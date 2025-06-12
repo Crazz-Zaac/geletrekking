@@ -1,23 +1,82 @@
-# Node modules folder
+# dependencies
 node_modules/
+**/node_modules/
 
-# Environment variables file
+# production build output
+dist/
+build/
+**/dist/
+**/build/
+
+# local env files
 .env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+**/.env.*.local
 
-# Logs
-logs/
-*.log
+# logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# Build output (if you have any build process)
-dist/
-build/
+*.log
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/*.log
 
 # OS generated files
 .DS_Store
 Thumbs.db
+**/.DS_Store
+**/Thumbs.db
 
-# VSCode settings folder (optional)
+# Editor folders/files
 .vscode/
+.idea/
+**/.vscode/
+**/.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+**.suo
+**.ntvs*
+**.njsproj
+**.sln
+
+
+# Optional coverage folder (if you run tests)
+coverage/
+**/coverage/
+
+# Optional TypeScript cache files
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# MongoDB local files / temp data / database dumps
+data/
+*.pid
+dump*.json
+**/data/
+**/*.pid
+**/dump*.json
+
+# Backup or temp files
+*.bak
+*.tmp
+**/*.bak
+**/*.tmp
+
+# Uploaded files or temporary folders
+uploads/
+tmp/
+temp/
+**/uploads/
+**/tmp/
+**/temp/
+
+# Optional: Postman collections
+*.postman_collection.json
+**/*.postman_collection.json

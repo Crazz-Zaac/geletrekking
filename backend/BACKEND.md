@@ -2,65 +2,93 @@ Backend Project Structure
 1. Overview
 
 This backend is built with Node.js, Express, and MongoDB. It provides REST APIs to manage trekking data (treks).
-2. Folder Structure
+
+2. 📁 Folder Structure
 
 /backend
-  /controllers    # Logic for handling API requests (e.g., trekController.js)
-  /models         # Mongoose schemas (e.g., Trek.js)
-  /routes         # Express route definitions (e.g., trekRoutes.js)
-  server.js       # Main entry point of the backend server
+│
+├── /controllers # Logic for handling API requests
+│ ├── trekController.js
+│ └── contactController.js
+│
+├── /models # Mongoose schemas
+│ ├── Trek.js
+│ └── Contact.js
+│
+├── /routes # Express route definitions
+│ ├── trekRoutes.js
+│ └── contactRoutes.js
+│
+├── .env # Environment variables (DB URI, PORT, etc.)
+├── server.js # Main entry point of the backend server
+└── package.json
 
-3. Technologies Used
 
-    Node.js & Express for server and routing
+---
 
-    MongoDB with Mongoose for database and ODM
+3. 🛠️ Technologies Used
 
-    CORS for cross-origin requests
+- **Node.js** & **Express** for server and routing
+- **MongoDB** with **Mongoose** for database and ODM
+- **CORS** for cross-origin requests
+- **dotenv** for managing environment variables
+- **Nodemon** (optional) for development
 
-    Nodemon (optional) for development
+---
 
-4. API Endpoints
+4. 📡 API Endpoints
 
-    GET /api/treks — Fetch all treks
+### ✅ Trek Endpoints
 
-    POST /api/treks — Create a new trek
+- **GET** `/api/treks`  
+  - Fetch all treks
 
-5. Database
+- **POST** `/api/treks`  
+  - Create a new trek  
+  - Expects: `{ name, location, duration }`
 
-    MongoDB is used as the database
+---
 
-    Connected locally at mongodb://127.0.0.1:27017/geletrekking (replace with your actual database name)
+### ✅ Contact Form Endpoints
 
-    Trek schema contains fields like name, location, and duration
+- **POST** `/api/contact`  
+  - Save a contact form message  
+  - Expects:  
+    ```json
+    {
+      "name": "Your Name",
+      "email": "your@email.com",
+      "subject": "Optional subject",
+      "message": "Your message here"
+    }
+    ```
+  - Validates required fields: `name`, `email`, `message`
+  - Saves data to MongoDB
+  - Responds with success or error status
 
-6. Server Setup
+---
 
-    Server listens on port 5000 (default)
+5. 💾 Database
 
-    MongoDB connection established before server starts
+- **MongoDB** is used for data storage.
+- Connection string is stored securely in `.env`.
 
-    Proper error handling for database connection failures
+### Example Local Connection
 
-7. How to Run Backend
+mongodb://127.0.0.1:27017/geletrekking
 
-npm install
-node server.js
 
-8. Current Status
+### Trek Schema (`Trek.js`)
+```js
+name: String (required)
+location: String (required)
+duration: String (required)
 
-    Backend server is running and connected to MongoDB
+Contact Schema (Contact.js)
 
-    Basic APIs for getting and creating trek data are working
+name: String (required)
+email: String (required)
+subject: String (optional)
+message: String (required)
+createdAt: Date (default: Date.now)
 
-    Tested with Postman / frontend and confirmed data retrieval and insertion
-
-9. Next Steps
-
-    Add more API endpoints (update, delete)
-
-    Add authentication if needed
-
-    Improve error handling and validation
-
-    Connect frontend with backend fully
