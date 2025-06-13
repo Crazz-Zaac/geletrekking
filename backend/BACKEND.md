@@ -25,19 +25,6 @@ This backend is built with Node.js, Express, and MongoDB. It provides REST APIs 
 
 
 ---
-
-3. 🛠️ Technologies Used
-
-- **Node.js** & **Express** for server and routing
-- **MongoDB** with **Mongoose** for database and ODM
-- **CORS** for cross-origin requests
-- **dotenv** for managing environment variables
-- **Nodemon** (optional) for development
-
----
-
-4. 📡 API Endpoints
-
 ### ✅ Trek Endpoints
 
 - **GET** `/api/treks`  
@@ -68,9 +55,7 @@ This backend is built with Node.js, Express, and MongoDB. It provides REST APIs 
 
 ---
 
-5. 💾 Database
-
-- **MongoDB** is used for data storage.
+4. 💾 Database
 - Connection string is stored securely in `.env`.
 
 ### Example Local Connection
