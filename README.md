@@ -41,7 +41,9 @@ npm install
 ```env
 PORT=5000
 MONGODB_URI=mongodb://127.0.0.1:27017/geletrekking
-(to use the contact and get the message in gmail add your email and app passcode to make it work here in .env like <EMAIL_USER=your@gmail.com
+(to use the contact and get the message in gmail add your email and app passcode to make it work here in .env like 
+<
+EMAIL_USER=your@gmail.com
 EMAIL_PASS=yout passcode here
 ADMIN_EMAIL=your@gmail.com
 > )
