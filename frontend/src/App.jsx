@@ -32,7 +32,7 @@ import Contact from './pages/Contact';
 function App() {
   return (
     <Router>
-      {/* Navbar shown on all pages except /admin/login */}
+      {/* Show Navbar on all pages except admin login */}
       {window.location.pathname !== '/admin/login' && <Navbar />}
 
       <Routes>
