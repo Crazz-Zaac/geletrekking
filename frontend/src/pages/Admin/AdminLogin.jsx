@@ -44,7 +44,7 @@ const AdminLogin = () => {
           type="password"
           placeholder="Password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => (setPassworde.target.value)}
         /><br />
         <button type="submit">Login</button>
       </form>
@@ -52,5 +52,4 @@ const AdminLogin = () => {
     </div>
   );
 };
-
 export default AdminLogin;

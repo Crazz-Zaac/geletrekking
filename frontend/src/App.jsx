@@ -28,7 +28,6 @@ import ValleyRimTrek from './pages/Activities/ValleyRimTrek';
 import Testimonials from './pages/Testimonials';
 import Blog from './pages/Blog';
 import Contact from './pages/Contact';
-
 function App() {
   return (
     <Router>
@@ -65,6 +64,7 @@ function App() {
         <Route path="/testimonials" element={<Testimonials />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/contact" element={<Contact />} />
+          <Route path="/dashboard" element={<dashboard />} />
       </Routes>
     </Router>
   );
