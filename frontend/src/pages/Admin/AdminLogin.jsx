@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';  // <-- Import this
+import { useNavigate } from 'react-router-dom';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
-  const navigate = useNavigate();  // <-- Initialize navigate
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -20,9 +20,13 @@ const AdminLogin = () => {
       setMessage(response.data.message);
       console.log('✅ Login successful:', response.data);
 
-      // Redirect to admin contact page after successful login
-      navigate('/admin/contactMessages');  // <-- Adjust this path if needed
+      // ✅ Store token (if backend provides it)
+      if (response.data.token) {
+        localStorage.setItem('adminToken', response.data.token);
+      }
 
+      // ✅ Redirect to the dashboard page
+      navigate('/admin/dashboard');
     } catch (err) {
       console.error('❌ Login error full:', err);
       console.error('Response data:', err.response?.data);
@@ -31,7 +35,7 @@ const AdminLogin = () => {
   };
 
   return (
-    <div>
+    <div style={{ maxWidth: '400px', margin: '0 auto', padding: '2rem' }}>
       <h2>Admin Login</h2>
       <form onSubmit={handleLogin}>
         <input
@@ -39,16 +43,22 @@ const AdminLogin = () => {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-        /><br />
+          required
+          style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
+        />
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-        /><br />
-        <button type="submit">Login</button>
+          required
+          style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
+        />
+        <button type="submit" style={{ padding: '10px 20px', width: '100%' }}>
+          Login
+        </button>
       </form>
-      {message && <p>{message}</p>}
+      {message && <p style={{ marginTop: '1rem', color: 'red' }}>{message}</p>}
     </div>
   );
 };
