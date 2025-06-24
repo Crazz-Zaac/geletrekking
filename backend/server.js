@@ -6,9 +6,18 @@ const cors = require('cors');
 
 const app = express(); // Initialize express app
 
+const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173'];  // Add your frontend URLs here
+
 // Middleware — enable BEFORE routes!
 app.use(cors({
-  origin: 'http://localhost:5173',  // your frontend URL
+  origin: function(origin, callback) {
+    // Allow requests with no origin like mobile apps or curl
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -16,17 +25,20 @@ app.use(cors({
 app.use(express.json()); // parse JSON bodies
 
 // Import routes
+const userAuth = require('./routes/userAuth');
 const trekRoutes = require('./routes/trekRoutes');
 const adminRoutes = require('./routes/Admin/adminRoutes');
-const contactRoutes = require('./routes/contactRoutes');  // Only contact POST route for sending email
-
+const contactRoutes = require('./routes/contactRoutes');
 const aboutUsRoutes = require('./routes/aboutus');
-app.use('/api/aboutus', aboutUsRoutes);
+const protectedRoutes = require('./routes/protectedRoutes');  // New protected routes
 
 // Mount routes
-app.use('/api/treks', trekRoutes);          // Trekking related routes
-app.use('/api/admin', adminRoutes);          // Other admin routes
-app.use('/api/contact', contactRoutes);      // Public contact form POST route for sending email
+app.use('/api/userauth', userAuth);
+app.use('/api/aboutus', aboutUsRoutes);
+app.use('/api/treks', trekRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/protected', protectedRoutes);   // Mount the protected routes here
 
 // Root route for testing backend is running
 app.get('/', (req, res) => {
@@ -49,7 +61,7 @@ const PORT = process.env.PORT || 5000;
 // Connect to MongoDB and start server
 const startServer = async () => {
   try {
-    await mongoose.connect("mongodb://127.0.0.1:27017/geletrekking");
+    await mongoose.connect(process.env.MONGO_URI);
     console.log("✅ MongoDB connected successfully!");
 
     app.listen(PORT, () => {
@@ -61,5 +73,4 @@ const startServer = async () => {
   }
 };
 
- 
 startServer();
