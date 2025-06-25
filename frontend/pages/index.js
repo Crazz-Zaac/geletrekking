@@ -86,17 +86,7 @@ export default function Dropdown() {
           </div>
         </div>
     </nav>
-  <p>lorem*asdlkfjklasdjfkl;ajsldkflsadf
-    asdlkfjsakldjfkl;sajd;lfjdsa;kjsadfasdkfjsadjkl;jadsjfffffffffffffffffffffffffffffffffffffjdkjfkdjfkjdkfjdkfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjdd
-    dfjkljdlfjldsja;sdjf;lsajflk;sajflkajsdlfjsa;kjfssssssfasdklfjklsa;jadsjfffffffffffffffffffffffffffffffffffffjdkjfkdjfkjdkfjdkfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjddsadfklsaj;lkjklsa;djf;as\dfjkljdlfjldsjaasjkdfk;lsaj;falsesadlkfja;lkdf
-    asdlkfjaslkjflk;asj;dfjkljdlfjldsjasadklfj;lkasdjflasd
-    sadkjfaksldjfl;jadsjfffffffffffffffffffffffffffffffffffffjdkjfkdjfkjdkfjdkfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjddfklsadjf;lksajdlk;fjlsad
-    fsadlkfjaklsjfkl;sajflkajsdlfjsasadjklfklas;jdfklad f jfklsadj;lfkjasl; lksajdlk fklsda fjklsaj fklsajdlkfj asdlkfjaslkjflkf sakldfj k;lsajf lkjsdalkf
-    safkjsadhf sad fklsdjf;j sadkjfaksldjflasdklfjsakl jfsa j klfjlsda f
-    as klfjsald fjlsad ;lkf jsad 
-    sakld jlksdj flsjadk;fklsajdlkfj
-  </p>
-  <img src="https://geletrekking.com/wp-content/uploads/2024/05/Traditional-Load-Carrying-in-Nepal-768x1024.jpg"></img>
+
 </>
   );
 }
