@@ -1,11 +1,14 @@
 .nav{
   background-color: green;
   display: flex;
-
+  position: sticky;
+  overflow: hidden;
 }
 .nav img{
   height: 60px;
   animation: logo 2s infinite;
+  border: 1px solid red ;
+  border-radius: 100%;
 }
 
 @keyframes logo{
@@ -20,9 +23,11 @@
 }
 .home{
   padding-top: 10px;
+  display: flex;
+  padding-left: 400px;
 }
 .dropbtn {
-  padding: 10px 10px;
+  padding: 1px 10px;
   color: rgb(20, 19, 19);
   border-radius: 20px;
   font-size: 16px;
