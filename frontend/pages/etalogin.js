@@ -33,7 +33,7 @@ export default function Login() {
       if (data.user.role === 'admin') {
         router.push('/admin');
       } else if (data.user.role === 'superadmin') {
-        router.push('/superadmin');
+        router.push('/superadmin');  // Redirect superadmin to index page
       } else {
         setError('Unauthorized role');
       }

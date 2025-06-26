@@ -30,7 +30,8 @@ const trekRoutes = require('./routes/trekRoutes');
 const adminRoutes = require('./routes/Admin/adminRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const aboutUsRoutes = require('./routes/aboutus');
-const protectedRoutes = require('./routes/protectedRoutes');  // New protected routes
+const protectedRoutes = require('./routes/protectedRoutes');
+const superadminRoutes = require('./routes/superadmin/superadmin')  // New protected routes
 
 // Mount routes
 app.use('/api/userauth', userAuth);
@@ -38,7 +39,8 @@ app.use('/api/aboutus', aboutUsRoutes);
 app.use('/api/treks', trekRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/contact', contactRoutes);
-app.use('/api/protected', protectedRoutes);   // Mount the protected routes here
+app.use('/api/protected', protectedRoutes);   
+app.use('/api/superadmin',superadminRoutes);// Mount the protected routes here
 
 // Root route for testing backend is running
 app.get('/', (req, res) => {

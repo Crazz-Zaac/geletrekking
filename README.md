@@ -1,104 +1,107 @@
+GeleTrekking Project Setup Guide (Next.js frontend + Express backend)
+Prerequisites
 
-# GeleTrekking Project Setup Guide
+    Node.js
 
-This guide explains how to run the **GeleTrekking** project on your local machine.
+    MongoDB
 
----
+    Git
 
-## Prerequisites
+Clone the Repository
 
-- **Node.js** 
-- **MongoDB** 
-- **Git**
-(make sure this all are installed in your local machine to run)
----
-
-## Clone the Repository
-
-```bash
 git clone https://github.com/Crazz-Zaac/geletrekking.git
 cd geletrekking
-```
 
----
+Backend Setup
 
-## Backend Setup
+    Navigate to backend folder:
 
-1. Navigate to the backend folder:
-
-```bash
 cd backend
-```
 
-2. Install dependencies:
+    Install dependencies:
 
-```bash
 npm install
-```
 
-3. Create a `.env` file in the backend folder with the following (example):
+    Backend main packages used (listed for your info; these should already be in package.json):
 
-```env
+    express — backend web framework
+
+    mongoose — MongoDB ODM
+
+    cors — to allow cross-origin requests
+
+    dotenv — load environment variables
+
+    bcryptjs — password hashing
+
+    jsonwebtoken — JWT auth tokens
+
+    nodemailer — for sending emails (optional)
+
+    Create .env file with content like:
+
 PORT=5000
 MONGODB_URI=mongodb://127.0.0.1:27017/geletrekking
-(to use the contact and get the message in gmail add your email and app passcode to make it work here in .env like 
-<
+{
 EMAIL_USER=your@gmail.com
-EMAIL_PASS=yout passcode here
+EMAIL_PASS=your_app_passcode
 ADMIN_EMAIL=your@gmail.com
-> )
-{note:- both admin and user mail is same because sending and receiving is done by your@gmail.com}
-```
+}("not needed now cause we haven't done contact in this next.js")
+    Start backend server:
 
-4. Start the backend server:
-
-```bash
 npm start
-```
 
-The backend API will be running on [http://localhost:5000](http://localhost:5000).
+API runs at http://localhost:5000.
+Frontend Setup (Next.js)
 
----
+    Navigate to frontend folder:
 
-## Frontend Setup
-
-1. Open a new terminal and navigate to the frontend folder:
-
-```bash
 cd frontend
-```
 
-2. Install dependencies:
+    Install dependencies:
 
-```bash
 npm install
-```
 
-3. Start the frontend development server:
+    Frontend main packages you should have in package.json:
 
-```bash
+    react — React core
+
+    react-dom — React DOM renderer
+
+    next — Next.js framework
+
+    axios — HTTP client (optional; you can also use fetch API)
+
+    js-cookie — (optional) cookie handling for auth
+
+    swr — (optional) React data fetching hooks
+
+    dotenv — (for env vars in Next.js)
+
+    These should be in your package.json. If not, install with:
+
+npm install react react-dom next axios js-cookie swr dotenv
+
+    Start frontend dev server:
+
 npm run dev
-```
 
-The frontend app will be running on [http://localhost:5173].
----
+Frontend runs at http://localhost:3000.
+Notes
 
-## Notes
+    MongoDB must be running locally before starting backend.
 
-- Ensure MongoDB is running locally before starting the backend.
-- The frontend communicates with the backend API at `http://localhost:5000`.
-- You can change this URL in frontend configuration if needed.
-- The project uses these main packages:
-  - **Backend**: express, mongoose, cors, dotenv
-  - **Frontend**: react, react-router-dom, axios, vite
+    Frontend connects to backend at http://localhost:5000 (change URLs if needed).
 
----
+    You can use .env.local in your frontend to store variables like:
 
-## Troubleshooting
+NEXT_PUBLIC_API_URL=http://localhost:5000
 
-- If you get module not found errors, run `npm install` again.
-- If ports are busy, change the ports in `.env` or frontend config.
-- For MongoDB connection issues, check your MongoDB server status.
+and use process.env.NEXT_PUBLIC_API_URL in your code to avoid hardcoding URLs.
+Troubleshooting
 
----
+    Run npm install if packages are missing.
 
+    Change ports in .env files if conflicts.
+
+    Check MongoDB service status if connection errors occur.

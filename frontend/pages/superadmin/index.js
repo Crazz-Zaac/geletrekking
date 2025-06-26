@@ -1,15 +1,26 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Navbar from '../../components/Navbar';
 
-export default function SuperadminDashboard() {
+export default function SuperadminIndex() {
   const router = useRouter();
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
-    if (role !== 'superadmin') {
-      router.replace('/login'); // redirect if not superadmin
+
+    if (!token || role !== 'superadmin') {
+      router.replace('/login');
     }
   }, [router]);
 
-  return <h1>Welcome to the Superadmin Dashboard</h1>;
+  return (
+    <>
+      <Navbar />
+      <div style={{ maxWidth: 600, margin: 'auto', padding: '2rem' }}>
+        <h1>Welcome, Superadmin!</h1>
+        <p>Use the "Registration" link above to add new admins.</p>
+      </div>
+    </>
+  );
 }

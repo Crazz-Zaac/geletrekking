@@ -1,14 +1,20 @@
-const User = require('../models/user');  // <-- Add this line
+const User = require('../models/user');
+const Admin = require('../models/Admin');  // <-- Import Admin model
 const bcrypt = require('bcryptjs');
 const generateToken = require('../utils/generateToken');
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  console.log('Login attempt:', { email });  // Log incoming email
+  console.log('Login attempt:', { email });
 
   try {
-    const user = await User.findOne({ email });
-    console.log('User found:', user ? true : false);
+    // Try finding user in User collection first
+    let user = await User.findOne({ email });
+
+    // If not found, try finding in Admin collection
+    if (!user) {
+      user = await Admin.findOne({ email });
+    }
 
     if (!user || !['admin', 'superadmin'].includes(user.role)) {
       console.log('Access denied due to role or user not found');
@@ -30,9 +36,9 @@ exports.login = async (req, res) => {
       token,
       user: {
         id: user._id,
-        name: user.name,
+        name: user.name || user.username,
         email: user.email,
-        role: user.role
+        role: user.role,
       }
     });
   } catch (err) {
