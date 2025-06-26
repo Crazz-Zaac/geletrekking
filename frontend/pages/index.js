@@ -1,5 +1,6 @@
 import { useState } from "react";
 import styles from "./styles/nav.module.css";
+import Link from 'next/link';
 
 export default function Dropdown() {
   const [isGalleryOpen, setGalleryOpen] = useState(false);
@@ -25,11 +26,11 @@ export default function Dropdown() {
         ></img>
         <div className={styles.home}>
          
-            <a href="#">Home</a>
+            <a href="/gallery">Home</a>
             <a href="#" style={{ marginLeft: "20px" }}>
               About us
             </a>
-             <a href="#" style={{ marginLeft: "20px" }}>
+             <a href="/testmonial" style={{ marginLeft: "20px" }}>
              Testmonial
             </a>
           <div className={styles.dropdown}>
@@ -45,7 +46,7 @@ export default function Dropdown() {
             {isGalleryOpen && (
               <ul className={styles.dropdownContent} role="menu">
                 <li role="menuitem">
-                  <a href="#">Photos</a>
+                  <a href="">Photos</a>
                 </li>
                 <li role="menuitem">
                   <a href="#">Videos</a>
@@ -80,7 +81,7 @@ export default function Dropdown() {
                 </li>
               </ul>
             )}
-             <a href="#">
+             <a href="/contactus">
               Contact us 
             </a>
           </div>
