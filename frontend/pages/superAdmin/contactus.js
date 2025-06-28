@@ -43,12 +43,15 @@ export default function SuperadminContactUs() {
             margin-left: 500px;
             margin-bottom: 10px;
             width: 300px;
+            height:40px;
           }
 
           button[type="submit"] {
             border: 1px solid black;
             margin-left: 500px;
             width: 300px;
+            background-color:red;
+            height:40px;
           }
         `}</style>
       </div>
