@@ -1,6 +1,7 @@
 import { useState } from "react";
 import styles from "./styles/nav.module.css";
 import Link from 'next/link';
+import Navbar from "@/components/Navbar";
 
 export default function Dropdown() {
   const [isGalleryOpen, setGalleryOpen] = useState(false);
@@ -19,6 +20,7 @@ export default function Dropdown() {
 
   return (
     <>
+  <Navbar/>
      <nav className={styles.nav}>
         <img
           src="https://imgs.search.brave.com/W9J42-2dzJU6-Egw26SmEcuJMX-gannKDRkPL0Sxgbk/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTU1/MzUyODQ5L3Bob3Rv/L3R3by1ldXJvLWNv/aW4uanBnP3M9NjEy/eDYxMiZ3PTAmaz0y/MCZjPTNkM0tSOThG/ZWpnREd4NExYLWx4/ZlN4UTVGTjJPcUlf/eks0VDE1LWtVdjQ9"
