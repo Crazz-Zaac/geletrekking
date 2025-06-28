@@ -28,7 +28,7 @@ export default function Dropdown() {
         ></img>
         <div className={styles.home}>
          
-            <a href="/gallery">Home</a>
+            <a href="user/gallery">Home</a>
             <a href="#" style={{ marginLeft: "20px" }}>
               About us
             </a>

@@ -18,6 +18,13 @@ export default function Navbar() {
       >
         Registration
       </Link>
+      <Link
+        href="/superAdmin/contactus"
+        style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}
+      >
+        Contactus
+      </Link>
+      
     </nav>
   );
 }
