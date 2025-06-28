@@ -8,25 +8,50 @@ export default function SuperadminContactUs() {
   return (
     <>
       <Navbar />
-       <div style={{ padding: "2rem" }}>
-      <h1>Contact Us</h1>
-      
+      <div className="contactus">
+        <h1>Contact Us</h1>
         <p>Thank you for contacting us!</p>
-      
-        <form style={{ display: "flex", flexDirection: "column", maxWidth: "400px" }}>
+
+        <form style={{ display: "flex", flexDirection: "column" }}>
           <label>Name:</label>
-          <input type="text" name="name" style={{border:" 1px solid black"}}  required />
+          <input type="text" name="name" required />
 
           <label>Email:</label>
-          <input type="email" name="email" style={{border:" 1px solid black"}} required />
+          <input type="email" name="email" required />
 
           <label>Message:</label>
-          <textarea name="message" style={{border:" 1px solid black"}}  required />
+          <textarea name="message" required />
 
-          <button type="submit" style={{backgroundColor:"Blue",border:" 1px solid black", marginTop: "1rem" }}>Submit</button>
+          <button
+            type="submit"
+
+          >
+            Submit
+          </button>
         </form>
-    
-    </div>
+
+        <style jsx>{`
+          .contactus {
+            text-align: center;
+            padding: 2rem;
+          }
+
+          input[type="email"],
+          input[type="text"],
+          textarea {
+            border: 1px solid black;
+            margin-left: 500px;
+            margin-bottom: 10px;
+            width: 300px;
+          }
+
+          button[type="submit"] {
+            border: 1px solid black;
+            margin-left: 500px;
+            width: 300px;
+          }
+        `}</style>
+      </div>
     </>
   );
 }
