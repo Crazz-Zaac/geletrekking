@@ -43,7 +43,7 @@ npm install dotenv
 PORT=5000
 MONGO_URI=mongodb://localhost:27017/geletrekking
 JWT_SECRET=your_jwt_secret_key
-
+```
 
 4. Start the backend server:
 
