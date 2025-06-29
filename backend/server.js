@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 // ✅ Import cron job to delete log files daily
-require('./cron/deleteLogs.js');
+require('./cron/deletelog');
 
 const app = express(); // Initialize Express app
 
