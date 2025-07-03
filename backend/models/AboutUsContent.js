@@ -5,9 +5,9 @@ const aboutUsSchema = new mongoose.Schema({
   heading: { type: String, required: true },
   description: { type: String, required: true },
   imageUrl: { type: String },          // URL or path of image
-  price: { type: Number },             // Price value
-  days: { type: Number },              // Number of days
-  groupSize: { type: Number },         // Group size
+  price: { type: Number },             
+  days: { type: Number },              
+  groupSize: { type: Number },         
   updatedAt: { type: Date, default: Date.now },
 });
 

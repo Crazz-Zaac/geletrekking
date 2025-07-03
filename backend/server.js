@@ -4,14 +4,17 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-const app = express(); // Initialize express app
+// ✅ Import cron job to delete log files daily
+require('./cron/deletelog');
 
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173'];  // Add your frontend URLs here
+const app = express(); // Initialize Express app
 
-// Middleware — enable BEFORE routes!
+// ✅ CORS Setup
+const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173'];
+
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin like mobile apps or curl
+    // Allow requests with no origin (like mobile apps, curl)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -22,55 +25,55 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-app.use(express.json()); // parse JSON bodies
+app.use(express.json()); // Enable JSON request body parsing
 
-// Import routes
+// ✅ Import routes
 const userAuth = require('./routes/userAuth');
 const trekRoutes = require('./routes/trekRoutes');
 const adminRoutes = require('./routes/Admin/adminRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const aboutUsRoutes = require('./routes/aboutus');
 const protectedRoutes = require('./routes/protectedRoutes');
-const superadminRoutes = require('./routes/superadmin/superadmin')  // New protected routes
+const superadminRoutes = require('./routes/superadmin/superadmin');
 
-// Mount routes
+// ✅ Mount routes
 app.use('/api/userauth', userAuth);
 app.use('/api/aboutus', aboutUsRoutes);
 app.use('/api/treks', trekRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/contact', contactRoutes);
-app.use('/api/protected', protectedRoutes);   
-app.use('/api/superadmin',superadminRoutes);// Mount the protected routes here
+app.use('/api/protected', protectedRoutes);
+app.use('/api/superadmin', superadminRoutes);
 
-// Root route for testing backend is running
+// ✅ Root route
 app.get('/', (req, res) => {
   res.send('Geletrekking backend is running!');
 });
 
-// Optional debug route to check if contact route is reachable
+// ✅ Optional test route
 app.get('/api/contact', (req, res) => {
   res.json({ message: 'GET /api/contact route is reachable!' });
 });
 
-// Generic error handler
+// ✅ Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
+// ✅ MongoDB + Server start
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB and start server
 const startServer = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log("✅ MongoDB connected successfully!");
+    console.log('✅ MongoDB connected successfully!');
 
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
   } catch (err) {
-    console.error("❌ MongoDB connection failed:", err.message);
+    console.error('❌ MongoDB connection failed:', err.message);
     process.exit(1);
   }
 };

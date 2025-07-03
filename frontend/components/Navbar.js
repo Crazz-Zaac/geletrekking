@@ -13,6 +13,12 @@ export default function Navbar() {
       }}
     >
       <Link
+        href="/superadmin"
+        style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}
+      >
+        Home
+      </Link>
+      <Link
         href="/superadmin/addadmin"
         style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}
       >
