@@ -48,8 +48,10 @@ JWT_SECRET=your_jwt_secret_key
 4. Start the backend server:
 
 ```bash
-node superadminSeeder.js(to save the superadmin in db)
-node server.js(to run server)
+#save superadmin in db
+node superadminSeeder.js
+#start the server
+node server.js
 ```
 
 The backend API will be running on [http://localhost:5000](http://localhost:5000).
