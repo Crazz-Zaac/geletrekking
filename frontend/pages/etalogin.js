@@ -5,14 +5,19 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSuperadmin, setIsSuperadmin] = useState(false); // toggle login type
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
+    const loginUrl = isSuperadmin 
+      ? 'http://localhost:5000/api/superadmin/auth/login' 
+      : 'http://localhost:5000/api/userauth/login';
+
     try {
-      const res = await fetch('http://localhost:5000/api/userauth/login', {
+      const res = await fetch(loginUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -27,15 +32,16 @@ export default function Login() {
 
       // Save token and role in localStorage
       localStorage.setItem('token', data.token);
-      localStorage.setItem('role', data.user.role);
+      localStorage.setItem('role', data.role || data.user.role); // handle both user and superadmin response
 
       // Redirect based on role
-      if (data.user.role === 'admin') {
+      const role = data.role || data.user.role;
+      if (role === 'admin') {
         router.push('/admin');
-      } else if (data.user.role === 'superadmin') {
-        router.push('/superadmin');  // Redirect superadmin to index page
+      } else if (role === 'superadmin') {
+        router.push('/superadmin');
       } else {
-        setError('Unauthorized role');
+        router.push('/'); // or user home page
       }
     } catch (err) {
       setError('Server error. Try again later.');
@@ -45,6 +51,17 @@ export default function Login() {
   return (
     <div style={{ maxWidth: '400px', margin: 'auto', padding: '2rem' }}>
       <h2>Login</h2>
+
+      <label style={{ display: 'block', marginBottom: '1rem' }}>
+        <input
+          type="checkbox"
+          checked={isSuperadmin}
+          onChange={() => setIsSuperadmin(!isSuperadmin)}
+          style={{ marginRight: '0.5rem' }}
+        />
+        Login as Superadmin
+      </label>
+
       <form onSubmit={handleSubmit}>
         <label>Email:</label>
         <input

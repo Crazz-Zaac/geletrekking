@@ -1,6 +1,5 @@
 const User = require('../models/user');
-const Admin = require('../models/Admin');  // <-- Import Admin model
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');           
 const generateToken = require('../utils/generateToken');
 
 exports.login = async (req, res) => {
@@ -16,11 +15,13 @@ exports.login = async (req, res) => {
       user = await Admin.findOne({ email });
     }
 
+    // Check user existence and role
     if (!user || !['admin', 'superadmin'].includes(user.role)) {
       console.log('Access denied due to role or user not found');
       return res.status(401).json({ message: 'Access denied' });
     }
 
+    // Compare password using bcrypt (async)
     const isMatch = await bcrypt.compare(password, user.password);
     console.log('Password match:', isMatch);
 
@@ -29,6 +30,7 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // Generate JWT token
     const token = generateToken(user);
     console.log('Token generated');
 
