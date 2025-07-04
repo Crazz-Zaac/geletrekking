@@ -29,19 +29,18 @@ app.use(express.json());
 /* =======================
    ROUTE IMPORTS
 ========================== */
-const authRoutes = require('./routes/userAuth');                     // User auth routes
 
 
 const adminRoutes = require('./routes/Admin/adminRoutes');
 const protectedRoutes = require('./routes/protectedRoutes');
 
-const superadminAuthRoutes = require('./routes/superadmin/auth');         // Superadmin login route
+const superadminAuthRoutes = require('./routes/superadmin/auth');         // Superadmin and admin login route
 const superadminRoutes = require('./routes/superadmin/superadmin');       // Superadmin management routes
 
 /* =======================
    ROUTE MOUNTING
 ========================== */
-app.use('/api/auth', authRoutes);                           
+//app.use('/api/auth', authRoutes);                           
 
 app.use('/api/admin', adminRoutes);
 app.use('/api/protected', protectedRoutes);
