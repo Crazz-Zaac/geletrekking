@@ -7,14 +7,24 @@ export default function Login() {
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  const handleLogin = async (role) => {
+    setError('');
+
+    if (!email || !password) {
+      setError('Please fill all fields');
+      return;
+    }
+
+    const loginUrl =
+      role === 'superadmin'
+        ? 'http://localhost:5000/api/superadmin/auth/login'
+        : 'http://localhost:5000/api/superadmin/auth/login';
+        
 
     try {
-      const res = await fetch("http://localhost:5000/api/userauth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch(loginUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
@@ -25,15 +35,15 @@ export default function Login() {
         return;
       }
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.user.role);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('role', data.role);
 
-      if (data.user.role === "admin") {
-        router.push("/admin");
-      } else if (data.user.role === "superadmin") {
-        router.push("/superadmin");
+      if (role === 'admin') {
+        router.push('/admin');
+      } else if (role === 'superadmin') {
+        router.push('/superadmin');
       } else {
-        setError("Unauthorized role");
+        router.push('/');
       }
     } catch (err) {
       setError("Server error. Try again later.");

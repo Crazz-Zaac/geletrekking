@@ -6,7 +6,7 @@ export default function AddAdmin() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
 
-  const [username, setUsername] = useState("");
+  const [name, setName] = useState(""); // ✅ Changed from username
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -31,7 +31,7 @@ export default function AddAdmin() {
     setError("");
 
     const token = localStorage.getItem("token");
-    const newAdminData = { username, email, password };
+    const newAdminData = { name, email, password }; // ✅ use `name`
 
     try {
       const res = await fetch("http://localhost:5000/api/superadmin/addadmin", {
@@ -45,9 +45,9 @@ export default function AddAdmin() {
 
       let data;
       try {
-        data = await res.json(); // Safe single read
+        data = await res.json();
       } catch (jsonErr) {
-        const text = await res.text(); // fallback for HTML or plain text
+        const text = await res.text();
         throw new Error(`Unexpected server response: ${text}`);
       }
 
@@ -56,7 +56,7 @@ export default function AddAdmin() {
       }
 
       setMessage("✅ Admin added successfully!");
-      setUsername("");
+      setName(""); // ✅ reset name
       setEmail("");
       setPassword("");
     } catch (err) {
@@ -72,9 +72,9 @@ export default function AddAdmin() {
         <form onSubmit={handleSubmit}>
           <input
             type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Name" // ✅ changed placeholder
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             required
             style={{ display: "block", marginBottom: 10, width: "100%" }}
           />

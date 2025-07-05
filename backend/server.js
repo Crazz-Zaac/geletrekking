@@ -4,17 +4,15 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-// ✅ Import cron job to delete log files daily
-require('./cron/deletelog');
-
 const app = express(); // Initialize Express app
 
-// ✅ CORS Setup
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173'];
+// Cron Job: Delete logs daily
+require('./cron/deletelog');
 
+// CORS Setup: Allow specific frontend origins
+const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173'];
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -25,43 +23,53 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-app.use(express.json()); // Enable JSON request body parsing
+// Middleware to parse JSON bodies
+app.use(express.json());
 
-// ✅ Import routes
-const userAuth = require('./routes/userAuth');
-const trekRoutes = require('./routes/trekRoutes');
+/* =======================
+   ROUTE IMPORTS
+========================== */
+
+
 const adminRoutes = require('./routes/Admin/adminRoutes');
-const contactRoutes = require('./routes/contactRoutes');
-const aboutUsRoutes = require('./routes/aboutus');
 const protectedRoutes = require('./routes/protectedRoutes');
-const superadminRoutes = require('./routes/superadmin/superadmin');
 
-// ✅ Mount routes
-app.use('/api/userauth', userAuth);
-app.use('/api/aboutus', aboutUsRoutes);
-app.use('/api/treks', trekRoutes);
+const superadminAuthRoutes = require('./routes/superadmin/auth');         // Superadmin and admin login route
+const superadminRoutes = require('./routes/superadmin/superadmin');       // Superadmin management routes
+
+/* =======================
+   ROUTE MOUNTING
+========================== */
+//app.use('/api/auth', authRoutes);                           
+
 app.use('/api/admin', adminRoutes);
-app.use('/api/contact', contactRoutes);
 app.use('/api/protected', protectedRoutes);
+
+app.use('/api/superadmin/auth', superadminAuthRoutes);
 app.use('/api/superadmin', superadminRoutes);
 
-// ✅ Root route
+/* =======================
+   TEST ROUTES
+========================== */
 app.get('/', (req, res) => {
-  res.send('Geletrekking backend is running!');
+  res.send('🌍 Geletrekking backend is running!');
 });
 
-// ✅ Optional test route
 app.get('/api/contact', (req, res) => {
   res.json({ message: 'GET /api/contact route is reachable!' });
 });
 
-// ✅ Error handler
+/* =======================
+   GLOBAL ERROR HANDLER
+========================== */
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// ✅ MongoDB + Server start
+/* =======================
+   MONGODB + SERVER START
+========================== */
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
