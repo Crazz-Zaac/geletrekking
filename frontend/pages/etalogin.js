@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { useRouter } from "next/router";
+import { useState } from 'react';
+import { useRouter } from 'next/router';
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const router = useRouter();
 
   const handleLogin = async (role) => {
@@ -31,7 +31,7 @@ export default function Login() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || "Login failed");
+        setError(data.message || 'Login failed');
         return;
       }
 
@@ -46,93 +46,45 @@ export default function Login() {
         router.push('/');
       }
     } catch (err) {
-      setError("Server error. Try again later.");
+      setError('Server error. Try again later.');
     }
   };
 
   return (
-    <>
-      <div className="first">
-        <h1> super admin login</h1>
-        {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
+    <div style={{ maxWidth: '400px', margin: 'auto', padding: '2rem' }}>
+      <h2>Login</h2>
 
-        <form onSubmit={handleSubmit}>
-          <label htmlFor="username">Username</label>
-          <input
-            type="email"
-            id="username"
-            placeholder="username"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+      <label>Email:</label>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        style={{ width: '100%', marginBottom: '1rem' }}
+      />
 
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            placeholder="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+      <label>Password:</label>
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        style={{ width: '100%', marginBottom: '1rem' }}
+      />
 
-          <button type="submit">Login</button>
-        </form>
-      </div>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
 
-      <style jsx>{`
-        .first {
-          max-width: 400px;
-          padding: 30px;
-          margin: 100px auto;
-          border-radius: 10px;
-          background: rgb(179, 44, 44);
-        }
+      <button
+        onClick={() => handleLogin('superadmin')}
+        style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }}
+      >
+        Login as Superadmin
+      </button>
 
-        .first h1 {
-          color: aquamarine;
-          text-align: center;
-          margin-bottom: 30px;
-        }
-
-        .first label {
-          color: black;
-          display: block;
-          text-align: center;
-          margin: 10px 0 5px 0;
-        }
-
-        input[type="email"],
-        input[type="password"] {
-          width: 100%;
-          padding: 10px;
-          font-size: medium;
-          border: none;
-          border-bottom: 2px solid black;
-        }
-        button[type="submit"] {
-          width: 50%;
-          padding: 10px;
-          font-size: medium;
-          margin-left: 25%;
-          background-color: aquamarine;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-          margin-top: 10px;
-          color: black;
-          font-weight: bold;
-        }
-        button[type="submit"]:hover {
-          background-color: #00ffcc;
-        }
-     
-        body {
-          background-color: rgb(31, 30, 34);
-          font-family: Arial, Helvetica, sans-serif;
-        }
-      `}</style>
-    </>
+      <button
+        onClick={() => handleLogin('admin')}
+        style={{ width: '100%', padding: '0.5rem' }}
+      >
+        Login as Admin
+      </button>
+    </div>
   );
 }
