@@ -50,41 +50,102 @@ export default function Login() {
     }
   };
 
-  return (
-    <div style={{ maxWidth: '400px', margin: 'auto', padding: '2rem' }}>
-      <h2>Login</h2>
+  return (<>
 
-      <label>Email:</label>
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        style={{ width: '100%', marginBottom: '1rem' }}
-      />
+<div className="loginpage">
+  <div className="box">
+    <h2>Login</h2>
 
-      <label>Password:</label>
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        style={{ width: '100%', marginBottom: '1rem' }}
-      />
+    <input
+      placeholder="Email"
+      type="email"
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+    />
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <input
+      placeholder="Password"
+      type="password"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+    />
 
-      <button
-        onClick={() => handleLogin('superadmin')}
-        style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }}
-      >
-        Login as Superadmin
-      </button>
+    {error && <p className="error">{error}</p>}
 
-      <button
-        onClick={() => handleLogin('admin')}
-        style={{ width: '100%', padding: '0.5rem' }}
-      >
-        Login as Admin
-      </button>
-    </div>
+    <button onClick={() => handleLogin('superadmin')}>Login as Superadmin</button>
+    <button onClick={() => handleLogin('admin')}>Login as Admin</button>
+  </div>
+
+  <style jsx>{`
+    .loginpage {
+      background: linear-gradient(to bottom,rgb(175, 81, 133),rgb(83, 172, 90));
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .box {
+      background-color: #ffffff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .box h2 {
+      margin-bottom: 30px;
+      font-size: 28px;
+      color: #333;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: 0.2s ease;
+    }
+
+    input:focus {
+      border-color: #4facfe;
+      outline: none;
+    }
+
+    .error {
+      color: red;
+      margin-bottom: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      background-color:rgb(55, 212, 116);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #00c6ff;
+    }
+  `}</style>
+</div>
+
+
+    </>
   );
 }
