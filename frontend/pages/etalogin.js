@@ -78,7 +78,7 @@ export default function Login() {
 
   <style jsx>{`
     .loginpage {
-      background: linear-gradient(to bottom,rgb(175, 81, 133),rgb(83, 172, 90));
+      background: linear-gradient(to bottom,rgb(175, 81, 133),rgb(44, 211, 58));
       height: 100vh;
       width: 100vw;
       display: flex;
