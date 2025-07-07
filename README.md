@@ -35,6 +35,9 @@ cd backend
 ```bash
 npm install
 npm install dotenv
+npm install speakeasy
+npm install google-auth-library
+
 ```
 
 3. Create a `.env` file in the backend folder with the following (example):
@@ -70,6 +73,8 @@ cd frontend
 
 ```bash
 npm install
+npm install @react-oauth/google
+
 ```
 
 3. Start the frontend development server:

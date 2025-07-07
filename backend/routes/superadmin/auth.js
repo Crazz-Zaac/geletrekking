@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');  // Using bcrypt, not bcryptjs
-const Admin = require('../../models/user'); // Both superadmins and admins in same model
+const bcrypt = require('bcrypt');
+const Admin = require('../../models/user'); // user model
+const authController = require('../../controllers/authController'); // ✅ Import controller
 
+// 🔐 Email + Password Login
 router.post('/login', async (req, res) => {
   let { email, password } = req.body;
 
@@ -13,7 +15,6 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    // Find user with role 'superadmin' or 'admin'
     const user = await Admin.findOne({ email, role: { $in: ['superadmin', 'admin'] } });
 
     if (!user) {
@@ -21,7 +22,6 @@ router.post('/login', async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid password' });
     }
@@ -30,7 +30,6 @@ router.post('/login', async (req, res) => {
       expiresIn: '7d',
     });
 
-    // Send back user info including role
     res.json({
       token,
       username: user.username,
@@ -42,5 +41,8 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Server error during login' });
   }
 });
+
+// ✅ Google Login for Admins
+router.post('/google-login', authController.googleLogin);
 
 module.exports = router;
