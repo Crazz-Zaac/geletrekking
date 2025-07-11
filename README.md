@@ -7,10 +7,11 @@ This guide explains how to run the **GeleTrekking** project on your local machin
 
 ## Prerequisites
 
-- **Node.js** 
-- **MongoDB** 
-- **Git**
-(make sure this all are installed in your local machine to run)
+- **Node.js**  
+- **MongoDB**  
+- **Git**  
+(make sure these all are installed in your local machine to run)
+
 ---
 
 ## Clone the Repository
@@ -37,7 +38,6 @@ npm install
 npm install dotenv
 npm install speakeasy
 npm install google-auth-library
-
 ```
 
 3. Create a `.env` file in the backend folder with the following (example):
@@ -51,9 +51,10 @@ JWT_SECRET=your_jwt_secret_key
 4. Start the backend server:
 
 ```bash
-#save superadmin in db
+# save superadmin in db
 node superadminSeeder.js
-#start the server
+
+# start the server
 node server.js
 ```
 
@@ -74,21 +75,20 @@ cd frontend
 ```bash
 npm install
 npm install @react-oauth/google
-
 ```
-3.     Google OAuth Setup:
+
+3. Google OAuth Setup:  
 To enable Google login in the frontend, you need to provide your Google Client ID as an environment variable.
 
-    Create a file named .env.local inside the frontend folder.
+- Create a file named `.env.local` inside the frontend folder.
 
-    Add the following line with your Google Client ID:
-    ```env
+- Add the following line with your Google Client ID:
 
-      NEXT_PUBLIC_GOOGLE_CLIENT_ID=416465718761-k6esa7bds8i96cdhssqa916p8l39m70f.apps.googleusercontent.com
-    ```
+```env
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=416465718761-k6esa7bds8i96cdhssqa916p8l39m70f.apps.googleusercontent.com
+```
 
-    Note: The prefix NEXT_PUBLIC_ is required to expose the variable to the frontend React app.
-
+**Note:** The prefix `NEXT_PUBLIC_` is required to expose the variable to the frontend React app.
 
 4. Start the frontend development server:
 
@@ -96,7 +96,8 @@ To enable Google login in the frontend, you need to provide your Google Client I
 npm run dev
 ```
 
-The frontend app will be running on [http://localhost:5173].
+The frontend app will be running on [http://localhost:5173](http://localhost:5173).
+
 ---
 
 ## Notes
@@ -117,4 +118,3 @@ The frontend app will be running on [http://localhost:5173].
 - For MongoDB connection issues, check your MongoDB server status.
 
 ---
-
