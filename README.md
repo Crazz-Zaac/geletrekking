@@ -76,8 +76,21 @@ npm install
 npm install @react-oauth/google
 
 ```
+3.     Google OAuth Setup:
+To enable Google login in the frontend, you need to provide your Google Client ID as an environment variable.
 
-3. Start the frontend development server:
+    Create a file named .env.local inside the frontend folder.
+
+    Add the following line with your Google Client ID:
+    ```env
+
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=416465718761-k6esa7bds8i96cdhssqa916p8l39m70f.apps.googleusercontent.com
+    ```
+
+    Note: The prefix NEXT_PUBLIC_ is required to expose the variable to the frontend React app.
+
+
+4. Start the frontend development server:
 
 ```bash
 npm run dev
