@@ -84,7 +84,7 @@ To enable Google login in the frontend, you need to provide your Google Client I
     Add the following line with your Google Client ID:
     ```env
 
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=416465718761-k6esa7bds8i96cdhssqa916p8l39m70f.apps.googleusercontent.com
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID=416465718761-k6esa7bds8i96cdhssqa916p8l39m70f.apps.googleusercontent.com
     ```
 
     Note: The prefix NEXT_PUBLIC_ is required to expose the variable to the frontend React app.
