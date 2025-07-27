@@ -1,11 +1,20 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { GoogleLogin } from '@react-oauth/google';
+import axios from 'axios';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+
+  // Shared route handler
+  const handleRoutingByRole = (role) => {
+    if (role === 'admin') router.push('/admin');
+    else if (role === 'superadmin') router.push('/superadmin');
+    else router.push('/');
+  };
 
   const handleLogin = async (role) => {
     setError('');
@@ -15,17 +24,13 @@ export default function Login() {
       return;
     }
 
-    const loginUrl =
-      role === 'superadmin'
-        ? 'http://localhost:5000/api/superadmin/auth/login'
-        : 'http://localhost:5000/api/superadmin/auth/login';
-        
+    const loginUrl = 'http://localhost:5000/api/superadmin/auth/login';
 
     try {
       const res = await fetch(loginUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, role }), // ✅ Send role here
       });
 
       const data = await res.json();
@@ -35,23 +40,57 @@ export default function Login() {
         return;
       }
 
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('role', data.role);
+      console.log('Manual Login Response:', data);
 
-      if (role === 'admin') {
-        router.push('/admin');
-      } else if (role === 'superadmin') {
-        router.push('/superadmin');
+      if (data?.token && data?.user?.role) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('role', data.user.role);
+        handleRoutingByRole(data.user.role);
       } else {
-        router.push('/');
+        setError('Login succeeded, but user data is missing.');
+        console.error('Unexpected login response:', data);
       }
     } catch (err) {
+      console.error('Manual login error:', err);
       setError('Server error. Try again later.');
     }
   };
 
-   return (<>
-  
+  const handleGoogleSuccess = async (response) => {
+    console.log('Google Login Response:', response);
+
+    try {
+      const { credential } = response;
+
+      if (!credential) {
+        setError('Google credential missing');
+        return;
+      }
+
+      const res = await axios.post('http://localhost:5000/api/superadmin/auth/google-login', {
+        token: credential,
+      });
+
+      const resData = res.data;
+      console.log('Backend Google Login Response:', resData);
+
+      if (resData?.token && resData?.user?.role) {
+        localStorage.setItem('token', resData.token);
+        localStorage.setItem('role', resData.user.role);
+        handleRoutingByRole(resData.user.role);
+      } else {
+        setError('Google login succeeded, but user data is missing.');
+        console.error('Unexpected Google login response:', resData);
+      }
+    } catch (err) {
+      console.error('Google login failed:', err);
+      setError(err.response?.data?.message || 'Google login failed');
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: '400px', margin: 'auto', padding: '2rem' }}>
+      <h2>Login</h2>
 
 <div className="loginpage" >
   <div className="box">
@@ -73,85 +112,19 @@ export default function Login() {
 
     {error && <p className="error">{error}</p>}
 
-    <button onClick={() => handleLogin('superadmin')}>Login as Superadmin</button>
-    <button onClick={() => handleLogin('admin')}>Login as Admin</button>
-  </div>
+      <button
+        onClick={() => handleLogin('admin')}
+        style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
+      >
+        Login as Admin
+      </button>
 
-  <style jsx>{`
-      *{margin:0;
-      padding:0;
-  }
+      <hr style={{ margin: '1rem 0' }} />
 
-    .loginpage {
-      background: linear-gradient(to bottom,rgb(175, 81, 133),rgb(44, 211, 58));
-      height: 96vh;
-      width: 100vw;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .box {
-      background-color: #ffffff;
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-    }
-
-    .box h2 {
-      margin-bottom: 30px;
-      font-size: 28px;
-      color: #333;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px 16px;
-      margin-bottom: 20px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 1rem;
-      transition: 0.2s ease;
-    }
-
-    input:focus {
-      border-color: #4facfe;
-      outline: none;
-    }
-
-    .error {
-      color: red;
-      margin-bottom: 20px;
-      font-weight: bold;
-      text-align: center;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 15px;
-      background-color:rgb(55, 212, 116);
-      border: none;
-      border-radius: 6px;
-      color: white;
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #00c6ff;
-    }
-  `}</style>
-</div>
-
-
-    </>
+      <GoogleLogin
+        onSuccess={handleGoogleSuccess}
+        onError={() => setError('Google login failed')}
+      />
+    </div>
   );
 }
-
