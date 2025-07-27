@@ -1,7 +1,5 @@
 import { useState } from "react";
-import styles from "./styles/nav.module.css";
-import Link from 'next/link';
-import Navbar from "@/components/Navbar";
+import styles from "../styles/nav.module.css";
 
 export default function Dropdown() {
   const [isGalleryOpen, setGalleryOpen] = useState(false);
@@ -20,7 +18,6 @@ export default function Dropdown() {
 
   return (
     <>
-  <Navbar/>
      <nav className={styles.nav}>
         <img
           src="https://imgs.search.brave.com/W9J42-2dzJU6-Egw26SmEcuJMX-gannKDRkPL0Sxgbk/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTU1/MzUyODQ5L3Bob3Rv/L3R3by1ldXJvLWNv/aW4uanBnP3M9NjEy/eDYxMiZ3PTAmaz0y/MCZjPTNkM0tSOThG/ZWpnREd4NExYLWx4/ZlN4UTVGTjJPcUlf/eks0VDE1LWtVdjQ9"
@@ -28,11 +25,11 @@ export default function Dropdown() {
         ></img>
         <div className={styles.home}>
          
-            <a href="user/gallery">Home</a>
+            <a href="#">Home</a>
             <a href="#" style={{ marginLeft: "20px" }}>
               About us
             </a>
-             <a href="/testmonial" style={{ marginLeft: "20px" }}>
+             <a href="#" style={{ marginLeft: "20px" }}>
              Testmonial
             </a>
           <div className={styles.dropdown}>
@@ -48,7 +45,7 @@ export default function Dropdown() {
             {isGalleryOpen && (
               <ul className={styles.dropdownContent} role="menu">
                 <li role="menuitem">
-                  <a href="">Photos</a>
+                  <a href="#">Photos</a>
                 </li>
                 <li role="menuitem">
                   <a href="#">Videos</a>
@@ -83,7 +80,7 @@ export default function Dropdown() {
                 </li>
               </ul>
             )}
-             <a href="/contactus">
+             <a href="#">
               Contact us 
             </a>
           </div>

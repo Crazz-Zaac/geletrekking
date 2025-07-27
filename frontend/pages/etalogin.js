@@ -50,9 +50,10 @@ export default function Login() {
     }
   };
 
-  return (<>
+   return (<>
+  
 
-<div className="loginpage">
+<div className="loginpage" >
   <div className="box">
     <h2>Login</h2>
 
@@ -77,9 +78,13 @@ export default function Login() {
   </div>
 
   <style jsx>{`
+      *{margin:0;
+      padding:0;
+  }
+
     .loginpage {
       background: linear-gradient(to bottom,rgb(175, 81, 133),rgb(44, 211, 58));
-      height: 100vh;
+      height: 96vh;
       width: 100vw;
       display: flex;
       justify-content: center;
@@ -149,3 +154,4 @@ export default function Login() {
     </>
   );
 }
+
