@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import Navbar from "../../components/Navbar";
+import SuperAdminNavbar from "../../components/superadminNav";
 
 export default function AddAdmin() {
   const router = useRouter();
@@ -66,7 +66,7 @@ export default function AddAdmin() {
 
   return (
     <>
-      <Navbar />
+      <SuperAdminNavbar />
       <div style={{ maxWidth: 400, margin: "auto", paddingTop: 50 }}>
         <h1>Add New Admin</h1>
         <form onSubmit={handleSubmit}>

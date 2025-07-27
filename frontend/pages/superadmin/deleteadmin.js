@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import Navbar from '../../components/Navbar';
+import Navbar from '../../components/superadminNav';
 
 export default function DeleteAdmin() {
   const router = useRouter();

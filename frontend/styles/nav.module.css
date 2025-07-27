@@ -1,44 +1,108 @@
-.nav{
-    background-color: green;
-    display: flex;
-    position: sticky;
-    overflow: hidden;
-  }
-  .nav img{
-    height: 60px;
-    animation: logo 2s infinite;
-    border: 1px solid red ;
-    border-radius: 100%;
-  }
-  
-  @keyframes logo{
-    from{
-      transform: rotateY(0deg);
-    
-    }
-    to{
-       transform: rotateY(360deg);
-       cursor: pointer;
-    }
-  }
-  .home{
-    padding-top: 10px;
-    display: flex;
-    padding-left: 400px;
-  }
-  .dropbtn {
-    padding: 1px 10px;
-    color: rgb(20, 19, 19);
-    border-radius: 20px;
-    font-size: 16px;
-  }
-  .dropdownContent {
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.logo img {
+  height: 40px;
+  width: auto;
+}
+
+.menu {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.menu a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  position: relative;
+}
+
+.menu a:hover {
+  color: #0070f3;
+}
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #333;
+  font-weight: 500;
+  padding: 0;
+}
+
+.dropdownContent {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid #eee;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  list-style: none;
+  padding: 10px 0;
+  width: 160px;
+  z-index: 999;
+}
+
+.dropdownContent li {
+  padding: 8px 16px;
+}
+
+.dropdownContent li:hover {
+  background-color: #f5f5f5;
+}
+
+.hamburger {
+  display: none;
+  background: none;
+  font-size: 24px;
+  border: none;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .menu {
+    display: none;
+    flex-direction: column;
+    width: 100%;
     position: absolute;
-    min-width: 160px;
+    top: 72px;
+    left: 0;
+    background-color: #fff;
+    padding: 1rem 2rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
   }
-  .dropdownContent li a {
-    color: rgb(10, 10, 10);
-    padding: 10px 15px;
+
+  .menu.show {
+    display: flex;
+  }
+
+  .dropdownContent {
+    position: static;
+    border: none;
+    box-shadow: none;
+    padding-left: 10px;
+  }
+
+  .dropdownContent li {
+    padding: 8px 0;
+  }
+
+  .hamburger {
     display: block;
   }
-  
+}
