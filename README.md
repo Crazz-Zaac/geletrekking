@@ -38,6 +38,7 @@ npm install
 npm install dotenv
 npm install speakeasy
 npm install google-auth-library
+npm install nodemailer
 ```
 
 3. Create a `.env` file in the backend folder with the following (example):

@@ -18,7 +18,7 @@
     "google-auth-library": "^10.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.15.1",
-    "nodemailer": "^7.0.3",
+    "nodemailer": "^7.0.5",
     "speakeasy": "^2.0.0",
     "winston": "^3.17.0"
   }

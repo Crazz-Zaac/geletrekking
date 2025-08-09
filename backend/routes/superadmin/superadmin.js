@@ -4,6 +4,7 @@ const authMiddleware = require('../../middleware/authMiddleware');
 const roleMiddleware = require('../../middleware/roleMiddleware');
 const Admin = require('../../models/user');
 const bcrypt = require('bcrypt');
+const speakeasy = require('speakeasy');
 
 // GET route — test if superadmin can access the admin creation form
 router.get('/addadmin', authMiddleware, roleMiddleware('superadmin'), (req, res) => {
@@ -26,16 +27,30 @@ router.post('/addadmin', authMiddleware, roleMiddleware('superadmin'), async (re
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Generate 2FA secret and enable 2FA
+    const secret = speakeasy.generateSecret({ length: 20 });
+
     const newAdmin = new Admin({
       name,
       email,
       password: hashedPassword,
       role: 'admin',
+      twoFactorEnabled: true,
+      twoFactorSecret: secret.base32,
     });
 
     await newAdmin.save();
 
-    res.status(201).json({ message: 'New admin created successfully', admin: newAdmin });
+    res.status(201).json({ 
+      message: 'New admin created successfully with 2FA enabled', 
+      admin: {
+        id: newAdmin._id,
+        name: newAdmin.name,
+        email: newAdmin.email,
+        role: newAdmin.role,
+        twoFactorEnabled: newAdmin.twoFactorEnabled,
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error while creating admin' });
