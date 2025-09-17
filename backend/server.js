@@ -36,6 +36,8 @@ const protectedRoutes = require('./routes/protectedRoutes');
 
 const superadminAuthRoutes = require('./routes/superadmin/auth');         // Superadmin and admin login route
 const superadminRoutes = require('./routes/superadmin/superadmin');       // Superadmin management routes
+const trekRoutes = require("./routes/trekroutes");
+
 
 /* =======================
    ROUTE MOUNTING
@@ -47,6 +49,7 @@ app.use('/api/protected', protectedRoutes);
 
 app.use('/api/superadmin/auth', superadminAuthRoutes);
 app.use('/api/superadmin', superadminRoutes);
+app.use("/api/treks", trekRoutes);
 
 /* =======================
    TEST ROUTES
