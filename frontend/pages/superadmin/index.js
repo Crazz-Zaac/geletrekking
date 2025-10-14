@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import Navbar from '../../components/Navbar';
+// import Navbar from '../../components/Navbar';
 
 export default function SuperadminIndex() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function SuperadminIndex() {
 
   return (
     <>
-      <Navbar />
+      {/* <Navbar /> */}
       <div style={{ maxWidth: 600, margin: 'auto', padding: '2rem' }}>
         <h1>Welcome, Superadmin!</h1>
         <p>Use the "Registration" link above to add new admins.</p>

@@ -1,37 +1,17 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true
-  },
-
-  email: {
-    type: String,
-    required: true,
-    unique: true
-  },
-
-  password: {
-    type: String,
-    required: true
-  },
-
+  name: String,
+  email: String,
+  password: String,
   role: {
     type: String,
     enum: ['user', 'admin', 'superadmin'],
-    default: 'user'
+    default: 'user',
   },
+}, { timestamps: true });
 
-  // 🔐 2FA Fields
-  twoFactorEnabled: {
-    type: Boolean,
-    default: false
-  },
+// This prevents "OverwriteModelError" when the model is compiled multiple times
+const User = mongoose.models.User || mongoose.model('User', userSchema);
 
-  twoFactorSecret: {
-    type: String
-  }
-});
-
-module.exports = mongoose.model('User', userSchema);
+module.exports = User;

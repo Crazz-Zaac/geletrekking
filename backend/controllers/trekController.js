@@ -1,3 +1,4 @@
+// controllers/trekController.js
 const TrekPackage = require("../models/TrekPackage");
 const mongoose = require("mongoose");
 
@@ -5,7 +6,30 @@ const mongoose = require("mongoose");
 // CONTROLLERS
 // --------------------
 
-// Get single trek by ID
+// Create a new trek (admin/superadmin only)
+const createTrek = async (req, res) => {
+  try {
+    const trekData = req.body;
+
+    // Optional: add createdBy field from logged-in user
+    if (req.user && req.user._id) {
+      trekData.createdBy = req.user._id;
+    }
+
+    const newTrek = new TrekPackage(trekData);
+    await newTrek.save();
+
+    res.status(201).json({
+      message: "Trek package created successfully",
+      trek: newTrek,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get single trek by ID (any user, but only active treks)
 const getTrekById = async (req, res) => {
   const { id } = req.params;
 
@@ -30,17 +54,30 @@ const getTrekById = async (req, res) => {
     }
 
     res.json(finalTrek);
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// STUB FUNCTIONS (temporary placeholders)
-const getAllTreks = async (req, res) => { res.send("getAllTreks works"); };
-const createTrek = async (req, res) => { res.send("createTrek works"); };
-const updateTrek = async (req, res) => { res.send("updateTrek works"); };
-const deleteTrek = async (req, res) => { res.send("deleteTrek works"); };
+// STUBS: placeholder for future endpoints
+const getAllTreks = async (req, res) => {
+  res.send("getAllTreks works");
+};
 
-module.exports = { getTrekById, getAllTreks, createTrek, updateTrek, deleteTrek };
+const updateTrek = async (req, res) => {
+  res.send("updateTrek works");
+};
+
+const deleteTrek = async (req, res) => {
+  res.send("deleteTrek works");
+};
+
+// Export all controllers
+module.exports = {
+  createTrek,
+  getTrekById,
+  getAllTreks,
+  updateTrek,
+  deleteTrek,
+};
