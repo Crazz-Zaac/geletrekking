@@ -10,9 +10,8 @@ export default function Login() {
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [error, setError] = useState('');
   const [need2FA, setNeed2FA] = useState(false);
-  const [pendingRole, setPendingRole] = useState('');
+  const [loginMethod, setLoginMethod] = useState(''); // 'manual' or 'google'
   const [pendingGoogleToken, setPendingGoogleToken] = useState(null);
-  const [loginMethod, setLoginMethod] = useState(''); // Tracks if login is 'manual' or 'google'
 
   const router = useRouter();
 
@@ -24,7 +23,7 @@ export default function Login() {
   };
 
   // ===== MANUAL LOGIN =====
-  const handleLogin = async (role) => {
+  const handleLogin = async () => {
     setError('');
     setLoginMethod('manual');
 
@@ -34,7 +33,7 @@ export default function Login() {
     }
 
     try {
-      const payload = { email, password, role };
+      const payload = { email, password };
       if (need2FA) payload.twoFactorCode = twoFactorCode;
 
       const res = await fetch('http://localhost:5000/api/superadmin/auth/login', {
@@ -45,48 +44,24 @@ export default function Login() {
 
       const data = await res.json();
 
-      if (!res.ok) {
-        // If backend asks for 2FA
-        if (res.status === 401 && data.message === '2FA code sent to your email') {
-          setNeed2FA(true);
-          setPendingRole(role);
-          setError('Enter the 2FA code sent to your email');
-          return;
-        }
-        setError(data.message || 'Login failed');
+      // ✅ Handle both 2FA trigger and success login
+      if (data.need2FA || data.message?.includes('2FA')) {
+        setNeed2FA(true);
+        setError('Enter the 2FA code sent to your email');
         return;
       }
 
-      // Successful login
       if (data?.token && data?.user?.role) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', data.user.role);
         handleRoutingByRole(data.user.role);
-      } else {
-        setError('Login succeeded, but user data is missing.');
+        return;
       }
+
+      setError(data.message || 'Login failed');
     } catch (err) {
       console.error('Manual login error:', err);
       setError('Server error. Try again later.');
-    }
-  };
-
-  // ===== MANUAL 2FA REQUEST =====
-  const request2FACodeManual = async () => {
-    setError('');
-    if (!email || !pendingRole) {
-      setError('Please enter your email and select role first');
-      return;
-    }
-    try {
-      await axios.post('http://localhost:5000/api/superadmin/auth/send-2fa-code', {
-        email,
-        role: pendingRole,
-      });
-      setError('2FA code sent to your email.');
-      setNeed2FA(true);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send 2FA code');
     }
   };
 
@@ -104,6 +79,13 @@ export default function Login() {
 
       const resData = res.data;
 
+      // ✅ Handle Google 2FA
+      if (resData.need2FA || resData.message?.includes('2FA')) {
+        setNeed2FA(true);
+        setError('Enter the 2FA code sent to your email');
+        return;
+      }
+
       if (resData?.token && resData?.user?.role) {
         localStorage.setItem('token', resData.token);
         localStorage.setItem('role', resData.user.role);
@@ -112,30 +94,8 @@ export default function Login() {
         setError('Google login succeeded, but user data is missing.');
       }
     } catch (err) {
-      if (err.response?.status === 401 && err.response?.data?.message === '2FA code sent to your email') {
-        setNeed2FA(true);
-        setError('Enter the 2FA code sent to your email');
-      } else {
-        setError(err.response?.data?.message || 'Google login failed');
-      }
-    }
-  };
-
-  // ===== GOOGLE 2FA REQUEST =====
-  const request2FACodeGoogle = async () => {
-    setError('');
-    if (!pendingGoogleToken) {
-      setError('No Google token found. Please login again.');
-      return;
-    }
-    try {
-      await axios.post('http://localhost:5000/api/superadmin/auth/send-2fa-code', {
-        token: pendingGoogleToken,
-      });
-      setError('2FA code sent to your email.');
-      setNeed2FA(true);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send 2FA code');
+      console.error('Google login error:', err);
+      setError(err.response?.data?.message || 'Google login failed');
     }
   };
 
@@ -189,8 +149,7 @@ export default function Login() {
             style={styles.input}
           />
           {error && <p style={error.includes('sent') ? styles.successMsg : styles.errorMsg}>{error}</p>}
-          <button style={styles.buttonPrimary} onClick={() => { setPendingRole('superadmin'); handleLogin('superadmin'); }}>Login</button>
-          {/* <button style={styles.buttonSecondary} onClick={() => { setPendingRole('admin'); handleLogin('admin'); }}>Login as Admin</button> */}
+          <button style={styles.buttonPrimary} onClick={handleLogin}>Login</button>
         </>
       )}
 
@@ -204,8 +163,7 @@ export default function Login() {
             onChange={(e) => setTwoFactorCode(e.target.value)}
             style={styles.input}
           />
-          <button style={styles.buttonPrimary} onClick={() => handleLogin(pendingRole)}>Submit 2FA Code</button>
-          <button style={styles.buttonWarning} onClick={request2FACodeManual}>Send 2FA Code Again</button>
+          <button style={styles.buttonPrimary} onClick={handleLogin}>Submit 2FA Code</button>
           {error && <p style={error.includes('sent') ? styles.successMsg : styles.errorMsg}>{error}</p>}
         </>
       )}
@@ -221,7 +179,6 @@ export default function Login() {
             style={styles.input}
           />
           <button style={styles.buttonPrimary} onClick={handleGoogle2FASubmit}>Submit 2FA Code</button>
-          <button style={styles.buttonWarning} onClick={request2FACodeGoogle}>Send 2FA Code Again</button>
           {error && <p style={error.includes('sent') ? styles.successMsg : styles.errorMsg}>{error}</p>}
         </>
       )}
@@ -264,28 +221,6 @@ const styles = {
     border: 'none',
     borderRadius: '8px',
     marginBottom: '0.5rem',
-    cursor: 'pointer',
-    fontSize: '1rem',
-  },
-  buttonSecondary: {
-    width: '100%',
-    padding: '0.8rem',
-    background: '#6c757d',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    marginBottom: '1rem',
-    cursor: 'pointer',
-    fontSize: '1rem',
-  },
-  buttonWarning: {
-    width: '100%',
-    padding: '0.8rem',
-    background: '#f0ad4e',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    marginBottom: '1rem',
     cursor: 'pointer',
     fontSize: '1rem',
   },

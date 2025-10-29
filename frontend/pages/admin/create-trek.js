@@ -8,6 +8,7 @@ const CreateTrek = () => {
   const router = useRouter();
   const { user } = useContext(UserContext);
 
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     overview: "",
@@ -36,23 +37,28 @@ const CreateTrek = () => {
 
   const [message, setMessage] = useState("");
 
-  // Redirect if user is not admin or superadmin
+  // ✅ Stable Access Control (Prevents false redirect)
   useEffect(() => {
-    if (!user || (user.role !== "admin" && user.role !== "superadmin")) {
-      router.replace("/");
+    if (typeof window === "undefined") return; // wait for browser
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!token || (role !== "admin" && role !== "superadmin")) {
+      router.replace("/etalogin");
+    } else {
+      setLoading(false);
     }
-  }, [user]);
+  }, [router]);
 
-  if (!user || (user.role !== "admin" && user.role !== "superadmin")) {
-    return <p>Redirecting...</p>;
-  }
+  if (loading) return <p>Loading...</p>;
 
+  // ✅ Controlled Form Handlers
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: type === "checkbox" ? checked : value,
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -65,9 +71,9 @@ const CreateTrek = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setMessage(res.data.message || "Trek created successfully");
+      setMessage(res.data.message || "✅ Trek created successfully!");
 
-      // Reset form
+      // Reset form after success
       setFormData({
         name: "",
         overview: "",
@@ -95,17 +101,17 @@ const CreateTrek = () => {
       });
     } catch (err) {
       console.error(err);
-      setMessage(err.response?.data?.message || "Error creating trek");
+      setMessage(err.response?.data?.message || "❌ Error creating trek");
     }
   };
 
+  // ✅ Render Form
   return (
     <div className="container mx-auto p-4 max-w-3xl">
       <h2 className="text-2xl font-bold mb-4">Create Trek Package</h2>
       {message && <p className="mb-4 text-green-600">{message}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Name & Overview */}
         <div>
           <label className="block mb-1">Name</label>
           <input
@@ -128,7 +134,6 @@ const CreateTrek = () => {
           />
         </div>
 
-        {/* Prices & Duration */}
         <div className="flex space-x-4">
           <div>
             <label>Price (GBP)</label>
@@ -214,54 +219,9 @@ const CreateTrek = () => {
                 className="border p-1 w-full"
               />
             </div>
-            <div className="flex space-x-4">
-              <div>
-                <label>Discounted GBP</label>
-                <input
-                  type="number"
-                  name="discounted_price_gbp"
-                  value={formData.discounted_price_gbp}
-                  onChange={handleChange}
-                  className="border p-1"
-                />
-              </div>
-              <div>
-                <label>Discounted USD</label>
-                <input
-                  type="number"
-                  name="discounted_price_usd"
-                  value={formData.discounted_price_usd}
-                  onChange={handleChange}
-                  className="border p-1"
-                />
-              </div>
-            </div>
-            <div className="flex space-x-4">
-              <div>
-                <label>Offer Valid From</label>
-                <input
-                  type="date"
-                  name="offer_valid_from"
-                  value={formData.offer_valid_from}
-                  onChange={handleChange}
-                  className="border p-1"
-                />
-              </div>
-              <div>
-                <label>Offer Valid To</label>
-                <input
-                  type="date"
-                  name="offer_valid_to"
-                  value={formData.offer_valid_to}
-                  onChange={handleChange}
-                  className="border p-1"
-                />
-              </div>
-            </div>
           </div>
         )}
 
-        {/* Other options */}
         <div>
           <label>Season Tag</label>
           <input

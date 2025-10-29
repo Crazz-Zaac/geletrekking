@@ -5,13 +5,14 @@ const generateToken = require('../utils/generateToken');
 const verifyGoogleToken = require('../utils/verifyGoogleToken');
 const sendEmail = require('../utils/sendEmail');
 
+// ─────────────────────────────────────────────
+//  EMAIL + PASSWORD LOGIN CONTROLLER
+// ─────────────────────────────────────────────
 exports.login = async (req, res) => {
   const { email, password, twoFactorCode } = req.body;
-  console.log('Login attempt:', { email });
 
   try {
     const user = await User.findOne({ email });
-
     if (!user || !['admin', 'superadmin'].includes(user.role)) {
       return res.status(401).json({ message: 'Access denied' });
     }
@@ -20,51 +21,60 @@ exports.login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
-    console.log('2FA check:', user.role, user.twoFactorEnabled, twoFactorCode);
 
-    // Skip 2FA for superadmin
+    // ── Superadmin: skip 2FA ───────────────────────────────
     if (user.role === 'superadmin') {
-      console.log('Superadmin login - skipping 2FA');
       const token = generateToken(user);
-      return res.json({ token, user });
+      return res.status(200).json({ token, user });
     }
 
-    // For admins with 2FA enabled
-    if (user.role === 'admin' && user.twoFactorEnabled) {
+    // ── Admin 2FA Logic ────────────────────────────────────
+    if (user.role === 'admin') {
+      // Ensure secret exists only once
+      if (!user.twoFactorSecret || user.twoFactorSecret === 'undefined') {
+        const secret = speakeasy.generateSecret();
+        user.twoFactorSecret = secret.base32;
+        user.twoFactorEnabled = true;
+        await user.save();
+      }
+
+      // Send 2FA code if not provided yet
       if (!twoFactorCode) {
-        const token = speakeasy.totp({
+        const code = speakeasy.totp({
           secret: user.twoFactorSecret,
           encoding: 'base32',
+          step: 60, // valid for 60s
         });
-        console.log(`Sending 2FA code to ${user.email}:`, token);
 
         await sendEmail(
           user.email,
           'Your 2FA Code',
-          `Your 2FA verification code is: ${token}`
+          `Your verification code is: ${code}\n\nValid for 60 seconds.`
         );
 
-        return res.status(401).json({ message: '2FA code sent to your email' });
+        return res.status(200).json({
+          need2FA: true,
+          message: '2FA code sent to your email. Please enter it to continue.',
+        });
       }
 
-      console.log('Verifying 2FA code:', twoFactorCode);
+      // Verify 2FA code
       const verified = speakeasy.totp.verify({
         secret: user.twoFactorSecret,
         encoding: 'base32',
         token: twoFactorCode,
-        window: 1,
+        step: 60,
+        window: 3,
       });
 
       if (!verified) {
-        console.log('Invalid 2FA code:', twoFactorCode);
-        return res.status(401).json({ message: 'Invalid 2FA code' });
+        return res.status(401).json({ message: 'Invalid or expired 2FA code' });
       }
-      console.log('2FA code verified successfully');
     }
 
-    // Passed 2FA or no 2FA needed
+    // ── Login Success (after 2FA or superadmin bypass)
     const token = generateToken(user);
-    res.json({
+    res.status(200).json({
       token,
       user: {
         id: user._id,
@@ -79,75 +89,81 @@ exports.login = async (req, res) => {
   }
 };
 
+// ─────────────────────────────────────────────
+//  GOOGLE LOGIN CONTROLLER
+// ─────────────────────────────────────────────
 exports.googleLogin = async (req, res) => {
   const { token, twoFactorCode } = req.body;
-  console.log('Google login attempt');
 
   try {
     const payload = await verifyGoogleToken(token);
     const { email, name } = payload;
-
     const user = await User.findOne({ email });
 
     if (!user || !['admin', 'superadmin'].includes(user.role)) {
       return res.status(403).json({ message: 'Not an authorized admin' });
     }
 
-    // Superadmin - skip 2FA
+    // ── Superadmin bypass ──────────────────────────────────
     if (user.role === 'superadmin') {
       const jwtToken = generateToken(user);
-      return res.json({
+      return res.status(200).json({
         token: jwtToken,
-        user: {
-          id: user._id,
-          name: user.name || name,
-          email: user.email,
-          role: user.role,
-        },
+        user: { id: user._id, name: user.name || name, email, role: user.role },
       });
     }
 
-    // Admin with 2FA enabled
-    if (user.role === 'admin' && user.twoFactorEnabled) {
+    // ── Admin 2FA Logic ────────────────────────────────────
+    if (user.role === 'admin') {
+      if (!user.twoFactorSecret || user.twoFactorSecret === 'undefined') {
+        const secret = speakeasy.generateSecret();
+        user.twoFactorSecret = secret.base32;
+        user.twoFactorEnabled = true;
+        await user.save();
+      }
+
+      // Send 2FA if no code yet
       if (!twoFactorCode) {
-        // Generate TOTP code
         const code = speakeasy.totp({
           secret: user.twoFactorSecret,
           encoding: 'base32',
+          step: 60,
         });
-        console.log(`Sending 2FA code to ${user.email}:`, code);
 
         await sendEmail(
           user.email,
           'Your 2FA Code',
-          `Your 2FA verification code is: ${code}`
+          `Your verification code is: ${code}\n\nValid for 60 seconds.`
         );
 
-        return res.status(401).json({ message: '2FA code sent to your email' });
+        return res.status(200).json({
+          need2FA: true,
+          message: '2FA code sent to your email. Please enter it to continue.',
+        });
       }
 
-      // Verify 2FA code submitted by user
+      // Verify code
       const verified = speakeasy.totp.verify({
         secret: user.twoFactorSecret,
         encoding: 'base32',
         token: twoFactorCode,
-        window: 1,
+        step: 60,
+        window: 3,
       });
 
       if (!verified) {
-        return res.status(401).json({ message: 'Invalid 2FA code' });
+        return res.status(401).json({ message: 'Invalid or expired 2FA code' });
       }
     }
 
-    // Passed 2FA (or 2FA not required), issue token
+    // ── Login Success ──────────────────────────────────────
     const jwtToken = generateToken(user);
-
-    res.json({
+    res.status(200).json({
       token: jwtToken,
       user: {
         id: user._id,
         name: user.name || name,
-        email: user.email,
+        email,
         role: user.role,
       },
     });

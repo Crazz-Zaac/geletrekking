@@ -1,12 +1,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import Navbar from "../../components/Navbar";
 
 export default function AddAdmin() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-
-  const [name, setName] = useState(""); // ✅ Changed from username
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -31,7 +29,7 @@ export default function AddAdmin() {
     setError("");
 
     const token = localStorage.getItem("token");
-    const newAdminData = { name, email, password }; // ✅ use `name`
+    const newAdminData = { name, email, password };
 
     try {
       const res = await fetch("http://localhost:5000/api/superadmin/addadmin", {
@@ -43,20 +41,11 @@ export default function AddAdmin() {
         body: JSON.stringify(newAdminData),
       });
 
-      let data;
-      try {
-        data = await res.json();
-      } catch (jsonErr) {
-        const text = await res.text();
-        throw new Error(`Unexpected server response: ${text}`);
-      }
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to add admin");
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to add admin");
 
       setMessage("✅ Admin added successfully!");
-      setName(""); // ✅ reset name
+      setName("");
       setEmail("");
       setPassword("");
     } catch (err) {
@@ -65,43 +54,40 @@ export default function AddAdmin() {
   };
 
   return (
-    <>
-      <Navbar />
-      <div style={{ maxWidth: 400, margin: "auto", paddingTop: 50 }}>
-        <h1>Add New Admin</h1>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Name" // ✅ changed placeholder
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            style={{ display: "block", marginBottom: 10, width: "100%" }}
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ display: "block", marginBottom: 10, width: "100%" }}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ display: "block", marginBottom: 10, width: "100%" }}
-          />
-          <button type="submit" style={{ width: "100%" }}>
-            Add Admin
-          </button>
-        </form>
+    <div style={{ maxWidth: 400, margin: "auto", paddingTop: 50 }}>
+      <h1>Add New Admin</h1>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          style={{ display: "block", marginBottom: 10, width: "100%" }}
+        />
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          style={{ display: "block", marginBottom: 10, width: "100%" }}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          style={{ display: "block", marginBottom: 10, width: "100%" }}
+        />
+        <button type="submit" style={{ width: "100%" }}>
+          Add Admin
+        </button>
+      </form>
 
-        {message && <p style={{ color: "green", marginTop: 10 }}>{message}</p>}
-        {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
-      </div>
-    </>
+      {message && <p style={{ color: "green", marginTop: 10 }}>{message}</p>}
+      {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
+    </div>
   );
 }

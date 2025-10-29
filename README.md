@@ -1,20 +1,21 @@
+# 🏔️ GeleTrekking – Docker Setup Guide
 
-# GeleTrekking Project Setup Guide
-
-This guide explains how to run the **GeleTrekking** project on your local machine.
-
----
-
-## Prerequisites
-
-- **Node.js**  
-- **MongoDB**  
-- **Git**  
-(make sure these all are installed in your local machine to run)
+This guide explains how to run the **GeleTrekking** project using **Docker** (no need to install Node.js or MongoDB locally).
 
 ---
 
-## Clone the Repository
+## 🧩 Prerequisites
+
+Make sure the following are installed on your system:
+
+- [Docker](https://www.docker.com/get-started)  
+- [Git](https://git-scm.com/downloads)
+
+You **do not need** to manually install Node.js, MongoDB, or npm anymore — Docker handles that for you.
+
+---
+
+## 🚀 Clone the Repository
 
 ```bash
 git clone https://github.com/Crazz-Zaac/geletrekking.git
@@ -23,99 +24,122 @@ cd geletrekking
 
 ---
 
-## Backend Setup
+## 🐳 Run the Project with Docker
 
-1. Navigate to the backend folder:
+All services (backend, frontend, MongoDB) are managed using **Docker Compose**.
 
-```bash
-cd backend
-```
-
-2. Install dependencies:
+1. Build and start containers:
 
 ```bash
-npm install
-npm install dotenv
-npm install speakeasy
-npm install google-auth-library
-npm install nodemailer
+docker compose -f docker/docker-compose.yml up --build
 ```
 
-3. Create a `.env` file in the backend folder with the following (example):
+2. Once everything is running:
+
+   - **Frontend:** [http://localhost:3000](http://localhost:3000)  
+   - **Backend:** [http://localhost:5000](http://localhost:5000)  
+   - **MongoDB:** `mongodb://admin:admin123@localhost:27017/`
+
+---
+
+## ⚙️ Environment Configuration
+
+Create a `.env` file inside the `backend/` folder with the following values:
 
 ```env
 PORT=5000
-MONGO_URI=mongodb://localhost:27017/geletrekking
+MONGO_URI=mongodb://admin:admin123@mongo:27017/geletrekking
 JWT_SECRET=your_jwt_secret_key
 ```
 
-4. Start the backend server:
-
-```bash
-# save superadmin in db
-node superadminSeeder.js
-
-# start the server
-node server.js
-```
-
-The backend API will be running on [http://localhost:5000](http://localhost:5000).
+> Note:  
+> Use `mongo` (the Docker container name) instead of `localhost` inside Docker.
 
 ---
 
-## Frontend Setup
+## 🔑 Frontend Environment Setup
 
-1. Open a new terminal and navigate to the frontend folder:
-
-```bash
-cd frontend
-```
-
-2. Install dependencies:
-
-```bash
-npm install
-npm install @react-oauth/google
-```
-
-3. Google OAuth Setup:  
-To enable Google login in the frontend, you need to provide your Google Client ID as an environment variable.
-
-- Create a file named `.env.local` inside the frontend folder.
-
-- Add the following line with your Google Client ID:
+Create a `.env.local` file inside the `frontend/` folder:
 
 ```env
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=416465718761-k6esa7bds8i96cdhssqa916p8l39m70f.apps.googleusercontent.com
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000
 ```
 
-**Note:** The prefix `NEXT_PUBLIC_` is required to expose the variable to the frontend React app.
+---
+## 🔑 Superadmin Access
 
-4. Start the frontend development server:
+When you first run the backend, a default **superadmin** account is automatically seeded.
 
+| Role | Email | Password |
+|------|--------|-----------|
+| Superadmin | `superadmin@geletrekking.com` | `superadmin123` |
+
+Use this account to log in at:  
+👉 [http://localhost:3000/etalogin](http://localhost:3000/etalogin)
+
+## 🧠 Useful Docker Commands
+
+| Command | Description |
+|----------|--------------|
+| `docker compose ps` | List running containers |
+| `docker compose down` | Stop and remove all containers |
+| `docker compose stop` | Stop containers (without removing them) |
+| `docker compose start` | Restart stopped containers |
+| `docker logs <container_name>` | View logs of a container |
+| `docker exec -it <container_name> sh` | Open shell inside a container |
+
+Example:
 ```bash
+docker exec -it geletrekking-backend sh
+```
+
+---
+
+## 🧰 Developer Notes
+
+- You can edit your **frontend** and **backend** code directly — Docker watches for file changes automatically.
+- All dependencies are installed inside Docker containers.
+- MongoDB data is persisted using Docker volumes (so data won’t be lost on restart).
+
+---
+
+## 🧹 Troubleshooting
+
+- **Module Not Found Errors:**  
+  Run a rebuild → `docker compose -f docker/docker-compose.yml up --build`
+- **Port Conflicts:**  
+  Ensure ports `3000`, `5000`, and `27017` are free before running Docker.
+- **Database Connection Issues:**  
+  Check MongoDB logs or container status → `docker compose ps`
+
+---
+
+## 💡 Local (Non-Docker) Alternative (Optional)
+
+If you still want to run manually:
+
+### Backend
+```bash
+cd backend
+npm install
+node superadminSeeder.js
+node server.js
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
 npm run dev
 ```
 
-The frontend app will be running on [http://localhost:5173](http://localhost:5173).
-
 ---
 
-## Notes
+## ✅ Summary
 
-- Ensure MongoDB is running locally before starting the backend.
-- The frontend communicates with the backend API at `http://localhost:5000`.
-- You can change this URL in frontend configuration if needed.
-- The project uses these main packages:
-  - **Backend**: express, mongoose, cors, dotenv
-  - **Frontend**: react, react-router-dom, axios, vite
-
----
-
-## Troubleshooting
-
-- If you get module not found errors, run `npm install` again.
-- If ports are busy, change the ports in `.env` or frontend config.
-- For MongoDB connection issues, check your MongoDB server status.
-
----
+| Service | Port | Description |
+|----------|------|--------------|
+| Frontend | 3000 | Next.js (Vite) client |
+| Backend | 5000 | Express API server |
+| MongoDB | 27017 | Database |
