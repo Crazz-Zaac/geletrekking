@@ -10,8 +10,6 @@ const {
   deleteTrek,
 } = require("../controllers/trekController");
 
-// Routes
-
 // Public
 router.get("/", getAllTreks);
 router.get("/:id", getTrekById);

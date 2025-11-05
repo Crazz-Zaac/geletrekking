@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../context/UserContext";
@@ -30,7 +31,7 @@ export default function Navbar() {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     setUser(null);
-    router.replace("/etalogin"); // ✅ Redirect to your actual login page
+    router.replace("/etalogin");
   };
 
   return (
@@ -44,44 +45,38 @@ export default function Navbar() {
           alignItems: "center",
         }}
       >
+        {/* ✅ Home */}
         <li>
           <Link href={homeLink} style={{ color: "white", textDecoration: "none" }}>
             Home
           </Link>
         </li>
 
+        {/* ✅ SuperAdmin Only: Manage admins */}
         {role === "superadmin" && (
-          <>
-            <li>
-              <Link
-                href="/superadmin/addadmin"
-                style={{ color: "white", textDecoration: "none" }}
-              >
-                Register Admin
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/superadmin/deleteadmin"
-                style={{ color: "white", textDecoration: "none" }}
-              >
-                Delete Admin
-              </Link>
-            </li>
-          </>
-        )}
-
-        {(role === "admin" || role === "superadmin") && (
           <li>
             <Link
-              href="/admin/create-trek"
+              href="/superadmin/manage-admins"
               style={{ color: "white", textDecoration: "none" }}
             >
-              Create Trek
+              Manage Admins
             </Link>
           </li>
         )}
 
+        {/* ✅ Admin & SuperAdmin Trek Management */}
+        {(role === "admin" || role === "superadmin") && (
+          <li>
+            <Link
+              href="/admin/treks"
+              style={{ color: "white", textDecoration: "none", fontWeight: "bold" }}
+            >
+              Manage Treks
+            </Link>
+          </li>
+        )}
+
+        {/* ✅ Logout */}
         {role && (
           <li>
             <button

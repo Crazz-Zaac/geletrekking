@@ -1,10 +1,12 @@
 @import "tailwindcss";
 
+/* ✅ High-contrast light mode */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc; /* very light gray */
+  --foreground: #0a1a2b; /* deep mountain navy */
 }
 
+/* ✅ Tailwind theme variables */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -12,15 +14,45 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* ✅ High-contrast dark mode */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0a0f14; /* deep dark blueish black */
+    --foreground: #e8eef5; /* soft white */
   }
 }
 
+/* ✅ Apply base style */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.65;
+}
+
+/* ✅ Make links readable */
+a {
+  color: #0a72eb; /* bright link blue */
+}
+a:hover {
+  color: #0548a8;
+  text-decoration: underline;
+}
+
+/* ✅ Improve form fields globally */
+input, textarea, select {
+  background: white;
+  color: #0a1a2b;
+  border: 1px solid #cbd5e1;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #0a72eb;
+  box-shadow: 0 0 4px rgba(10, 114, 235, 0.5);
+}
+
+/* ✅ Buttons */
+button {
+  font-size: 15px;
+  font-weight: 500;
 }

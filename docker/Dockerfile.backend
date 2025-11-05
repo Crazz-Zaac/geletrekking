@@ -1,7 +1,16 @@
 FROM node:18-alpine
-WORKDIR /app/backend
+
+WORKDIR /usr/src/app
+
+# Copy package.json first
 COPY backend/package*.json ./
-RUN npm install
-COPY backend/ /app/backend/
+
+# Install ALL deps + nodemon (dev)
+RUN npm install && npm install -g nodemon
+
+# Copy source code
+COPY backend ./
+
 EXPOSE 5000
-CMD ["node", "server.js"]
+
+CMD ["npm", "run", "dev"]

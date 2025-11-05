@@ -1,93 +1,104 @@
 require('dotenv').config();
-
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-const app = express(); // Initialize Express app
+const app = express();
 
-// Cron Job: Delete logs daily
-require('./cron/deletelog');
+/* =========================================================
+   1. CORS CONFIGURATION
+   ---------------------------------------------------------
+   - Allows requests from trusted origins only.
+   - Includes both local and Docker network access.
+========================================================= */
 
-// CORS Setup: Allow specific frontend origins
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173'];
-app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+const allowedOrigins = [
+  'http://localhost:3000',   // Local browser (host machine)
+  'http://backend:5000',     // Docker internal (optional)
+  'http://geletrekking-frontend:3000' // Docker container name access
+];
 
-// Middleware to parse JSON bodies
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests without origin (server-to-server, Postman, etc.)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log('Blocked by CORS:', origin);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  })
+);
+
+/* =========================================================
+   2. MIDDLEWARE
+========================================================= */
 app.use(express.json());
 
-/* =======================
-   ROUTE IMPORTS
-========================== */
-
-
+/* =========================================================
+   3. ROUTES IMPORT
+========================================================= */
 const adminRoutes = require('./routes/Admin/adminRoutes');
 const protectedRoutes = require('./routes/protectedRoutes');
-
-const superadminAuthRoutes = require('./routes/superadmin/auth');         // Superadmin and admin login route
-const superadminRoutes = require('./routes/superadmin/superadmin');       // Superadmin management routes
-const trekRoutes = require("./routes/trekroutes");
+const superadminAuthRoutes = require('./routes/superadmin/auth');
+const superadminRoutes = require('./routes/superadmin/superadmin');
+const trekRoutes = require('./routes/trekroutes');
 const authRoutes = require('./routes/authroutes');
 
-
-
-
-/* =======================
-   ROUTE MOUNTING
-========================== */
-//app.use('/api/auth', authRoutes);                           
-
+/* =========================================================
+   4. ROUTES MOUNTING
+========================================================= */
 app.use('/api/admin', adminRoutes);
 app.use('/api/protected', protectedRoutes);
-
 app.use('/api/superadmin/auth', superadminAuthRoutes);
 app.use('/api/superadmin', superadminRoutes);
-app.use("/api/treks", trekRoutes);
+app.use('/api/treks', trekRoutes);
 app.use('/api/auth', authRoutes);
-/* =======================
-   TEST ROUTES
-========================== */
+
+/* =========================================================
+   5. TEST ROUTES
+========================================================= */
 app.get('/', (req, res) => {
-  res.send('🌍 Geletrekking backend is running!');
+  res.send('Geletrekking backend is running.');
 });
 
 app.get('/api/contact', (req, res) => {
-  res.json({ message: 'GET /api/contact route is reachable!' });
+  res.json({ message: 'GET /api/contact route is reachable.' });
 });
 
-/* =======================
-   GLOBAL ERROR HANDLER
-========================== */
+/* =========================================================
+   6. ERROR HANDLING MIDDLEWARE
+========================================================= */
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  console.error('Error:', err.message);
+  res.status(500).json({ error: 'Internal server error.' });
 });
 
-/* =======================
-   MONGODB + SERVER START
-========================== */
+/* =========================================================
+   7. DATABASE CONNECTION & SERVER STARTUP
+========================================================= */
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('✅ MongoDB connected successfully!');
+    console.log('MongoDB connected successfully.');
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+    // Important: Listen on all interfaces for Docker networking
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on port ${PORT}`);
     });
   } catch (err) {
-    console.error('❌ MongoDB connection failed:', err.message);
+    console.error('MongoDB connection failed:', err.message);
     process.exit(1);
   }
 };
