@@ -22,8 +22,8 @@ services:
 
   backend:
     build:
-      context: ..
-      dockerfile: docker/Dockerfile.backend
+      context: ../backend
+      dockerfile: ../docker/Dockerfile.backend
     container_name: geletrekking-backend
     ports:
       - "5000:5000"
@@ -32,6 +32,7 @@ services:
       - PORT=5000
     volumes:
       - ../backend:/usr/src/app
+      - /usr/src/app/node_modules
       
     depends_on:
       - mongo
