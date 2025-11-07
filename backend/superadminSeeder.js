@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
-const User = require('../backend/models/user');
+const User = require('./models/user');
 
 dotenv.config();
 const MONGO_URI = process.env.MONGO_URI;

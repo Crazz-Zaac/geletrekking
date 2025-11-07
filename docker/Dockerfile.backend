@@ -2,15 +2,11 @@ FROM node:18-alpine
 
 WORKDIR /usr/src/app
 
-# Copy package.json first
 COPY backend/package*.json ./
+RUN npm install 
 
-# Install ALL deps + nodemon (dev)
-RUN npm install && npm install -g nodemon
-
-# Copy source code
 COPY backend ./
 
 EXPOSE 5000
 
-CMD ["npm", "run", "dev"]
+CMD sh -c "node superadminSeeder.js && npm run dev" 
