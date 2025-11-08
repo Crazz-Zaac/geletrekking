@@ -61,8 +61,31 @@ export default function AdminTreksPage() {
       { ...selectedTrek, extra_sections: extraSections },
       { headers: { Authorization: `Bearer ${token}` } }
     );
-    alert("✅ Trek Updated");
+    alert("Trek Updated");
     fetchTreks();
+  };
+
+  const deleteTrek = async () => {
+    if (!selectedTrek) return;
+
+    const confirmDelete = confirm(`Are you sure you want to delete "${selectedTrek.name}"?`);
+    if (!confirmDelete) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/treks/${selectedTrek._id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert("Trek deleted");
+
+      setSelectedTrek(null);
+      fetchTreks();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to delete trek");
+    }
   };
 
   return (
@@ -86,7 +109,7 @@ export default function AdminTreksPage() {
             cursor: "pointer"
           }}
         >
-          ➕ Create New Trek
+          Create New Trek
         </button>
 
         {treks.map((trek) => (
@@ -111,7 +134,7 @@ export default function AdminTreksPage() {
         
         {!selectedTrek && (
           <h2 style={{ textAlign: "center", marginTop: "50px", color: "#555" }}>
-            👈 Select a trek to edit
+            Select a trek to edit
           </h2>
         )}
 
@@ -171,7 +194,7 @@ export default function AdminTreksPage() {
                     cursor: "pointer"
                   }}
                 >
-                  ✕
+                  X
                 </button>
 
                 <input
@@ -191,8 +214,18 @@ export default function AdminTreksPage() {
               </div>
             ))}
 
-            <button onClick={addSection} style={buttonSecondary}>➕ Add Section</button>
-            <button onClick={saveTrek} style={buttonPrimary}>✅ Save Changes</button>
+            <button onClick={addSection} style={buttonSecondary}>Add Section</button>
+            <button onClick={saveTrek} style={buttonPrimary}>Save Changes</button>
+            <button
+              onClick={deleteTrek}
+              style={{
+                ...buttonPrimary,
+                background: "#b91c1c",
+                marginLeft: "10px"
+              }}
+            >
+              Delete Trek
+            </button>
           </div>
         )}
       </div>
