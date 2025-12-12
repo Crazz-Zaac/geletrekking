@@ -1,200 +1,207 @@
 "use client";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { getTrekPackageById } from "../../src/api/trekPackageApi";
+import axios from "axios";
 
-export default function TrekPackageDetailPage() {
+const COLORS = {
+  primary: "#e84610",
+  gold: "#fed81e",
+  greenDark: "#2a3a19",
+  navy: "#282c62",
+  bgDark: "#0a0f14",
+};
+
+export default function TrekDetails() {
   const router = useRouter();
   const { id } = router.query;
+
   const [trek, setTrek] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
-
-    const fetchTrek = async () => {
+    async function fetchTrek() {
       try {
-        const data = await getTrekPackageById(id);
-        setTrek(data?.trek || data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/treks/${id}`);
+        setTrek(res.data);
+      } catch (err) {
+        console.error(err);
       }
-    };
-
+      setLoading(false);
+    }
     fetchTrek();
   }, [id]);
 
-  if (loading) return <p style={{ padding: "40px", textAlign: "center" }}>Loading...</p>;
-  if (!trek) return <p style={{ padding: "40px", textAlign: "center", color: "red" }}>Not found</p>;
+  if (loading) return <div className="text-white p-10">Loading…</div>;
+  if (!trek) return <div className="text-red-400 p-10">Trek not found.</div>;
 
   return (
-    <div style={{ fontFamily: "Arial", background: "#f7f7f7" }}>
-      
-      {/* Banner */}
-      <div
-        style={{
-          background: `url(${trek.image || "/fallback.jpg"}) center/cover no-repeat`,
-          height: "350px",
-          position: "relative",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "rgba(0,0,0,0.4)",
-            color: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "34px",
-            fontWeight: "bold",
-            textShadow: "0px 2px 5px rgba(0,0,0,0.7)",
-          }}
-        >
-          {trek.title || trek.name}
+    <div
+      style={{
+        background: COLORS.bgDark,
+        color: "white",
+        minHeight: "100vh",
+        paddingBottom: "50px",
+      }}
+    >
+      {/* HERO SECTION */}
+      <div className="relative w-full h-[380px]">
+        <img
+          src={trek.image_url}
+          alt={trek.name}
+          className="w-full h-full object-cover opacity-70"
+        />
+
+        <div className="absolute inset-0 bg-black/40 flex flex-col justify-center px-6 md:px-16">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: COLORS.gold }}>
+            {trek.name}
+          </h1>
+          <p className="max-w-2xl text-gray-300">{trek.overview?.substring(0, 180)}...</p>
         </div>
       </div>
 
-      <div
-        style={{
-          maxWidth: "1200px",
-          margin: "40px auto",
-          display: "flex",
-          gap: "25px",
-          padding: "0 20px",
-        }}
-      >
-        {/* Left Content */}
-        <div style={{ flex: 2 }}>
-          
-          {/* Quick Info */}
-          <div
-            style={{
-              background: "#fff",
-              padding: "20px 25px",
-              borderRadius: "8px",
-              marginBottom: "20px",
-              border: "1px solid #e6e6e6",
-            }}
-          >
-            <h2 style={{ marginBottom: "15px" }}>Trip Details</h2>
-            <ul style={{ lineHeight: "28px", fontSize: "15px" }}>
-              {trek.duration_days && <li><b>Duration:</b> {trek.duration_days} days</li>}
-              {trek.difficulty && <li><b>Difficulty:</b> {trek.difficulty}</li>}
-              {trek.price_usd && <li><b>Price:</b> ${trek.price_usd}</li>}
-              {trek.price_gbp && <li><b>Price (GBP):</b> £{trek.price_gbp}</li>}
-              {trek.max_altitude_meters && <li><b>Max Altitude:</b> {trek.max_altitude_meters}m</li>}
+      <div className="max-w-5xl mx-auto px-6 mt-10">
+        {/* QUICK INFO GRID */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+          <Info label="Best Season" value={trek.best_season} />
+          <Info label="Difficulty" value={trek.difficulty} />
+          <Info label="Duration" value={`${trek.duration_days} Days`} />
+          <Info label="Max Altitude" value={`${trek.max_altitude_meters} m`} />
+          <Info label="Group Size" value={`${trek.group_size_min} - ${trek.group_size_max}`} />
+          <Info label="Price (USD)" value={`$${trek.price_usd}`} highlight />
+        </div>
+
+        {/* HIGHLIGHTS */}
+        {trek.highlights?.length > 0 && (
+          <Section title="Highlights">
+            <ul className="list-disc ml-6 text-gray-300 space-y-1">
+              {trek.highlights.map((h, i) => (
+                <li key={i}>{h}</li>
+              ))}
             </ul>
-          </div>
+          </Section>
+        )}
 
-          {/* Overview */}
-          <div
-            style={{
-              background: "#fff",
-              padding: "20px 25px",
-              borderRadius: "8px",
-              marginBottom: "20px",
-              border: "1px solid #e6e6e6",
-            }}
-          >
-            <h3 style={{ marginBottom: "12px" }}>Overview</h3>
-            <p style={{ lineHeight: "1.8", color: "#444" }}>
-              {trek.overview || trek.description || "No description available."}
-            </p>
-          </div>
-
-          {/* Highlights */}
-          {Array.isArray(trek.highlights) && trek.highlights.length > 0 && (
-            <div
-              style={{
-                background: "#fff",
-                padding: "20px 25px",
-                borderRadius: "8px",
-                marginBottom: "20px",
-                border: "1px solid #e6e6e6",
-              }}
-            >
-              <h3 style={{ marginBottom: "12px" }}>Highlights</h3>
-              <ul style={{ paddingLeft: "18px", color: "#444", lineHeight: "1.8" }}>
-                {trek.highlights.map((h, i) => (
-                  <li key={i}>{h}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* ✅ Additional Sections */}
-          {Array.isArray(trek.extra_sections) && trek.extra_sections.length > 0 && (
-            <div style={{ marginTop: "20px" }}>
-              <h3 style={{ marginBottom: "12px" }}>Additional Information</h3>
-              {trek.extra_sections.map((sec, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    background: "#fff",
-                    padding: "20px",
-                    borderRadius: "8px",
-                    border: "1px solid #e2e8f0",
-                    marginBottom: "15px",
-                  }}
-                >
-                  <h4 style={{ marginBottom: "8px", color: "#0a472e", fontSize: "18px" }}>
-                    {sec.title}
-                  </h4>
-                  <p style={{ lineHeight: "1.7", color: "#444" }}>
-                    {sec.content}
-                  </p>
-                </div>
+        {/* GALLERY */}
+        {trek.gallery_images?.length > 0 && (
+          <Section title="Gallery">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {trek.gallery_images.map((url, i) => (
+                <img key={i} src={url} className="rounded-lg shadow-lg h-40 object-cover" />
               ))}
             </div>
-          )}
+          </Section>
+        )}
 
-        </div>
+        {/* INCLUDES */}
+        {trek.includes?.length > 0 && (
+          <Section title="What’s Included">
+            <ul className="list-disc ml-6 text-gray-300 space-y-1">
+              {trek.includes.map((h, i) => (
+                <li key={i}>{h}</li>
+              ))}
+            </ul>
+          </Section>
+        )}
 
-        {/* Sidebar */}
-        <div
-          style={{
-            flex: 1,
-            background: "#fff",
-            padding: "20px 25px",
-            borderRadius: "8px",
-            border: "1px solid #e6e6e6",
-            height: "fit-content",
-          }}
-        >
-          <h3 style={{ marginBottom: "15px" }}>Trip Price</h3>
-          <p
-            style={{
-              fontSize: "22px",
-              fontWeight: "bold",
-              marginBottom: "10px",
-              color: "#0a472e",
-            }}
-          >
-            ${trek.price_usd || "N/A"}
-          </p>
+        {/* EXCLUDES */}
+        {trek.excludes?.length > 0 && (
+          <Section title="What’s Not Included">
+            <ul className="list-disc ml-6 text-red-300 space-y-1">
+              {trek.excludes.map((h, i) => (
+                <li key={i}>{h}</li>
+              ))}
+            </ul>
+          </Section>
+        )}
 
-          <button
-            onClick={() => router.back()}
-            style={{
-              width: "100%",
-              padding: "12px",
-              background: "#0a472e",
-              color: "#fff",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer",
-              fontSize: "16px",
-              marginTop: "10px",
-            }}
-          >
-            ← Back to Treks
-          </button>
-        </div>
+        {/* LIMITED TIME OFFERS */}
+        {trek.has_offer && (
+          <Section title="🔥 Limited-Time Offer">
+            <div
+              style={{
+                background: COLORS.greenDark,
+                padding: "20px",
+                borderRadius: "10px",
+                border: `1px solid ${COLORS.gold}`,
+              }}
+            >
+              <h3 className="text-xl font-bold text-yellow-300">{trek.offer_title}</h3>
+              <p className="mt-1 text-gray-200">{trek.offer_description}</p>
+
+              <ul className="list-disc ml-6 mt-2 text-gray-200 space-y-1">
+                {trek.offer_includes?.map((o, i) => (
+                  <li key={i}>{o}</li>
+                ))}
+              </ul>
+
+              <p className="mt-3 text-lg font-semibold">
+                Price:{" "}
+                <span className="text-yellow-300">
+                  ${trek.offer_price_from} → ${trek.offer_price_to}
+                </span>
+              </p>
+            </div>
+          </Section>
+        )}
+
+        {/* ITINERARY */}
+        {trek.itinerary?.length > 0 && (
+          <Section title="Day-by-Day Itinerary">
+            {trek.itinerary.map((d, i) => (
+              <div
+                key={i}
+                className="p-5 mb-4 rounded-lg shadow-lg"
+                style={{
+                  background: COLORS.navy,
+                  borderLeft: `4px solid ${COLORS.primary}`,
+                }}
+              >
+                <h3 className="text-xl font-bold text-yellow-300">
+                  Day {d.day}: {d.title}
+                </h3>
+                <p className="mt-2 text-gray-200 whitespace-pre-line">{d.description}</p>
+              </div>
+            ))}
+          </Section>
+        )}
+
+        {/* EXTRA SECTIONS */}
+        {trek.extra_sections?.map((sec, i) => (
+          <Section key={i} title={sec.title}>
+            <p className="text-gray-300 whitespace-pre-line">{sec.content}</p>
+          </Section>
+        ))}
       </div>
+    </div>
+  );
+}
+
+/* INFO BOX COMPONENT */
+function Info({ label, value, highlight }) {
+  if (!value) return null;
+  return (
+    <div
+      className="p-4 rounded-lg shadow text-center"
+      style={{
+        background: highlight ? "#e8461033" : "#ffffff11",
+        border: highlight ? "1px solid #fed81e" : "1px solid #333",
+      }}
+    >
+      <p className="text-sm text-gray-300">{label}</p>
+      <p className="text-lg font-bold text-white">{value}</p>
+    </div>
+  );
+}
+
+/* SECTION WRAPPER */
+function Section({ title, children }) {
+  return (
+    <div className="mb-10">
+      <h2 className="text-3xl font-bold mb-4" style={{ color: COLORS.gold }}>
+        {title}
+      </h2>
+      {children}
     </div>
   );
 }

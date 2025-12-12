@@ -1,14 +1,17 @@
 FROM node:18-alpine
 
+# Work directory
 WORKDIR /usr/src/app
 
-# Copy package files and install deps
+# Install dependencies first (cached layer)
 COPY frontend/package*.json ./
 RUN npm install
 
-# Copy rest of the app
-COPY frontend ./
+# Copy source code
+COPY frontend/. .
 
+# Expose next.js dev port
 EXPOSE 3000
 
+# Run the development server
 CMD ["npm", "run", "dev"]

@@ -64,7 +64,7 @@ export default function Navbar() {
           </li>
         )}
 
-        {/* ✅ Admin & SuperAdmin Trek Management */}
+        {/*  Admin & SuperAdmin Trek Management */}
         {(role === "admin" || role === "superadmin") && (
           <li>
             <Link
@@ -73,6 +73,12 @@ export default function Navbar() {
             >
               Manage Treks
             </Link>
+          </li>
+        )}
+        {/* ADMIN / SUPERADMIN ONLY LINKS */}
+        {(role === "admin" || role === "superadmin") && (
+          <li>
+            <Link href="/admin/about"  style={{ color: "white", textDecoration: "none", fontWeight: "bold"}}>Edit About</Link>
           </li>
         )}
 

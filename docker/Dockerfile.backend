@@ -2,11 +2,17 @@ FROM node:18-alpine
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
-RUN npm install 
+# Install dependencies first
+COPY backend/package*.json ./
+RUN npm install
 
-COPY . .
+# Copy backend code
+COPY backend/. .
+
+# Ensure entrypoint exists
+COPY backend/entrypoint.sh /usr/src/app/entrypoint.sh
+RUN chmod +x /usr/src/app/entrypoint.sh
 
 EXPOSE 5000
 
-CMD sh -c "node superadminSeeder.js && npm run dev" 
+ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
