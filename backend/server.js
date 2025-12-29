@@ -76,6 +76,12 @@ const trekRoutes = require("./routes/trekroutes");
 const authRoutes = require("./routes/authroutes");
 const aboutRoutes = require("./routes/aboutRoutes");
 
+// 🆕 Content routes
+const blogRoutes = require("./routes/blogRoutes");
+const testimonialRoutes = require("./routes/testimonialRoutes");
+const galleryRoutes = require("./routes/galleryRoutes");
+const contactRoutes = require("./routes/contactRoutes");
+
 /* =========================================================
    5. ROUTES MOUNTING
 ========================================================= */
@@ -86,6 +92,12 @@ app.use("/api/superadmin", superadminRoutes);
 app.use("/api/treks", trekRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/about", aboutRoutes);
+
+// Mount new content routes
+app.use("/api/blogs", blogRoutes);
+app.use("/api/testimonials", testimonialRoutes);
+app.use("/api/gallery", galleryRoutes);
+app.use("/api/contact", contactRoutes);
 
 /* =========================================================
    6. TEST ROUTES

@@ -64,22 +64,58 @@ export default function Navbar() {
           </li>
         )}
 
-        {/*  Admin & SuperAdmin Trek Management */}
+        {/*  Admin & SuperAdmin Links */}
         {(role === "admin" || role === "superadmin") && (
-          <li>
-            <Link
-              href="/admin/treks"
-              style={{ color: "white", textDecoration: "none", fontWeight: "bold" }}
-            >
-              Manage Treks
-            </Link>
-          </li>
-        )}
-        {/* ADMIN / SUPERADMIN ONLY LINKS */}
-        {(role === "admin" || role === "superadmin") && (
-          <li>
-            <Link href="/admin/about"  style={{ color: "white", textDecoration: "none", fontWeight: "bold"}}>Edit About</Link>
-          </li>
+          <>
+            <li>
+              <Link
+                href="/admin/treks"
+                style={{ color: "white", textDecoration: "none", fontWeight: "bold" }}
+              >
+                Manage Treks
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/admin/blogs"
+                style={{ color: "white", textDecoration: "none", fontWeight: "bold" }}
+              >
+                Manage Blogs
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/admin/gallery"
+                style={{ color: "white", textDecoration: "none", fontWeight: "bold" }}
+              >
+                Manage Gallery
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/admin/testimonials"
+                style={{ color: "white", textDecoration: "none", fontWeight: "bold" }}
+              >
+                Manage Testimonials
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/admin/messages"
+                style={{ color: "white", textDecoration: "none", fontWeight: "bold" }}
+              >
+                Messages
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/admin/about"
+                style={{ color: "white", textDecoration: "none", fontWeight: "bold" }}
+              >
+                Edit About
+              </Link>
+            </li>
+          </>
         )}
 
         {/* ✅ Logout */}
