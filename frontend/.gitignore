@@ -25,3 +25,5 @@ AGENTS.md
 
 .config/
 !.env
+
+.next/
