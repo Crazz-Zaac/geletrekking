@@ -25,9 +25,11 @@ export const Header = ({ settings }: { settings: any }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-10 h-10 bg-gradient-to-br from-brand-accent to-brand-warning rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">T</span>
-            </div>
+           
+            <img src="/geletrekking.png" 
+              alt="Gele Trekking Logo" 
+              className="h-10 w-10 rounded-full object-cover border border-gray-200 shadow-sm"
+            />
             <span className="hidden sm:inline text-xl font-bold text-brand-dark">
               {settings?.siteName || "GELE TREKKING"}
             </span>

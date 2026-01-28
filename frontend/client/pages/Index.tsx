@@ -1,10 +1,144 @@
 import { Layout } from "@/components/Layout";
 import { useHero } from "@/hooks/useHero";
 import { Link } from "react-router-dom";
-import { ArrowRight, Mountain, Users, MapPin, Star, Facebook, Instagram, Twitter, Linkedin } from "lucide-react";
+import { ArrowRight, Mountain, Users, MapPin, Loader2, Star } from "lucide-react";
+import { useEffect, useState } from "react";
+
+// Helper function to safely get a field value
+const getField = (obj: any, ...fieldNames: string[]): any => {
+  for (const field of fieldNames) {
+    if (obj[field] !== undefined && obj[field] !== null && obj[field] !== '') {
+      return obj[field];
+    }
+  }
+  return null;
+};
+
+// Helper function to get trek image
+const getTrekImage = (trek: any): string => {
+  // Try to get image from various possible field names
+  // IMPORTANT: image_url is your database field!
+  const imageField = getField(
+    trek,
+    'image_url',    // ← YOUR DATABASE USES THIS! (with underscore)
+    'images',
+    'image',
+    'imageUrl',     // camelCase version
+    'coverImage',
+    'thumbnail',
+    'photo',
+    'photos',
+    'img',
+    'picture'
+  );
+  
+  // If it's an array, get the first item
+  if (Array.isArray(imageField) && imageField.length > 0) {
+    return imageField[0];
+  }
+  
+  // If it's a string, return it
+  if (typeof imageField === 'string' && imageField.trim() !== '') {
+    return imageField;
+  }
+  
+  // Fallback
+  return "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop";
+};
+
+// Helper function to get trek name
+const getTrekName = (trek: any): string => {
+  return getField(trek, 'name', 'title', 'trekName', 'packageName') || 'Unnamed Trek';
+};
+
+// Helper function to get trek difficulty
+const getTrekDifficulty = (trek: any): string => {
+  const difficulty = getField(trek, 'difficulty', 'level', 'difficultyLevel') || 'Moderate';
+  // Capitalize properly: "easy" → "Easy"
+  return difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
+};
+
+// Helper function to get trek duration
+const getTrekDuration = (trek: any): string => {
+  const duration = getField(
+    trek,
+    'duration',
+    'days',
+    'length',
+    'tripDuration',
+    'numberOfDays'
+  );
+  
+  if (!duration) return 'N/A';
+  
+  // If it's already a string like "7 Days", return it
+  if (typeof duration === 'string') return duration;
+  
+  // If it's a number, format it
+  if (typeof duration === 'number') return `${duration} Days`;
+  
+  return 'N/A';
+};
+
+// Helper function to get trek rating
+const getTrekRating = (trek: any): number => {
+  const rating = getField(trek, 'rating', 'averageRating', 'stars');
+  if (typeof rating === 'number' && rating > 0) return rating;
+  return 5; // Default rating
+};
 
 export default function Index() {
   const { data: hero } = useHero();
+  
+  // State for fetched data
+  const [treks, setTreks] = useState<any[]>([]);
+  const [gallery, setGallery] = useState<any[]>([]);
+  const [testimonials, setTestimonials] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Get API URL from environment or use default
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  // Fetch data from your existing backend APIs
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch treks
+        const treksRes = await fetch(`${API_URL}/api/treks`);
+        if (treksRes.ok) {
+          const treksData = await treksRes.json();
+          const allTreks = treksData.treks || treksData || [];
+          setTreks(allTreks.slice(0, 3));
+        }
+
+        // Fetch gallery images
+        const galleryRes = await fetch(`${API_URL}/api/gallery`);
+        if (galleryRes.ok) {
+          const galleryData = await galleryRes.json();
+          const allImages = galleryData.images || galleryData || [];
+          setGallery(allImages.slice(0, 3));
+        }
+
+        // Fetch testimonials
+        const testimonialsRes = await fetch(`${API_URL}/api/testimonials`);
+        if (testimonialsRes.ok) {
+          const testimonialsData = await testimonialsRes.json();
+          const allTestimonials = testimonialsData.testimonials || testimonialsData || [];
+          setTestimonials(allTestimonials.slice(0, 5));
+        }
+        
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [API_URL]);
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -54,7 +188,7 @@ export default function Index() {
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold text-center text-brand-dark mb-16">
-            Why Choose GELE TREKKINGs?
+            Why Choose GELE TREKKING?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
@@ -92,7 +226,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Featured Destinations */}
+      {/* Featured Destinations - FROM DATABASE */}
       <section className="py-20 px-4 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold text-center text-brand-dark mb-4">
@@ -101,71 +235,68 @@ export default function Index() {
           <p className="text-center text-gray-600 mb-16 max-w-2xl mx-auto">
             Discover some of our most popular and breathtaking trek packages
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                id: 1,
-                name: "Everest Base Camp",
-                difficulty: "Hard",
-                days: "14 Days",
-                image:
-                  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
-              },
-              {
-                id: 2,
-                name: "Kilimanjaro Summit",
-                difficulty: "Moderate",
-                days: "7 Days",
-                image:
-                  "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&h=300&fit=crop",
-              },
-              {
-                id: 3,
-                name: "Machu Picchu Trail",
-                difficulty: "Moderate",
-                days: "4 Days",
-                image:
-                  "https://images.unsplash.com/photo-1587595431973-160550115063?w=400&h=300&fit=crop",
-              },
-            ].map((destination) => (
-              <Link
-                key={destination.id}
-                to={`/destination/${destination.id}`}
-                className="block bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow group"
-              >
-                <div className="relative overflow-hidden h-64">
-                  <img
-                    src={destination.image}
-                    alt={destination.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-4 right-4 bg-brand-accent text-white px-4 py-2 rounded-lg">
-                    {destination.difficulty}
-                  </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-2xl font-bold text-brand-dark mb-2 group-hover:text-brand-accent transition-colors">
-                    {destination.name}
-                  </h3>
-                  <div className="flex items-center gap-4 mb-4">
-                    <span className="text-sm text-gray-600">
-                      {destination.days}
-                    </span>
-                    <span className="flex items-center gap-1 text-brand-accent">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="w-4 h-4 fill-current" />
-                      ))}
-                    </span>
-                  </div>
-                  <span
-                    className="inline-block text-brand-accent font-semibold group-hover:gap-2 transition-all"
+
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="w-12 h-12 animate-spin text-brand-accent" />
+            </div>
+          ) : treks.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {treks.map((trek) => {
+                const trekImage = getTrekImage(trek);
+                const trekName = getTrekName(trek);
+                const trekDifficulty = getTrekDifficulty(trek);
+                const trekDuration = getTrekDuration(trek);
+                const trekRating = getTrekRating(trek);
+                
+                return (
+                  <Link
+                    key={trek._id}
+                    to={`/destination/${trek._id}`}
+                    className="block bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow group"
                   >
-                    Learn More →
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
+                    <div className="relative overflow-hidden h-64">
+                      <img
+                        src={trekImage}
+                        alt={trekName}
+                        onError={(e) => {
+                          e.currentTarget.src = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop";
+                        }}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-4 right-4 bg-brand-accent text-white px-4 py-2 rounded-lg">
+                        {trekDifficulty}
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <h3 className="text-2xl font-bold text-brand-dark mb-2 group-hover:text-brand-accent transition-colors">
+                        {trekName}
+                      </h3>
+                      <div className="flex items-center gap-4 mb-4">
+                        <span className="text-sm text-gray-600">
+                          {trekDuration}
+                        </span>
+                        <span className="flex items-center gap-1 text-brand-accent">
+                          {[...Array(Math.round(trekRating))].map((_, i) => (
+                            <Star key={i} className="w-4 h-4 fill-current" />
+                          ))}
+                        </span>
+                      </div>
+                      <span className="inline-block text-brand-accent font-semibold group-hover:gap-2 transition-all">
+                        Learn More →
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-20 text-gray-500">
+              <p className="text-xl">No featured destinations available yet.</p>
+              <p className="mt-2">Check back soon for amazing treks!</p>
+            </div>
+          )}
+
           <div className="text-center mt-12">
             <Link
               to="/destinations"
@@ -178,7 +309,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Gallery Section */}
+      {/* Gallery Section - FROM DATABASE */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold text-center text-brand-dark mb-4">
@@ -187,41 +318,43 @@ export default function Index() {
           <p className="text-center text-gray-600 mb-16 max-w-2xl mx-auto">
             Get inspired by our most breathtaking trek destinations
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                src: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
-                alt: "Snow-covered mountain peak",
-                title: "High Peaks",
-              },
-              {
-                src: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&h=300&fit=crop",
-                alt: "Golden mountain landscape",
-                title: "Sunlit Summits",
-              },
-              {
-                src: "https://images.unsplash.com/photo-1587595431973-160550115063?w=400&h=300&fit=crop",
-                alt: "Ancient mountain ruins",
-                title: "Ancient Wonders",
-              },
-            ].map((photo, idx) => (
-              <div
-                key={idx}
-                className="relative overflow-hidden rounded-lg h-64 group cursor-pointer"
-              >
-                <img
-                  src={photo.src}
-                  alt={photo.alt}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end">
-                  <div className="p-4 text-white w-full translate-y-full group-hover:translate-y-0 transition-transform">
-                    <p className="font-semibold text-lg">{photo.title}</p>
+
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="w-12 h-12 animate-spin text-brand-accent" />
+            </div>
+          ) : gallery.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {gallery.map((photo) => (
+                <div
+                  key={photo._id}
+                  className="relative overflow-hidden rounded-lg h-64 group cursor-pointer"
+                >
+                  <img
+                    src={photo.imageUrl || photo.image || photo.url}
+                    alt={photo.title || photo.name || 'Gallery Image'}
+                    onError={(e) => {
+                      e.currentTarget.src = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop";
+                    }}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end">
+                    <div className="p-4 text-white w-full translate-y-full group-hover:translate-y-0 transition-transform">
+                      <p className="font-semibold text-lg">{photo.title || photo.name || 'Beautiful View'}</p>
+                      {photo.description && (
+                        <p className="text-sm text-gray-200 mt-1">{photo.description}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20 text-gray-500">
+              <p className="text-xl">No gallery images available yet.</p>
+            </div>
+          )}
+
           <div className="text-center mt-12">
             <Link
               to="/gallery"
@@ -277,7 +410,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* Testimonials Section - FROM DATABASE */}
       <section className="py-20 px-4 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold text-center text-brand-dark mb-4">
@@ -286,60 +419,45 @@ export default function Index() {
           <p className="text-center text-gray-600 mb-16 max-w-2xl mx-auto">
             Real stories from people who've explored the world with us
           </p>
-          <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-hide">
-            {[
-              {
-                name: "Sarah Johnson",
-                location: "New York, USA",
-                text: "The Everest Base Camp trek was life-changing! The guides were knowledgeable and the experience unforgettable.",
-                rating: 5,
-              },
-              {
-                name: "Marco Rossi",
-                location: "Rome, Italy",
-                text: "Kilimanjaro was the adventure of a lifetime. Every moment was worth it. Highly recommended!",
-                rating: 5,
-              },
-              {
-                name: "Elena García",
-                location: "Madrid, Spain",
-                text: "The Machu Picchu trail exceeded all expectations. The team made it magical and safe.",
-                rating: 5,
-              },
-              {
-                name: "David Chen",
-                location: "Singapore",
-                text: "Professional guides, incredible views, and an amazing community. Can't wait for the next trek!",
-                rating: 5,
-              },
-              {
-                name: "Priya Patel",
-                location: "Mumbai, India",
-                text: "This company understands adventure. Every detail was thoughtfully planned.",
-                rating: 5,
-              },
-            ].map((testimonial, idx) => (
-              <div
-                key={idx}
-                className="flex-shrink-0 w-96 bg-white rounded-lg p-8 shadow-lg hover:shadow-xl transition-shadow"
-              >
-                <div className="flex gap-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <span key={i} className="text-yellow-400">
-                      ★
-                    </span>
-                  ))}
-                </div>
-                <p className="text-gray-700 mb-6 italic">"{testimonial.text}"</p>
-                <div>
-                  <p className="font-semibold text-brand-dark">
-                    {testimonial.name}
+
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="w-12 h-12 animate-spin text-brand-accent" />
+            </div>
+          ) : testimonials.length > 0 ? (
+            <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-hide">
+              {testimonials.map((testimonial) => (
+                <div
+                  key={testimonial._id}
+                  className="flex-shrink-0 w-96 bg-white rounded-lg p-8 shadow-lg hover:shadow-xl transition-shadow"
+                >
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(testimonial.rating || 5)].map((_, i) => (
+                      <span key={i} className="text-yellow-400">
+                        ★
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-gray-700 mb-6 italic">
+                    "{testimonial.text || testimonial.message || testimonial.review}"
                   </p>
-                  <p className="text-sm text-gray-600">{testimonial.location}</p>
+                  <div>
+                    <p className="font-semibold text-brand-dark">
+                      {testimonial.name || 'Anonymous'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {testimonial.location || 'Location not specified'}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20 text-gray-500">
+              <p className="text-xl">No testimonials available yet.</p>
+            </div>
+          )}
+
           <div className="text-center mt-12">
             <Link
               to="/testimonials"
@@ -348,54 +466,6 @@ export default function Index() {
               Read More Reviews
               <ArrowRight className="w-5 h-5" />
             </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Social Media Section */}
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-brand-dark mb-4">Follow Our Adventures</h2>
-          <p className="text-gray-600 text-lg mb-8">
-            Stay connected with us on social media to see stunning photos, trek updates, and travel tips
-          </p>
-          <div className="flex gap-6 justify-center items-center flex-wrap">
-            <a
-              href="https://www.facebook.com/trekways"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-            >
-              <Facebook className="w-5 h-5" />
-              Facebook
-            </a>
-            <a
-              href="https://www.instagram.com/trekways"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-            >
-              <Instagram className="w-5 h-5" />
-              Instagram
-            </a>
-            <a
-              href="https://twitter.com/trekways"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-            >
-              <Twitter className="w-5 h-5" />
-              Twitter
-            </a>
-            <a
-              href="https://www.linkedin.com/company/trekways"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-blue-800 hover:bg-blue-900 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-            >
-              <Linkedin className="w-5 h-5" />
-              LinkedIn
-            </a>
           </div>
         </div>
       </section>
