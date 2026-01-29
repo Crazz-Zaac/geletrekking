@@ -83,4 +83,4 @@ RUN THIS BEFORE GOING TO ADMIN DASHBOARD:                               |
 docker exec -it geletrekking-backend npm run superadminSeeder.js        |
                                                                         |
 -------------------------------------------------------------------------
-
+--
