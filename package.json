@@ -1,5 +1,5 @@
 {
-  "name": "zen-oasis-merged",
+  "name": "geletrekking",
   "private": true,
   "scripts": {
     "backend": "npm run dev --prefix backend",

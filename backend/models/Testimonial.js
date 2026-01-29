@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 /**
  * Testimonial Schema
  *
@@ -13,9 +12,13 @@ const testimonialSchema = new mongoose.Schema(
     country: { type: String, trim: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
     message: { type: String, required: true, trim: true },
+    image: { 
+      type: String, 
+      trim: true,
+      default: null 
+    },
     isApproved: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
-
 module.exports = mongoose.model("Testimonial", testimonialSchema);

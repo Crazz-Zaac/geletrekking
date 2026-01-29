@@ -13,12 +13,9 @@ const {
 // Public: get approved testimonials
 router.get("/", getApprovedTestimonials);
 
-// Admin: create a new testimonial
-//
-// Testimonials should only be created by authenticated admin or superadmin
-// users.  The previous implementation allowed public users to submit
-// testimonials, but based on current requirements (option 3.b) we
-// restrict this route to admin and superadmin roles.
+// Admin/Superadmin: create a new testimonial
+// Testimonials can only be created by authenticated admin or superadmin users.
+// This approach is used when testimonials are curated rather than user-submitted.
 router.post(
   "/",
   authMiddleware,
@@ -34,7 +31,7 @@ router.get(
   getAllTestimonials
 );
 
-// Admin: update (approve/hide) a testimonial
+// Admin: update/approve a testimonial
 router.put(
   "/admin/:id",
   authMiddleware,

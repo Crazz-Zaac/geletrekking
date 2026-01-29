@@ -23,10 +23,14 @@ Check:
 docker -v
 docker-compose -v
 
-✅ 2) Environment Variables
+✅ 2) Environment Variables:
+
 📁 backend/.env
+
 PORT=5000
+
 MONGO_URI=mongodb://mongo:27017/gele_trekking
+
 JWT_SECRET=your_secret
 
 
@@ -72,7 +76,7 @@ About page
 
 Superadmin can manage admins & system settings.
 
-🛠 6) Database Seeder (Optional)
+🛠 6) Database Seeder 
 -------------------------------------------------------------------------
 RUN THIS BEFORE GOING TO ADMIN DASHBOARD:                               |
                                                                         |
