@@ -1,0 +1,19 @@
+FROM node:18-alpine
+
+WORKDIR /usr/src/app
+
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install --legacy-peer-deps
+
+# Copy all backend code
+COPY . .
+
+EXPOSE 5000
+
+# Copy entrypoint script
+COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
+
+# Run entrypoint script
+ENTRYPOINT ["./entrypoint.sh"]

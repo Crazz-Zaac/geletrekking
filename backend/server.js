@@ -1,74 +1,175 @@
-require('dotenv').config();
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const path = require("path");
 
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
+const app = express();
 
-const app = express(); // Initialize express app
+/* =========================================================
+   1. UNIVERSAL CORS CONFIG (LOCAL + DOCKER)
+========================================================= */
 
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173'];  // Add your frontend URLs here
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : [];
 
-// Middleware — enable BEFORE routes!
-app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin like mobile apps or curl
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (Postman, curl, server-to-server)
+      if (!origin) return callback(null, true);
 
-app.use(express.json()); // parse JSON bodies
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log("CORS BLOCKED:", origin);
+        callback(new Error("CORS not allowed"));
+      }
+    },
+    credentials: true,
+  })
+);
 
-// Import routes
-const userAuth = require('./routes/userAuth');
-const trekRoutes = require('./routes/trekRoutes');
-const adminRoutes = require('./routes/Admin/adminRoutes');
-const contactRoutes = require('./routes/contactRoutes');
-const aboutUsRoutes = require('./routes/aboutus');
-const protectedRoutes = require('./routes/protectedRoutes');  // New protected routes
+/* =========================================================
+   2. DEFAULT HEADERS (for extra safety)
+========================================================= */
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
 
-// Mount routes
-app.use('/api/userauth', userAuth);
-app.use('/api/aboutus', aboutUsRoutes);
-app.use('/api/treks', trekRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/contact', contactRoutes);
-app.use('/api/protected', protectedRoutes);   // Mount the protected routes here
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
 
-// Root route for testing backend is running
-app.get('/', (req, res) => {
-  res.send('Geletrekking backend is running!');
+  next();
 });
 
-// Optional debug route to check if contact route is reachable
-app.get('/api/contact', (req, res) => {
-  res.json({ message: 'GET /api/contact route is reachable!' });
+/* =========================================================
+   3. MIDDLEWARE
+========================================================= */
+app.use(express.json());
+
+/* =========================================================
+   4. ROUTES IMPORT
+========================================================= */
+const adminRoutes = require("./routes/Admin/adminRoutes");
+const protectedRoutes = require("./routes/protectedRoutes");
+const superadminAuthRoutes = require("./routes/superadmin/auth");
+const superadminRoutes = require("./routes/superadmin/superadmin");
+const trekRoutes = require("./routes/trekroutes");
+const authRoutes = require("./routes/authroutes");
+const aboutRoutes = require("./routes/aboutRoutes");
+
+// Content routes
+const blogRoutes = require("./routes/blogRoutes");
+const testimonialRoutes = require("./routes/testimonialRoutes");
+const galleryRoutes = require("./routes/galleryRoutes");
+const contactRoutes = require("./routes/contactRoutes");
+
+// Settings / Hero / Uploads
+const settingsRoutes = require("./routes/settingsRoutes");
+const heroRoutes = require("./routes/heroRoutes");
+// const uploadRoutes = require("./routes/uploadRoutes");
+
+/* =========================================================
+   5. ROUTES MOUNTING
+========================================================= */
+app.use("/api/admin", adminRoutes);
+app.use("/api/protected", protectedRoutes);
+app.use("/api/superadmin/auth", superadminAuthRoutes);
+app.use("/api/superadmin", superadminRoutes);
+app.use("/api/treks", trekRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/about", aboutRoutes);
+
+// Mount new content routes
+app.use("/api/blogs", blogRoutes);
+app.use("/api/testimonials", testimonialRoutes);
+app.use("/api/gallery", galleryRoutes);
+app.use("/api/contact", contactRoutes);
+
+// Settings/Hero/Uploads
+app.use("/api/settings", settingsRoutes);
+app.use("/api/hero", heroRoutes);
+// app.use("/api/uploads", uploadRoutes);
+
+
+/* =========================================================
+   6. SERVE FRONTEND IN PRODUCTION
+========================================================= */
+if (process.env.NODE_ENV === "production") {
+  const distPath = path.join(__dirname, "..", "frontend", "dist");
+  app.use(express.static(distPath));
+
+  // SPA fallback
+  app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
+  });
+}
+
+/* =========================================================
+   7. TEST ROUTES
+========================================================= */
+app.get("/", (req, res) => {
+  res.send("GeleTrekking backend is running.");
 });
 
-// Generic error handler
+/* =========================================================
+   7. ERROR HANDLING
+========================================================= */
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  console.error("ERROR:", err.stack);
+  res.status(500).json({ error: err.message || "Internal server error" });
 });
 
+/* =========================================================
+   8. DATABASE CONNECTION & SERVER STARTUP
+========================================================= */
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB and start server
+// Build MongoDB URI dynamically
+const buildMongoUri = () => {
+  if (process.env.MONGO_URI) {
+    return process.env.MONGO_URI;
+  }
+  
+  const username = encodeURIComponent(process.env.MONGO_USERNAME || '');
+  const password = encodeURIComponent(process.env.MONGO_PASSWORD || '');
+  const host = process.env.MONGO_HOST || 'mongo';
+  const port = process.env.MONGO_PORT || '27017';
+  const database = process.env.MONGO_DATABASE || 'geletrekking';
+  const authSource = process.env.MONGO_AUTH_SOURCE || 'admin';
+  
+  if (!username || !password) {
+    throw new Error('MongoDB credentials not configured. Set MONGO_USERNAME and MONGO_PASSWORD or MONGO_URI');
+  }
+  
+  return `mongodb://${username}:${password}@${host}:${port}/${database}?authSource=${authSource}`;
+};
+
 const startServer = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log("✅ MongoDB connected successfully!");
+    const mongoUri = buildMongoUri();
+    await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 5000,
+    });
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+    console.log("MongoDB connected.");
+
+    // IMPORTANT: Must listen on 0.0.0.0 in Docker
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Backend running on port ${PORT}`);
     });
   } catch (err) {
-    console.error("❌ MongoDB connection failed:", err.message);
+    console.error(" MongoDB Connection Error:", err.message);
     process.exit(1);
   }
 };

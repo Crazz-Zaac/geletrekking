@@ -1,0 +1,72 @@
+version: "3.9"
+
+services:
+  # Frontend - React/Vite with Nginx (Production)
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    container_name: geletrekking-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped  # TODO: Change to 'on-failure' in production
+    networks:
+      - geletrekking-network
+
+  # Backend - Node.js/Express
+  backend:
+    build:
+      context: ../backend
+      dockerfile: ../docker/Dockerfile.backend
+    container_name: geletrekking-backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - ../backend/.env
+    depends_on:
+      - mongo
+    restart: unless-stopped
+    networks:
+      - geletrekking-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 5s
+      retries: 5
+
+  # MongoDB Database
+  mongo:
+    image: mongo:7
+    container_name: geletrekking-mongo
+    ports:
+      - "27017:27017"   # TODO: Remove this port mapping in production for security
+    env_file:
+      - ../backend/.env
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+    networks:
+      - geletrekking-network
+
+  # Mongo Express - Database Admin UI
+  mongo-express:
+    image: mongo-express:latest
+    container_name: geletrekking-mongo-express
+    ports:
+      - "8081:8081"
+    env_file:
+      - ../backend/.env
+    depends_on:
+      - mongo
+    restart: unless-stopped  # TODO: Change to 'on-failure' in production
+    networks:
+      - geletrekking-network
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  geletrekking-network:
+    driver: bridge

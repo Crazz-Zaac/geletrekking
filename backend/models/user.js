@@ -1,24 +1,25 @@
 const mongoose = require('mongoose');
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  password: {
-    type: String,
-    required: true
-  },
-  role: {
-    type: String,
-    enum: ['user', 'admin', 'superadmin'],
-    default: 'user'
-  }
-});
+const userSchema = new mongoose.Schema(
+  {
+    name: { type: String },
+    email: { type: String, required: true, unique: true },
+    password: { type: String },
 
-module.exports = mongoose.model('User', userSchema);
+    role: {
+      type: String,
+      enum: ['user', 'admin', 'superadmin'],
+      default: 'user',
+    },
+
+    // 🔐 Two-Factor Authentication fields
+    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorSecret: { type: String, default: null },
+  },
+  { timestamps: true }
+);
+
+// Prevent model overwrite errors during hot-reload
+const User = mongoose.models.User || mongoose.model('User', userSchema);
+
+module.exports = User;
