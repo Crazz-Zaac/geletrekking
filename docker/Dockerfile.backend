@@ -11,5 +11,9 @@ COPY . .
 
 EXPOSE 5000
 
-# Start the server directly
-CMD ["node", "server.js"]
+# Copy entrypoint script
+COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
+
+# Run entrypoint script
+ENTRYPOINT ["./entrypoint.sh"]
