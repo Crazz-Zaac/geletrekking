@@ -10,20 +10,9 @@ const app = express();
    1. UNIVERSAL CORS CONFIG (LOCAL + DOCKER)
 ========================================================= */
 
-const allowedOrigins = [
-  "http://localhost:3000",        // Local Next.js
-  "http://127.0.0.1:3000",
-  "http://localhost:5173",        // Local Vite
-  "http://127.0.0.1:5173",
-  "http://localhost:4000",        // If mapped
-  "http://127.0.0.1:4000",
-
-  // DOCKER internal hostname for frontend
-  "http://frontend:3000",
-
-  // Optional production domain
-  process.env.FRONTEND_URL,
-];
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : [];
 
 app.use(
   cors({
@@ -34,7 +23,7 @@ app.use(
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        console.log("❌ CORS BLOCKED:", origin);
+        console.log("CORS BLOCKED:", origin);
         callback(new Error("CORS not allowed"));
       }
     },
@@ -79,13 +68,13 @@ const trekRoutes = require("./routes/trekroutes");
 const authRoutes = require("./routes/authroutes");
 const aboutRoutes = require("./routes/aboutRoutes");
 
-// 🆕 Content routes
+// Content routes
 const blogRoutes = require("./routes/blogRoutes");
 const testimonialRoutes = require("./routes/testimonialRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 
-// 🆕 Settings / Hero / Uploads
+// Settings / Hero / Uploads
 const settingsRoutes = require("./routes/settingsRoutes");
 const heroRoutes = require("./routes/heroRoutes");
 // const uploadRoutes = require("./routes/uploadRoutes");
@@ -137,7 +126,7 @@ app.get("/", (req, res) => {
    7. ERROR HANDLING
 ========================================================= */
 app.use((err, req, res, next) => {
-  console.error("❌ ERROR:", err.stack);
+  console.error("ERROR:", err.stack);
   res.status(500).json({ error: err.message || "Internal server error" });
 });
 
@@ -146,20 +135,41 @@ app.use((err, req, res, next) => {
 ========================================================= */
 const PORT = process.env.PORT || 5000;
 
+// Build MongoDB URI dynamically
+const buildMongoUri = () => {
+  if (process.env.MONGO_URI) {
+    return process.env.MONGO_URI;
+  }
+  
+  const username = encodeURIComponent(process.env.MONGO_USERNAME || '');
+  const password = encodeURIComponent(process.env.MONGO_PASSWORD || '');
+  const host = process.env.MONGO_HOST || 'mongo';
+  const port = process.env.MONGO_PORT || '27017';
+  const database = process.env.MONGO_DATABASE || 'geletrekking';
+  const authSource = process.env.MONGO_AUTH_SOURCE || 'admin';
+  
+  if (!username || !password) {
+    throw new Error('MongoDB credentials not configured. Set MONGO_USERNAME and MONGO_PASSWORD or MONGO_URI');
+  }
+  
+  return `mongodb://${username}:${password}@${host}:${port}/${database}?authSource=${authSource}`;
+};
+
 const startServer = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
+    const mongoUri = buildMongoUri();
+    await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 5000,
     });
 
-    console.log("✅ MongoDB connected.");
+    console.log("MongoDB connected.");
 
     // IMPORTANT: Must listen on 0.0.0.0 in Docker
     app.listen(PORT, "0.0.0.0", () => {
-      console.log(`🚀 Backend running on port ${PORT}`);
+      console.log(`Backend running on port ${PORT}`);
     });
   } catch (err) {
-    console.error("❌ MongoDB Connection Error:", err.message);
+    console.error(" MongoDB Connection Error:", err.message);
     process.exit(1);
   }
 };
