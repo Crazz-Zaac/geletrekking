@@ -6,14 +6,15 @@ export default function AdminLayout() {
   const user = getUser(); // expected: { role: "admin" | "superadmin" }
 
   const navItems = [
-    { to: "/admin", label: "Dashboard" },
-    { to: "/admin/settings", label: "Settings" },
-    { to: "/admin/hero", label: "Hero" },
-    { to: "/admin/treks", label: "Treks" },
-    { to: "/admin/blogs", label: "Blogs" },
-    { to: "/admin/gallery", label: "Gallery" },
+    { to: "/admin",              label: "Dashboard" },
+    { to: "/admin/settings",     label: "Settings" },
+    { to: "/admin/hero",         label: "Hero" },
+    { to: "/admin/treks",        label: "Treks" },
+    { to: "/admin/blogs",        label: "Blogs" },
+    { to: "/admin/gallery",      label: "Gallery" },
     { to: "/admin/testimonials", label: "Testimonials" },
-    { to: "/admin/about", label: "About Page" },
+    { to: "/admin/about",        label: "About Page" },
+    { to: "/admin/AdminMessages",     label: "Messages" },   // ← NEW
   ];
 
   return (
@@ -22,10 +23,7 @@ export default function AdminLayout() {
         {/* ================= SIDEBAR ================= */}
         <aside className="w-64 h-screen sticky top-0 border-r border-white/10 p-5">
           {/* LOGO */}
-          <Link
-            to="/"
-            className="block text-lg font-extrabold tracking-wide"
-          >
+          <Link to="/" className="block text-lg font-extrabold tracking-wide">
             GELE TREKKING
           </Link>
 
@@ -50,6 +48,7 @@ export default function AdminLayout() {
                   ].join(" ")
                 }
               >
+                {/* Messages link shows an unread badge – handled inside AdminMessages itself */}
                 {item.label}
               </NavLink>
             ))}
@@ -60,7 +59,6 @@ export default function AdminLayout() {
                 <div className="mt-4 px-3 text-xs uppercase tracking-wide text-slate-500">
                   Superadmin
                 </div>
-
                 <NavLink
                   to="/admin/admins"
                   className={({ isActive }) =>
