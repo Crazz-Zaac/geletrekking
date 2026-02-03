@@ -1,5 +1,6 @@
 import { Layout } from "@/components/Layout";
 import { useState } from "react";
+import { api } from "@/lib/apiClient"; // ← Import API client
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -17,16 +18,20 @@ export default function Contact() {
     setSubmitMessage("");
 
     try {
-      // Replace this with your actual API endpoint
-      // const response = await api.post("/api/contact", formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      // ✅ ACTUAL API CALL - sends to backend
+      await api.post("/api/contact", {
+        name: formData.name,
+        email: formData.email,
+        message: formData.message,
+      });
+
       setSubmitMessage("Thank you! We'll get back to you soon.");
       setFormData({ name: "", email: "", phone: "", message: "" });
-    } catch (error) {
-      setSubmitMessage("Something went wrong. Please try again.");
+    } catch (error: any) {
+      console.error("Contact form error:", error);
+      setSubmitMessage(
+        error?.response?.data?.message || "Something went wrong. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -56,7 +61,7 @@ export default function Contact() {
                 <h2 className="text-3xl font-bold text-gray-900 mb-6">
                   Send Us a Message
                 </h2>
-                
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">

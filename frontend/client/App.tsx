@@ -5,7 +5,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
 // Public pages
 import Index from "./pages/Index";
 import About from "./pages/About";
@@ -20,7 +19,6 @@ import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
-
 // Admin
 import AdminLogin from "./pages/admin/Login";
 import RequireAdmin from "./pages/admin/RequireAdmin";
@@ -28,13 +26,14 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminSettings from "./pages/admin/Settings";
 import AdminHero from "./pages/admin/Hero";
-import TreksList from "./pages/admin/TreksList"; // ✅ NEW: List all treks
-import TrekForm from "./pages/admin/TrekForm"; // ✅ UPDATED: Create/Edit trek form
+import TreksList from "./pages/admin/TreksList";
+import TrekForm from "./pages/admin/TrekForm";
 import AdminBlogs from "./pages/admin/Blogs";
 import AdminGallery from "./pages/admin/Gallery";
 import AdminTestimonials from "./pages/admin/Testimonials";
 import AdminAbout from "./pages/admin/About";
 import Admins from "./pages/admin/Admins";
+import AdminMessages from "./pages/admin/AdminMessages"; // ← NEW
 
 const queryClient = new QueryClient();
 
@@ -66,17 +65,18 @@ const App = () => (
               <Route index element={<AdminDashboard />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="hero" element={<AdminHero />} />
-              
-              {/* ✅ UPDATED Trek Routes */}
+
+              {/* Trek Routes */}
               <Route path="treks" element={<TreksList />} />
               <Route path="treks/create" element={<TrekForm />} />
               <Route path="treks/edit/:id" element={<TrekForm />} />
-              
+
               <Route path="blogs" element={<AdminBlogs />} />
               <Route path="gallery" element={<AdminGallery />} />
               <Route path="testimonials" element={<AdminTestimonials />} />
               <Route path="about" element={<AdminAbout />} />
-              
+              <Route path="messages" element={<AdminMessages />} /> {/* ← NEW */}
+
               {/* 🔐 Superadmin only */}
               <Route path="admins" element={<Admins />} />
             </Route>

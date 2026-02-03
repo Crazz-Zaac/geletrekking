@@ -14,7 +14,7 @@ export default function AdminLayout() {
     { to: "/admin/gallery",      label: "Gallery" },
     { to: "/admin/testimonials", label: "Testimonials" },
     { to: "/admin/about",        label: "About Page" },
-    { to: "/admin/AdminMessages",     label: "Messages" },   // ← NEW
+    { to: "/admin/messages",     label: "Messages" },   
   ];
 
   return (
