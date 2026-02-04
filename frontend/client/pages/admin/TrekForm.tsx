@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "@/lib/apiClient";
 import { getToken, getUser } from "@/lib/auth";
@@ -23,6 +23,20 @@ type ExtraSection = {
   content: string;
 };
 
+const sections = [
+  { id: "basic", label: "Basic Info" },
+  { id: "pricing", label: "Pricing" },
+  { id: "group", label: "Group Size" },
+  { id: "highlights", label: "Highlights" },
+  { id: "includes", label: "Includes" },
+  { id: "excludes", label: "Excludes" },
+  { id: "itinerary", label: "Itinerary" },
+  { id: "offers", label: "Offers" },
+  { id: "faqs", label: "FAQs" },
+  { id: "extra", label: "Extra Sections" },
+  { id: "categories", label: "Categories" },
+];
+
 export default function TrekForm() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -31,6 +45,7 @@ export default function TrekForm() {
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState("");
+  const [activeSection, setActiveSection] = useState("basic");
 
   const [form, setForm] = useState({
     name: "",
@@ -49,7 +64,6 @@ export default function TrekForm() {
     is_featured: false,
     is_active: true,
     is_optional: false,
-    // Offer fields
     has_offer: false,
     offer_title: "",
     offer_description: "",
@@ -65,6 +79,22 @@ export default function TrekForm() {
   const [itinerary, setItinerary] = useState<ItineraryDay[]>([]);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [extraSections, setExtraSections] = useState<ExtraSection[]>([]);
+
+  // Section refs for scrolling
+  const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({});
+
+  const scrollToSection = (sectionId: string) => {
+    const element = sectionRefs.current[sectionId];
+    if (element) {
+      const offset = 180; // sticky nav height + padding
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      window.scrollTo({
+        top: elementPosition - offset,
+        behavior: "smooth",
+      });
+      setActiveSection(sectionId);
+    }
+  };
 
   // AUTH CHECK
   useEffect(() => {
@@ -245,8 +275,6 @@ export default function TrekForm() {
         extra_sections: extraSections,
       };
 
-      console.log("📦 Sending payload:", payload);
-
       if (isEditMode) {
         await api.put(`/api/treks/${id}`, payload);
         alert("✅ Trek updated successfully!");
@@ -288,6 +316,26 @@ export default function TrekForm() {
         </div>
       </div>
 
+      {/* ✅ STICKY SECTION NAVIGATION */}
+      <div className="sticky top-0 z-10 bg-slate-900 border-y border-slate-700 py-3 mb-6 -mx-8 px-8">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+          {sections.map((section) => (
+            <button
+              key={section.id}
+              onClick={() => scrollToSection(section.id)}
+              className={[
+                "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all",
+                activeSection === section.id
+                  ? "bg-yellow-500 text-black shadow-lg"
+                  : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white",
+              ].join(" ")}
+            >
+              {section.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {error && (
         <div className="bg-red-500/20 border border-red-500 text-red-300 p-3 rounded mb-4">
           {error}
@@ -296,7 +344,11 @@ export default function TrekForm() {
 
       <div className="space-y-8 max-w-6xl">
         {/* SECTION 1: BASIC INFORMATION */}
-        <section className="bg-slate-900 rounded-lg p-6">
+        <section
+          id="basic"
+          ref={(el) => (sectionRefs.current["basic"] = el)}
+          className="bg-slate-900 rounded-lg p-6 scroll-mt-48"
+        >
           <h2 className="text-2xl font-bold text-yellow-400 mb-4">Basic Information</h2>
 
           <div className="space-y-4">
@@ -415,7 +467,11 @@ export default function TrekForm() {
         </section>
 
         {/* SECTION 2: PRICING */}
-        <section className="bg-slate-900 rounded-lg p-6">
+        <section
+          id="pricing"
+          ref={(el) => (sectionRefs.current["pricing"] = el)}
+          className="bg-slate-900 rounded-lg p-6 scroll-mt-48"
+        >
           <h2 className="text-2xl font-bold text-yellow-400 mb-4">Pricing</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -449,7 +505,11 @@ export default function TrekForm() {
         </section>
 
         {/* SECTION 3: GROUP SIZE */}
-        <section className="bg-slate-900 rounded-lg p-6">
+        <section
+          id="group"
+          ref={(el) => (sectionRefs.current["group"] = el)}
+          className="bg-slate-900 rounded-lg p-6 scroll-mt-48"
+        >
           <h2 className="text-2xl font-bold text-yellow-400 mb-4">Group Size</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -481,7 +541,11 @@ export default function TrekForm() {
         </section>
 
         {/* SECTION 4: HIGHLIGHTS */}
-        <section className="bg-slate-900 rounded-lg p-6">
+        <section
+          id="highlights"
+          ref={(el) => (sectionRefs.current["highlights"] = el)}
+          className="bg-slate-900 rounded-lg p-6 scroll-mt-48"
+        >
           <h2 className="text-2xl font-bold text-yellow-400 mb-4">Highlights</h2>
 
           <div className="space-y-3">
@@ -512,7 +576,11 @@ export default function TrekForm() {
         </section>
 
         {/* SECTION 5: INCLUDES */}
-        <section className="bg-slate-900 rounded-lg p-6">
+        <section
+          id="includes"
+          ref={(el) => (sectionRefs.current["includes"] = el)}
+          className="bg-slate-900 rounded-lg p-6 scroll-mt-48"
+        >
           <h2 className="text-2xl font-bold text-yellow-400 mb-4">Cost Includes</h2>
 
           <div className="space-y-3">
@@ -543,7 +611,11 @@ export default function TrekForm() {
         </section>
 
         {/* SECTION 6: EXCLUDES */}
-        <section className="bg-slate-900 rounded-lg p-6">
+        <section
+          id="excludes"
+          ref={(el) => (sectionRefs.current["excludes"] = el)}
+          className="bg-slate-900 rounded-lg p-6 scroll-mt-48"
+        >
           <h2 className="text-2xl font-bold text-yellow-400 mb-4">Cost Does Not Include</h2>
 
           <div className="space-y-3">
@@ -574,7 +646,11 @@ export default function TrekForm() {
         </section>
 
         {/* SECTION 7: ITINERARY */}
-        <section className="bg-slate-900 rounded-lg p-6">
+        <section
+          id="itinerary"
+          ref={(el) => (sectionRefs.current["itinerary"] = el)}
+          className="bg-slate-900 rounded-lg p-6 scroll-mt-48"
+        >
           <h2 className="text-2xl font-bold text-yellow-400 mb-4">Itinerary</h2>
 
           <div className="space-y-4">
@@ -632,7 +708,11 @@ export default function TrekForm() {
         </section>
 
         {/* SECTION 8: OFFERS */}
-        <section className="bg-slate-900 rounded-lg p-6">
+        <section
+          id="offers"
+          ref={(el) => (sectionRefs.current["offers"] = el)}
+          className="bg-slate-900 rounded-lg p-6 scroll-mt-48"
+        >
           <h2 className="text-2xl font-bold text-yellow-400 mb-4">Special Offers</h2>
 
           <div className="space-y-4">
@@ -732,7 +812,11 @@ export default function TrekForm() {
         </section>
 
         {/* SECTION 9: FAQs */}
-        <section className="bg-slate-900 rounded-lg p-6">
+        <section
+          id="faqs"
+          ref={(el) => (sectionRefs.current["faqs"] = el)}
+          className="bg-slate-900 rounded-lg p-6 scroll-mt-48"
+        >
           <h2 className="text-2xl font-bold text-yellow-400 mb-4">FAQs</h2>
 
           <div className="space-y-4">
@@ -776,7 +860,11 @@ export default function TrekForm() {
         </section>
 
         {/* SECTION 10: EXTRA SECTIONS */}
-        <section className="bg-slate-900 rounded-lg p-6">
+        <section
+          id="extra"
+          ref={(el) => (sectionRefs.current["extra"] = el)}
+          className="bg-slate-900 rounded-lg p-6 scroll-mt-48"
+        >
           <h2 className="text-2xl font-bold text-yellow-400 mb-4">Extra Sections</h2>
           <p className="text-sm text-slate-400 mb-4">
             Add additional sections like "What to Bring", "Accommodation", etc.
@@ -823,7 +911,11 @@ export default function TrekForm() {
         </section>
 
         {/* SECTION 11: TREK CATEGORIES */}
-        <section className="bg-slate-900 rounded-lg p-6">
+        <section
+          id="categories"
+          ref={(el) => (sectionRefs.current["categories"] = el)}
+          className="bg-slate-900 rounded-lg p-6 scroll-mt-48"
+        >
           <h2 className="text-2xl font-bold text-yellow-400 mb-4">Trek Categories</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -875,7 +967,7 @@ export default function TrekForm() {
         </section>
 
         {/* SUBMIT BUTTONS */}
-        <div className="flex gap-4">
+        <div className="flex gap-4 sticky bottom-0 bg-slate-950 py-4 border-t border-slate-800">
           <button
             onClick={handleSubmit}
             disabled={submitLoading}

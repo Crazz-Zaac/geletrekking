@@ -1,16 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/apiClient";
 
-const navigationItems = [
+// Static nav items (no dropdowns)
+const staticNavItems = [
   { label: "Home", path: "/" },
   { label: "About Us", path: "/about" },
-  { label: "Destinations", path: "/destinations" },
   { label: "Gallery", path: "/gallery" },
   { label: "Company Activities", path: "/activities" },
-  { label: "Optional Treks", path: "/optional-treks" },
   { label: "Testimonials", path: "/testimonials" },
   { label: "Blog", path: "/blog" },
   { label: "Contact Us", path: "/contact" },
@@ -19,15 +18,34 @@ const navigationItems = [
 export const Header = ({ settings }: { settings: any }) => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [destinations, setDestinations] = useState<any[]>([]);
+  const [optionalTreks, setOptionalTreks] = useState<any[]>([]);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  // Fetch treks on mount
+  useEffect(() => {
+    // Fetch destination treks
+    api
+      .get("/api/treks?type=destination")
+      .then((res) => setDestinations(res.data || []))
+      .catch(() => setDestinations([]));
+
+    // Fetch optional treks
+    api
+      .get("/api/treks?type=optional")
+      .then((res) => setOptionalTreks(res.data || []))
+      .catch(() => setOptionalTreks([]));
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+          {/* Logo */}
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-           
-            <img src="/geletrekking.png" 
-              alt="Gele Trekking Logo" 
+            <img
+              src="/geletrekking.png"
+              alt="Gele Trekking Logo"
               className="h-10 w-10 rounded-full object-cover border border-gray-200 shadow-sm"
             />
             <span className="hidden sm:inline text-xl font-bold text-brand-dark">
@@ -35,23 +53,164 @@ export const Header = ({ settings }: { settings: any }) => {
             </span>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-8">
-            {navigationItems.map((item) => (
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-6">
+            <Link
+              to="/"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-brand-accent",
+                location.pathname === "/"
+                  ? "text-brand-accent"
+                  : "text-gray-700"
+              )}
+            >
+              Home
+            </Link>
+
+            <Link
+              to="/about"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-brand-accent",
+                location.pathname === "/about"
+                  ? "text-brand-accent"
+                  : "text-gray-700"
+              )}
+            >
+              About Us
+            </Link>
+
+            {/* Destinations Dropdown */}
+            <div
+              className="relative"
+              onMouseEnter={() => setActiveDropdown("destinations")}
+              onMouseLeave={() => setActiveDropdown(null)}
+            >
               <Link
-                key={item.path}
-                to={item.path}
+                to="/destinations"
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-brand-accent",
-                  location.pathname === item.path
+                  "flex items-center gap-1 text-sm font-medium transition-colors hover:text-brand-accent",
+                  location.pathname.startsWith("/destination")
                     ? "text-brand-accent"
                     : "text-gray-700"
                 )}
               >
-                {item.label}
+                Destinations
+                <ChevronDown className="w-4 h-4" />
               </Link>
-            ))}
+
+              {/* Dropdown menu */}
+              {activeDropdown === "destinations" && destinations.length > 0 && (
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-[220px]">
+                  {destinations.map((trek) => (
+                    <Link
+                      key={trek._id}
+                      to={`/destination/${trek._id}`}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-accent transition-colors"
+                    >
+                      {trek.title}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Link
+              to="/gallery"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-brand-accent",
+                location.pathname === "/gallery"
+                  ? "text-brand-accent"
+                  : "text-gray-700"
+              )}
+            >
+              Gallery
+            </Link>
+
+            <Link
+              to="/activities"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-brand-accent",
+                location.pathname === "/activities"
+                  ? "text-brand-accent"
+                  : "text-gray-700"
+              )}
+            >
+              Company Activities
+            </Link>
+
+            {/* Optional Treks Dropdown */}
+            <div
+              className="relative"
+              onMouseEnter={() => setActiveDropdown("optional")}
+              onMouseLeave={() => setActiveDropdown(null)}
+            >
+              <Link
+                to="/optional-treks"
+                className={cn(
+                  "flex items-center gap-1 text-sm font-medium transition-colors hover:text-brand-accent",
+                  location.pathname.startsWith("/optional-trek")
+                    ? "text-brand-accent"
+                    : "text-gray-700"
+                )}
+              >
+                Optional Treks
+                <ChevronDown className="w-4 h-4" />
+              </Link>
+
+              {/* Dropdown menu */}
+              {activeDropdown === "optional" && optionalTreks.length > 0 && (
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-[220px]">
+                  {optionalTreks.map((trek) => (
+                    <Link
+                      key={trek._id}
+                      to={`/optional-trek/${trek._id}`}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-accent transition-colors"
+                    >
+                      {trek.title}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Link
+              to="/testimonials"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-brand-accent",
+                location.pathname === "/testimonials"
+                  ? "text-brand-accent"
+                  : "text-gray-700"
+              )}
+            >
+              Testimonials
+            </Link>
+
+            <Link
+              to="/blog"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-brand-accent",
+                location.pathname === "/blog"
+                  ? "text-brand-accent"
+                  : "text-gray-700"
+              )}
+            >
+              Blog
+            </Link>
+
+            <Link
+              to="/contact"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-brand-accent",
+                location.pathname === "/contact"
+                  ? "text-brand-accent"
+                  : "text-gray-700"
+              )}
+            >
+              Contact Us
+            </Link>
           </nav>
 
+          {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="lg:hidden p-2"
@@ -64,23 +223,155 @@ export const Header = ({ settings }: { settings: any }) => {
           </button>
         </div>
 
+        {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <nav className="lg:hidden border-t border-gray-200 py-4">
-            {navigationItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className={cn(
-                  "block px-4 py-2 text-sm font-medium rounded-lg transition-colors",
-                  location.pathname === item.path
-                    ? "bg-brand-accent/10 text-brand-accent"
-                    : "text-gray-700 hover:bg-gray-100"
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+          <nav className="lg:hidden border-t border-gray-200 py-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
+            <Link
+              to="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "block px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                location.pathname === "/"
+                  ? "bg-brand-accent/10 text-brand-accent"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              Home
+            </Link>
+
+            <Link
+              to="/about"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "block px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                location.pathname === "/about"
+                  ? "bg-brand-accent/10 text-brand-accent"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              About Us
+            </Link>
+
+            {/* Destinations in mobile */}
+            <Link
+              to="/destinations"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "block px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                location.pathname === "/destinations"
+                  ? "bg-brand-accent/10 text-brand-accent"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              Destinations
+            </Link>
+            {destinations.length > 0 && (
+              <div className="ml-4 space-y-1">
+                {destinations.map((trek) => (
+                  <Link
+                    key={trek._id}
+                    to={`/destination/${trek._id}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-4 py-1.5 text-xs text-gray-600 hover:text-brand-accent"
+                  >
+                    • {trek.title}
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            <Link
+              to="/gallery"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "block px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                location.pathname === "/gallery"
+                  ? "bg-brand-accent/10 text-brand-accent"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              Gallery
+            </Link>
+
+            <Link
+              to="/activities"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "block px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                location.pathname === "/activities"
+                  ? "bg-brand-accent/10 text-brand-accent"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              Company Activities
+            </Link>
+
+            {/* Optional Treks in mobile */}
+            <Link
+              to="/optional-treks"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "block px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                location.pathname === "/optional-treks"
+                  ? "bg-brand-accent/10 text-brand-accent"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              Optional Treks
+            </Link>
+            {optionalTreks.length > 0 && (
+              <div className="ml-4 space-y-1">
+                {optionalTreks.map((trek) => (
+                  <Link
+                    key={trek._id}
+                    to={`/optional-trek/${trek._id}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-4 py-1.5 text-xs text-gray-600 hover:text-brand-accent"
+                  >
+                    • {trek.title}
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            <Link
+              to="/testimonials"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "block px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                location.pathname === "/testimonials"
+                  ? "bg-brand-accent/10 text-brand-accent"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              Testimonials
+            </Link>
+
+            <Link
+              to="/blog"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "block px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                location.pathname === "/blog"
+                  ? "bg-brand-accent/10 text-brand-accent"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              Blog
+            </Link>
+
+            <Link
+              to="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "block px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                location.pathname === "/contact"
+                  ? "bg-brand-accent/10 text-brand-accent"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+            >
+              Contact Us
+            </Link>
           </nav>
         )}
       </div>
@@ -95,9 +386,11 @@ export const Footer = ({ settings }: { settings: any }) => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-brand-accent to-brand-warning rounded flex items-center justify-center">
-                <span className="text-white font-bold text-sm">T</span>
-              </div>
+              <img
+                src="/geletrekking.png"
+                alt="Gele Trekking Logo"
+                className="h-8 w-8 rounded-full object-cover border border-white/20 shadow-sm"
+              />
               {settings?.siteName || "GELE TREKKING"}
             </h3>
             <p className="text-gray-300 text-sm">
@@ -164,7 +457,8 @@ export const Footer = ({ settings }: { settings: any }) => {
 
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-300">
           <p>
-            &copy; {new Date().getFullYear()} {settings?.siteName || "GELE TREKKING"}. All rights reserved.
+            &copy; {new Date().getFullYear()}{" "}
+            {settings?.siteName || "GELE TREKKING"}. All rights reserved.
           </p>
           <div className="flex gap-6 mt-4 md:mt-0">
             <a href="#" className="hover:text-brand-accent">

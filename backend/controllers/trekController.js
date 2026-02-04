@@ -32,8 +32,18 @@ const createTrek = async (req, res) => {
 // --------------------
 const getAllTreks = async (req, res) => {
   try {
-    // Public users → only show active treks
+    // Base filter: public users → only show active treks
     const filter = req.user?.role ? {} : { is_active: true };
+
+    // ✅ NEW: Support ?type=destination or ?type=optional query parameter
+    const { type } = req.query;
+    
+    if (type === "destination") {
+      filter.is_optional = false;
+    } else if (type === "optional") {
+      filter.is_optional = true;
+    }
+    // If no type specified, return all treks (existing behavior)
 
     const treks = await TrekPackage.find(filter).sort({ createdAt: -1 });
 
