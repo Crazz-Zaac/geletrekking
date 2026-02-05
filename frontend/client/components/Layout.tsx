@@ -4,37 +4,41 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/apiClient";
 
-// Static nav items (no dropdowns)
-const staticNavItems = [
-  { label: "Home", path: "/" },
-  { label: "About Us", path: "/about" },
-  { label: "Gallery", path: "/gallery" },
-  { label: "Company Activities", path: "/activities" },
-  { label: "Testimonials", path: "/testimonials" },
-  { label: "Blog", path: "/blog" },
-  { label: "Contact Us", path: "/contact" },
-];
-
 export const Header = ({ settings }: { settings: any }) => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [destinations, setDestinations] = useState<any[]>([]);
   const [optionalTreks, setOptionalTreks] = useState<any[]>([]);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Fetch treks on mount
   useEffect(() => {
-    // Fetch destination treks
-    api
-      .get("/api/treks?type=destination")
-      .then((res) => setDestinations(res.data || []))
-      .catch(() => setDestinations([]));
+    const fetchTreks = async () => {
+      try {
+        // Fetch destination treks
+        try {
+          const destResponse = await api.get("/api/treks?type=destination");
+          setDestinations(destResponse.data || []);
+        } catch (err) {
+          console.error("Error fetching destination treks:", err);
+          setDestinations([]);
+        }
 
-    // Fetch optional treks
-    api
-      .get("/api/treks?type=optional")
-      .then((res) => setOptionalTreks(res.data || []))
-      .catch(() => setOptionalTreks([]));
+        // Fetch optional treks
+        try {
+          const optResponse = await api.get("/api/treks?type=optional");
+          setOptionalTreks(optResponse.data || []);
+        } catch (err) {
+          console.error("Error fetching optional treks:", err);
+          setOptionalTreks([]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTreks();
   }, []);
 
   return (
@@ -99,17 +103,27 @@ export const Header = ({ settings }: { settings: any }) => {
               </Link>
 
               {/* Dropdown menu */}
-              {activeDropdown === "destinations" && destinations.length > 0 && (
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-[220px]">
-                  {destinations.map((trek) => (
-                    <Link
-                      key={trek._id}
-                      to={`/destination/${trek._id}`}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-accent transition-colors"
-                    >
-                      {trek.title}
-                    </Link>
-                  ))}
+              {activeDropdown === "destinations" && (
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-[220px] z-50">
+                  {loading ? (
+                    <div className="px-4 py-2 text-sm text-gray-500">
+                      Loading...
+                    </div>
+                  ) : destinations.length > 0 ? (
+                    destinations.map((trek) => (
+                      <Link
+                        key={trek._id}
+                        to={`/destination/${trek._id}`}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-accent transition-colors capitalize"
+                      >
+                        {trek.name}
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="px-4 py-2 text-sm text-gray-500">
+                      No destinations available
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -158,17 +172,27 @@ export const Header = ({ settings }: { settings: any }) => {
               </Link>
 
               {/* Dropdown menu */}
-              {activeDropdown === "optional" && optionalTreks.length > 0 && (
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-[220px]">
-                  {optionalTreks.map((trek) => (
-                    <Link
-                      key={trek._id}
-                      to={`/optional-trek/${trek._id}`}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-accent transition-colors"
-                    >
-                      {trek.title}
-                    </Link>
-                  ))}
+              {activeDropdown === "optional" && (
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-[220px] z-50">
+                  {loading ? (
+                    <div className="px-4 py-2 text-sm text-gray-500">
+                      Loading...
+                    </div>
+                  ) : optionalTreks.length > 0 ? (
+                    optionalTreks.map((trek) => (
+                      <Link
+                        key={trek._id}
+                        to={`/optional-trek/${trek._id}`}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-accent transition-colors capitalize"
+                      >
+                        {trek.name}
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="px-4 py-2 text-sm text-gray-500">
+                      No optional treks available
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -265,16 +289,16 @@ export const Header = ({ settings }: { settings: any }) => {
             >
               Destinations
             </Link>
-            {destinations.length > 0 && (
+            {!loading && destinations.length > 0 && (
               <div className="ml-4 space-y-1">
                 {destinations.map((trek) => (
                   <Link
                     key={trek._id}
                     to={`/destination/${trek._id}`}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-1.5 text-xs text-gray-600 hover:text-brand-accent"
+                    className="block px-4 py-1.5 text-xs text-gray-600 hover:text-brand-accent capitalize"
                   >
-                    • {trek.title}
+                    • {trek.name}
                   </Link>
                 ))}
               </div>
@@ -319,16 +343,16 @@ export const Header = ({ settings }: { settings: any }) => {
             >
               Optional Treks
             </Link>
-            {optionalTreks.length > 0 && (
+            {!loading && optionalTreks.length > 0 && (
               <div className="ml-4 space-y-1">
                 {optionalTreks.map((trek) => (
                   <Link
                     key={trek._id}
                     to={`/optional-trek/${trek._id}`}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-1.5 text-xs text-gray-600 hover:text-brand-accent"
+                    className="block px-4 py-1.5 text-xs text-gray-600 hover:text-brand-accent capitalize"
                   >
-                    • {trek.title}
+                    • {trek.name}
                   </Link>
                 ))}
               </div>
