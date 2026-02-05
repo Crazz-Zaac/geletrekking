@@ -122,6 +122,11 @@ app.get("/", (req, res) => {
   res.send("GeleTrekking backend is running.");
 });
 
+// Health check endpoint for Docker
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "healthy", message: "Backend is running" });
+});
+
 /* =========================================================
    7. ERROR HANDLING
 ========================================================= */

@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # Frontend - React/Vite with Nginx (Production)
   frontend:
@@ -30,10 +28,6 @@ services:
     restart: unless-stopped
     networks:
       - geletrekking-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 5s
-      retries: 5
 
   # MongoDB Database
   mongo:
