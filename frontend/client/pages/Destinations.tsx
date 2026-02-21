@@ -244,12 +244,15 @@ export default function Destinations() {
 
                     {/* Quick Details */}
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <div className="text-sm text-gray-600">Duration</div>
-                        <div className="text-lg font-bold text-brand-accent">
-                          {trek.duration_days} Days
+                      {/* ✅ FIXED: Changed from {trek.duration_days &&} to {trek.duration_days > 0 &&} */}
+                      {trek.duration_days > 0 && (
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <div className="text-sm text-gray-600">Duration</div>
+                          <div className="text-lg font-bold text-brand-accent">
+                            {trek.duration_days} Days
+                          </div>
                         </div>
-                      </div>
+                      )}
                       <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="text-sm text-gray-600">Difficulty</div>
                         <div
@@ -264,13 +267,17 @@ export default function Destinations() {
                           {trek.difficulty}
                         </div>
                       </div>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <div className="text-sm text-gray-600">Price</div>
-                        <div className="text-lg font-bold text-brand-accent">
-                          ${trek.price_usd}
+                      {/* ✅ FIXED: Changed from {trek.price_usd &&} to {trek.price_usd > 0 &&} */}
+                      {trek.price_usd > 0 && (
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <div className="text-sm text-gray-600">Price</div>
+                          <div className="text-lg font-bold text-brand-accent">
+                            ${trek.price_usd}
+                          </div>
                         </div>
-                      </div>
-                      {trek.rating && (
+                      )}
+                      {/* ✅ FIXED: Changed from {trek.rating &&} to {trek.rating && trek.rating > 0 &&} */}
+                      {trek.rating && trek.rating > 0 && (
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <div className="text-sm text-gray-600">Rating</div>
                           <div className="flex items-center gap-1">
