@@ -67,39 +67,100 @@ export default function Contact() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
                     <input type="text" required value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 outline-none transition"
                       placeholder="Your full name" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
                     <input type="email" required value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 outline-none transition"
                       placeholder="your@email.com" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                     <input type="tel" value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 outline-none transition"
                       placeholder="+977 98XXXXXXXX" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Message *</label>
                     <textarea required value={formData.message} rows={8}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none transition"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 outline-none resize-none transition"
                       placeholder="Tell us about your trekking plans, preferred dates, group size..." />
                   </div>
+
                   {submitMessage && (
                     <div className={`p-4 rounded-lg text-sm ${submitMessage.includes("Thank") ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>
                       {submitMessage}
                     </div>
                   )}
-                  <button type="submit" disabled={isSubmitting}
-                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
-                    {isSubmitting ? "Sending..." : "Send Message"}
+
+                  {/* ── Send Message Button — Forest Green gradient ── */}
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    style={{
+                      width: "100%",
+                      padding: "14px 24px",
+                      borderRadius: "12px",
+                      border: "none",
+                      cursor: isSubmitting ? "not-allowed" : "pointer",
+                      background: isSubmitting
+                        ? "linear-gradient(135deg, #86efac, #4ade80)"
+                        : "linear-gradient(135deg, #16a34a, #15803d, #166534)",
+                      color: "white",
+                      fontWeight: "700",
+                      fontSize: "16px",
+                      letterSpacing: "0.03em",
+                      boxShadow: isSubmitting
+                        ? "none"
+                        : "0 4px 20px rgba(22,163,74,0.45), 0 2px 8px rgba(0,0,0,0.12)",
+                      transition: "all 0.25s ease",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSubmitting) {
+                        (e.currentTarget as HTMLButtonElement).style.background =
+                          "linear-gradient(135deg, #22c55e, #16a34a, #15803d)";
+                        (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                          "0 6px 28px rgba(22,163,74,0.6), 0 2px 10px rgba(0,0,0,0.15)";
+                        (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSubmitting) {
+                        (e.currentTarget as HTMLButtonElement).style.background =
+                          "linear-gradient(135deg, #16a34a, #15803d, #166534)";
+                        (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                          "0 4px 20px rgba(22,163,74,0.45), 0 2px 8px rgba(0,0,0,0.12)";
+                        (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
+                      }
+                    }}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <svg style={{ width: 18, height: 18, animation: "spin 1s linear infinite" }} fill="none" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeOpacity="0.3" />
+                          <path d="M12 2a10 10 0 0110 10" stroke="white" strokeWidth="3" strokeLinecap="round" />
+                        </svg>
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <svg style={{ width: 18, height: 18 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                        Send Message
+                      </>
+                    )}
                   </button>
+
                   <p className="text-sm text-gray-500 text-center">We typically respond within 24 hours</p>
                 </form>
               </div>
@@ -198,14 +259,49 @@ export default function Contact() {
                     </div>
                   )}
 
-                  <a href="https://www.google.com/maps/dir//27.758888888888890,85.308333333333340"
-                    target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors w-full">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  {/* ── Get Directions Button — Forest Green gradient ── */}
+                  <a
+                    href="https://www.google.com/maps/dir//27.758888888888890,85.308333333333340"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      width: "100%",
+                      padding: "14px 24px",
+                      borderRadius: "12px",
+                      background: "linear-gradient(135deg, #16a34a, #15803d, #166534)",
+                      color: "white",
+                      fontWeight: "700",
+                      fontSize: "16px",
+                      letterSpacing: "0.03em",
+                      textDecoration: "none",
+                      boxShadow: "0 4px 20px rgba(22,163,74,0.45), 0 2px 8px rgba(0,0,0,0.12)",
+                      transition: "all 0.25s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLAnchorElement).style.background =
+                        "linear-gradient(135deg, #22c55e, #16a34a, #15803d)";
+                      (e.currentTarget as HTMLAnchorElement).style.boxShadow =
+                        "0 6px 28px rgba(22,163,74,0.6), 0 2px 10px rgba(0,0,0,0.15)";
+                      (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-2px)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLAnchorElement).style.background =
+                        "linear-gradient(135deg, #16a34a, #15803d, #166534)";
+                      (e.currentTarget as HTMLAnchorElement).style.boxShadow =
+                        "0 4px 20px rgba(22,163,74,0.45), 0 2px 8px rgba(0,0,0,0.12)";
+                      (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(0)";
+                    }}
+                  >
+                    <svg style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                     </svg>
                     Get Directions
                   </a>
+
                 </div>
               </div>
             </div>
