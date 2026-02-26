@@ -43,7 +43,7 @@ export default function Gallery() {
     return items.filter((item: any) => item.category === selectedCategory);
   }, [items, selectedCategory]);
 
-  // Group items by category for stacking
+  // Group items by category for stacking (only used in "all" mode)
   const stackedCategories = useMemo(() => {
     if (!filteredItems) return [];
     
@@ -56,7 +56,6 @@ export default function Gallery() {
       return acc;
     }, {});
     
-    // Convert to array format for rendering
     return Object.entries(grouped).map(([category, images]: [string, any]) => ({
       category,
       images
@@ -65,11 +64,11 @@ export default function Gallery() {
 
   const heroImageUrl = heroData?.heroImageUrl;
 
-  const openLightbox = (image: any, categoryImages: any[], e: React.MouseEvent) => {
+  const openLightbox = (image: any, imageList: any[], e: React.MouseEvent) => {
     e.stopPropagation();
-    const index = categoryImages.findIndex(item => item._id === image._id);
+    const index = imageList.findIndex(item => item._id === image._id);
     setLightboxImage(image);
-    setLightboxImages(categoryImages);
+    setLightboxImages(imageList);
     setLightboxIndex(index);
   };
 
@@ -176,12 +175,19 @@ export default function Gallery() {
           opacity: 0.03;
           mix-blend-mode: overlay;
         }
+
+        .flat-grid-card {
+          transition: all 0.3s ease;
+        }
+        .flat-grid-card:hover {
+          transform: scale(1.02);
+          box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
       `}</style>
       
       <div className="min-h-screen gallery-container" style={{ background: 'linear-gradient(to bottom, #fdfcfb 0%, #e2d1c3 100%)' }}>
         {/* Hero Section with Artistic Background */}
         <section className="pt-40 pb-24 relative overflow-hidden">
-          {/* Decorative Background Elements */}
           <div className="absolute inset-0">
             {heroImageUrl ? (
               <>
@@ -195,13 +201,11 @@ export default function Gallery() {
               </>
             ) : null}
             
-            {/* Organic shapes */}
             <div className="absolute top-20 right-10 w-96 h-96 bg-gradient-to-br from-amber-200/30 to-rose-300/30 rounded-full blur-3xl" />
             <div className="absolute bottom-20 left-10 w-80 h-80 bg-gradient-to-tr from-blue-200/30 to-purple-300/30 rounded-full blur-3xl" />
             <div className="noise-texture absolute inset-0" />
           </div>
           
-          {/* Content */}
           <div className="container mx-auto px-6 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
               <h1 className="gallery-title text-7xl md:text-8xl mb-6 text-gray-900 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
@@ -211,7 +215,6 @@ export default function Gallery() {
                 A curated collection of moments from our adventures
               </p>
               
-              {/* Decorative divider */}
               <div className="mt-8 flex items-center justify-center gap-2 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
                 <div className="h-px w-16 bg-gradient-to-r from-transparent to-amber-400" />
                 <div className="w-2 h-2 rounded-full bg-amber-500" />
@@ -274,7 +277,7 @@ export default function Gallery() {
                     </p>
                   </div>
                 </div>
-              ) : (
+              ) : selectedCategory === "all" ? (
                 <>
                   {/* Results count */}
                   <div className="mb-12 text-center animate-fade-in-up">
@@ -285,7 +288,7 @@ export default function Gallery() {
                     </p>
                   </div>
 
-                  {/* Stacked Categories Grid */}
+                  {/* Stacked Categories Grid — shown only in "All Collections" mode */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
                     {stackedCategories.map(({ category, images }, stackIdx) => (
                       <div 
@@ -296,7 +299,7 @@ export default function Gallery() {
                           animationDelay: `${stackIdx * 0.1}s`
                         }}
                       >
-                        {/* Category label with premium styling */}
+                        {/* Category label */}
                         <div className="absolute -top-6 left-6 z-30">
                           <div className="relative">
                             <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-rose-400 blur-lg opacity-60" />
@@ -307,7 +310,7 @@ export default function Gallery() {
                           </div>
                         </div>
 
-                        {/* Stacked images with enhanced styling */}
+                        {/* Stacked images */}
                         <div className="relative h-full pt-4">
                           {images.map((item: any, index: number) => (
                             <div
@@ -318,16 +321,13 @@ export default function Gallery() {
                                 zIndex: images.length - index,
                               }}
                             >
-                              {/* Collapsed state - show only first image with premium card design */}
+                              {/* Collapsed state */}
                               <div 
                                 className="h-full w-full transition-all duration-500 ease-out group-hover/stack:opacity-0 group-hover/stack:pointer-events-none"
-                                style={{
-                                  transitionDelay: `${index * 60}ms`,
-                                }}
+                                style={{ transitionDelay: `${index * 60}ms` }}
                               >
                                 {index === 0 && (
                                   <div className="h-full relative overflow-hidden rounded-3xl bg-white shadow-2xl shadow-black/20 border border-gray-200/50">
-                                    {/* Image with overlay gradient */}
                                     <div className="absolute inset-0">
                                       <img
                                         src={item.imageUrl}
@@ -336,8 +336,6 @@ export default function Gallery() {
                                       />
                                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                                     </div>
-                                    
-                                    {/* Featured badge with glow */}
                                     {item.isFeatured && (
                                       <div className="absolute top-5 right-5">
                                         <div className="relative">
@@ -348,8 +346,6 @@ export default function Gallery() {
                                         </div>
                                       </div>
                                     )}
-                                    
-                                    {/* Bottom info bar */}
                                     <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                                       <p className="text-sm font-medium opacity-90 mb-1">Hover to reveal collection</p>
                                       <div className="h-1 w-12 bg-white/50 rounded-full" />
@@ -358,7 +354,7 @@ export default function Gallery() {
                                 )}
                               </div>
 
-                              {/* Expanded state on hover - all images visible and clickable with premium styling */}
+                              {/* Expanded state on hover */}
                               <div 
                                 onClick={(e) => openLightbox(item, images, e)}
                                 className="absolute inset-0 opacity-0 group-hover/stack:opacity-100 transition-all duration-500 ease-out"
@@ -368,7 +364,6 @@ export default function Gallery() {
                                 }}
                               >
                                 <div className="h-72 relative overflow-hidden rounded-3xl bg-white shadow-2xl shadow-black/20 border border-gray-200/50 hover:shadow-3xl hover:scale-[1.02] transition-all duration-300">
-                                  {/* Image */}
                                   <div className="absolute inset-0 overflow-hidden">
                                     <img
                                       src={item.imageUrl}
@@ -377,8 +372,6 @@ export default function Gallery() {
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                                   </div>
-                                  
-                                  {/* Featured badge */}
                                   {item.isFeatured && (
                                     <div className="absolute top-4 right-4">
                                       <div className="relative">
@@ -389,14 +382,10 @@ export default function Gallery() {
                                       </div>
                                     </div>
                                   )}
-                                  
-                                  {/* Hover overlay with title and click indicator */}
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover/card:opacity-100 transition-all duration-300 flex flex-col justify-end p-6">
                                     <div className="text-white transform translate-y-4 group-hover/card:translate-y-0 transition-transform duration-300">
                                       {item.title && (
-                                        <p className="text-lg font-semibold mb-2 gallery-title">
-                                          {item.title}
-                                        </p>
+                                        <p className="text-lg font-semibold mb-2 gallery-title">{item.title}</p>
                                       )}
                                       <div className="flex items-center gap-2 text-sm opacity-90">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -406,14 +395,70 @@ export default function Gallery() {
                                         <span>Click to view</span>
                                       </div>
                                     </div>
-                                    
-                                    {/* Decorative corner accent */}
                                     <div className="absolute bottom-4 right-4 w-12 h-12 border-r-2 border-b-2 border-white/30 rounded-br-2xl" />
                                   </div>
                                 </div>
                               </div>
                             </div>
                           ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Flat grid — shown when a specific category is selected */}
+                  <div className="mb-12 text-center animate-fade-in-up">
+                    <p className="text-lg text-gray-600 font-light">
+                      {filteredItems.length} {filteredItems.length === 1 ? "moment" : "moments"} in{" "}
+                      <span className="font-semibold text-gray-800 capitalize">{selectedCategory}</span>
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {filteredItems.map((item: any, idx: number) => (
+                      <div
+                        key={item._id}
+                        className="flat-grid-card relative overflow-hidden rounded-3xl bg-white shadow-xl shadow-black/15 border border-gray-200/50 cursor-pointer group animate-fade-in-up"
+                        style={{ animationDelay: `${idx * 0.07}s`, height: '320px' }}
+                        onClick={(e) => openLightbox(item, filteredItems, e)}
+                      >
+                        {/* Image */}
+                        <img
+                          src={item.imageUrl}
+                          alt={item.title || "Gallery image"}
+                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+
+                        {/* Featured badge */}
+                        {item.isFeatured && (
+                          <div className="absolute top-4 right-4">
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-yellow-400 blur-md opacity-75" />
+                              <div className="relative bg-gradient-to-r from-yellow-400 to-amber-500 text-amber-900 px-3 py-1.5 rounded-full text-xs font-bold shadow-xl uppercase tracking-wider">
+                                ✨ Featured
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-6">
+                          <div className="text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                            {item.title && (
+                              <p className="text-lg font-semibold mb-2 gallery-title">{item.title}</p>
+                            )}
+                            <div className="flex items-center gap-2 text-sm opacity-90">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              <span>Click to view</span>
+                            </div>
+                          </div>
+                          <div className="absolute bottom-4 right-4 w-12 h-12 border-r-2 border-b-2 border-white/30 rounded-br-2xl" />
                         </div>
                       </div>
                     ))}
@@ -430,7 +475,6 @@ export default function Gallery() {
             className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center backdrop-blur-sm"
             onClick={closeLightbox}
           >
-            {/* Close button with premium styling */}
             <button
               onClick={closeLightbox}
               className="absolute top-6 right-6 text-white/90 hover:text-white transition-all z-50 bg-white/10 backdrop-blur-sm rounded-full p-3 hover:bg-white/20 hover:rotate-90 duration-300"
@@ -438,31 +482,23 @@ export default function Gallery() {
               <X className="w-6 h-6" />
             </button>
 
-            {/* Image counter with premium styling */}
             <div className="absolute top-6 left-1/2 transform -translate-x-1/2 text-white backdrop-blur-md bg-white/10 px-6 py-3 rounded-full border border-white/20">
               <span className="font-medium">{lightboxIndex + 1}</span>
               <span className="mx-2 opacity-50">/</span>
               <span className="opacity-75">{lightboxImages.length}</span>
             </div>
 
-            {/* Navigation buttons with premium styling */}
             {lightboxImages.length > 1 && (
               <>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    prevImage();
-                  }}
+                  onClick={(e) => { e.stopPropagation(); prevImage(); }}
                   className="absolute left-6 top-1/2 transform -translate-y-1/2 text-white transition-all backdrop-blur-md bg-white/10 rounded-full p-4 hover:bg-white/20 hover:scale-110 border border-white/20"
                 >
                   <ChevronLeft className="w-8 h-8" />
                 </button>
                 
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    nextImage();
-                  }}
+                  onClick={(e) => { e.stopPropagation(); nextImage(); }}
                   className="absolute right-6 top-1/2 transform -translate-y-1/2 text-white transition-all backdrop-blur-md bg-white/10 rounded-full p-4 hover:bg-white/20 hover:scale-110 border border-white/20"
                 >
                   <ChevronRight className="w-8 h-8" />
@@ -470,7 +506,6 @@ export default function Gallery() {
               </>
             )}
 
-            {/* Main image with premium frame */}
             <div 
               className="relative max-w-7xl max-h-[85vh] mx-8"
               onClick={(e) => e.stopPropagation()}
@@ -483,7 +518,6 @@ export default function Gallery() {
                 />
               </div>
               
-              {/* Image info with premium styling */}
               {(lightboxImage.title || lightboxImage.category) && (
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-8 rounded-b-2xl">
                   <div className="backdrop-blur-sm">
