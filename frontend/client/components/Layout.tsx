@@ -12,46 +12,53 @@ interface SocialIcon {
   svg: string;
 }
 
-const socialIcons: SocialIcon[] = [
+const getSocialIcons = (social: any): SocialIcon[] => [
   {
     name: "Instagram",
-    href: "#",
+    href: social?.instagram || "#",
     colors: ["#833ab4", "#fd1d1d", "#fcb045"],
     svg: `<rect x="2" y="2" width="20" height="20" rx="5" fill="none" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="white" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.3" fill="white"/>`,
   },
   {
     name: "Facebook",
-    href: "#",
+    href: social?.facebook || "#",
     colors: ["#1877f2", "#42a5f5"],
     svg: `<path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" fill="white"/>`,
   },
   {
     name: "Gmail",
-    href: "#",
+    href: social?.gmail ? `mailto:${social.gmail}` : "#",
     colors: ["#EA4335", "#FBBC05", "#34A853", "#4285F4"],
     svg: `<path d="M2 6a2 2 0 012-2h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" fill="none" stroke="white" stroke-width="1.5"/><path d="M2 7l10 7 10-7" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"/>`,
   },
   {
     name: "WhatsApp",
-    href: "#",
+    href: social?.whatsapp ? `https://wa.me/${social.whatsapp.replace(/\D/g, "")}` : "#",
     colors: ["#25D366", "#128C7E", "#075E54"],
     svg: `<path d="M20.5 3.5A12 12 0 003.5 20.5L2 22l1.5-5.5A12 12 0 1020.5 3.5z" fill="none" stroke="white" stroke-width="1.8"/><path d="M9 11c.5 1 1.2 2 2.2 2.8 1 .8 2 1.3 3 1.5l1-1.2c.2-.2.5-.3.8-.1.8.3 1.7.6 2 .7.3.1.5.4.5.7v2c0 .6-.5 1-1 .9C8.5 17.5 6.5 8 7 7.5l2-2c.3-.3.8-.2 1 .1l1 2.2c.2.3.1.6-.1.8L9 11z" fill="white"/>`,
   },
+  {
+    name: "LinkedIn",
+    href: social?.linkedin || "#",
+    colors: ["#0077b5", "#00a0dc"],
+    svg: `<path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z" fill="white"/><rect x="2" y="9" width="4" height="12" fill="white"/><circle cx="4" cy="4" r="2" fill="white"/>`,
+  },
 ];
 
-const SocialIconsRow = () => {
+const SocialIconsRow = ({ social }: { social: any }) => {
   const [hovered, setHovered] = useState<string | null>(null);
+  const icons = getSocialIcons(social);
 
   return (
     <div className="flex items-center gap-3 mt-1">
-      {socialIcons.map((icon, i) => {
+      {icons.map((icon, i) => {
         const gradId = `footer-grad-${i}`;
         const isHovered = hovered === icon.name;
         return (
           <a
             key={icon.name}
             href={icon.href}
-            target="_blank"
+            target={icon.href.startsWith("mailto") ? "_self" : "_blank"}
             rel="noopener noreferrer"
             aria-label={icon.name}
             onMouseEnter={() => setHovered(icon.name)}
@@ -135,6 +142,7 @@ export const Header = ({ settings }: { settings: any }) => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
             <img
@@ -384,10 +392,10 @@ export const Footer = ({ settings }: { settings: any }) => {
             </ul>
           </div>
 
-          {/* Social Media — replaces old Contact column */}
+          {/* Social Media */}
           <div>
             <h4 className="font-semibold mb-4">Follow Us</h4>
-            <SocialIconsRow />
+            <SocialIconsRow social={settings?.social} />
           </div>
 
         </div>

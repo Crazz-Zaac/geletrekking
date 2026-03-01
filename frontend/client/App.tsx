@@ -5,7 +5,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
 // Public pages
 import Index from "./pages/Index";
 import About from "./pages/About";
@@ -20,7 +19,6 @@ import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
-
 // Admin
 import AdminLogin from "./pages/admin/Login";
 import RequireAdmin from "./pages/admin/RequireAdmin";
@@ -36,6 +34,7 @@ import AdminTestimonials from "./pages/admin/Testimonials";
 import AdminAbout from "./pages/admin/About";
 import Admins from "./pages/admin/Admins";
 import AdminMessages from "./pages/admin/AdminMessages";
+import AdminActivities from "./pages/admin/AdminActivities"; // ✅ NEW
 
 const queryClient = new QueryClient();
 
@@ -76,6 +75,7 @@ const App = () => (
               <Route path="testimonials" element={<AdminTestimonials />} />
               <Route path="about" element={<AdminAbout />} />
               <Route path="messages" element={<AdminMessages />} />
+              <Route path="activities" element={<AdminActivities />} /> {/* ✅ NEW */}
               {/* 🔐 Superadmin only */}
               <Route path="admins" element={<Admins />} />
             </Route>

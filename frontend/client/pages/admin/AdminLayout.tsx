@@ -15,7 +15,8 @@ import {
   Users,
   LogOut,
   Moon,
-  Sun
+  Sun,
+  Activity  // ✅ NEW
 } from "lucide-react";
 import { clearAuth, getUser } from "@/lib/auth";
 import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
@@ -27,15 +28,16 @@ function AdminLayoutContent() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const navItems = [
-    { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/admin/settings", label: "Settings", icon: Settings },
-    { to: "/admin/hero", label: "Hero", icon: Flame },
-    { to: "/admin/treks", label: "Treks", icon: Mountain },
-    { to: "/admin/blogs", label: "Blogs", icon: FileText },
-    { to: "/admin/gallery", label: "Gallery", icon: Image },
+    { to: "/admin",              label: "Dashboard",    icon: LayoutDashboard },
+    { to: "/admin/settings",     label: "Settings",     icon: Settings },
+    { to: "/admin/hero",         label: "Hero",         icon: Flame },
+    { to: "/admin/treks",        label: "Treks",        icon: Mountain },
+    { to: "/admin/blogs",        label: "Blogs",        icon: FileText },
+    { to: "/admin/gallery",      label: "Gallery",      icon: Image },
     { to: "/admin/testimonials", label: "Testimonials", icon: MessageSquare },
-    { to: "/admin/about", label: "About Page", icon: Info },
-    { to: "/admin/messages", label: "Messages", icon: Mail },
+    { to: "/admin/about",        label: "About Page",   icon: Info },
+    { to: "/admin/activities",   label: "Activities",   icon: Activity }, // ✅ NEW
+    { to: "/admin/messages",     label: "Messages",     icon: Mail },
   ];
 
   return (
@@ -99,6 +101,7 @@ function AdminLayoutContent() {
                     </NavLink>
                   );
                 })}
+
                 {/* SUPERADMIN SECTION */}
                 {user?.role === "superadmin" && (
                   <>
@@ -122,6 +125,7 @@ function AdminLayoutContent() {
                   </>
                 )}
               </nav>
+
               {/* LOGOUT */}
               <button
                 onClick={() => {
@@ -133,6 +137,7 @@ function AdminLayoutContent() {
                 <LogOut className="w-5 h-5" />
                 Logout
               </button>
+
               {/* TOGGLE BUTTON AT BOTTOM */}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -179,6 +184,7 @@ function AdminLayoutContent() {
                     </NavLink>
                   );
                 })}
+
                 {user?.role === "superadmin" && (
                   <NavLink
                     to="/admin/admins"
@@ -196,6 +202,7 @@ function AdminLayoutContent() {
                   </NavLink>
                 )}
               </nav>
+
               {/* LOGOUT ICON */}
               <button
                 onClick={() => {
@@ -207,6 +214,7 @@ function AdminLayoutContent() {
               >
                 <LogOut className="w-5 h-5" />
               </button>
+
               {/* TOGGLE BUTTON AT BOTTOM */}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -217,6 +225,7 @@ function AdminLayoutContent() {
             </>
           )}
         </aside>
+
         {/* ================= CONTENT ================= */}
         <main className="flex-1 p-6 bg-gray-50 dark:bg-slate-900">
           <Outlet />

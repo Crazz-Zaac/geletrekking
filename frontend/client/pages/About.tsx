@@ -11,12 +11,28 @@ export default function About() {
   return (
     <Layout>
       <div className="min-h-screen bg-white">
-        <section className="pt-32 pb-16 bg-gradient-to-br from-blue-50 to-teal-50">
-          <div className="container mx-auto px-4">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+
+        {/* HERO with background video + overlay */}
+        <section className="relative overflow-hidden min-h-[520px] flex items-end">
+          {/* Background Video */}
+          <video
+            className="absolute inset-0 w-full h-full object-cover"
+            src="https://ik.imagekit.io/dj8jxmvvw/sample-video.mp4?updatedAt=1770239642405"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+
+          {/* Gradient overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/70 to-teal-800/60" />
+
+          {/* Hero text on top of overlay */}
+          <div className="container mx-auto px-4 relative z-10 pt-32 pb-12">
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
               {data?.heroTitle || "About GELE TREKKING"}
             </h1>
-            <p className="text-lg text-gray-600 max-w-2xl">
+            <p className="text-lg text-blue-100 max-w-2xl">
               {data?.heroSubtitle || "Your trusted trekking partner in Nepal."}
             </p>
           </div>
@@ -26,18 +42,6 @@ export default function About() {
           <div className="container mx-auto px-4 py-16 text-gray-600">Loading...</div>
         ) : (
           <>
-            {data?.heroImageUrl ? (
-              <div className="container mx-auto px-4 -mt-10">
-                <div className="rounded-3xl overflow-hidden shadow-xl bg-gray-100">
-                  <img
-                    src={data.heroImageUrl}
-                    alt="About hero"
-                    className="w-full h-[360px] object-cover"
-                  />
-                </div>
-              </div>
-            ) : null}
-
             <section className="py-16">
               <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-10">
                 <div className="rounded-3xl bg-white shadow-lg p-8">
@@ -48,7 +52,6 @@ export default function About() {
                     {data?.missionBody || ""}
                   </p>
                 </div>
-
                 <div className="rounded-3xl bg-white shadow-lg p-8">
                   <h2 className="text-2xl font-bold text-gray-900">
                     {data?.storyTitle || "Our Story"}
@@ -70,7 +73,6 @@ export default function About() {
                     </div>
                   ))}
                 </div>
-
                 <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4">
                   {(data?.stats || []).map((s: any, idx: number) => (
                     <div key={idx} className="rounded-2xl bg-gradient-to-br from-blue-50 to-teal-50 p-5 text-center">

@@ -67,6 +67,7 @@ const superadminRoutes = require("./routes/superadmin/superadmin");
 const trekRoutes = require("./routes/trekroutes");
 const authRoutes = require("./routes/authroutes");
 const aboutRoutes = require("./routes/aboutRoutes");
+const activityRoutes = require("./routes/activityRoutes");
 
 // Content routes
 const blogRoutes = require("./routes/blogRoutes");
@@ -89,6 +90,7 @@ app.use("/api/superadmin", superadminRoutes);
 app.use("/api/treks", trekRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/about", aboutRoutes);
+app.use("/api/activities", activityRoutes);
 
 // Mount new content routes
 app.use("/api/blogs", blogRoutes);

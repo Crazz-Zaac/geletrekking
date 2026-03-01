@@ -77,7 +77,7 @@ export default function AdminSettings() {
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
-                  
+
                   const loadingToast = showToast.loading("Uploading logo...");
                   try {
                     const url = await uploadImage(file, "logo");
@@ -122,17 +122,21 @@ export default function AdminSettings() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {["facebook", "instagram", "twitter", "linkedin"].map((k) => (
-              <div key={k}>
-                <label className="block text-sm text-slate-300 mb-1">
-                  {k.charAt(0).toUpperCase() + k.slice(1)}
-                </label>
+            {[
+              { key: "facebook",  label: "Facebook" },
+              { key: "instagram", label: "Instagram" },
+              { key: "gmail",     label: "Gmail" },
+              { key: "whatsapp",  label: "WhatsApp" },
+              { key: "linkedin",  label: "LinkedIn" },
+            ].map(({ key, label }) => (
+              <div key={key}>
+                <label className="block text-sm text-slate-300 mb-1">{label}</label>
                 <input
-                  value={form.social?.[k] || ""}
+                  value={form.social?.[key] || ""}
                   onChange={(e) =>
                     setForm({
                       ...form,
-                      social: { ...(form.social || {}), [k]: e.target.value },
+                      social: { ...(form.social || {}), [key]: e.target.value },
                     })
                   }
                   className="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 outline-none"

@@ -1,209 +1,164 @@
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { useState } from "react";
-import { Tag, Share2, Facebook, Twitter, Linkedin } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/apiClient";
 
-interface Activity {
-  id: number;
-  title: string;
-  description: string;
-  image: string;
-  tags: string[];
-  date: string;
+function ParticleWaveHero() {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTick(v => v + 1), 40);
+    return () => clearInterval(t);
+  }, []);
+
+  const dots = Array.from({ length: 40 }, (_, i) => ({
+    x: (i / 40) * 100,
+    baseY: 75,
+    amp: 8 + (i % 5) * 3,
+    speed: 0.05 + (i % 4) * 0.02,
+    phase: i * 0.4,
+    size: i % 6 === 0 ? 3 : 2,
+    color: i % 3 === 0 ? "#5eead4" : i % 3 === 1 ? "#fbbf24" : "#6366f1"
+  }));
+
+  return (
+    <section className="relative overflow-hidden pt-28 pb-16 text-white text-center" style={{ background: "#0f172a", minHeight: "280px" }}>
+      {/* SVG particle wave */}
+      <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+        {dots.map((dot, i) => (
+          <circle
+            key={i}
+            cx={`${dot.x}%`}
+            cy={`${dot.baseY + Math.sin(tick * dot.speed + dot.phase) * dot.amp}%`}
+            r={dot.size}
+            fill={dot.color}
+            opacity={0.4 + Math.sin(tick * 0.03 + i) * 0.3}
+          />
+        ))}
+        <polyline
+          points={dots.map(dot =>
+            `${dot.x * 10},${(dot.baseY + Math.sin(tick * dot.speed + dot.phase) * dot.amp) * 2.8}`
+          ).join(" ")}
+          fill="none"
+          stroke="rgba(94,234,212,0.15)"
+          strokeWidth="1"
+        />
+      </svg>
+
+      {/* Text content */}
+      <div className="relative z-10 flex flex-col items-center justify-center px-4">
+        <p style={{ fontSize: "11px", color: "#5eead4", letterSpacing: "0.3em", marginBottom: "10px" }}>
+          ✦ GELE TREKKING
+        </p>
+        <h1 className="text-5xl font-extrabold mb-4">
+          Company <span style={{ color: "#fbbf24" }}>Activities</span>
+        </h1>
+        <p className="text-blue-200 text-lg max-w-xl mx-auto">
+          Where every journey begins with community
+        </p>
+      </div>
+    </section>
+  );
 }
 
-const activities: Activity[] = [
-  {
-    id: 1,
-    title: "Community Trail Cleanup",
-    description:
-      "Join us as we maintain and improve trails in popular trekking destinations. This volunteer activity helps preserve nature and support local communities.",
-    image:
-      "https://images.unsplash.com/photo-1517457373614-b7152f800fd1?w=600&h=400&fit=crop",
-    tags: ["volunteer", "environmental", "community"],
-    date: "2024-02-15",
-  },
-  {
-    id: 2,
-    title: "Photography Workshop",
-    description:
-      "Learn landscape photography from professionals during our mountain expeditions. Capture stunning views and improve your skills.",
-    image:
-      "https://images.unsplash.com/photo-1516035069371-29a08e8be313?w=600&h=400&fit=crop",
-    tags: ["photography", "workshop", "learning"],
-    date: "2024-02-20",
-  },
-  {
-    id: 3,
-    title: "Mountain Wellness Retreat",
-    description:
-      "Combine trekking with yoga and meditation. Experience wellness activities in the serene mountain environment.",
-    image:
-      "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&h=400&fit=crop",
-    tags: ["wellness", "yoga", "meditation"],
-    date: "2024-03-01",
-  },
-  {
-    id: 4,
-    title: "Local Culture Exchange",
-    description:
-      "Immerse yourself in local traditions, cuisine, and customs. Experience authentic mountain village life.",
-    image:
-      "https://images.unsplash.com/photo-1530281700549-f2b2038caf00?w=600&h=400&fit=crop",
-    tags: ["cultural", "community", "experience"],
-    date: "2024-03-10",
-  },
-];
-
-const ALL_TAGS = Array.from(
-  new Set(activities.flatMap((activity) => activity.tags))
-).sort();
-
 export default function Activities() {
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [shareOpen, setShareOpen] = useState<number | null>(null);
-
-  const filteredActivities =
-    selectedTags.length === 0
-      ? activities
-      : activities.filter((activity) =>
-          selectedTags.some((tag) => activity.tags.includes(tag))
-        );
-
-  const toggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
-  };
+  const { data: activities, isLoading } = useQuery({
+    queryKey: ["activities"],
+    queryFn: async () => {
+      const res = await api.get("/api/activities");
+      return res.data;
+    },
+  });
 
   return (
     <Layout>
-      <section className="bg-gradient-to-r from-brand-dark to-brand-navy text-white py-12 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl font-bold mb-4">Company Activities</h1>
-          <p className="text-lg text-gray-200">
-            Join us for special events and activities beyond trekking
-          </p>
-        </div>
-      </section>
+      <div className="min-h-screen bg-gray-50">
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        {/* Tag Filter */}
-        <div className="mb-12">
-          <h3 className="text-lg font-bold text-brand-dark mb-4 flex items-center gap-2">
-            <Tag className="w-5 h-5 text-brand-accent" />
-            Filter by Tags
-          </h3>
-          <div className="flex flex-wrap gap-3">
-            {ALL_TAGS.map((tag) => (
-              <button
-                key={tag}
-                onClick={() => toggleTag(tag)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all capitalize ${
-                  selectedTags.includes(tag)
-                    ? "bg-brand-accent text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
-              >
-                {tag}
-              </button>
-            ))}
-            {selectedTags.length > 0 && (
-              <button
-                onClick={() => setSelectedTags([])}
-                className="px-4 py-2 rounded-full text-sm font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200"
-              >
-                Clear All
-              </button>
-            )}
-          </div>
-        </div>
+        {/* Hero — Style 6: Particle Wave Animation */}
+        <ParticleWaveHero />
 
-        {/* Activities Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {filteredActivities.map((activity) => (
-            <div
-              key={activity.id}
-              className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
-            >
-              <img
-                src={activity.image}
-                alt={activity.title}
-                className="w-full h-64 object-cover"
-              />
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-bold text-brand-dark flex-1">
-                    {activity.title}
-                  </h3>
-                  <span className="text-sm text-gray-500 ml-4 flex-shrink-0">
-                    {new Date(activity.date).toLocaleDateString()}
-                  </span>
-                </div>
-                <p className="text-gray-600 mb-4">{activity.description}</p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {activity.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-block bg-brand-accent/10 text-brand-accent text-xs px-3 py-1 rounded-full capitalize"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <div className="relative">
-                  <button
-                    onClick={() =>
-                      setShareOpen(shareOpen === activity.id ? null : activity.id)
-                    }
-                    className="flex items-center gap-2 bg-brand-accent hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
-                  >
-                    <Share2 className="w-5 h-5" />
-                    Share
-                  </button>
-                  {shareOpen === activity.id && (
-                    <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden z-10">
-                      <a
-                        href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-3 hover:bg-gray-50 text-gray-700"
-                      >
-                        <Facebook className="w-5 h-5" />
-                        Facebook
-                      </a>
-                      <a
-                        href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out ${activity.title} on GELE TREKKINGs!`)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-3 hover:bg-gray-50 text-gray-700 border-t border-gray-200"
-                      >
-                        <Twitter className="w-5 h-5" />
-                        Twitter
-                      </a>
-                      <a
-                        href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-3 hover:bg-gray-50 text-gray-700 border-t border-gray-200"
-                      >
-                        <Linkedin className="w-5 h-5" />
-                        LinkedIn
-                      </a>
+        {/* Grid */}
+        <section className="py-16 max-w-7xl mx-auto px-4">
+          {isLoading ? (
+            <div className="flex justify-center py-20">
+              <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : activities && activities.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {activities.map((activity: any) => (
+                <div
+                  key={activity._id}
+                  className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
+                >
+                  {/* Image */}
+                  {activity.image ? (
+                    <img
+                      src={activity.image}
+                      alt={activity.title}
+                      className="w-full h-52 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-52 bg-gradient-to-br from-blue-100 to-indigo-200 flex items-center justify-center">
+                      <span className="text-5xl">🏔️</span>
                     </div>
                   )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
 
-        {filteredActivities.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-600 text-lg">
-              No activities match the selected tags
-            </p>
-          </div>
-        )}
+                  {/* Content */}
+                  <div className="p-6">
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <h2 className="text-xl font-bold text-gray-900">{activity.title}</h2>
+                      <span className="text-xs text-gray-400 whitespace-nowrap mt-1">
+                        {new Date(activity.date).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
+                      {activity.description}
+                    </p>
+
+                    {/* Tags */}
+                    {activity.tags && activity.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {activity.tags.map((tag: string, i: number) => (
+                          <span
+                            key={i}
+                            className="text-xs px-3 py-1 rounded-full bg-orange-50 text-orange-600 border border-orange-100 font-medium"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Share */}
+                    <button
+                      onClick={() => {
+                        if (navigator.share) {
+                          navigator.share({
+                            title: activity.title,
+                            text: activity.description,
+                            url: window.location.href,
+                          });
+                        }
+                      }}
+                      className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                      Share
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20 text-gray-500">
+              <div className="text-6xl mb-4">🏔️</div>
+              <p className="text-xl font-semibold text-gray-700">No activities yet</p>
+              <p className="text-sm mt-2">Check back soon for upcoming events!</p>
+            </div>
+          )}
+        </section>
       </div>
     </Layout>
   );

@@ -1,5 +1,4 @@
 import { Layout } from "@/components/Layout";
-import { ItineraryTimeline, type ItineraryDay } from "@/components/ItineraryTimeline";
 import { useState } from "react";
 import { Filter, X } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -25,24 +24,24 @@ interface TrekPackage {
 
 const DIFFICULTY_LEVELS: ("Easy" | "Moderate" | "Hard")[] = ["Easy", "Moderate", "Hard"];
 const PRICE_RANGES = [
-  { label: "Under $500", min: 0, max: 500 },
-  { label: "$500 - $1000", min: 500, max: 1000 },
-  { label: "$1000 - $1500", min: 1000, max: 1500 },
-  { label: "Over $1500", min: 1500, max: Infinity },
+  { label: "Under $500",    min: 0,    max: 500      },
+  { label: "$500 - $1000",  min: 500,  max: 1000     },
+  { label: "$1000 - $1500", min: 1000, max: 1500     },
+  { label: "Over $1500",    min: 1500, max: Infinity  },
 ];
 const DURATIONS = [4, 7, 14];
 const RATING_RANGES = [
-  { label: "All Ratings", min: 0, max: 5 },
-  { label: "4.5+ Stars", min: 4.5, max: 5 },
-  { label: "4.0+ Stars", min: 4.0, max: 5 },
-  { label: "3.5+ Stars", min: 3.5, max: 5 },
+  { label: "All Ratings", min: 0,   max: 5 },
+  { label: "4.5+ Stars",  min: 4.5, max: 5 },
+  { label: "4.0+ Stars",  min: 4.0, max: 5 },
+  { label: "3.5+ Stars",  min: 3.5, max: 5 },
 ];
 
 export default function Destinations() {
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("");
-  const [selectedDuration, setSelectedDuration] = useState<string>("");
-  const [selectedPriceRange, setSelectedPriceRange] = useState<string>("");
-  const [selectedRating, setSelectedRating] = useState<string>("All Ratings");
+  const [selectedDifficulty, setSelectedDifficulty]   = useState<string>("");
+  const [selectedDuration,   setSelectedDuration]     = useState<string>("");
+  const [selectedPriceRange, setSelectedPriceRange]   = useState<string>("");
+  const [selectedRating,     setSelectedRating]       = useState<string>("All Ratings");
 
   const { data: treks, isLoading } = useQuery({
     queryKey: ["treks"],
@@ -72,162 +71,371 @@ export default function Destinations() {
 
   return (
     <Layout>
-      {/* Header */}
-      <section className="bg-gradient-to-r from-brand-dark to-brand-navy text-white py-12 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl font-bold mb-4">Explore Our Destinations</h1>
-          <p className="text-lg text-gray-200">Choose from our carefully curated trek packages around the world</p>
-        </div>
-      </section>
+      <div className="min-h-screen" style={{ background: "#0f172a" }}>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        {/* Filters */}
-        <div className="bg-white rounded-lg p-6 shadow-md mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-brand-accent" />
-            <h3 className="font-bold text-brand-dark text-lg">Filters</h3>
-          </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <div>
-              <label className="font-semibold text-brand-dark text-sm mb-2 block">Difficulty</label>
-              <select value={selectedDifficulty} onChange={(e) => setSelectedDifficulty(e.target.value)}
-                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-semibold focus:outline-none focus:border-brand-accent">
-                <option value="">All Difficulties</option>
-                {DIFFICULTY_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="font-semibold text-brand-dark text-sm mb-2 block">Duration</label>
-              <select value={selectedDuration} onChange={(e) => setSelectedDuration(e.target.value)}
-                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-semibold focus:outline-none focus:border-brand-accent">
-                <option value="">All Durations</option>
-                {DURATIONS.map((d) => <option key={d} value={String(d)}>{d} Days</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="font-semibold text-brand-dark text-sm mb-2 block">Price Range</label>
-              <select value={selectedPriceRange} onChange={(e) => setSelectedPriceRange(e.target.value)}
-                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-semibold focus:outline-none focus:border-brand-accent">
-                <option value="">All Prices</option>
-                {PRICE_RANGES.map((r) => <option key={r.label} value={r.label}>{r.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="font-semibold text-brand-dark text-sm mb-2 block">Rating</label>
-              <select value={selectedRating} onChange={(e) => setSelectedRating(e.target.value)}
-                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-semibold focus:outline-none focus:border-brand-accent">
-                {RATING_RANGES.map((r) => <option key={r.label} value={r.label}>{r.label}</option>)}
-              </select>
-            </div>
-            {hasActiveFilters && (
-              <button onClick={() => { setSelectedDifficulty(""); setSelectedDuration(""); setSelectedPriceRange(""); setSelectedRating("All Ratings"); }}
-                className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors text-sm font-semibold h-10">
-                <X className="w-4 h-4" /> Clear All
-              </button>
-            )}
-          </div>
-        </div>
+        {/* ══════════════ HERO ══════════════ */}
+        <section
+          className="relative overflow-hidden pt-32 pb-20"
+          style={{
+            background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f4c3a 100%)",
+            minHeight: "420px",
+          }}
+        >
+          {/* Stars */}
+          {Array.from({ length: 60 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full bg-white"
+              style={{
+                width:  i % 5 === 0 ? 2 : 1,
+                height: i % 5 === 0 ? 2 : 1,
+                top:  `${(i * 37 + 11) % 90}%`,
+                left: `${(i * 53 + 7)  % 100}%`,
+                opacity: 0.15 + (i % 4) * 0.15,
+              }}
+            />
+          ))}
 
-        {/* Trek List */}
-        {isLoading ? (
-          <div className="bg-white rounded-lg p-12 text-center">
-            <p className="text-gray-600 text-lg">Loading treks...</p>
-          </div>
-        ) : filteredTreks.length === 0 ? (
-          <div className="bg-white rounded-lg p-12 text-center">
-            <p className="text-gray-600 text-lg">No treks match your filters. Try adjusting your criteria.</p>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {filteredTreks.map((trek) => (
-              <Link key={trek._id} to={`/destination/${trek._id}`}
-                className="block bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow group">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
-                  {/* Image */}
-                  <div className="md:col-span-1 overflow-hidden rounded-lg">
-                    {trek.image_url ? (
-                      <img src={trek.image_url} alt={trek.name}
-                        className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300" />
-                    ) : (
-                      <div className="w-full h-64 bg-gradient-to-br from-blue-100 to-teal-100 flex items-center justify-center">
-                        <span className="text-gray-400 text-sm">No image</span>
-                      </div>
-                    )}
+          {/* Glowing orbs */}
+          <div className="absolute top-10 left-1/4 w-72 h-72 rounded-full blur-3xl"
+            style={{ background: "rgba(13,148,136,0.12)" }} />
+          <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full blur-3xl"
+            style={{ background: "rgba(15,76,58,0.2)" }} />
+          <div className="absolute top-20 right-10 w-48 h-48 rounded-full blur-3xl"
+            style={{ background: "rgba(251,191,36,0.06)" }} />
+
+          <div className="relative z-10 container mx-auto px-6 text-center">
+            <p className="text-xs uppercase tracking-[0.35em] font-semibold mb-4"
+              style={{ color: "#5eead4" }}>
+              ✦ Gele Trekking
+            </p>
+            <h1 className="text-5xl md:text-7xl font-black text-white mb-6 leading-tight">
+              Explore Our{" "}
+              <span
+                className="text-transparent bg-clip-text"
+                style={{ backgroundImage: "linear-gradient(90deg, #fbbf24, #f97316)" }}
+              >
+                Destinations
+              </span>
+            </h1>
+            <p className="text-lg font-light max-w-xl mx-auto mb-10"
+              style={{ color: "#94a3b8" }}>
+              Choose from our carefully curated trek packages — from gentle valleys to challenging summits.
+            </p>
+
+            {/* Stats */}
+            <div className="flex justify-center gap-10 flex-wrap">
+              {[
+                { value: filteredTreks.length || "20+", label: "Destinations" },
+                { value: "3",                            label: "Difficulty Levels" },
+                { value: "Year",                         label: "Round Season" },
+              ].map((stat, i) => (
+                <div key={i} className="text-center">
+                  <div className="text-3xl font-black" style={{ color: "#fbbf24" }}>
+                    {stat.value}
                   </div>
-
-                  {/* Info */}
-                  <div className="md:col-span-2">
-                    <h2 className="text-2xl font-bold text-brand-dark mb-4 group-hover:text-brand-accent transition-colors">
-                      {trek.name}
-                    </h2>
-
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                      {trek.duration_days > 0 && (
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <div className="text-sm text-gray-600">Duration</div>
-                          <div className="text-lg font-bold text-brand-accent">{trek.duration_days} Days</div>
-                        </div>
-                      )}
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <div className="text-sm text-gray-600">Difficulty</div>
-                        <div className={`text-lg font-bold ${trek.difficulty === "Hard" ? "text-red-600" : trek.difficulty === "Moderate" ? "text-orange-600" : "text-green-600"}`}>
-                          {trek.difficulty}
-                        </div>
-                      </div>
-                      {trek.price_usd > 0 && (
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <div className="text-sm text-gray-600">Price</div>
-                          <div className="text-lg font-bold text-brand-accent">${trek.price_usd}</div>
-                        </div>
-                      )}
-                      {/* ✅ Fixed: only show rating if it's a number greater than 0 */}
-                      {typeof trek.rating === "number" && trek.rating > 0 && (
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <div className="text-sm text-gray-600">Rating</div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-lg font-bold text-brand-accent">{trek.rating}</span>
-                            <span className="text-yellow-400">★</span>
-                          </div>
-                        </div>
-                      )}
-                      {trek.start_point && (
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <div className="text-sm text-gray-600">Start Point</div>
-                          <div className="text-lg font-bold text-brand-dark">{trek.start_point}</div>
-                        </div>
-                      )}
-                      {trek.end_point && (
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <div className="text-sm text-gray-600">End Point</div>
-                          <div className="text-lg font-bold text-brand-dark">{trek.end_point}</div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mb-4">
-                      {/* ✅ Fixed: only show overview if it's a non-empty, non-zero string */}
-                      {trek.overview && trek.overview !== "0" && (
-                        <p className="text-gray-700 mb-2 line-clamp-3">{trek.overview}</p>
-                      )}
-                      {trek.best_season && (
-                        <div className="text-sm text-gray-600">
-                          <strong>Best Season:</strong> {trek.best_season}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="text-brand-accent font-semibold group-hover:gap-2 transition-all inline-block">
-                      View Details →
-                    </div>
+                  <div className="text-xs uppercase tracking-widest mt-1" style={{ color: "#64748b" }}>
+                    {stat.label}
                   </div>
                 </div>
-              </Link>
-            ))}
+              ))}
+            </div>
           </div>
-        )}
+
+          {/* Bottom wave */}
+          <div className="absolute bottom-0 left-0 right-0" style={{ lineHeight: 0 }}>
+            <svg viewBox="0 0 1440 60" className="w-full" preserveAspectRatio="none" style={{ height: 50 }}>
+              <path d="M0,30 C360,60 1080,0 1440,30 L1440,60 L0,60 Z" fill="#0f172a" />
+            </svg>
+          </div>
+        </section>
+
+        {/* ══════════════ FILTERS ══════════════ */}
+        <div className="container mx-auto px-4 py-10">
+          <div
+            className="rounded-2xl p-6 mb-8"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              backdropFilter: "blur(4px)",
+            }}
+          >
+            <div className="flex items-center gap-2 mb-5">
+              <Filter className="w-5 h-5" style={{ color: "#5eead4" }} />
+              <h3 className="font-bold text-lg text-white">Filters</h3>
+            </div>
+
+            <div className="flex flex-wrap items-end gap-4">
+              {/* Difficulty */}
+              <div>
+                <label className="block text-xs uppercase tracking-wider mb-2 font-semibold"
+                  style={{ color: "#64748b" }}>Difficulty</label>
+                <select
+                  value={selectedDifficulty}
+                  onChange={(e) => setSelectedDifficulty(e.target.value)}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold outline-none"
+                  style={{
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    color: "#e2e8f0",
+                  }}
+                >
+                  <option value="" style={{ background: "#1e293b" }}>All Difficulties</option>
+                  {DIFFICULTY_LEVELS.map((level) => (
+                    <option key={level} value={level} style={{ background: "#1e293b" }}>{level}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Duration */}
+              <div>
+                <label className="block text-xs uppercase tracking-wider mb-2 font-semibold"
+                  style={{ color: "#64748b" }}>Duration</label>
+                <select
+                  value={selectedDuration}
+                  onChange={(e) => setSelectedDuration(e.target.value)}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold outline-none"
+                  style={{
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    color: "#e2e8f0",
+                  }}
+                >
+                  <option value="" style={{ background: "#1e293b" }}>All Durations</option>
+                  {DURATIONS.map((d) => (
+                    <option key={d} value={String(d)} style={{ background: "#1e293b" }}>{d} Days</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Price */}
+              <div>
+                <label className="block text-xs uppercase tracking-wider mb-2 font-semibold"
+                  style={{ color: "#64748b" }}>Price Range</label>
+                <select
+                  value={selectedPriceRange}
+                  onChange={(e) => setSelectedPriceRange(e.target.value)}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold outline-none"
+                  style={{
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    color: "#e2e8f0",
+                  }}
+                >
+                  <option value="" style={{ background: "#1e293b" }}>All Prices</option>
+                  {PRICE_RANGES.map((r) => (
+                    <option key={r.label} value={r.label} style={{ background: "#1e293b" }}>{r.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Rating */}
+              <div>
+                <label className="block text-xs uppercase tracking-wider mb-2 font-semibold"
+                  style={{ color: "#64748b" }}>Rating</label>
+                <select
+                  value={selectedRating}
+                  onChange={(e) => setSelectedRating(e.target.value)}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold outline-none"
+                  style={{
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    color: "#e2e8f0",
+                  }}
+                >
+                  {RATING_RANGES.map((r) => (
+                    <option key={r.label} value={r.label} style={{ background: "#1e293b" }}>{r.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Clear All */}
+              {hasActiveFilters && (
+                <button
+                  onClick={() => {
+                    setSelectedDifficulty("");
+                    setSelectedDuration("");
+                    setSelectedPriceRange("");
+                    setSelectedRating("All Ratings");
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+                  style={{
+                    background: "rgba(239,68,68,0.1)",
+                    border: "1px solid rgba(239,68,68,0.2)",
+                    color: "#fca5a5",
+                  }}
+                >
+                  <X className="w-4 h-4" /> Clear All
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* ══════════════ TREK LIST ══════════════ */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div
+                className="w-12 h-12 rounded-full border-4 border-t-transparent animate-spin"
+                style={{ borderColor: "#0d9488", borderTopColor: "transparent" }}
+              />
+            </div>
+          ) : filteredTreks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="text-6xl mb-4">🏔️</div>
+              <p className="text-lg font-semibold mb-2" style={{ color: "#e2e8f0" }}>
+                No treks match your filters.
+              </p>
+              <p className="text-sm" style={{ color: "#64748b" }}>
+                Try adjusting your criteria.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Count */}
+              <p className="mb-6 text-sm" style={{ color: "#64748b" }}>
+                Showing{" "}
+                <span style={{ color: "#5eead4" }} className="font-semibold">
+                  {filteredTreks.length}
+                </span>{" "}
+                {filteredTreks.length === 1 ? "destination" : "destinations"}
+              </p>
+
+              <div className="space-y-6">
+                {filteredTreks.map((trek) => (
+                  <Link
+                    key={trek._id}
+                    to={`/destination/${trek._id}`}
+                    className="block rounded-2xl overflow-hidden transition-all duration-300 group"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLAnchorElement).style.border = "1px solid rgba(13,148,136,0.4)";
+                      (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 8px 32px rgba(13,148,136,0.15)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLAnchorElement).style.border = "1px solid rgba(255,255,255,0.08)";
+                      (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 4px 20px rgba(0,0,0,0.3)";
+                    }}
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+
+                      {/* Image */}
+                      <div className="md:col-span-1 h-64 overflow-hidden"
+                        style={{ background: "linear-gradient(135deg,#1e3a5f,#0f4c3a)" }}>
+                        {trek.image_url ? (
+                          <img
+                            src={trek.image_url}
+                            alt={trek.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-6xl opacity-20">🏔️</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="md:col-span-2 p-6 flex flex-col justify-between">
+                        <div>
+                          <h2 className="text-2xl font-black mb-4 transition-colors"
+                            style={{ color: "#f1f5f9" }}>
+                            {trek.name}
+                          </h2>
+
+                          {/* Stats grid */}
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
+                            {trek.duration_days > 0 && (
+                              <div className="rounded-xl p-3"
+                                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                                <div className="text-xs mb-1" style={{ color: "#64748b" }}>Duration</div>
+                                <div className="text-base font-bold" style={{ color: "#5eead4" }}>
+                                  {trek.duration_days} Days
+                                </div>
+                              </div>
+                            )}
+                            <div className="rounded-xl p-3"
+                              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                              <div className="text-xs mb-1" style={{ color: "#64748b" }}>Difficulty</div>
+                              <div className="text-base font-bold"
+                                style={{
+                                  color: trek.difficulty === "Hard"
+                                    ? "#fca5a5"
+                                    : trek.difficulty === "Moderate"
+                                    ? "#fdba74"
+                                    : "#86efac",
+                                }}>
+                                {trek.difficulty}
+                              </div>
+                            </div>
+                            {trek.price_usd > 0 && (
+                              <div className="rounded-xl p-3"
+                                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                                <div className="text-xs mb-1" style={{ color: "#64748b" }}>Price</div>
+                                <div className="text-base font-bold" style={{ color: "#fbbf24" }}>
+                                  ${trek.price_usd}
+                                </div>
+                              </div>
+                            )}
+                            {typeof trek.rating === "number" && trek.rating > 0 && (
+                              <div className="rounded-xl p-3"
+                                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                                <div className="text-xs mb-1" style={{ color: "#64748b" }}>Rating</div>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-base font-bold" style={{ color: "#fbbf24" }}>{trek.rating}</span>
+                                  <span style={{ color: "#fbbf24" }}>★</span>
+                                </div>
+                              </div>
+                            )}
+                            {trek.start_point && (
+                              <div className="rounded-xl p-3"
+                                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                                <div className="text-xs mb-1" style={{ color: "#64748b" }}>Start Point</div>
+                                <div className="text-base font-bold" style={{ color: "#e2e8f0" }}>{trek.start_point}</div>
+                              </div>
+                            )}
+                            {trek.end_point && (
+                              <div className="rounded-xl p-3"
+                                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                                <div className="text-xs mb-1" style={{ color: "#64748b" }}>End Point</div>
+                                <div className="text-base font-bold" style={{ color: "#e2e8f0" }}>{trek.end_point}</div>
+                              </div>
+                            )}
+                          </div>
+
+                          {trek.overview && trek.overview !== "0" && (
+                            <p className="text-sm leading-relaxed mb-3 line-clamp-2"
+                              style={{ color: "#94a3b8" }}>
+                              {trek.overview}
+                            </p>
+                          )}
+                          {trek.best_season && (
+                            <p className="text-xs" style={{ color: "#64748b" }}>
+                              <span className="font-semibold" style={{ color: "#5eead4" }}>Best Season: </span>
+                              {trek.best_season}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* CTA */}
+                        <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                          <span className="text-sm font-bold transition-colors"
+                            style={{ color: "#5eead4" }}>
+                            View Details →
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </Layout>
   );
 }
- 
