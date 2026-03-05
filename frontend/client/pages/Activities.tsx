@@ -1,64 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/apiClient";
-
-function ParticleWaveHero() {
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setTick(v => v + 1), 40);
-    return () => clearInterval(t);
-  }, []);
-
-  const dots = Array.from({ length: 40 }, (_, i) => ({
-    x: (i / 40) * 100,
-    baseY: 75,
-    amp: 8 + (i % 5) * 3,
-    speed: 0.05 + (i % 4) * 0.02,
-    phase: i * 0.4,
-    size: i % 6 === 0 ? 3 : 2,
-    color: i % 3 === 0 ? "#5eead4" : i % 3 === 1 ? "#fbbf24" : "#6366f1"
-  }));
-
-  return (
-    <section className="relative overflow-hidden pt-28 pb-16 text-white text-center" style={{ background: "#0f172a", minHeight: "280px" }}>
-      {/* SVG particle wave */}
-      <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-        {dots.map((dot, i) => (
-          <circle
-            key={i}
-            cx={`${dot.x}%`}
-            cy={`${dot.baseY + Math.sin(tick * dot.speed + dot.phase) * dot.amp}%`}
-            r={dot.size}
-            fill={dot.color}
-            opacity={0.4 + Math.sin(tick * 0.03 + i) * 0.3}
-          />
-        ))}
-        <polyline
-          points={dots.map(dot =>
-            `${dot.x * 10},${(dot.baseY + Math.sin(tick * dot.speed + dot.phase) * dot.amp) * 2.8}`
-          ).join(" ")}
-          fill="none"
-          stroke="rgba(94,234,212,0.15)"
-          strokeWidth="1"
-        />
-      </svg>
-
-      {/* Text content */}
-      <div className="relative z-10 flex flex-col items-center justify-center px-4">
-        <p style={{ fontSize: "11px", color: "#5eead4", letterSpacing: "0.3em", marginBottom: "10px" }}>
-          ✦ GELE TREKKING
-        </p>
-        <h1 className="text-5xl font-extrabold mb-4">
-          Company <span style={{ color: "#fbbf24" }}>Activities</span>
-        </h1>
-        <p className="text-blue-200 text-lg max-w-xl mx-auto">
-          Where every journey begins with community
-        </p>
-      </div>
-    </section>
-  );
-}
+import { Share2, Calendar, Tag, Mountain } from "lucide-react";
 
 export default function Activities() {
   const { data: activities, isLoading } = useQuery({
@@ -73,93 +17,183 @@ export default function Activities() {
     <Layout>
       <div className="min-h-screen bg-gray-50">
 
-        {/* Hero — Style 6: Particle Wave Animation */}
-        <ParticleWaveHero />
+        {/* ── Simple Hero ── */}
+        <section className="relative h-56 overflow-hidden">
+          {/* Background image */}
+          <img
+            src="/geletrekking.png"
+            alt="Activities Hero"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ filter: "brightness(0.45)" }}
+          />
+          {/* Gradient overlay */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: "linear-gradient(to right, rgba(15,23,42,0.7) 0%, rgba(15,23,42,0.3) 100%)",
+            }}
+          />
+          {/* Content */}
+          <div className="relative z-10 h-full flex flex-col justify-center px-8 max-w-7xl mx-auto">
+            <p
+              style={{
+                fontSize: 11,
+                letterSpacing: "0.3em",
+                color: "#fbbf24",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                marginBottom: 8,
+              }}
+            >
+              Gele Trekking
+            </p>
+            <h1
+              style={{
+                fontSize: "clamp(1.8rem, 4vw, 2.8rem)",
+                fontWeight: 800,
+                color: "#fff",
+                lineHeight: 1.15,
+              }}
+            >
+              Company Activities
+            </h1>
+            <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 15, marginTop: 8 }}>
+              Where every journey begins with community
+            </p>
+          </div>
+        </section>
 
-        {/* Grid */}
-        <section className="py-16 max-w-7xl mx-auto px-4">
+        {/* ── Grid ── */}
+        <section className="py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          {/* Count badge */}
+          {!isLoading && activities?.length > 0 && (
+            <div className="flex items-center gap-2 mb-8">
+              <span className="text-sm font-semibold text-gray-500">
+                {activities.length} {activities.length === 1 ? "Activity" : "Activities"}
+              </span>
+              <div className="h-px flex-1 bg-gray-200" />
+            </div>
+          )}
+
           {isLoading ? (
-            <div className="flex justify-center py-20">
-              <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            <div className="flex justify-center py-24">
+              <div className="w-10 h-10 border-4 border-orange-400 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : activities && activities.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
               {activities.map((activity: any) => (
-                <div
-                  key={activity._id}
-                  className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
-                >
-                  {/* Image */}
-                  {activity.image ? (
-                    <img
-                      src={activity.image}
-                      alt={activity.title}
-                      className="w-full h-52 object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-52 bg-gradient-to-br from-blue-100 to-indigo-200 flex items-center justify-center">
-                      <span className="text-5xl">🏔️</span>
-                    </div>
-                  )}
-
-                  {/* Content */}
-                  <div className="p-6">
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <h2 className="text-xl font-bold text-gray-900">{activity.title}</h2>
-                      <span className="text-xs text-gray-400 whitespace-nowrap mt-1">
-                        {new Date(activity.date).toLocaleDateString()}
-                      </span>
-                    </div>
-
-                    <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
-                      {activity.description}
-                    </p>
-
-                    {/* Tags */}
-                    {activity.tags && activity.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {activity.tags.map((tag: string, i: number) => (
-                          <span
-                            key={i}
-                            className="text-xs px-3 py-1 rounded-full bg-orange-50 text-orange-600 border border-orange-100 font-medium"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Share */}
-                    <button
-                      onClick={() => {
-                        if (navigator.share) {
-                          navigator.share({
-                            title: activity.title,
-                            text: activity.description,
-                            url: window.location.href,
-                          });
-                        }
-                      }}
-                      className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                      </svg>
-                      Share
-                    </button>
-                  </div>
-                </div>
+                <ActivityCard key={activity._id} activity={activity} />
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 text-gray-500">
-              <div className="text-6xl mb-4">🏔️</div>
-              <p className="text-xl font-semibold text-gray-700">No activities yet</p>
-              <p className="text-sm mt-2">Check back soon for upcoming events!</p>
+            <div className="text-center py-24 text-gray-400">
+              <Mountain className="w-14 h-14 mx-auto mb-4 opacity-30" />
+              <p className="text-lg font-semibold text-gray-600">No activities yet</p>
+              <p className="text-sm mt-1">Check back soon for upcoming events!</p>
             </div>
           )}
         </section>
       </div>
     </Layout>
+  );
+}
+
+function ActivityCard({ activity }: { activity: any }) {
+  const [shared, setShared] = useState(false);
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: activity.title,
+        text: activity.description,
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard?.writeText(window.location.href);
+      setShared(true);
+      setTimeout(() => setShared(false), 2000);
+    }
+  };
+
+  const formattedDate = activity.date
+    ? new Date(activity.date).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : null;
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col">
+      {/* Image — small/compact */}
+      <div className="relative w-full h-44 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 flex-shrink-0">
+        {activity.image ? (
+          <img
+            src={activity.image}
+            alt={activity.title}
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Mountain className="w-12 h-12 text-slate-300" />
+          </div>
+        )}
+        {/* Date chip overlaid on image */}
+        {formattedDate && (
+          <div
+            className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+            style={{ background: "rgba(15,23,42,0.65)", color: "#fff", backdropFilter: "blur(6px)" }}
+          >
+            <Calendar className="w-3 h-3" />
+            {formattedDate}
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-5 flex flex-col flex-1">
+        <h2 className="text-base font-bold text-gray-900 mb-2 leading-snug">
+          {activity.title}
+        </h2>
+
+        <p className="text-gray-500 text-sm leading-relaxed line-clamp-3 flex-1">
+          {activity.description}
+        </p>
+
+        {/* Tags */}
+        {activity.tags && activity.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {activity.tags.map((tag: string, i: number) => (
+              <span
+                key={i}
+                className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full font-medium"
+                style={{ background: "#fff7ed", color: "#ea580c", border: "1px solid #fed7aa" }}
+              >
+                <Tag className="w-2.5 h-2.5" />
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Footer row */}
+        <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+          <span className="text-xs text-gray-400 font-medium">Gele Trekking</span>
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+            style={{
+              background: shared ? "#dcfce7" : "#fff7ed",
+              color: shared ? "#16a34a" : "#ea580c",
+              border: shared ? "1px solid #bbf7d0" : "1px solid #fed7aa",
+            }}
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            {shared ? "Copied!" : "Share"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

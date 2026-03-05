@@ -12,22 +12,14 @@ export default function About() {
     <Layout>
       <div className="min-h-screen bg-white">
 
-        {/* HERO with background video + overlay */}
-        <section className="relative overflow-hidden min-h-[520px] flex items-end">
-          {/* Background Video */}
+        {/* Hero */}
+        <section className="relative overflow-hidden min-h-[420px] flex items-end">
           <video
             className="absolute inset-0 w-full h-full object-cover"
             src="https://ik.imagekit.io/dj8jxmvvw/sample-video.mp4?updatedAt=1770239642405"
-            autoPlay
-            muted
-            loop
-            playsInline
+            autoPlay muted loop playsInline
           />
-
-          {/* Gradient overlay for text readability */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-900/70 to-teal-800/60" />
-
-          {/* Hero text on top of overlay */}
           <div className="container mx-auto px-4 relative z-10 pt-32 pb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
               {data?.heroTitle || "About GELE TREKKING"}
@@ -41,49 +33,60 @@ export default function About() {
         {isLoading ? (
           <div className="container mx-auto px-4 py-16 text-gray-600">Loading...</div>
         ) : (
-          <>
-            <section className="py-16">
-              <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <div className="rounded-3xl bg-white shadow-lg p-8">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {data?.missionTitle || "Our Mission"}
-                  </h2>
-                  <p className="mt-4 text-gray-700 leading-relaxed whitespace-pre-line">
-                    {data?.missionBody || ""}
-                  </p>
-                </div>
-                <div className="rounded-3xl bg-white shadow-lg p-8">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {data?.storyTitle || "Our Story"}
-                  </h2>
-                  <p className="mt-4 text-gray-700 leading-relaxed whitespace-pre-line">
-                    {data?.storyBody || ""}
-                  </p>
-                </div>
-              </div>
-            </section>
+          <div className="max-w-3xl mx-auto px-6 py-14 space-y-10">
 
-            <section className="pb-16">
-              <div className="container mx-auto px-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {(data?.highlights || []).map((h: any, idx: number) => (
-                    <div key={idx} className="rounded-3xl bg-white shadow-lg p-6">
-                      <div className="text-xl font-bold text-gray-900">{h.title}</div>
-                      <div className="mt-2 text-gray-700">{h.description}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {(data?.stats || []).map((s: any, idx: number) => (
-                    <div key={idx} className="rounded-2xl bg-gradient-to-br from-blue-50 to-teal-50 p-5 text-center">
-                      <div className="text-2xl font-extrabold text-gray-900">{s.value}</div>
-                      <div className="text-sm text-gray-600">{s.label}</div>
-                    </div>
-                  ))}
-                </div>
+            {/* Mission */}
+            {(data?.missionTitle || data?.missionBody) && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  {data?.missionTitle || "Our Mission"}
+                </h2>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                  {data?.missionBody}
+                </p>
               </div>
-            </section>
-          </>
+            )}
+
+            {/* Story */}
+            {(data?.storyTitle || data?.storyBody) && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  {data?.storyTitle || "Our Story"}
+                </h2>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                  {data?.storyBody}
+                </p>
+              </div>
+            )}
+
+            {/* Highlights — vertical list */}
+            {data?.highlights?.length > 0 && (
+              <div className="space-y-6">
+                {data.highlights.map((h: any, idx: number) => (
+                  <div key={idx}>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">{h.title}</h3>
+                    <p className="text-gray-700 leading-relaxed">{h.description}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Stats — 2-col grid */}
+            {data?.stats?.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+                {data.stats.map((s: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-center"
+                  >
+                    <div className="text-2xl font-extrabold text-gray-900">{s.value}</div>
+                    <div className="text-sm text-gray-500 mt-1">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+          </div>
         )}
       </div>
     </Layout>

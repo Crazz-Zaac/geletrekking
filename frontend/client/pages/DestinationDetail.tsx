@@ -1,11 +1,188 @@
 import { Layout } from "@/components/Layout";
 import { ItineraryTimeline } from "@/components/ItineraryTimeline";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Share2, Facebook, Linkedin, Twitter, Calendar, MapPin, TrendingUp, Users } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Share2, Facebook, Linkedin, Twitter, Calendar, MapPin, TrendingUp, Users, Cloud, Wind, Droplets, Thermometer, Eye } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/apiClient";
 
+// ── Weather Widget ─────────────────────────────────────────────
+interface WeatherData {
+  temperature: number;
+  feelsLike: number;
+  humidity: number;
+  windSpeed: number;
+  visibility: number;
+  weatherCode: number;
+  weatherDesc: string;
+  weatherIcon: string;
+  high: number;
+  low: number;
+}
+
+const WMO_CODES: Record<number, { desc: string; icon: string }> = {
+  0:  { desc: "Clear Sky",         icon: "☀️" },
+  1:  { desc: "Mainly Clear",      icon: "🌤️" },
+  2:  { desc: "Partly Cloudy",     icon: "⛅" },
+  3:  { desc: "Overcast",          icon: "☁️" },
+  45: { desc: "Foggy",             icon: "🌫️" },
+  48: { desc: "Icy Fog",           icon: "🌫️" },
+  51: { desc: "Light Drizzle",     icon: "🌦️" },
+  53: { desc: "Drizzle",           icon: "🌦️" },
+  55: { desc: "Heavy Drizzle",     icon: "🌧️" },
+  61: { desc: "Light Rain",        icon: "🌧️" },
+  63: { desc: "Rain",              icon: "🌧️" },
+  65: { desc: "Heavy Rain",        icon: "🌧️" },
+  71: { desc: "Light Snow",        icon: "🌨️" },
+  73: { desc: "Snow",              icon: "❄️" },
+  75: { desc: "Heavy Snow",        icon: "❄️" },
+  77: { desc: "Snow Grains",       icon: "🌨️" },
+  80: { desc: "Light Showers",     icon: "🌦️" },
+  81: { desc: "Showers",           icon: "🌧️" },
+  82: { desc: "Heavy Showers",     icon: "⛈️" },
+  85: { desc: "Snow Showers",      icon: "🌨️" },
+  86: { desc: "Heavy Snow Shower", icon: "❄️" },
+  95: { desc: "Thunderstorm",      icon: "⛈️" },
+  96: { desc: "Thunderstorm + Hail",icon: "⛈️" },
+  99: { desc: "Heavy Thunderstorm",icon: "⛈️" },
+};
+
+const WeatherWidget = ({ locationName }: { locationName: string }) => {
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!locationName) return;
+
+    const fetchWeather = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Step 1: Geocode the location name → lat/lng
+        const geoRes = await fetch(
+          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(locationName)}&count=1&language=en&format=json`
+        );
+        const geoData = await geoRes.json();
+
+        if (!geoData.results || geoData.results.length === 0) {
+          setError("Location not found");
+          setLoading(false);
+          return;
+        }
+
+        const { latitude, longitude } = geoData.results[0];
+
+        // Step 2: Fetch weather for those coordinates
+        const weatherRes = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
+          `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,visibility` +
+          `&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`
+        );
+        const weatherData = await weatherRes.json();
+
+        const code = weatherData.current.weather_code;
+        const wmo = WMO_CODES[code] || { desc: "Unknown", icon: "🌡️" };
+
+        setWeather({
+          temperature: Math.round(weatherData.current.temperature_2m),
+          feelsLike: Math.round(weatherData.current.apparent_temperature),
+          humidity: weatherData.current.relative_humidity_2m,
+          windSpeed: Math.round(weatherData.current.wind_speed_10m),
+          visibility: Math.round((weatherData.current.visibility || 0) / 1000),
+          weatherCode: code,
+          weatherDesc: wmo.desc,
+          weatherIcon: wmo.icon,
+          high: Math.round(weatherData.daily.temperature_2m_max[0]),
+          low: Math.round(weatherData.daily.temperature_2m_min[0]),
+        });
+      } catch (e) {
+        setError("Failed to load weather data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWeather();
+  }, [locationName]);
+
+  if (loading) {
+    return (
+      <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg mb-12 animate-pulse">
+        <div className="flex items-center gap-2 mb-4">
+          <Cloud className="w-5 h-5" />
+          <span className="font-semibold text-lg">Current Weather</span>
+        </div>
+        <div className="text-blue-200 text-sm">Fetching weather for {locationName}...</div>
+      </div>
+    );
+  }
+
+  if (error || !weather) {
+    return (
+      <div className="bg-gradient-to-br from-gray-400 to-gray-500 rounded-xl p-6 text-white shadow-lg mb-12">
+        <div className="flex items-center gap-2 mb-2">
+          <Cloud className="w-5 h-5" />
+          <span className="font-semibold text-lg">Weather</span>
+        </div>
+        <div className="text-white/80 text-sm">{error || "Weather unavailable"}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="rounded-xl p-6 text-white shadow-lg mb-12"
+      style={{ background: "linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #1e3c72 100%)" }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Cloud className="w-5 h-5 text-blue-200" />
+          <span className="font-bold text-lg">Current Weather</span>
+        </div>
+        <span className="text-blue-200 text-sm capitalize">{locationName}</span>
+      </div>
+
+      {/* Main temp + icon */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className="text-7xl font-thin leading-none">{weather.temperature}°C</div>
+          <div className="text-blue-200 mt-1">{weather.weatherDesc}</div>
+          <div className="text-sm text-blue-300 mt-1">
+            Feels like {weather.feelsLike}°C &nbsp;·&nbsp; ↑{weather.high}° ↓{weather.low}°
+          </div>
+        </div>
+        <div className="text-7xl">{weather.weatherIcon}</div>
+      </div>
+
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-3 border-t border-white/20 pt-4">
+        <div className="flex flex-col items-center gap-1">
+          <Droplets className="w-4 h-4 text-blue-300" />
+          <span className="text-sm font-semibold">{weather.humidity}%</span>
+          <span className="text-xs text-blue-300">Humidity</span>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <Wind className="w-4 h-4 text-blue-300" />
+          <span className="text-sm font-semibold">{weather.windSpeed} km/h</span>
+          <span className="text-xs text-blue-300">Wind</span>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <Eye className="w-4 h-4 text-blue-300" />
+          <span className="text-sm font-semibold">{weather.visibility} km</span>
+          <span className="text-xs text-blue-300">Visibility</span>
+        </div>
+      </div>
+
+      <div className="mt-3 text-right text-xs text-blue-300">
+        Powered by Open-Meteo · Live data
+      </div>
+    </div>
+  );
+};
+
+// ── Main Page ──────────────────────────────────────────────────
 export default function DestinationDetail() {
   const { id } = useParams<{ id: string }>();
   const [showShareMenu, setShowShareMenu] = useState(false);
@@ -55,6 +232,9 @@ export default function DestinationDetail() {
   const hasValidOffer = trek.has_offer && trek.offer_valid_from && trek.offer_valid_to
     ? new Date() >= new Date(trek.offer_valid_from) && new Date() <= new Date(trek.offer_valid_to)
     : false;
+
+  // Best location name for weather lookup: start_point > trek.name > fallback "Nepal"
+  const weatherLocation = trek.start_point || trek.name || "Nepal";
 
   return (
     <Layout>
@@ -110,6 +290,9 @@ export default function DestinationDetail() {
             </div>
           </div>
         </div>
+
+        {/* ── WEATHER WIDGET ── */}
+        <WeatherWidget locationName={weatherLocation} />
 
         {/* Special Offer Banner */}
         {hasValidOffer && (

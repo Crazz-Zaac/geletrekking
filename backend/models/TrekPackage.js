@@ -22,50 +22,62 @@ const extraSectionSchema = new mongoose.Schema({
   content: { type: String, required: true },
 });
 
+// ── NEW: Availability schema ───────────────────────────────────
+const availabilitySchema = new mongoose.Schema({
+  start_date: { type: Date, required: true },
+  end_date:   { type: Date, required: true },
+  status:     {
+    type: String,
+    enum: ["available", "booked", "limited"],
+    default: "available",
+  },
+  note: { type: String, default: "" },
+});
+
 // Main Trek Package Schema
 const trekPackageSchema = new mongoose.Schema(
   {
     // Basic Information
     name: { type: String, required: true, trim: true },
     overview: { type: String, required: true, trim: true },
-    
+
     // Media
     image_url: { type: String },
     gallery_images: [{ type: String }],
     map_image_url: { type: String },
-    
+
     // Trek Details
     highlights: [{ type: String }],
     includes: [{ type: String }],
     excludes: [{ type: String }],
     itinerary: [itinerarySchema],
-    
+
     // Location & Season
     best_season: { type: String },
     start_point: { type: String },
     end_point: { type: String },
-    
+
     // Pricing
     price_gbp: { type: Number, default: 0 },
     price_usd: { type: Number, default: 0 },
-    
+
     // Trek Specifications
     duration_days: { type: Number, default: 0 },
-    difficulty: { 
-      type: String, 
-      enum: ["Easy", "Moderate", "Hard"], 
-      default: "Moderate" 
+    difficulty: {
+      type: String,
+      enum: ["Easy", "Moderate", "Hard"],
+      default: "Moderate",
     },
     group_size_min: { type: Number, default: 1 },
     group_size_max: { type: Number, default: 15 },
     max_altitude_meters: { type: Number },
-    
+
     // Additional Resources
     itinerary_pdf_url: { type: String },
     booking_link: { type: String },
     trek_gallery_id: { type: Number },
     trek_map_embed_url: { type: String },
-    
+
     // Offers & Discounts
     has_offer: { type: Boolean, default: false },
     offer_title: { type: String },
@@ -74,25 +86,28 @@ const trekPackageSchema = new mongoose.Schema(
     discounted_price_usd: { type: Number },
     offer_valid_from: { type: Date },
     offer_valid_to: { type: Date },
-    
+
     // Tags & Seasonality
     season_tag: { type: String },
-    
+
     // FAQs and Extra Sections
     faqs: [faqSchema],
     extra_sections: [extraSectionSchema],
-    
+
     // Status Flags
     is_featured: { type: Boolean, default: false },
-    is_active: { type: Boolean, default: true },
-    is_optional: { type: Boolean, default: false }, // ✅ NEW FIELD
-    
+    is_active:   { type: Boolean, default: true },
+    is_optional: { type: Boolean, default: false },
+
     // Ratings & Reviews
-    rating: { type: Number, min: 0, max: 5, default: 0 },
+    rating:       { type: Number, min: 0, max: 5, default: 0 },
     review_count: { type: Number, default: 0 },
+
+    // ── NEW FIELD ──────────────────────────────────────────────
+    availability: [availabilitySchema],
   },
-  { 
-    timestamps: true 
+  {
+    timestamps: true,
   }
 );
 
@@ -124,15 +139,13 @@ trekPackageSchema.methods.isOfferValid = function () {
 // Method to get current price (considering offers)
 trekPackageSchema.methods.getCurrentPrice = function (currency = "usd") {
   const isOfferValid = this.isOfferValid();
-  
   if (currency.toLowerCase() === "gbp") {
-    return isOfferValid && this.discounted_price_gbp 
-      ? this.discounted_price_gbp 
+    return isOfferValid && this.discounted_price_gbp
+      ? this.discounted_price_gbp
       : this.price_gbp;
   }
-  
-  return isOfferValid && this.discounted_price_usd 
-    ? this.discounted_price_usd 
+  return isOfferValid && this.discounted_price_usd
+    ? this.discounted_price_usd
     : this.price_usd;
 };
 
