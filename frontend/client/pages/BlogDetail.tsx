@@ -5,7 +5,7 @@ import { api } from "@/lib/apiClient";
 import { Calendar, ArrowLeft } from "lucide-react";
 
 export default function BlogDetail() {
-  const { id } = useParams(); // route is /blog/:id but actually slug
+  const { id } = useParams();
   const slug = id as string;
 
   const { data: post, isLoading, error } = useQuery({
@@ -56,12 +56,11 @@ export default function BlogDetail() {
                 </div>
               ) : null}
 
-              <div className="prose prose-lg max-w-none mt-8">
-                {/* Simple rendering (plain text with new lines) */}
-                {(post?.content || "").split("\n").map((line: string, idx: number) => (
-                  <p key={idx}>{line}</p>
-                ))}
-              </div>
+              {/* ✅ FIXED: renders HTML from the rich text editor */}
+              <div
+                className="prose prose-lg max-w-none mt-8"
+                dangerouslySetInnerHTML={{ __html: post?.content || "" }}
+              />
             </>
           )}
         </div>

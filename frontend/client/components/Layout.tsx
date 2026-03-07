@@ -161,15 +161,10 @@ export const Header = ({ settings }: { settings: any }) => {
             marginRight: "8px",
           }}
         >
-          {/* Logo image */}
           <div
             style={{
-              width: 48,
-              height: 48,
-              borderRadius: 12,
-              overflow: "hidden",
-              flexShrink: 0,
-              boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
+              width: 48, height: 48, borderRadius: 12, overflow: "hidden",
+              flexShrink: 0, boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
               border: "2px solid rgba(0,0,0,0.08)",
             }}
           >
@@ -179,31 +174,20 @@ export const Header = ({ settings }: { settings: any }) => {
               style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
             />
           </div>
-
-          {/* Logo text */}
           <Link to="/" style={{ textDecoration: "none" }}>
             <div
               style={{
                 fontFamily: "'Bebas Neue', 'Rajdhani', sans-serif",
-                fontSize: 20,
-                fontWeight: 700,
-                color: "#1a1a1a",
-                letterSpacing: "3px",
-                lineHeight: 1,
-                whiteSpace: "nowrap",
+                fontSize: 20, fontWeight: 700, color: "#1a1a1a",
+                letterSpacing: "3px", lineHeight: 1, whiteSpace: "nowrap",
               }}
             >
               {settings?.siteName || "GELE TREKKING"}
             </div>
             <div
               style={{
-                fontSize: 9,
-                color: "#888",
-                letterSpacing: "2px",
-                textTransform: "uppercase",
-                fontWeight: 600,
-                marginTop: 4,
-                whiteSpace: "nowrap",
+                fontSize: 9, color: "#888", letterSpacing: "2px",
+                textTransform: "uppercase", fontWeight: 600, marginTop: 4, whiteSpace: "nowrap",
               }}
             >
               Walk · Explore · Discover
@@ -409,7 +393,12 @@ export const Header = ({ settings }: { settings: any }) => {
           {!loading && destinations.length > 0 && (
             <div className="ml-5 space-y-1 border-l-2 border-orange-100 pl-3">
               {destinations.map((trek) => (
-                <Link key={trek._id} to={`/destination/${trek._id}`} onClick={() => setMobileMenuOpen(false)} className="block py-1 text-xs text-gray-500 hover:text-orange-600 capitalize">
+                <Link
+                  key={trek._id}
+                  to={`/destination/${trek._id}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-1 text-xs text-gray-500 hover:text-orange-600 capitalize"
+                >
                   {trek.name}
                 </Link>
               ))}
@@ -436,10 +425,16 @@ export const Footer = ({ settings }: { settings: any }) => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <img src="/geletrekking.png" alt="Gele Trekking Logo" className="h-8 w-8 rounded-full object-cover border border-white/20 shadow-sm" />
+              <img
+                src="/geletrekking.png"
+                alt="Gele Trekking Logo"
+                className="h-8 w-8 rounded-full object-cover border border-white/20 shadow-sm"
+              />
               {settings?.siteName || "GELE TREKKING"}
             </h3>
-            <p className="text-gray-300 text-sm">Explore the world, one trail at a time. Experience breathtaking adventures with expert guides.</p>
+            <p className="text-gray-300 text-sm">
+              Explore the world, one trail at a time. Experience breathtaking adventures with expert guides.
+            </p>
           </div>
           <div>
             <h4 className="font-semibold mb-4">Quick Links</h4>
@@ -463,12 +458,15 @@ export const Footer = ({ settings }: { settings: any }) => {
             <SocialIconsRow social={settings?.social} />
           </div>
         </div>
+
+        {/* ── Footer Bottom ── */}
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-300">
           <p>&copy; {new Date().getFullYear()} {settings?.siteName || "GELE TREKKING"}. All rights reserved.</p>
           <div className="flex gap-6 mt-4 md:mt-0">
-            <a href="#" className="hover:text-orange-400">Terms</a>
-            <a href="#" className="hover:text-orange-400">Privacy</a>
-            <a href="#" className="hover:text-orange-400">Cookies</a>
+            {/* ✅ Terms now links to /terms page */}
+            <Link to="/terms" className="hover:text-orange-400 transition-colors">Terms</Link>
+            <a href="#" className="hover:text-orange-400 transition-colors">Privacy</a>
+            <a href="#" className="hover:text-orange-400 transition-colors">Cookies</a>
           </div>
         </div>
       </div>
