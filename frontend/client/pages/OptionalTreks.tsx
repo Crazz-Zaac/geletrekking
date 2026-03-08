@@ -1,10 +1,23 @@
 import { Layout } from "@/components/Layout";
-import { Share2, Facebook, Twitter, Linkedin } from "lucide-react";
+import { X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/apiClient";
+import { useState } from "react";
+
+const DIFF_COLOR: Record<string, string> = {
+  Easy:     "#22c55e",
+  Moderate: "#f59e0b",
+  Hard:     "#ef4444",
+};
+
+const DIFFICULTY_LEVELS: ("Easy" | "Moderate" | "Hard")[] = ["Easy", "Moderate", "Hard"];
+const DURATIONS = [1, 3, 7];
 
 export default function OptionalTreks() {
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("");
+  const [selectedDuration,   setSelectedDuration]   = useState<string>("");
+
   const { data: treks, isLoading } = useQuery({
     queryKey: ["optional-treks"],
     queryFn: async () => {
@@ -13,269 +26,388 @@ export default function OptionalTreks() {
     },
   });
 
-  const optionalTreks = (treks || []).filter(
-    (trek: any) => trek.is_optional && trek.is_active
-  );
+  const optionalTreks = (treks || [])
+    .filter((trek: any) => trek.is_optional && trek.is_active)
+    .filter((trek: any) => {
+      if (selectedDifficulty && trek.difficulty !== selectedDifficulty) return false;
+      if (selectedDuration && trek.duration_days !== parseInt(selectedDuration)) return false;
+      return true;
+    });
+
+  const hasActiveFilters = selectedDifficulty || selectedDuration;
 
   return (
     <Layout>
-      <div className="min-h-screen" style={{ background: "#0f172a" }}>
+      {/* Google Fonts */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@400;500;600&display=swap');
+
+        .trek-card {
+          transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .trek-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 20px 48px rgba(0,0,0,0.13) !important;
+        }
+        .trek-card:hover .card-image img {
+          transform: scale(1.05);
+        }
+        .card-image img {
+          transition: transform 0.5s ease;
+        }
+        .learn-btn {
+          transition: background 0.2s ease, color 0.2s ease;
+        }
+        .learn-btn:hover {
+          background: #111 !important;
+          color: #fff !important;
+        }
+        .filter-pill {
+          transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+          cursor: pointer;
+          border: none;
+          font-family: 'Inter', sans-serif;
+        }
+        .filter-pill:hover {
+          background: #f0ede8 !important;
+        }
+        .filter-pill.active {
+          background: #111 !important;
+          color: #fff !important;
+        }
+      `}</style>
+
+      <div style={{ background: "#faf8f5", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}>
 
         {/* ══════════════ HERO ══════════════ */}
-        <section
-          className="relative overflow-hidden pt-32 pb-20"
-          style={{
-            background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f4c3a 100%)",
-            minHeight: "420px",
-          }}
-        >
-          {/* Stars */}
-          {Array.from({ length: 60 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute rounded-full bg-white"
-              style={{
-                width:  i % 5 === 0 ? 2 : 1,
-                height: i % 5 === 0 ? 2 : 1,
-                top:  `${(i * 37 + 11) % 90}%`,
-                left: `${(i * 53 + 7)  % 100}%`,
-                opacity: 0.15 + (i % 4) * 0.15,
-              }}
-            />
-          ))}
-
-          {/* Glowing orbs */}
-          <div className="absolute top-10 left-1/4 w-72 h-72 rounded-full blur-3xl"
-            style={{ background: "rgba(13,148,136,0.12)" }} />
-          <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full blur-3xl"
-            style={{ background: "rgba(15,76,58,0.2)" }} />
-          <div className="absolute top-20 right-10 w-48 h-48 rounded-full blur-3xl"
-            style={{ background: "rgba(251,191,36,0.06)" }} />
-
-          <div className="relative z-10 container mx-auto px-6 text-center">
-            <p className="text-xs uppercase tracking-[0.35em] font-semibold mb-4"
-              style={{ color: "#5eead4" }}>
-              ✦ Gele Trekking
+        <section style={{ borderBottom: "1px solid #e8e2d8", padding: "100px 40px 28px" }}>
+          <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+            <p style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 11,
+              letterSpacing: "0.3em",
+              color: "#a0856a",
+              textTransform: "uppercase",
+              margin: "0 0 10px",
+            }}>
+              ✦ Gele Trekking · Nepal
             </p>
-            <h1 className="text-5xl md:text-7xl font-black text-white mb-6 leading-tight">
-              Optional{" "}
-              <span
-                className="text-transparent bg-clip-text"
-                style={{
-                  backgroundImage: "linear-gradient(90deg, #fbbf24, #f97316)",
-                }}
-              >
-                Activities
-              </span>
-            </h1>
-            <p className="text-lg font-light max-w-xl mx-auto mb-10"
-              style={{ color: "#94a3b8" }}>
-              Enhance your adventure with our curated trekking experiences — from cultural immersions to wellness retreats.
-            </p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 20 }}>
+              <h1 style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: "clamp(36px, 5vw, 52px)",
+                fontWeight: 900,
+                color: "#111",
+                margin: 0,
+                lineHeight: 1.05,
+                letterSpacing: "-0.02em",
+              }}>
+                Optional{" "}
+                <em style={{ fontStyle: "italic", fontWeight: 400 }}>Activities</em>
+              </h1>
+              <p style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 14,
+                color: "#888",
+                maxWidth: 280,
+                lineHeight: 1.65,
+                margin: 0,
+              }}>
+                Enhance your adventure with curated experiences — from cultural immersions to wellness retreats.
+              </p>
+            </div>
 
-            {/* Stats */}
-            <div className="flex justify-center gap-10 flex-wrap">
+            {/* Stats row */}
+            <div style={{ display: "flex", gap: 36, marginTop: 28, paddingTop: 20, borderTop: "1px solid #e8e2d8" }}>
               {[
                 { value: optionalTreks.length || "12+", label: "Activities" },
-                { value: "7",                            label: "Max Days" },
-                { value: "All",                          label: "Skill Levels" },
-              ].map((stat, i) => (
-                <div key={i} className="text-center">
-                  <div className="text-3xl font-black" style={{ color: "#fbbf24" }}>
-                    {stat.value}
-                  </div>
-                  <div className="text-xs uppercase tracking-widest mt-1"
-                    style={{ color: "#64748b" }}>
-                    {stat.label}
-                  </div>
+                { value: "3",                            label: "Difficulty Levels" },
+                { value: "All Levels",                   label: "Skill" },
+              ].map((s, i) => (
+                <div key={i}>
+                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#111" }}>{s.value}</div>
+                  <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "#aaa", marginTop: 2 }}>{s.label}</div>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Bottom wave */}
-          <div className="absolute bottom-0 left-0 right-0" style={{ lineHeight: 0 }}>
-            <svg viewBox="0 0 1440 60" className="w-full" preserveAspectRatio="none" style={{ height: 50 }}>
-              <path d="M0,30 C360,60 1080,0 1440,30 L1440,60 L0,60 Z" fill="#0f172a" />
-            </svg>
-          </div>
         </section>
 
-        {/* ══════════════ TREKS GRID ══════════════ */}
-        <section className="py-16" style={{ background: "#0f172a" }}>
-          <div className="container mx-auto px-4">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <div
-                  className="w-12 h-12 rounded-full border-4 border-t-transparent animate-spin"
-                  style={{ borderColor: "#0d9488", borderTopColor: "transparent" }}
-                />
-              </div>
-            ) : optionalTreks.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="text-6xl mb-4">🏔️</div>
-                <p className="text-lg font-semibold mb-2" style={{ color: "#e2e8f0" }}>
-                  No optional activities available at the moment.
-                </p>
-                <p className="text-sm mb-6" style={{ color: "#64748b" }}>
-                  Check back later or explore our main destinations.
-                </p>
-                <Link
-                  to="/destinations"
-                  className="px-6 py-3 rounded-xl font-semibold text-white transition-colors"
-                  style={{ background: "linear-gradient(90deg,#0d9488,#0f766e)" }}
-                >
-                  View Main Destinations
-                </Link>
-              </div>
-            ) : (
-              <>
-                {/* Count label */}
-                <p className="mb-8 text-sm" style={{ color: "#64748b" }}>
-                  Showing{" "}
-                  <span style={{ color: "#5eead4" }} className="font-semibold">
-                    {optionalTreks.length}
-                  </span>{" "}
-                  optional {optionalTreks.length === 1 ? "activity" : "activities"}
-                </p>
+        {/* ══════════════ FILTERS ══════════════ */}
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 40px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: "#bbb", marginRight: 4 }}>Filter:</span>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {optionalTreks.map((trek: any) => (
-                    <div
-                      key={trek._id}
-                      className="group rounded-2xl overflow-hidden transition-all duration-300"
-                      style={{
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        backdropFilter: "blur(4px)",
-                        boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(13,148,136,0.4)";
-                        (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 32px rgba(13,148,136,0.15)";
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(255,255,255,0.08)";
-                        (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 20px rgba(0,0,0,0.3)";
-                      }}
-                    >
-                      {/* Image */}
-                      <div className="h-52 overflow-hidden"
-                        style={{ background: "linear-gradient(135deg,#1e3a5f,#0f4c3a)" }}>
-                        {trek.image_url ? (
-                          <img
-                            src={trek.image_url}
-                            alt={trek.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-5xl opacity-30">🏔️</span>
-                          </div>
-                        )}
-                      </div>
+            {/* Difficulty pills */}
+            {DIFFICULTY_LEVELS.map((level) => (
+              <button
+                key={level}
+                className={`filter-pill ${selectedDifficulty === level ? "active" : ""}`}
+                onClick={() => setSelectedDifficulty(selectedDifficulty === level ? "" : level)}
+                style={{
+                  padding: "7px 18px",
+                  borderRadius: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  letterSpacing: "0.07em",
+                  textTransform: "uppercase",
+                  background: selectedDifficulty === level ? "#111" : "#fff",
+                  color: selectedDifficulty === level ? "#fff" : "#555",
+                  border: "1px solid #ddd",
+                }}
+              >
+                {level}
+              </button>
+            ))}
 
-                      {/* Content */}
-                      <div className="p-6">
-                        <h2
-                          className="text-xl font-bold mb-2 transition-colors"
-                          style={{ color: "#f1f5f9" }}
-                        >
-                          {trek.name}
-                        </h2>
-                        <p className="text-sm leading-relaxed mb-4 line-clamp-3"
-                          style={{ color: "#94a3b8" }}>
-                          {trek.overview || "Explore this amazing trekking adventure."}
-                        </p>
+            <div style={{ width: 1, height: 24, background: "#ddd", margin: "0 4px" }} />
 
-                        {/* Trek Details */}
-                        <div className="flex items-center justify-between text-sm mb-4 flex-wrap gap-2">
-                          {trek.duration_days > 0 && (
-                            <span className="flex items-center gap-1" style={{ color: "#5eead4" }}>
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                              {trek.duration_days} {trek.duration_days === 1 ? "day" : "days"}
-                            </span>
-                          )}
+            {/* Duration pills */}
+            {DURATIONS.map((d) => (
+              <button
+                key={d}
+                className={`filter-pill ${selectedDuration === String(d) ? "active" : ""}`}
+                onClick={() => setSelectedDuration(selectedDuration === String(d) ? "" : String(d))}
+                style={{
+                  padding: "7px 18px",
+                  borderRadius: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  letterSpacing: "0.07em",
+                  textTransform: "uppercase",
+                  background: selectedDuration === String(d) ? "#111" : "#fff",
+                  color: selectedDuration === String(d) ? "#fff" : "#555",
+                  border: "1px solid #ddd",
+                }}
+              >
+                {d} {d === 1 ? "Day" : "Days"}
+              </button>
+            ))}
 
-                          {trek.difficulty && (
-                            <span
-                              className="px-2 py-1 rounded-full text-xs font-semibold"
-                              style={{
-                                background:
-                                  trek.difficulty === "Hard"
-                                    ? "rgba(239,68,68,0.15)"
-                                    : trek.difficulty === "Moderate"
-                                    ? "rgba(249,115,22,0.15)"
-                                    : "rgba(34,197,94,0.15)",
-                                color:
-                                  trek.difficulty === "Hard"
-                                    ? "#fca5a5"
-                                    : trek.difficulty === "Moderate"
-                                    ? "#fdba74"
-                                    : "#86efac",
-                              }}
-                            >
-                              {trek.difficulty}
-                            </span>
-                          )}
-
-                          {trek.price_usd > 0 && (
-                            <span className="font-bold text-lg" style={{ color: "#fbbf24" }}>
-                              ${trek.price_usd}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Divider */}
-                        <div className="mb-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }} />
-
-                        {/* Actions */}
-                        <div className="flex items-center justify-between">
-                          <Link
-                            to={`/optional-trek/${trek._id}`}
-                            className="inline-flex items-center gap-1 text-sm font-semibold transition-colors"
-                            style={{ color: "#5eead4" }}
-                            onMouseEnter={(e) => (e.currentTarget.style.color = "#2dd4bf")}
-                            onMouseLeave={(e) => (e.currentTarget.style.color = "#5eead4")}
-                          >
-                            View Details →
-                          </Link>
-
-                          <div className="flex items-center gap-3">
-                            {[
-                              { Icon: Share2,   title: "Share" },
-                              { Icon: Facebook, title: "Facebook" },
-                              { Icon: Twitter,  title: "Twitter" },
-                              { Icon: Linkedin, title: "LinkedIn" },
-                            ].map(({ Icon, title }, i) => (
-                              <button
-                                key={i}
-                                title={title}
-                                className="transition-colors"
-                                style={{ color: "#475569" }}
-                                onMouseEnter={(e) =>
-                                  ((e.currentTarget as HTMLButtonElement).style.color = "#5eead4")
-                                }
-                                onMouseLeave={(e) =>
-                                  ((e.currentTarget as HTMLButtonElement).style.color = "#475569")
-                                }
-                              >
-                                <Icon size={16} />
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
+            {hasActiveFilters && (
+              <button
+                onClick={() => {
+                  setSelectedDifficulty("");
+                  setSelectedDuration("");
+                }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "7px 14px",
+                  border: "1px solid #fca5a5",
+                  borderRadius: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  fontFamily: "'Inter', sans-serif",
+                  letterSpacing: "0.07em",
+                  textTransform: "uppercase",
+                  background: "transparent",
+                  color: "#ef4444",
+                  cursor: "pointer",
+                }}
+              >
+                <X size={12} /> Clear
+              </button>
             )}
+
+            <span style={{ marginLeft: "auto", fontSize: 12, color: "#aaa" }}>
+              {optionalTreks.length} {optionalTreks.length === 1 ? "activity" : "activities"}
+            </span>
           </div>
-        </section>
+        </div>
+
+        {/* ══════════════ CARDS ══════════════ */}
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 40px 80px" }}>
+
+          {isLoading ? (
+            <div style={{ display: "flex", justifyContent: "center", padding: "80px 0" }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: "50%",
+                border: "3px solid #e8e2d8", borderTopColor: "#111",
+                animation: "spin 0.8s linear infinite",
+              }} />
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            </div>
+          ) : optionalTreks.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "80px 0" }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>🏔️</div>
+              <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: "#111", marginBottom: 8 }}>
+                No activities match your filters.
+              </p>
+              <p style={{ fontSize: 14, color: "#aaa", marginBottom: 24 }}>Try adjusting your criteria.</p>
+              <Link
+                to="/destinations"
+                style={{
+                  padding: "10px 24px",
+                  border: "1px solid #111",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  fontFamily: "'Inter', sans-serif",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  background: "transparent",
+                  color: "#111",
+                  textDecoration: "none",
+                }}
+              >
+                View Main Destinations
+              </Link>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 2 }}>
+              {optionalTreks.map((trek: any) => (
+                <Link
+                  key={trek._id}
+                  to={`/optional-trek/${trek._id}`}
+                  className="trek-card"
+                  style={{
+                    display: "block",
+                    background: "#fff",
+                    border: "1px solid #e8e2d8",
+                    overflow: "hidden",
+                    textDecoration: "none",
+                    boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
+                  }}
+                >
+                  {/* Image */}
+                  <div
+                    className="card-image"
+                    style={{
+                      height: 220,
+                      overflow: "hidden",
+                      position: "relative",
+                      background: "#e8e2d8",
+                    }}
+                  >
+                    {trek.image_url ? (
+                      <img
+                        src={trek.image_url}
+                        alt={trek.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      />
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ fontSize: 48, opacity: 0.2 }}>🏔️</span>
+                      </div>
+                    )}
+
+                    {/* Difficulty badge */}
+                    {trek.difficulty && (
+                      <div style={{
+                        position: "absolute", top: 14, left: 14,
+                        background: "#fff",
+                        padding: "4px 12px",
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: "0.15em",
+                        textTransform: "uppercase",
+                        color: DIFF_COLOR[trek.difficulty] ?? "#888",
+                        fontFamily: "'Inter', sans-serif",
+                      }}>
+                        {trek.difficulty}
+                      </div>
+                    )}
+
+                    {/* Rating badge */}
+                    {typeof trek.rating === "number" && trek.rating > 0 && (
+                      <div style={{
+                        position: "absolute", top: 14, right: 14,
+                        background: "#fff",
+                        padding: "4px 10px",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "#111",
+                        fontFamily: "'Inter', sans-serif",
+                        display: "flex", alignItems: "center", gap: 4,
+                      }}>
+                        <span style={{ color: "#f59e0b" }}>★</span> {trek.rating}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card body */}
+                  <div style={{ padding: "22px 24px 24px" }}>
+
+                    {/* Meta line */}
+                    <p style={{
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: 11,
+                      color: "#aaa",
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                      margin: "0 0 8px",
+                    }}>
+                      {trek.duration_days > 0 && `${trek.duration_days} ${trek.duration_days === 1 ? "Day" : "Days"}`}
+                      {trek.start_point && ` · ${trek.start_point}`}
+                    </p>
+
+                    {/* Name */}
+                    <h2 style={{
+                      fontFamily: "'Playfair Display', serif",
+                      fontSize: 22,
+                      fontWeight: 700,
+                      color: "#111",
+                      margin: "0 0 12px",
+                      lineHeight: 1.2,
+                    }}>
+                      {trek.name}
+                    </h2>
+
+                    {/* Overview */}
+                    {trek.overview && trek.overview !== "0" && (
+                      <p style={{
+                        fontFamily: "'Inter', sans-serif",
+                        fontSize: 13,
+                        color: "#777",
+                        lineHeight: 1.65,
+                        margin: "0 0 20px",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}>
+                        {trek.overview}
+                      </p>
+                    )}
+
+                    {/* Best season */}
+                    {trek.best_season && (
+                      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: "#bbb", margin: "0 0 20px" }}>
+                        Best season: <span style={{ color: "#888" }}>{trek.best_season}</span>
+                      </p>
+                    )}
+
+                    {/* Footer */}
+                    <div style={{
+                      paddingTop: 18,
+                      borderTop: "1px solid #f0ede8",
+                      display: "flex",
+                      justifyContent: "flex-end",
+                    }}>
+                      <button
+                        className="learn-btn"
+                        style={{
+                          padding: "9px 22px",
+                          border: "1px solid #111",
+                          borderRadius: 0,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          fontFamily: "'Inter', sans-serif",
+                          letterSpacing: "0.1em",
+                          textTransform: "uppercase",
+                          background: "transparent",
+                          color: "#111",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Learn More
+                      </button>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </Layout>
   );

@@ -1,6 +1,6 @@
 import { Layout } from "@/components/Layout";
 import { useState } from "react";
-import { Filter, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/apiClient";
@@ -37,67 +37,11 @@ const RATING_RANGES = [
   { label: "3.5+ Stars",  min: 3.5, max: 5 },
 ];
 
-// ── Gift ribbon bow decoration ──────────────────────────────────
-function RibbonBow() {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: 90,
-        height: 90,
-        overflow: "hidden",
-        pointerEvents: "none",
-        zIndex: 10,
-      }}
-    >
-      {/* diagonal band */}
-      <div
-        style={{
-          position: "absolute",
-          width: 128,
-          height: 22,
-          top: 26,
-          left: -26,
-          transform: "rotate(-45deg)",
-          transformOrigin: "center center",
-          background: "#7f1d1d",
-          borderTop: "1.5px solid #fbbf24",
-          borderBottom: "1.5px solid #fbbf24",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.35)",
-        }}
-      />
-      {/* bow SVG — rotated to align with band */}
-      <div
-        style={{
-          position: "absolute",
-          top: 12,
-          left: 12,
-          width: 42,
-          height: 42,
-          transform: "rotate(-45deg)",
-          transformOrigin: "center center",
-        }}
-      >
-        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {/* left loop */}
-          <path d="M32 32 C20 18 4 10 8 4 C12 -2 26 14 32 32Z" fill="#7f1d1d" stroke="#fbbf24" strokeWidth="1.2" />
-          {/* right loop */}
-          <path d="M32 32 C44 18 60 10 56 4 C52 -2 38 14 32 32Z" fill="#7f1d1d" stroke="#fbbf24" strokeWidth="1.2" />
-          {/* bottom-left tail */}
-          <path d="M32 32 C20 46 4 54 2 60 C8 62 22 50 32 32Z" fill="#6b1818" stroke="#fbbf24" strokeWidth="1" />
-          {/* bottom-right tail */}
-          <path d="M32 32 C44 46 60 54 62 60 C56 62 42 50 32 32Z" fill="#6b1818" stroke="#fbbf24" strokeWidth="1" />
-          {/* knot layers */}
-          <ellipse cx="32" cy="32" rx="9" ry="7" fill="#450a0a" />
-          <ellipse cx="32" cy="31" rx="6" ry="4.5" fill="#fbbf24" />
-          <ellipse cx="32" cy="31" rx="3" ry="2.5" fill="#7f1d1d" />
-        </svg>
-      </div>
-    </div>
-  );
-}
+const DIFF_COLOR: Record<string, string> = {
+  Easy:     "#22c55e",
+  Moderate: "#f59e0b",
+  Hard:     "#ef4444",
+};
 
 export default function Destinations() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("");
@@ -133,321 +77,381 @@ export default function Destinations() {
 
   return (
     <Layout>
-      <div className="min-h-screen" style={{ background: "#0f172a" }}>
+      {/* Google Fonts */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@400;500;600&display=swap');
+
+        .trek-card {
+          transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .trek-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 20px 48px rgba(0,0,0,0.13) !important;
+        }
+        .trek-card:hover .card-image img {
+          transform: scale(1.05);
+        }
+        .card-image img {
+          transition: transform 0.5s ease;
+        }
+        .learn-btn {
+          transition: background 0.2s ease, color 0.2s ease;
+        }
+        .learn-btn:hover {
+          background: #111 !important;
+          color: #fff !important;
+        }
+        .filter-pill {
+          transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+          cursor: pointer;
+          border: none;
+          font-family: 'Inter', sans-serif;
+        }
+        .filter-pill:hover {
+          background: #f0ede8 !important;
+        }
+        .filter-pill.active {
+          background: #111 !important;
+          color: #fff !important;
+        }
+      `}</style>
+
+      <div style={{ background: "#faf8f5", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}>
 
         {/* ══════════════ HERO ══════════════ */}
-        <section
-          className="relative overflow-hidden pt-32 pb-20"
-          style={{
-            background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f4c3a 100%)",
-            minHeight: "420px",
-          }}
-        >
-          {Array.from({ length: 60 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute rounded-full bg-white"
-              style={{
-                width:  i % 5 === 0 ? 2 : 1,
-                height: i % 5 === 0 ? 2 : 1,
-                top:  `${(i * 37 + 11) % 90}%`,
-                left: `${(i * 53 + 7)  % 100}%`,
-                opacity: 0.15 + (i % 4) * 0.15,
-              }}
-            />
-          ))}
-
-          <div className="absolute top-10 left-1/4 w-72 h-72 rounded-full blur-3xl"
-            style={{ background: "rgba(13,148,136,0.12)" }} />
-          <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full blur-3xl"
-            style={{ background: "rgba(15,76,58,0.2)" }} />
-          <div className="absolute top-20 right-10 w-48 h-48 rounded-full blur-3xl"
-            style={{ background: "rgba(251,191,36,0.06)" }} />
-
-          <div className="relative z-10 container mx-auto px-6 text-center">
-            <p className="text-xs uppercase tracking-[0.35em] font-semibold mb-4"
-              style={{ color: "#5eead4" }}>
-              ✦ Gele Trekking
+        <section style={{ borderBottom: "1px solid #e8e2d8", padding: "100px 40px 28px" }}>
+          <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+            <p style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 11,
+              letterSpacing: "0.3em",
+              color: "#a0856a",
+              textTransform: "uppercase",
+              margin: "0 0 10px",
+            }}>
+              ✦ Gele Trekking · Nepal
             </p>
-            <h1 className="text-5xl md:text-7xl font-black text-white mb-6 leading-tight">
-              Explore Our{" "}
-              <span
-                className="text-transparent bg-clip-text"
-                style={{ backgroundImage: "linear-gradient(90deg, #fbbf24, #f97316)" }}
-              >
-                Destinations
-              </span>
-            </h1>
-            <p className="text-lg font-light max-w-xl mx-auto mb-10"
-              style={{ color: "#94a3b8" }}>
-              Choose from our carefully curated trek packages — from gentle valleys to challenging summits.
-            </p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 20 }}>
+              <h1 style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: "clamp(36px, 5vw, 52px)",
+                fontWeight: 900,
+                color: "#111",
+                margin: 0,
+                lineHeight: 1.05,
+                letterSpacing: "-0.02em",
+              }}>
+                Explore Our{" "}
+                <em style={{ fontStyle: "italic", fontWeight: 400 }}>Destinations</em>
+              </h1>
+              <p style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 14,
+                color: "#888",
+                maxWidth: 280,
+                lineHeight: 1.65,
+                margin: 0,
+              }}>
+                Carefully curated trek packages — from gentle valleys to challenging summits across Nepal.
+              </p>
+            </div>
 
-            <div className="flex justify-center gap-10 flex-wrap">
+            {/* Stats row */}
+            <div style={{ display: "flex", gap: 36, marginTop: 28, paddingTop: 20, borderTop: "1px solid #e8e2d8" }}>
               {[
                 { value: filteredTreks.length || "20+", label: "Destinations" },
-                { value: "3",                            label: "Difficulty Levels" },
-                { value: "Year",                         label: "Round Season" },
-              ].map((stat, i) => (
-                <div key={i} className="text-center">
-                  <div className="text-3xl font-black" style={{ color: "#fbbf24" }}>{stat.value}</div>
-                  <div className="text-xs uppercase tracking-widest mt-1" style={{ color: "#64748b" }}>{stat.label}</div>
+                { value: "3",   label: "Difficulty Levels" },
+                { value: "Year Round", label: "Season" },
+              ].map((s, i) => (
+                <div key={i}>
+                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#111" }}>{s.value}</div>
+                  <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "#aaa", marginTop: 2 }}>{s.label}</div>
                 </div>
               ))}
             </div>
           </div>
-
-          <div className="absolute bottom-0 left-0 right-0" style={{ lineHeight: 0 }}>
-            <svg viewBox="0 0 1440 60" className="w-full" preserveAspectRatio="none" style={{ height: 50 }}>
-              <path d="M0,30 C360,60 1080,0 1440,30 L1440,60 L0,60 Z" fill="#0f172a" />
-            </svg>
-          </div>
         </section>
 
         {/* ══════════════ FILTERS ══════════════ */}
-        <div className="container mx-auto px-4 py-10">
-          <div
-            className="rounded-2xl p-6 mb-8"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              backdropFilter: "blur(4px)",
-            }}
-          >
-            <div className="flex items-center gap-2 mb-5">
-              <Filter className="w-5 h-5" style={{ color: "#5eead4" }} />
-              <h3 className="font-bold text-lg text-white">Filters</h3>
-            </div>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 40px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: "#bbb", marginRight: 4 }}>Filter:</span>
 
-            <div className="flex flex-wrap items-end gap-4">
-              <div>
-                <label className="block text-xs uppercase tracking-wider mb-2 font-semibold"
-                  style={{ color: "#64748b" }}>Difficulty</label>
-                <select
-                  value={selectedDifficulty}
-                  onChange={(e) => setSelectedDifficulty(e.target.value)}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold outline-none"
-                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#e2e8f0" }}
-                >
-                  <option value="" style={{ background: "#1e293b" }}>All Difficulties</option>
-                  {DIFFICULTY_LEVELS.map((level) => (
-                    <option key={level} value={level} style={{ background: "#1e293b" }}>{level}</option>
-                  ))}
-                </select>
-              </div>
+            {/* Difficulty pills */}
+            {DIFFICULTY_LEVELS.map((level) => (
+              <button
+                key={level}
+                className={`filter-pill ${selectedDifficulty === level ? "active" : ""}`}
+                onClick={() => setSelectedDifficulty(selectedDifficulty === level ? "" : level)}
+                style={{
+                  padding: "7px 18px",
+                  borderRadius: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  letterSpacing: "0.07em",
+                  textTransform: "uppercase",
+                  background: selectedDifficulty === level ? "#111" : "#fff",
+                  color: selectedDifficulty === level ? "#fff" : "#555",
+                  border: "1px solid #ddd",
+                }}
+              >
+                {level}
+              </button>
+            ))}
 
-              <div>
-                <label className="block text-xs uppercase tracking-wider mb-2 font-semibold"
-                  style={{ color: "#64748b" }}>Duration</label>
-                <select
-                  value={selectedDuration}
-                  onChange={(e) => setSelectedDuration(e.target.value)}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold outline-none"
-                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#e2e8f0" }}
-                >
-                  <option value="" style={{ background: "#1e293b" }}>All Durations</option>
-                  {DURATIONS.map((d) => (
-                    <option key={d} value={String(d)} style={{ background: "#1e293b" }}>{d} Days</option>
-                  ))}
-                </select>
-              </div>
+            <div style={{ width: 1, height: 24, background: "#ddd", margin: "0 4px" }} />
 
-              <div>
-                <label className="block text-xs uppercase tracking-wider mb-2 font-semibold"
-                  style={{ color: "#64748b" }}>Price Range</label>
-                <select
-                  value={selectedPriceRange}
-                  onChange={(e) => setSelectedPriceRange(e.target.value)}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold outline-none"
-                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#e2e8f0" }}
-                >
-                  <option value="" style={{ background: "#1e293b" }}>All Prices</option>
-                  {PRICE_RANGES.map((r) => (
-                    <option key={r.label} value={r.label} style={{ background: "#1e293b" }}>{r.label}</option>
-                  ))}
-                </select>
-              </div>
+            {/* Duration pills */}
+            {DURATIONS.map((d) => (
+              <button
+                key={d}
+                className={`filter-pill ${selectedDuration === String(d) ? "active" : ""}`}
+                onClick={() => setSelectedDuration(selectedDuration === String(d) ? "" : String(d))}
+                style={{
+                  padding: "7px 18px",
+                  borderRadius: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  letterSpacing: "0.07em",
+                  textTransform: "uppercase",
+                  background: selectedDuration === String(d) ? "#111" : "#fff",
+                  color: selectedDuration === String(d) ? "#fff" : "#555",
+                  border: "1px solid #ddd",
+                }}
+              >
+                {d} Days
+              </button>
+            ))}
 
-              <div>
-                <label className="block text-xs uppercase tracking-wider mb-2 font-semibold"
-                  style={{ color: "#64748b" }}>Rating</label>
-                <select
-                  value={selectedRating}
-                  onChange={(e) => setSelectedRating(e.target.value)}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold outline-none"
-                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#e2e8f0" }}
-                >
-                  {RATING_RANGES.map((r) => (
-                    <option key={r.label} value={r.label} style={{ background: "#1e293b" }}>{r.label}</option>
-                  ))}
-                </select>
-              </div>
+            <div style={{ width: 1, height: 24, background: "#ddd", margin: "0 4px" }} />
 
-              {hasActiveFilters && (
-                <button
-                  onClick={() => {
-                    setSelectedDifficulty("");
-                    setSelectedDuration("");
-                    setSelectedPriceRange("");
-                    setSelectedRating("All Ratings");
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
-                  style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#fca5a5" }}
-                >
-                  <X className="w-4 h-4" /> Clear All
-                </button>
-              )}
-            </div>
+            {/* Rating select */}
+            <select
+              value={selectedRating}
+              onChange={(e) => setSelectedRating(e.target.value)}
+              style={{
+                padding: "7px 14px",
+                border: "1px solid #ddd",
+                borderRadius: 0,
+                fontSize: 12,
+                fontWeight: 600,
+                fontFamily: "'Inter', sans-serif",
+                letterSpacing: "0.07em",
+                textTransform: "uppercase",
+                background: selectedRating !== "All Ratings" ? "#111" : "#fff",
+                color: selectedRating !== "All Ratings" ? "#fff" : "#555",
+                outline: "none",
+                cursor: "pointer",
+              }}
+            >
+              {RATING_RANGES.map((r) => (
+                <option key={r.label} value={r.label}>{r.label}</option>
+              ))}
+            </select>
+
+            {hasActiveFilters && (
+              <button
+                onClick={() => {
+                  setSelectedDifficulty("");
+                  setSelectedDuration("");
+                  setSelectedPriceRange("");
+                  setSelectedRating("All Ratings");
+                }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "7px 14px",
+                  border: "1px solid #fca5a5",
+                  borderRadius: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  fontFamily: "'Inter', sans-serif",
+                  letterSpacing: "0.07em",
+                  textTransform: "uppercase",
+                  background: "transparent",
+                  color: "#ef4444",
+                  cursor: "pointer",
+                }}
+              >
+                <X size={12} /> Clear
+              </button>
+            )}
+
+            <span style={{ marginLeft: "auto", fontSize: 12, color: "#aaa" }}>
+              {filteredTreks.length} {filteredTreks.length === 1 ? "destination" : "destinations"}
+            </span>
           </div>
+        </div>
 
-          {/* ══════════════ TREK LIST ══════════════ */}
+        {/* ══════════════ TREK CARDS ══════════════ */}
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 40px 80px" }}>
+
           {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <div
-                className="w-12 h-12 rounded-full border-4 border-t-transparent animate-spin"
-                style={{ borderColor: "#0d9488", borderTopColor: "transparent" }}
-              />
+            <div style={{ display: "flex", justifyContent: "center", padding: "80px 0" }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: "50%",
+                border: "3px solid #e8e2d8", borderTopColor: "#111",
+                animation: "spin 0.8s linear infinite",
+              }} />
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
           ) : filteredTreks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="text-6xl mb-4">🏔️</div>
-              <p className="text-lg font-semibold mb-2" style={{ color: "#e2e8f0" }}>No treks match your filters.</p>
-              <p className="text-sm" style={{ color: "#64748b" }}>Try adjusting your criteria.</p>
+            <div style={{ textAlign: "center", padding: "80px 0" }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>🏔️</div>
+              <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: "#111", marginBottom: 8 }}>No treks match your filters.</p>
+              <p style={{ fontSize: 14, color: "#aaa" }}>Try adjusting your criteria.</p>
             </div>
           ) : (
-            <>
-              <p className="mb-6 text-sm" style={{ color: "#64748b" }}>
-                Showing{" "}
-                <span style={{ color: "#5eead4" }} className="font-semibold">{filteredTreks.length}</span>{" "}
-                {filteredTreks.length === 1 ? "destination" : "destinations"}
-              </p>
-
-              <div className="space-y-6">
-                {filteredTreks.map((trek) => (
-                  <Link
-                    key={trek._id}
-                    to={`/destination/${trek._id}`}
-                    className="block rounded-2xl overflow-hidden transition-all duration-300 group"
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 2 }}>
+              {filteredTreks.map((trek) => (
+                <Link
+                  key={trek._id}
+                  to={`/destination/${trek._id}`}
+                  className="trek-card"
+                  style={{
+                    display: "block",
+                    background: "#fff",
+                    border: "1px solid #e8e2d8",
+                    overflow: "hidden",
+                    textDecoration: "none",
+                    boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
+                  }}
+                >
+                  {/* Image */}
+                  <div
+                    className="card-image"
                     style={{
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLAnchorElement).style.border = "1px solid rgba(13,148,136,0.4)";
-                      (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 8px 32px rgba(13,148,136,0.15)";
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLAnchorElement).style.border = "1px solid rgba(255,255,255,0.08)";
-                      (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 4px 20px rgba(0,0,0,0.3)";
+                      height: 220,
+                      overflow: "hidden",
+                      position: "relative",
+                      background: "#e8e2d8",
                     }}
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
-
-                      {/* ── Image with ribbon bow ── */}
-                      <div
-                        className="md:col-span-1 h-64 overflow-hidden relative"
-                        style={{ background: "linear-gradient(135deg,#1e3a5f,#0f4c3a)" }}
-                      >
-                        {trek.image_url ? (
-                          <img
-                            src={trek.image_url}
-                            alt={trek.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-6xl opacity-20">🏔️</span>
-                          </div>
-                        )}
-                        {/* 🎁 Ribbon bow */}
-                        <RibbonBow />
+                    {trek.image_url ? (
+                      <img
+                        src={trek.image_url}
+                        alt={trek.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      />
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ fontSize: 48, opacity: 0.2 }}>🏔️</span>
                       </div>
+                    )}
 
-                      {/* Info */}
-                      <div className="md:col-span-2 p-6 flex flex-col justify-between">
-                        <div>
-                          <h2 className="text-2xl font-black mb-4 transition-colors" style={{ color: "#f1f5f9" }}>
-                            {trek.name}
-                          </h2>
-
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
-                            {trek.duration_days > 0 && (
-                              <div className="rounded-xl p-3"
-                                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                                <div className="text-xs mb-1" style={{ color: "#64748b" }}>Duration</div>
-                                <div className="text-base font-bold" style={{ color: "#5eead4" }}>{trek.duration_days} Days</div>
-                              </div>
-                            )}
-                            <div className="rounded-xl p-3"
-                              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                              <div className="text-xs mb-1" style={{ color: "#64748b" }}>Difficulty</div>
-                              <div className="text-base font-bold"
-                                style={{
-                                  color: trek.difficulty === "Hard" ? "#fca5a5"
-                                    : trek.difficulty === "Moderate" ? "#fdba74"
-                                    : "#86efac",
-                                }}>
-                                {trek.difficulty}
-                              </div>
-                            </div>
-                            {trek.price_usd > 0 && (
-                              <div className="rounded-xl p-3"
-                                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                                <div className="text-xs mb-1" style={{ color: "#64748b" }}>Price</div>
-                                <div className="text-base font-bold" style={{ color: "#fbbf24" }}>${trek.price_usd}</div>
-                              </div>
-                            )}
-                            {typeof trek.rating === "number" && trek.rating > 0 && (
-                              <div className="rounded-xl p-3"
-                                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                                <div className="text-xs mb-1" style={{ color: "#64748b" }}>Rating</div>
-                                <div className="flex items-center gap-1">
-                                  <span className="text-base font-bold" style={{ color: "#fbbf24" }}>{trek.rating}</span>
-                                  <span style={{ color: "#fbbf24" }}>★</span>
-                                </div>
-                              </div>
-                            )}
-                            {trek.start_point && (
-                              <div className="rounded-xl p-3"
-                                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                                <div className="text-xs mb-1" style={{ color: "#64748b" }}>Start Point</div>
-                                <div className="text-base font-bold" style={{ color: "#e2e8f0" }}>{trek.start_point}</div>
-                              </div>
-                            )}
-                            {trek.end_point && (
-                              <div className="rounded-xl p-3"
-                                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                                <div className="text-xs mb-1" style={{ color: "#64748b" }}>End Point</div>
-                                <div className="text-base font-bold" style={{ color: "#e2e8f0" }}>{trek.end_point}</div>
-                              </div>
-                            )}
-                          </div>
-
-                          {trek.overview && trek.overview !== "0" && (
-                            <p className="text-sm leading-relaxed mb-3 line-clamp-2" style={{ color: "#94a3b8" }}>
-                              {trek.overview}
-                            </p>
-                          )}
-                          {trek.best_season && (
-                            <p className="text-xs" style={{ color: "#64748b" }}>
-                              <span className="font-semibold" style={{ color: "#5eead4" }}>Best Season: </span>
-                              {trek.best_season}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                          <span className="text-sm font-bold transition-colors" style={{ color: "#5eead4" }}>
-                            View Details →
-                          </span>
-                        </div>
-                      </div>
+                    {/* Difficulty badge */}
+                    <div style={{
+                      position: "absolute", top: 14, left: 14,
+                      background: "#fff",
+                      padding: "4px 12px",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                      color: DIFF_COLOR[trek.difficulty],
+                      fontFamily: "'Inter', sans-serif",
+                    }}>
+                      {trek.difficulty}
                     </div>
-                  </Link>
-                ))}
-              </div>
-            </>
+
+                    {/* Rating badge */}
+                    {typeof trek.rating === "number" && trek.rating > 0 && (
+                      <div style={{
+                        position: "absolute", top: 14, right: 14,
+                        background: "#fff",
+                        padding: "4px 10px",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "#111",
+                        fontFamily: "'Inter', sans-serif",
+                        display: "flex", alignItems: "center", gap: 4,
+                      }}>
+                        <span style={{ color: "#f59e0b" }}>★</span> {trek.rating}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card body */}
+                  <div style={{ padding: "22px 24px 24px" }}>
+
+                    {/* Meta line */}
+                    <p style={{
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: 11,
+                      color: "#aaa",
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                      margin: "0 0 8px",
+                    }}>
+                      {trek.duration_days > 0 && `${trek.duration_days} Days`}
+                      {trek.start_point && ` · ${trek.start_point}`}
+                    </p>
+
+                    {/* Name */}
+                    <h2 style={{
+                      fontFamily: "'Playfair Display', serif",
+                      fontSize: 22,
+                      fontWeight: 700,
+                      color: "#111",
+                      margin: "0 0 12px",
+                      lineHeight: 1.2,
+                    }}>
+                      {trek.name}
+                    </h2>
+
+                    {/* Overview */}
+                    {trek.overview && trek.overview !== "0" && (
+                      <p style={{
+                        fontFamily: "'Inter', sans-serif",
+                        fontSize: 13,
+                        color: "#777",
+                        lineHeight: 1.65,
+                        margin: "0 0 20px",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}>
+                        {trek.overview}
+                      </p>
+                    )}
+
+                    {/* Best season */}
+                    {trek.best_season && (
+                      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: "#bbb", margin: "0 0 20px" }}>
+                        Best season: <span style={{ color: "#888" }}>{trek.best_season}</span>
+                      </p>
+                    )}
+
+                    {/* Footer */}
+                    <div style={{
+                      paddingTop: 18,
+                      borderTop: "1px solid #f0ede8",
+                      display: "flex",
+                      justifyContent: "flex-end",
+                    }}>
+                      <button
+                        className="learn-btn"
+                        style={{
+                          padding: "9px 22px",
+                          border: "1px solid #111",
+                          borderRadius: 0,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          fontFamily: "'Inter', sans-serif",
+                          letterSpacing: "0.1em",
+                          textTransform: "uppercase",
+                          background: "transparent",
+                          color: "#111",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Learn More
+                      </button>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           )}
         </div>
       </div>

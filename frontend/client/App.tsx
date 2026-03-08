@@ -18,6 +18,7 @@ import Testimonials from "./pages/Testimonials";
 import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
 import Contact from "./pages/Contact";
+import Terms from "./pages/Term";
 import NotFound from "./pages/NotFound";
 // Admin
 import AdminLogin from "./pages/admin/Login";
@@ -34,7 +35,7 @@ import AdminTestimonials from "./pages/admin/Testimonials";
 import AdminAbout from "./pages/admin/About";
 import Admins from "./pages/admin/Admins";
 import AdminMessages from "./pages/admin/AdminMessages";
-import AdminActivities from "./pages/admin/AdminActivities"; // ✅ NEW
+import AdminActivities from "./pages/admin/AdminActivities";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ const App = () => (
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:id" element={<BlogDetail />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/terms" element={<Terms />} />
 
           {/* Admin */}
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -75,7 +77,7 @@ const App = () => (
               <Route path="testimonials" element={<AdminTestimonials />} />
               <Route path="about" element={<AdminAbout />} />
               <Route path="messages" element={<AdminMessages />} />
-              <Route path="activities" element={<AdminActivities />} /> {/* ✅ NEW */}
+              <Route path="activities" element={<AdminActivities />} />
               {/* 🔐 Superadmin only */}
               <Route path="admins" element={<Admins />} />
             </Route>
