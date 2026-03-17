@@ -1,16 +1,18 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Menu, X, ChevronDown, Phone } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/apiClient";
 
-// ── Social Icons Component ─────────────────────────────────────
+// ── Social Icons ───────────────────────────────────────────────────────────
+
 interface SocialIcon {
   name: string;
   href: string;
   colors: string[];
   svg: string;
 }
+
 const getSocialIcons = (social: any): SocialIcon[] => [
   {
     name: "Instagram",
@@ -48,9 +50,9 @@ const SocialIconsRow = ({ social }: { social: any }) => {
   const [hovered, setHovered] = useState<string | null>(null);
   const icons = getSocialIcons(social);
   return (
-    <div className="flex items-center gap-3 mt-1">
+    <div className="flex items-center gap-1.5">
       {icons.map((icon, i) => {
-        const gradId = `footer-grad-${i}`;
+        const gradId = `nav-grad-${i}`;
         const isHovered = hovered === icon.name;
         return (
           <a
@@ -61,20 +63,13 @@ const SocialIconsRow = ({ social }: { social: any }) => {
             aria-label={icon.name}
             onMouseEnter={() => setHovered(icon.name)}
             onMouseLeave={() => setHovered(null)}
+            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
             style={{
-              display: "block",
-              transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)",
-              transform: isHovered ? "translateY(-5px) scale(1.12)" : "translateY(0) scale(1)",
+              transition: "transform 0.2s ease",
+              transform: isHovered ? "translateY(-2px)" : "translateY(0)",
             }}
           >
-            <svg
-              width="40" height="40" viewBox="0 0 24 24"
-              style={{
-                borderRadius: "10px", display: "block",
-                boxShadow: isHovered ? "0 8px 20px rgba(0,0,0,0.5)" : "0 2px 6px rgba(0,0,0,0.3)",
-                transition: "box-shadow 0.3s ease",
-              }}
-            >
+            <svg width="18" height="18" viewBox="0 0 24 24">
               <defs>
                 <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
                   {icon.colors.map((c, ci) => (
@@ -92,7 +87,8 @@ const SocialIconsRow = ({ social }: { social: any }) => {
   );
 };
 
-// ── Header ─────────────────────────────────────────────────────
+// ── Header ─────────────────────────────────────────────────────────────────
+
 export const Header = ({ settings }: { settings: any }) => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -103,8 +99,8 @@ export const Header = ({ settings }: { settings: any }) => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll);
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
@@ -114,15 +110,11 @@ export const Header = ({ settings }: { settings: any }) => {
         try {
           const destResponse = await api.get("/api/treks?type=destination");
           setDestinations(destResponse.data || []);
-        } catch (err) {
-          setDestinations([]);
-        }
+        } catch { setDestinations([]); }
         try {
           const optResponse = await api.get("/api/treks?type=optional");
           setOptionalTreks(optResponse.data || []);
-        } catch (err) {
-          setOptionalTreks([]);
-        }
+        } catch { setOptionalTreks([]); }
       } finally {
         setLoading(false);
       }
@@ -130,294 +122,213 @@ export const Header = ({ settings }: { settings: any }) => {
     fetchTreks();
   }, []);
 
-  const phone = settings?.phone || "+977 9841 392186";
+  const siteName = settings?.siteName || "GELE TREKKING";
+  const phone    = settings?.phone    || "+977 9841 392186";
+
+  const navLinks = [
+    { label: "Home",          to: "/" },
+    { label: "About",         to: "/about" },
+    { label: "Destinations",  to: "/destinations",   dropdown: "destinations" },
+    { label: "Gallery",       to: "/gallery" },
+    { label: "Activities",    to: "/activities" },
+    { label: "Optional Treks",to: "/optional-treks", dropdown: "optional" },
+    { label: "Testimonials",  to: "/testimonials" },
+    { label: "Blog",          to: "/blog" },
+    { label: "Contact",       to: "/contact" },
+  ];
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-      style={{
-        background: scrolled ? "rgba(255,255,255,0.98)" : "rgba(255,255,255,0.95)",
-        backdropFilter: "blur(12px)",
-        boxShadow: scrolled ? "0 2px 20px rgba(0,0,0,0.10)" : "none",
-      }}
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        scrolled
+          ? "bg-[oklch(0.15_0.02_240/0.97)] backdrop-blur-md shadow-lg"
+          : "bg-[oklch(0.15_0.02_240/0.55)] backdrop-blur-sm"
+      )}
     >
-      {/* Top accent band */}
-      <div
-        style={{
-          height: "3px",
-          background: "linear-gradient(90deg, #ff8f00, #ffa726, #4fc3f7, #0288d1)",
-        }}
-      />
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
 
-      <div className="flex items-stretch">
-        {/* ── Logo Block ── */}
-        <div
-          className="flex items-center gap-2 flex-shrink-0"
-          style={{
-            padding: "8px 20px 8px 16px",
-            clipPath: "polygon(0 0, calc(100% - 18px) 0, 100% 100%, 0 100%)",
-            background: "transparent",
-            borderRight: "1.5px solid rgba(0,0,0,0.08)",
-            marginRight: "8px",
-          }}
-        >
-          <div
-            style={{
-              width: 48, height: 48, borderRadius: 12, overflow: "hidden",
-              flexShrink: 0, boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
-              border: "2px solid rgba(0,0,0,0.08)",
-            }}
-          >
-            <img
-              src="/geletrekking.png"
-              alt="Gele Trekking Logo"
-              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-            />
-          </div>
-          <Link to="/" style={{ textDecoration: "none" }}>
-            <div
-              style={{
-                fontFamily: "'Bebas Neue', 'Rajdhani', sans-serif",
-                fontSize: 20, fontWeight: 700, color: "#1a1a1a",
-                letterSpacing: "3px", lineHeight: 1, whiteSpace: "nowrap",
-              }}
-            >
-              {settings?.siteName || "GELE TREKKING"}
+        {/* ── Logo ── */}
+        <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
+          <img
+            src="/geletrekking.png"
+            alt={siteName}
+            className="w-9 h-9 rounded-lg object-cover border border-white/20 shadow flex-shrink-0"
+          />
+          <div className="hidden sm:block">
+            <div className="font-bold text-white text-sm leading-tight tracking-widest uppercase group-hover:text-accent transition-colors">
+              {siteName}
             </div>
-            <div
-              style={{
-                fontSize: 9, color: "#888", letterSpacing: "2px",
-                textTransform: "uppercase", fontWeight: 600, marginTop: 4, whiteSpace: "nowrap",
-              }}
-            >
+            <div className="text-white/50 text-[8px] uppercase tracking-[2px] leading-tight">
               Walk · Explore · Discover
             </div>
-          </Link>
-        </div>
+          </div>
+        </Link>
 
-        {/* ── Desktop Navigation ── */}
-        <nav className="hidden lg:flex items-center gap-0 flex-1 px-2">
-          <Link
-            to="/"
-            className={cn(
-              "px-2.5 py-2 text-sm font-semibold rounded-md transition-all duration-150 whitespace-nowrap",
-              location.pathname === "/" ? "text-orange-600 bg-orange-50" : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-            )}
-          >
-            Home
-          </Link>
-          <Link
-            to="/about"
-            className={cn(
-              "px-2.5 py-2 text-sm font-semibold rounded-md transition-all duration-150 whitespace-nowrap",
-              location.pathname === "/about" ? "text-orange-600 bg-orange-50" : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-            )}
-          >
-            About
-          </Link>
+        {/* ── Desktop Nav ── */}
+        <ul className="hidden lg:flex items-center">
+          {navLinks.map((link) =>
+            link.dropdown ? (
+              <li
+                key={link.label}
+                className="relative"
+                onMouseEnter={() => setActiveDropdown(link.dropdown!)}
+                onMouseLeave={() => setActiveDropdown(null)}
+              >
+                <Link
+                  to={link.to}
+                  className={cn(
+                    "flex items-center gap-0.5 px-2 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap",
+                    location.pathname.startsWith(link.to)
+                      ? "text-white bg-white/15"
+                      : "text-white/85 hover:text-white hover:bg-white/10"
+                  )}
+                >
+                  {link.label}
+                  <ChevronDown
+                    className={cn(
+                      "w-3 h-3 flex-shrink-0 transition-transform duration-200",
+                      activeDropdown === link.dropdown && "rotate-180"
+                    )}
+                  />
+                </Link>
 
-          {/* Destinations Dropdown */}
-          <div
-            className="relative"
-            onMouseEnter={() => setActiveDropdown("destinations")}
-            onMouseLeave={() => setActiveDropdown(null)}
-          >
-            <Link
-              to="/destinations"
-              className={cn(
-                "flex items-center gap-1 px-2.5 py-2 text-sm font-semibold rounded-md transition-all duration-150 whitespace-nowrap",
-                location.pathname.startsWith("/destination") ? "text-orange-600 bg-orange-50" : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-              )}
-            >
-              Destinations <ChevronDown className="w-3 h-3" />
-            </Link>
-            {activeDropdown === "destinations" && (
-              <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-100 py-2 min-w-[220px] z-50">
-                {loading ? (
-                  <div className="px-4 py-2 text-sm text-gray-400">Loading...</div>
-                ) : destinations.length > 0 ? (
-                  destinations.map((trek) => (
-                    <Link
-                      key={trek._id}
-                      to={`/destination/${trek._id}`}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors capitalize"
-                    >
-                      {trek.name}
-                    </Link>
-                  ))
-                ) : (
-                  <div className="px-4 py-2 text-sm text-gray-400">No destinations available</div>
+                {activeDropdown === link.dropdown && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50">
+                    <div className="bg-white rounded-xl shadow-2xl border border-border p-2 min-w-[200px]">
+                      {loading ? (
+                        <div className="px-4 py-2 text-sm text-muted-foreground">Loading...</div>
+                      ) : (link.dropdown === "destinations" ? destinations : optionalTreks).length > 0 ? (
+                        (link.dropdown === "destinations" ? destinations : optionalTreks).map((trek) => (
+                          <Link
+                            key={trek._id}
+                            to={link.dropdown === "destinations" ? `/destination/${trek._id}` : `/optional-trek/${trek._id}`}
+                            className="block px-4 py-2.5 text-sm text-foreground hover:bg-secondary hover:text-primary rounded-lg transition-colors font-medium capitalize"
+                          >
+                            {trek.name}
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="px-4 py-2 text-sm text-muted-foreground">None available</div>
+                      )}
+                    </div>
+                  </div>
                 )}
-              </div>
-            )}
+              </li>
+            ) : (
+              <li key={link.label}>
+                <Link
+                  to={link.to}
+                  className={cn(
+                    "px-2 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap",
+                    location.pathname === link.to
+                      ? "text-white bg-white/15"
+                      : "text-white/85 hover:text-white hover:bg-white/10"
+                  )}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            )
+          )}
+        </ul>
+
+        {/* ── Right side: socials + phone + Book Now + mobile toggle ── */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {/* Social icons */}
+          <div className="hidden xl:flex items-center border-r border-white/20 pr-2 mr-1">
+            <SocialIconsRow social={settings?.social} />
           </div>
 
-          <Link
-            to="/gallery"
-            className={cn(
-              "px-2.5 py-2 text-sm font-semibold rounded-md transition-all duration-150 whitespace-nowrap",
-              location.pathname === "/gallery" ? "text-orange-600 bg-orange-50" : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-            )}
+          {/* Phone */}
+          <a
+            href={`tel:${phone}`}
+            className="hidden xl:flex items-center gap-1 text-white/80 hover:text-white transition-colors text-xs font-medium whitespace-nowrap"
           >
-            Gallery
-          </Link>
-          <Link
-            to="/activities"
-            className={cn(
-              "px-2.5 py-2 text-sm font-semibold rounded-md transition-all duration-150 whitespace-nowrap",
-              location.pathname === "/activities" ? "text-orange-600 bg-orange-50" : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-            )}
-          >
-            Activities
-          </Link>
+            {phone}
+          </a>
 
-          {/* Optional Treks Dropdown */}
-          <div
-            className="relative"
-            onMouseEnter={() => setActiveDropdown("optional")}
-            onMouseLeave={() => setActiveDropdown(null)}
-          >
-            <Link
-              to="/optional-treks"
-              className={cn(
-                "flex items-center gap-1 px-2.5 py-2 text-sm font-semibold rounded-md transition-all duration-150 whitespace-nowrap",
-                location.pathname.startsWith("/optional-trek") ? "text-orange-600 bg-orange-50" : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-              )}
-            >
-              Optional Treks <ChevronDown className="w-3 h-3" />
-            </Link>
-            {activeDropdown === "optional" && (
-              <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-100 py-2 min-w-[220px] z-50">
-                {loading ? (
-                  <div className="px-4 py-2 text-sm text-gray-400">Loading...</div>
-                ) : optionalTreks.length > 0 ? (
-                  optionalTreks.map((trek) => (
-                    <Link
-                      key={trek._id}
-                      to={`/optional-trek/${trek._id}`}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors capitalize"
-                    >
-                      {trek.name}
-                    </Link>
-                  ))
-                ) : (
-                  <div className="px-4 py-2 text-sm text-gray-400">No optional treks available</div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <Link
-            to="/testimonials"
-            className={cn(
-              "px-2.5 py-2 text-sm font-semibold rounded-md transition-all duration-150 whitespace-nowrap",
-              location.pathname === "/testimonials" ? "text-orange-600 bg-orange-50" : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-            )}
-          >
-            Testimonials
-          </Link>
-          <Link
-            to="/blog"
-            className={cn(
-              "px-2.5 py-2 text-sm font-semibold rounded-md transition-all duration-150 whitespace-nowrap",
-              location.pathname === "/blog" ? "text-orange-600 bg-orange-50" : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-            )}
-          >
-            Blog
-          </Link>
+          {/* Book Now CTA */}
           <Link
             to="/contact"
-            className={cn(
-              "px-2.5 py-2 text-sm font-semibold rounded-md transition-all duration-150 whitespace-nowrap",
-              location.pathname === "/contact" ? "text-orange-600 bg-orange-50" : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-            )}
+            className="hidden md:inline-flex items-center bg-accent text-accent-foreground text-xs font-semibold px-3 py-2 rounded-lg hover:bg-accent/90 transition-colors ml-1 whitespace-nowrap"
           >
-            Contact
+            Book Now
           </Link>
-        </nav>
 
-        {/* ── Phone Info (right side) ── */}
-        <div className="hidden lg:flex items-center gap-2 px-3 border-l border-gray-100 flex-shrink-0">
-          <div
-            style={{
-              width: 34, height: 34, borderRadius: "50%",
-              background: "linear-gradient(135deg, #0288d1, #4fc3f7)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              flexShrink: 0,
-            }}
+          {/* Mobile toggle */}
+          <button
+            className="lg:hidden p-2 rounded-md text-white hover:bg-white/10 transition-colors"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
           >
-            <Phone size={15} color="#fff" />
-          </div>
-          <div style={{ lineHeight: 1.3 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#0288d1", whiteSpace: "nowrap" }}>{phone}</div>
-            <div style={{ fontSize: 9, color: "#aaa", letterSpacing: "0.8px", textTransform: "uppercase", fontWeight: 600, whiteSpace: "nowrap" }}>
-              Direct Call or WhatsApp 24/7
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Menu Button */}
-        <div className="lg:hidden flex items-center ml-auto px-4">
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2">
-            {mobileMenuOpen ? <X className="w-6 h-6 text-gray-700" /> : <Menu className="w-6 h-6 text-gray-700" />}
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
-      </div>
+      </nav>
 
-      {/* Mobile Menu */}
+      {/* ── Mobile Nav ── */}
       {mobileMenuOpen && (
-        <nav className="lg:hidden border-t border-gray-200 py-4 max-h-[calc(100vh-5rem)] overflow-y-auto bg-white">
-          {[
-            { to: "/", label: "Home" },
-            { to: "/about", label: "About Us" },
-            { to: "/destinations", label: "Destinations" },
-            { to: "/gallery", label: "Gallery" },
-            { to: "/activities", label: "Company Activities" },
-            { to: "/optional-treks", label: "Optional Treks" },
-            { to: "/testimonials", label: "Testimonials" },
-            { to: "/blog", label: "Blog" },
-            { to: "/contact", label: "Contact Us" },
-          ].map(({ to, label }) => (
-            <Link
-              key={to}
-              to={to}
-              onClick={() => setMobileMenuOpen(false)}
-              className={cn(
-                "block px-5 py-2.5 text-sm font-semibold transition-colors",
-                location.pathname === to ? "text-orange-600 bg-orange-50" : "text-gray-700 hover:bg-gray-50"
-              )}
-            >
-              {label}
-            </Link>
-          ))}
-          {!loading && destinations.length > 0 && (
-            <div className="ml-5 space-y-1 border-l-2 border-orange-100 pl-3">
-              {destinations.map((trek) => (
+        <div className="lg:hidden bg-[oklch(0.15_0.02_240/0.98)] backdrop-blur-md border-t border-white/10 max-h-[calc(100vh-4rem)] overflow-y-auto">
+          <div className="px-4 py-4 space-y-1">
+            {navLinks.map((link) => (
+              <div key={link.label}>
                 <Link
-                  key={trek._id}
-                  to={`/destination/${trek._id}`}
+                  to={link.to}
+                  className={cn(
+                    "block px-3 py-2.5 font-medium rounded-md transition-colors",
+                    location.pathname === link.to || location.pathname.startsWith(link.to + "/")
+                      ? "text-white bg-white/15"
+                      : "text-white/85 hover:text-white hover:bg-white/10"
+                  )}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block py-1 text-xs text-gray-500 hover:text-orange-600 capitalize"
                 >
-                  {trek.name}
+                  {link.label}
                 </Link>
-              ))}
-            </div>
-          )}
-          <div className="mt-4 mx-5 flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-            <Phone size={16} className="text-blue-500" />
-            <div>
-              <div className="text-sm font-bold text-blue-600">{phone}</div>
-              <div className="text-xs text-gray-500">WhatsApp 24/7</div>
+
+                {/* Inline dropdown items for mobile */}
+                {link.dropdown && !loading && (
+                  <div className="pl-4 space-y-0.5 mt-1">
+                    {(link.dropdown === "destinations" ? destinations : optionalTreks).map((trek) => (
+                      <Link
+                        key={trek._id}
+                        to={link.dropdown === "destinations" ? `/destination/${trek._id}` : `/optional-trek/${trek._id}`}
+                        className="block px-3 py-2 text-white/60 text-sm hover:text-white hover:bg-white/10 rounded-md transition-colors capitalize"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {trek.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Bottom of mobile menu */}
+            <div className="pt-4 border-t border-white/10 space-y-3">
+              <div className="flex items-center justify-center gap-2">
+                <SocialIconsRow social={settings?.social} />
+              </div>
+              <div className="flex items-center justify-center gap-2 text-white/70 text-sm">
+                <span>{phone}</span>
+              </div>
+              <Link
+                to="/contact"
+                className="flex justify-center bg-accent text-accent-foreground font-semibold px-4 py-3 rounded-lg hover:bg-accent/90 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Book a Trek
+              </Link>
             </div>
           </div>
-        </nav>
+        </div>
       )}
     </header>
   );
 };
 
-// ── Footer ─────────────────────────────────────────────────────
+// ── Footer ─────────────────────────────────────────────────────────────────
+
 export const Footer = ({ settings }: { settings: any }) => {
   return (
     <footer className="text-white mt-20" style={{ backgroundColor: "#26275E" }}>
@@ -439,18 +350,18 @@ export const Footer = ({ settings }: { settings: any }) => {
           <div>
             <h4 className="font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2 text-sm text-gray-300">
-              <li><Link to="/destinations" className="hover:text-orange-400">Destinations</Link></li>
-              <li><Link to="/gallery" className="hover:text-orange-400">Gallery</Link></li>
-              <li><Link to="/blog" className="hover:text-orange-400">Blog</Link></li>
-              <li><Link to="/contact" className="hover:text-orange-400">Contact</Link></li>
+              <li><Link to="/destinations" className="hover:text-accent transition-colors">Destinations</Link></li>
+              <li><Link to="/gallery" className="hover:text-accent transition-colors">Gallery</Link></li>
+              <li><Link to="/blog" className="hover:text-accent transition-colors">Blog</Link></li>
+              <li><Link to="/contact" className="hover:text-accent transition-colors">Contact</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-semibold mb-4">Company</h4>
             <ul className="space-y-2 text-sm text-gray-300">
-              <li><Link to="/about" className="hover:text-orange-400">About Us</Link></li>
-              <li><Link to="/activities" className="hover:text-orange-400">Activities</Link></li>
-              <li><Link to="/testimonials" className="hover:text-orange-400">Testimonials</Link></li>
+              <li><Link to="/about" className="hover:text-accent transition-colors">About Us</Link></li>
+              <li><Link to="/activities" className="hover:text-accent transition-colors">Activities</Link></li>
+              <li><Link to="/testimonials" className="hover:text-accent transition-colors">Testimonials</Link></li>
             </ul>
           </div>
           <div>
@@ -459,14 +370,12 @@ export const Footer = ({ settings }: { settings: any }) => {
           </div>
         </div>
 
-        {/* ── Footer Bottom ── */}
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-300">
           <p>&copy; {new Date().getFullYear()} {settings?.siteName || "GELE TREKKING"}. All rights reserved.</p>
           <div className="flex gap-6 mt-4 md:mt-0">
-            {/* ✅ Terms now links to /terms page */}
-            <Link to="/terms" className="hover:text-orange-400 transition-colors">Terms</Link>
-            <a href="#" className="hover:text-orange-400 transition-colors">Privacy</a>
-            <a href="#" className="hover:text-orange-400 transition-colors">Cookies</a>
+            <Link to="/terms" className="hover:text-accent transition-colors">Terms</Link>
+            <a href="#" className="hover:text-accent transition-colors">Privacy</a>
+            <a href="#" className="hover:text-accent transition-colors">Cookies</a>
           </div>
         </div>
       </div>
@@ -474,7 +383,8 @@ export const Footer = ({ settings }: { settings: any }) => {
   );
 };
 
-// ── Layout ─────────────────────────────────────────────────────
+// ── Layout ─────────────────────────────────────────────────────────────────
+
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const [settings, setSettings] = useState<any>(null);
   useEffect(() => {

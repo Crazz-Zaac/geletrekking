@@ -2,6 +2,9 @@ FROM node:18-alpine
 
 WORKDIR /usr/src/app
 
+# Install dos2unix to fix line endings
+RUN apk add --no-cache dos2unix
+
 # Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
@@ -9,11 +12,9 @@ RUN npm install --legacy-peer-deps
 # Copy all backend code
 COPY . .
 
+# Fix line endings and make executable
+RUN dos2unix entrypoint.sh && chmod +x entrypoint.sh
+
 EXPOSE 5000
 
-# Copy entrypoint script
-COPY entrypoint.sh ./
-RUN chmod +x entrypoint.sh
-
-# Run entrypoint script
 ENTRYPOINT ["./entrypoint.sh"]
