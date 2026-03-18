@@ -7,7 +7,11 @@ const nextConfig = {
     unoptimized: true,
   },
   async rewrites() {
-    const apiTarget = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/+$/, '')
+    const apiTarget = (
+      process.env.INTERNAL_API_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      'http://backend:5000'
+    ).replace(/\/+$/, '')
 
     return [
       {

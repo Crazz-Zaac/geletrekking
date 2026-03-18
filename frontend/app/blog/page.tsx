@@ -32,9 +32,13 @@ export default function BlogPage() {
 
   useEffect(() => {
     const loadPosts = async () => {
-      const apiPosts = await getBlogs();
-      if (apiPosts.length > 0) {
-        setPosts(apiPosts);
+      try {
+        const apiPosts = await getBlogs();
+        if (apiPosts.length > 0) {
+          setPosts(apiPosts);
+        }
+      } catch {
+        setPosts(blogPosts);
       }
     };
 
