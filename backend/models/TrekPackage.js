@@ -39,7 +39,7 @@ const trekPackageSchema = new mongoose.Schema(
   {
     // Basic Information
     name: { type: String, required: true, trim: true },
-    overview: { type: String, required: true, trim: true },
+    description: { type: String, required: true, trim: true },
 
     // Media
     image_url: { type: String },

@@ -7,7 +7,8 @@ const mongoose = require("mongoose");
 // --------------------
 const createTrek = async (req, res) => {
   try {
-    const trekData = req.body;
+    const trekData = { ...req.body };
+    delete trekData.overview;
     if (req.user && req.user._id) {
       trekData.createdBy = req.user._id;
     }
@@ -91,7 +92,10 @@ const updateTrek = async (req, res) => {
     return res.status(400).json({ message: "Invalid trek ID" });
   }
   try {
-    const updatedTrek = await TrekPackage.findByIdAndUpdate(id, req.body, {
+    const payload = { ...req.body };
+    delete payload.overview;
+
+    const updatedTrek = await TrekPackage.findByIdAndUpdate(id, payload, {
       new: true,
       runValidators: true,
     });

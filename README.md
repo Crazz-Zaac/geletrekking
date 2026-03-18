@@ -5,7 +5,7 @@ A fully Dockerized MERN (MongoDB, Express, React, Node.js) stack application for
 ## Stack Overview
 
 ```
-Frontend  → React + Vite + Tailwind CSS (Nginx in production)
+Frontend  → Next.js (App Router) + Tailwind CSS
 Backend   → Express.js + Node.js with JWT authentication
 Database  → MongoDB with authentication
 Services  → Docker Compose orchestration
@@ -44,7 +44,7 @@ docker compose up -d --build
 ```
 
 This command will:
-- Build the frontend (React + Vite)
+- Build the frontend (Next.js)
 - Build the backend (Express.js)
 - Start MongoDB with authentication
 - Start Mongo Express (database admin UI)
@@ -119,8 +119,8 @@ NODE_ENV=development
 JWT_SECRET=your_jwt_secret_key_here
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASS=your_app_password
-FRONTEND_URL=http://localhost:5173
-ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+FRONTEND_URL=http://localhost:3000
+ALLOWED_ORIGINS=http://localhost:3000
 ```
 
 ### 3. Start the Application
@@ -144,7 +144,7 @@ cd frontend
 npm run dev
 ```
 
-**Frontend**: http://localhost:5173
+**Frontend**: http://localhost:3000
 **Backend**: http://localhost:5000
 
 ## Project Structure
@@ -163,15 +163,12 @@ geletrekking/
 │   ├── entrypoint.sh       # Docker entry script
 │   └── .env               # Environment variables
 │
-├── frontend/               # React + Vite application
-│   ├── client/
-│   │   ├── components/     # Reusable UI components
-│   │   ├── pages/          # Route pages
-│   │   ├── hooks/          # Custom React hooks
-│   │   ├── lib/            # Utilities & API client
-│   │   └── App.tsx         # Main component
-│   ├── vite.config.ts
-│   └── tailwind.config.ts
+├── frontend/               # Next.js application
+│   ├── app/                # App Router pages
+│   ├── components/         # Reusable UI components
+│   ├── hooks/              # Custom React hooks
+│   ├── lib/                # Utilities & API client
+│   └── next.config.mjs
 │
 ├── docker/                 # Docker configuration
 │   ├── Dockerfile.backend  # Backend image
@@ -190,7 +187,7 @@ geletrekking/
 - ✅ **Auto-Seeding** - Superadmin user created on first run
 - ✅ **Email Integration** - Gmail SMTP for notifications
 - ✅ **Responsive UI** - Tailwind CSS for modern design
-- ✅ **Production Ready** - Nginx reverse proxy configuration
+- ✅ **Production Ready** - Dockerized Next.js + backend services
 - ✅ **Database Admin UI** - Mongo Express for easy data management
 
 ## Environment Variables Reference

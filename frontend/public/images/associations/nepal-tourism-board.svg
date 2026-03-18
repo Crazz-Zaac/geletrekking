@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 140" role="img" aria-labelledby="title">
+  <title>Nepal Tourism Board</title>
+  <rect width="320" height="140" rx="14" fill="#ffffff" stroke="#d9d9d9"/>
+  <circle cx="55" cy="70" r="28" fill="#2563eb"/>
+  <text x="55" y="76" text-anchor="middle" font-size="13" font-family="Arial, sans-serif" fill="#ffffff" font-weight="700">NTB</text>
+  <text x="98" y="62" font-size="20" font-family="Arial, sans-serif" fill="#111827" font-weight="700">Nepal Tourism Board</text>
+  <text x="98" y="86" font-size="13" font-family="Arial, sans-serif" fill="#6b7280">Tourism Promotion Body</text>
+</svg>
