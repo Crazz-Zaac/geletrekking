@@ -9,6 +9,25 @@ function slugify(str) {
     .replace(/^-+|-+$/g, "");
 }
 
+function normalizeHashtags(input) {
+  const values = Array.isArray(input)
+    ? input
+    : typeof input === 'string'
+      ? input.split(/[\s,]+/)
+      : [];
+
+  return Array.from(
+    new Set(
+      values
+        .map((value) => String(value || '').trim())
+        .filter(Boolean)
+        .map((value) => value.replace(/^#+/, ''))
+        .filter(Boolean)
+        .map((value) => `#${value.toLowerCase()}`)
+    )
+  );
+}
+
 // Get all published blog posts (public)
 exports.getAllBlogs = async (req, res) => {
   try {
@@ -33,7 +52,7 @@ exports.getBlogBySlug = async (req, res) => {
 // Create a new blog post (admin/superadmin)
 exports.createBlog = async (req, res) => {
   try {
-    const { title, excerpt, content, coverImage, author, isPublished } = req.body;
+    const { title, excerpt, content, coverImage, author, hashtags, isPublished } = req.body;
     if (!title || !content) {
       return res.status(400).json({ message: "Title and content are required" });
     }
@@ -52,6 +71,7 @@ exports.createBlog = async (req, res) => {
       content,
       coverImage,
       author,
+      hashtags: normalizeHashtags(hashtags),
       isPublished: !!isPublished,
     });
     res.status(201).json(post);
@@ -65,6 +85,11 @@ exports.updateBlog = async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+
+    if (Object.prototype.hasOwnProperty.call(updates, 'hashtags')) {
+      updates.hashtags = normalizeHashtags(updates.hashtags);
+    }
+
     // If title changed, regenerate slug
     if (updates.title) {
       let newSlug = slugify(updates.title);

@@ -1,16 +1,11 @@
+'use client'
+
 import Link from 'next/link'
 import { Mail, Phone, MapPin } from 'lucide-react'
 import { WhatsAppIcon } from '@/components/whatsapp-icon'
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons'
 import Image from 'next/image'
-
-const socialLinks = [
-  { Icon: FacebookIcon, href: 'https://facebook.com/geletrekking', label: 'Facebook' },
-  { Icon: InstagramIcon, href: 'https://instagram.com/geletrekking', label: 'Instagram' },
-  { Icon: WhatsAppIcon, href: 'https://wa.me/9779851234567', label: 'WhatsApp' },
-  { Icon: YouTubeIcon, href: 'https://youtube.com/@geletrekking', label: 'YouTube' },
-  { Icon: LinkedInIcon, href: 'https://linkedin.com/company/geletrekking', label: 'LinkedIn' },
-]
+import { useSiteSettings } from '@/hooks/use-site-settings'
 
 const footerLinks = {
   destinations: [
@@ -38,6 +33,16 @@ const footerLinks = {
 }
 
 export function Footer() {
+  const { settings, social } = useSiteSettings()
+
+  const socialLinks = [
+    { Icon: FacebookIcon, href: social.facebook, label: 'Facebook' },
+    { Icon: InstagramIcon, href: social.instagram, label: 'Instagram' },
+    { Icon: WhatsAppIcon, href: social.whatsapp, label: 'WhatsApp' },
+    { Icon: YouTubeIcon, href: social.youtube, label: 'YouTube' },
+    { Icon: LinkedInIcon, href: social.linkedin, label: 'LinkedIn' },
+  ].filter((item) => item.href)
+
   return (
     <footer className="bg-[oklch(0.13_0.015_240)] text-white">
       {/* Main Footer */}
@@ -47,14 +52,14 @@ export function Footer() {
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4">
               <Image
-                src="/geletrekking.png"
-                alt="Gele Trekking"
+                src={settings.logoUrl || '/geletrekking.png'}
+                alt={settings.siteName || 'Gele Trekking'}
                 width={40}
                 height={40}
                 className="w-10 h-10 rounded-lg object-cover border border-white/20 shadow"
               />
               <div>
-                <div className="font-bold text-white text-sm leading-tight tracking-widest uppercase">GELE TREKKING</div>
+                <div className="font-bold text-white text-sm leading-tight tracking-widest uppercase">{settings.siteName || 'GELE TREKKING'}</div>
                 <div className="text-white/50 text-[8px] uppercase tracking-[2px] leading-tight">Walk · Explore · Discover</div>
               </div>
             </Link>
@@ -62,17 +67,17 @@ export function Footer() {
               Your trusted local trekking partner in Nepal since 2008. Licensed, insured and passionate about sharing the Himalayas with the world.
             </p>
             <div className="space-y-2 text-sm text-white/60">
-              <a href="mailto:info@geletrekking.com" className="flex items-center gap-2 hover:text-white transition-colors">
+              <a href={`mailto:${settings.email || 'info@geletrekking.com'}`} className="flex items-center gap-2 hover:text-white transition-colors">
                 <Mail className="w-4 h-4 text-accent" />
-                info@geletrekking.com
+                {settings.email || 'info@geletrekking.com'}
               </a>
-              <a href="tel:+9779851234567" className="flex items-center gap-2 hover:text-white transition-colors">
+              <a href={`tel:${(settings.phone || '+9779851234567').replace(/\s+/g, '')}`} className="flex items-center gap-2 hover:text-white transition-colors">
                 <Phone className="w-4 h-4 text-accent" />
-                +977 985 123 4567
+                {settings.phone || '+977 985 123 4567'}
               </a>
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                <span>Thamel, Kathmandu 44600, Nepal</span>
+                <span>{settings.address || 'Thamel, Kathmandu 44600, Nepal'}</span>
               </div>
             </div>
             {/* Social */}

@@ -28,6 +28,9 @@ exports.updateSettings = async (req, res) => {
       "phone",
       "email",
       "address",
+      "officeHoursWeekdays",
+      "officeHoursWeekend",
+      "mapEmbedUrl",
       "social",
     ];
 

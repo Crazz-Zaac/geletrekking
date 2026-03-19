@@ -13,11 +13,16 @@ const defaultSettings: AdminSiteSettings = {
   phone: '',
   email: '',
   address: '',
+  officeHoursWeekdays: '',
+  officeHoursWeekend: '',
+  mapEmbedUrl: '',
   social: {
     facebook: '',
     instagram: '',
     twitter: '',
     linkedin: '',
+    youtube: '',
+    whatsapp: '',
   },
 }
 
@@ -95,12 +100,17 @@ export default function AdminSettingsPage() {
             <Input placeholder="Phone" value={form.phone || ''} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} />
             <Input placeholder="Email" value={form.email || ''} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} />
             <Input placeholder="Address" value={form.address || ''} onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))} />
+            <Input placeholder="Office hours (weekdays)" value={form.officeHoursWeekdays || ''} onChange={(e) => setForm((prev) => ({ ...prev, officeHoursWeekdays: e.target.value }))} />
+            <Input placeholder="Office hours (weekend)" value={form.officeHoursWeekend || ''} onChange={(e) => setForm((prev) => ({ ...prev, officeHoursWeekend: e.target.value }))} />
+            <Input placeholder="Map embed URL (Google Maps embed link)" value={form.mapEmbedUrl || ''} onChange={(e) => setForm((prev) => ({ ...prev, mapEmbedUrl: e.target.value }))} />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <Input placeholder="Facebook" value={form.social?.facebook || ''} onChange={(e) => setForm((prev) => ({ ...prev, social: { ...(prev.social || {}), facebook: e.target.value } }))} />
               <Input placeholder="Instagram" value={form.social?.instagram || ''} onChange={(e) => setForm((prev) => ({ ...prev, social: { ...(prev.social || {}), instagram: e.target.value } }))} />
               <Input placeholder="Twitter" value={form.social?.twitter || ''} onChange={(e) => setForm((prev) => ({ ...prev, social: { ...(prev.social || {}), twitter: e.target.value } }))} />
               <Input placeholder="LinkedIn" value={form.social?.linkedin || ''} onChange={(e) => setForm((prev) => ({ ...prev, social: { ...(prev.social || {}), linkedin: e.target.value } }))} />
+              <Input placeholder="YouTube" value={form.social?.youtube || ''} onChange={(e) => setForm((prev) => ({ ...prev, social: { ...(prev.social || {}), youtube: e.target.value } }))} />
+              <Input placeholder="WhatsApp" value={form.social?.whatsapp || ''} onChange={(e) => setForm((prev) => ({ ...prev, social: { ...(prev.social || {}), whatsapp: e.target.value } }))} />
             </div>
 
             <Button onClick={onSave} disabled={saving}>{saving ? 'Saving...' : 'Save Settings'}</Button>

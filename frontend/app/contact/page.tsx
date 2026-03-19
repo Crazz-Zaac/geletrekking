@@ -11,6 +11,7 @@ import { Mail, Phone, MapPin, Clock3, MessageCircle, ShieldCheck } from 'lucide-
 import { WhatsAppIcon } from '@/components/whatsapp-icon';
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons';
 import { submitContactMessage } from '@/lib/api';
+import { useSiteSettings } from '@/hooks/use-site-settings';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -25,64 +26,65 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
-const contactInfo = [
-  {
-    icon: Mail,
-    label: 'Email',
-    value: 'info@himalayantrek.com',
-    href: 'mailto:info@himalayantrek.com',
-    description: 'Best for itinerary planning and custom quotes',
-  },
-  {
-    icon: Phone,
-    label: 'Phone',
-    value: '+977 1 4416666',
-    href: 'tel:+97714416666',
-    description: 'Mon–Sat support for urgent travel assistance',
-  },
-  {
-    icon: MapPin,
-    label: 'Office',
-    value: 'Kathmandu, Nepal',
-    href: '#',
-    description: 'In-person consultation by prior appointment',
-  },
-];
-
-const socialLinks = [
-  {
-    Icon: FacebookIcon,
-    href: 'https://facebook.com/geletrekking',
-    label: 'Facebook',
-    className: 'text-[#1877F2] bg-[#1877F2]/10 hover:bg-[#1877F2]/20',
-  },
-  {
-    Icon: InstagramIcon,
-    href: 'https://instagram.com/geletrekking',
-    label: 'Instagram',
-    className: 'text-[#E1306C] bg-[#E1306C]/10 hover:bg-[#E1306C]/20',
-  },
-  {
-    Icon: WhatsAppIcon,
-    href: 'https://wa.me/9779851234567',
-    label: 'WhatsApp',
-    className: 'text-[#25D366] bg-[#25D366]/10 hover:bg-[#25D366]/20',
-  },
-  {
-    Icon: YouTubeIcon,
-    href: 'https://youtube.com/@geletrekking',
-    label: 'YouTube',
-    className: 'text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20',
-  },
-  {
-    Icon: LinkedInIcon,
-    href: 'https://linkedin.com/company/geletrekking',
-    label: 'LinkedIn',
-    className: 'text-[#0A66C2] bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20',
-  },
-];
-
 export default function ContactPage() {
+  const { settings, social } = useSiteSettings();
+
+  const contactInfo = [
+    {
+      icon: Mail,
+      label: 'Email',
+      value: settings.email || 'info@geletrekking.com',
+      href: `mailto:${settings.email || 'info@geletrekking.com'}`,
+      description: 'Best for itinerary planning and custom quotes',
+    },
+    {
+      icon: Phone,
+      label: 'Phone',
+      value: settings.phone || '+977 985 123 4567',
+      href: `tel:${(settings.phone || '+9779851234567').replace(/\s+/g, '')}`,
+      description: 'Mon–Sat support for urgent travel assistance',
+    },
+    {
+      icon: MapPin,
+      label: 'Office',
+      value: settings.address || 'Kathmandu, Nepal',
+      href: '#',
+      description: 'In-person consultation by prior appointment',
+    },
+  ];
+  const socialLinks = [
+    {
+      Icon: FacebookIcon,
+      href: social.facebook,
+      label: 'Facebook',
+      className: 'text-[#1877F2] bg-[#1877F2]/10 hover:bg-[#1877F2]/20',
+    },
+    {
+      Icon: InstagramIcon,
+      href: social.instagram,
+      label: 'Instagram',
+      className: 'text-[#E1306C] bg-[#E1306C]/10 hover:bg-[#E1306C]/20',
+    },
+    {
+      Icon: WhatsAppIcon,
+      href: social.whatsapp,
+      label: 'WhatsApp',
+      className: 'text-[#25D366] bg-[#25D366]/10 hover:bg-[#25D366]/20',
+    },
+    {
+      Icon: YouTubeIcon,
+      href: social.youtube,
+      label: 'YouTube',
+      className: 'text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20',
+    },
+    {
+      Icon: LinkedInIcon,
+      href: social.linkedin,
+      label: 'LinkedIn',
+      className: 'text-[#0A66C2] bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20',
+    },
+  ].filter((link) => link.href);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -302,22 +304,26 @@ export default function ContactPage() {
                   </form>
                 </Card>
 
-                <Card className="p-5 mt-5 shadow-sm">
+                <Card className="border-0 bg-transparent shadow-none p-5 mt-5">
                   <h3 className="text-base font-bold text-foreground mb-3">Follow Us</h3>
-                  <div className="flex items-center gap-2.5">
-                    {socialLinks.map(({ Icon, href, label, className }) => (
-                      <a
-                        key={label}
-                        href={href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={label}
-                        className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${className}`}
-                      >
-                        <Icon className="w-4 h-4" />
-                      </a>
-                    ))}
-                  </div>
+                  {socialLinks.length > 0 ? (
+                    <div className="flex items-center gap-2.5">
+                      {socialLinks.map(({ Icon, href, label, className }) => (
+                        <a
+                          key={label}
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={label}
+                          className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${className}`}
+                        >
+                          <Icon className="w-4 h-4" />
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No social links configured yet.</p>
+                  )}
                 </Card>
               </motion.div>
 
@@ -349,14 +355,14 @@ export default function ContactPage() {
                     <Clock3 className="w-4 h-4 text-primary" />
                     <h3 className="text-base font-bold text-foreground">Office Hours (NPT)</h3>
                   </div>
-                  <p className="text-sm text-muted-foreground">Sunday – Friday: 9:00 AM – 6:00 PM</p>
-                  <p className="text-sm text-muted-foreground">Saturday: By appointment only</p>
+                  <p className="text-sm text-muted-foreground">{settings.officeHoursWeekdays || 'Sunday – Friday: 9:00 AM – 6:00 PM'}</p>
+                  <p className="text-sm text-muted-foreground">{settings.officeHoursWeekend || 'Saturday: By appointment only'}</p>
                 </Card>
 
                 <Card className="border-border overflow-hidden">
                   <iframe
                     title="Kathmandu office map"
-                    src="https://maps.google.com/maps?q=Kathmandu%2C%20Nepal&t=&z=12&ie=UTF8&iwloc=&output=embed"
+                    src={settings.mapEmbedUrl || 'https://maps.google.com/maps?q=Kathmandu%2C%20Nepal&t=&z=12&ie=UTF8&iwloc=&output=embed'}
                     className="w-full h-[280px] border-0"
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"

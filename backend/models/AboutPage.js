@@ -54,6 +54,11 @@ const aboutPageSchema = new mongoose.Schema(
       default: [],
     },
 
+    whyChooseUs: {
+      type: [String],
+      default: [],
+    },
+
     stats: {
       type: [statSchema],
       default: [],

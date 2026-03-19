@@ -19,6 +19,7 @@ type BlogForm = {
   content: string
   coverImage: string
   author: string
+  hashtags: string
   isPublished: boolean
 }
 
@@ -28,6 +29,7 @@ const initialForm: BlogForm = {
   content: '',
   coverImage: '',
   author: '',
+  hashtags: '',
   isPublished: false,
 }
 
@@ -73,6 +75,7 @@ export default function AdminBlogsPage() {
       content: item.content || '',
       coverImage: item.coverImage || '',
       author: item.author || '',
+      hashtags: (item.hashtags || []).join(', '),
       isPublished: !!item.isPublished,
     })
     setMessage('')
@@ -100,11 +103,21 @@ export default function AdminBlogsPage() {
     setMessage('')
 
     try {
+      const parsedHashtags = form.hashtags
+        .split(/[\s,]+/)
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+
+      const payload = {
+        ...form,
+        hashtags: parsedHashtags,
+      }
+
       if (editingId) {
-        await updateAdminBlog(token, editingId, form)
+        await updateAdminBlog(token, editingId, payload)
         setMessage('Blog updated successfully.')
       } else {
-        await createAdminBlog(token, form)
+        await createAdminBlog(token, payload)
         setMessage('Blog created successfully.')
       }
       onReset()
@@ -146,6 +159,7 @@ export default function AdminBlogsPage() {
           <Input placeholder="Title" value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} />
           <Input placeholder="Cover image URL" value={form.coverImage} onChange={(e) => setForm((prev) => ({ ...prev, coverImage: e.target.value }))} />
           <Input placeholder="Author" value={form.author} onChange={(e) => setForm((prev) => ({ ...prev, author: e.target.value }))} />
+          <Input placeholder="Hashtags (comma or space separated, e.g. #dental, #healthcamp)" value={form.hashtags} onChange={(e) => setForm((prev) => ({ ...prev, hashtags: e.target.value }))} />
           <textarea
             value={form.excerpt}
             onChange={(e) => setForm((prev) => ({ ...prev, excerpt: e.target.value }))}
@@ -189,6 +203,9 @@ export default function AdminBlogsPage() {
                     <div>
                       <p className="font-semibold text-sm">{item.title}</p>
                       <p className="text-xs text-muted-foreground mt-1">/{item.slug} • {item.isPublished ? 'Published' : 'Draft'}</p>
+                      {item.hashtags && item.hashtags.length > 0 ? (
+                        <p className="text-xs text-muted-foreground mt-1">{item.hashtags.join(' ')}</p>
+                      ) : null}
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => onEdit(item)}>Edit</Button>

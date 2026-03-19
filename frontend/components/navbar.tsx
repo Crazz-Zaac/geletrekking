@@ -8,14 +8,7 @@ import { treks } from '@/lib/data'
 import { WhatsAppIcon } from '@/components/whatsapp-icon'
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons'
 import Image from 'next/image'
-
-const socialLinks = [
-  { Icon: FacebookIcon, href: 'https://facebook.com/geletrekking', label: 'Facebook' },
-  { Icon: InstagramIcon, href: 'https://instagram.com/geletrekking', label: 'Instagram' },
-  { Icon: WhatsAppIcon, href: 'https://wa.me/9779851234567', label: 'WhatsApp' },
-  { Icon: YouTubeIcon, href: 'https://youtube.com/@geletrekking', label: 'YouTube' },
-  { Icon: LinkedInIcon, href: 'https://linkedin.com/company/geletrekking', label: 'LinkedIn' },
-]
+import { useSiteSettings } from '@/hooks/use-site-settings'
 
 const navLinks = [
   { label: 'Home', href: '/' },
@@ -35,6 +28,16 @@ const navLinks = [
 ]
 
 export function Navbar() {
+  const { settings, social } = useSiteSettings()
+
+  const socialLinks = [
+    { Icon: FacebookIcon, href: social.facebook, label: 'Facebook' },
+    { Icon: InstagramIcon, href: social.instagram, label: 'Instagram' },
+    { Icon: WhatsAppIcon, href: social.whatsapp, label: 'WhatsApp' },
+    { Icon: YouTubeIcon, href: social.youtube, label: 'YouTube' },
+    { Icon: LinkedInIcon, href: social.linkedin, label: 'LinkedIn' },
+  ].filter((item) => item.href)
+
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
@@ -58,8 +61,8 @@ export function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
           <Image
-            src="/geletrekking.png"
-            alt="Gele Trekking"
+            src={settings.logoUrl || '/geletrekking.png'}
+            alt={settings.siteName || 'Gele Trekking'}
             width={36}
             height={36}
             className="w-9 h-9 rounded-lg object-cover border border-white/20 shadow"
@@ -67,7 +70,7 @@ export function Navbar() {
           />
           <div className="hidden sm:block">
             <div className="font-bold text-white text-sm leading-tight tracking-widest uppercase group-hover:text-accent transition-colors">
-              GELE TREKKING
+              {settings.siteName || 'GELE TREKKING'}
             </div>
             <div className="text-white/50 text-[8px] uppercase tracking-[2px] leading-tight">
               Walk · Explore · Discover

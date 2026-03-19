@@ -44,7 +44,7 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
-          className="relative h-96 md:h-[500px] overflow-hidden"
+          className="relative h-72 md:h-[300px] overflow-hidden"
         >
           <Image
             src={post.image}
@@ -77,9 +77,9 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-12"
+            className="grid grid-cols-1 lg:grid-cols-5 gap-8"
           >
-            <motion.div variants={itemVariants} className="lg:col-span-2">
+            <motion.div variants={itemVariants} className="lg:col-span-4">
               <div className="mb-8 pb-8 border-b border-border">
                 <p className="text-muted-foreground">
                   By <span className="font-semibold text-foreground">{post.author}</span> • {post.date}

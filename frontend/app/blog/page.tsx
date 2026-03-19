@@ -27,8 +27,11 @@ const itemVariants = {
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<UiBlogPost[]>(blogPosts);
-  const tags = useMemo(() => ['All', ...Array.from(new Set(posts.map((post) => post.category)))], [posts]);
-  const [selectedTag, setSelectedTag] = useState('All');
+  const hashtags = useMemo(
+    () => ['All', ...Array.from(new Set(posts.flatMap((post) => post.hashtags || [])))],
+    [posts]
+  );
+  const [selectedHashtag, setSelectedHashtag] = useState('All');
 
   useEffect(() => {
     const loadPosts = async () => {
@@ -46,12 +49,12 @@ export default function BlogPage() {
   }, []);
 
   const filteredPosts = useMemo(() => {
-    if (selectedTag === 'All') {
+    if (selectedHashtag === 'All') {
       return posts;
     }
 
-    return posts.filter((post) => post.category === selectedTag);
-  }, [selectedTag, posts]);
+    return posts.filter((post) => (post.hashtags || []).includes(selectedHashtag));
+  }, [selectedHashtag, posts]);
 
   return (
     <>
@@ -60,9 +63,8 @@ export default function BlogPage() {
         <section className="py-10 md:py-14">
           <div className="container mx-auto px-4 md:px-6">
             <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
+              initial={false}
+              animate="visible"
               variants={containerVariants}
               className="space-y-6"
             >
@@ -75,31 +77,33 @@ export default function BlogPage() {
               </motion.div>
 
               <motion.div variants={itemVariants} className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
+                {hashtags.map((hashtag) => (
                   <button
-                    key={tag}
-                    onClick={() => setSelectedTag(tag)}
+                    key={hashtag}
+                    onClick={() => setSelectedHashtag(hashtag)}
                     className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                      selectedTag === tag
+                      selectedHashtag === hashtag
                         ? 'border-primary bg-primary text-primary-foreground'
                         : 'border-border bg-background text-foreground hover:bg-muted'
                     }`}
-                    aria-pressed={selectedTag === tag}
+                    aria-pressed={selectedHashtag === hashtag}
                   >
-                    {tag}
+                    {hashtag}
                   </button>
                 ))}
               </motion.div>
 
               <motion.div
+                initial={false}
+                animate="visible"
                 variants={containerVariants}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
               >
                 {filteredPosts.map((post) => (
                   <motion.div key={post.slug} variants={itemVariants}>
                     <Link href={`/blog/${post.slug}`}>
-                      <Card className="group h-full border-border overflow-hidden hover:shadow-sm transition-shadow">
-                        <div className="relative h-36 md:h-40 overflow-hidden">
+                      <Card className="group h-full w-full max-w-[320px] mx-auto border-border overflow-hidden hover:shadow-sm transition-shadow">
+                        <div className="relative h-28 md:h-32 overflow-hidden">
                           <Image
                             src={post.image}
                             alt={post.title}
@@ -108,7 +112,7 @@ export default function BlogPage() {
                           />
                         </div>
 
-                        <div className="p-4 flex flex-col gap-2.5">
+                        <div className="p-3 flex flex-col gap-2">
                           <div className="flex items-center justify-between gap-3">
                             <Badge variant="secondary" className="font-medium text-[11px]">
                               {post.category}
@@ -119,13 +123,23 @@ export default function BlogPage() {
                             </span>
                           </div>
 
-                          <h3 className="text-base md:text-lg font-bold text-foreground leading-snug group-hover:text-primary transition-colors">
+                          <h3 className="text-sm md:text-base font-bold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
                             {post.title}
                           </h3>
 
-                          <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">
+                          <p className="text-xs text-muted-foreground line-clamp-2">
                             {post.excerpt}
                           </p>
+
+                          {post.hashtags && post.hashtags.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {post.hashtags.slice(0, 3).map((hashtag) => (
+                                <span key={`${post.slug}-${hashtag}`} className="text-[11px] text-primary/90 bg-primary/10 px-2 py-0.5 rounded-full">
+                                  {hashtag}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null}
 
                           <div className="pt-1 flex items-center justify-between text-xs text-muted-foreground">
                             <span>{post.author}</span>
@@ -140,7 +154,7 @@ export default function BlogPage() {
 
               {filteredPosts.length === 0 && (
                 <motion.div variants={itemVariants} className="text-sm text-muted-foreground rounded-lg border border-dashed border-border p-6 text-center">
-                  No articles found for this tag.
+                  No articles found for this hashtag.
                 </motion.div>
               )}
             </motion.div>

@@ -8,6 +8,7 @@ export interface UiBlogPost {
   excerpt: string
   image: string
   category: string
+  hashtags?: string[]
   author: string
   date: string
   readTime: string
@@ -23,6 +24,17 @@ export interface UiTestimonial {
   text: string
   date: string
   avatar: string
+}
+
+export interface UiGoogleReview {
+  id: string
+  authorName: string
+  authorPhoto?: string
+  rating: number
+  text: string
+  relativeTime?: string
+  time?: number | null
+  source: 'google'
 }
 
 export interface AdminUser {
@@ -69,6 +81,7 @@ export interface AdminBlog {
   content: string
   coverImage?: string
   author?: string
+  hashtags?: string[]
   isPublished: boolean
   createdAt?: string
 }
@@ -97,11 +110,16 @@ export interface AdminSiteSettings {
   phone?: string
   email?: string
   address?: string
+  officeHoursWeekdays?: string
+  officeHoursWeekend?: string
+  mapEmbedUrl?: string
   social?: {
     facebook?: string
     instagram?: string
     twitter?: string
     linkedin?: string
+    youtube?: string
+    whatsapp?: string
   }
 }
 
@@ -133,6 +151,7 @@ export interface AdminAbout {
   storyTitle?: string
   storyBody?: string
   highlights?: AdminAboutHighlight[]
+  whyChooseUs?: string[]
   stats?: AdminAboutStat[]
 }
 
@@ -195,6 +214,7 @@ interface BackendBlogPost {
   content: string
   coverImage?: string
   author?: string
+  hashtags?: string[]
   createdAt?: string
 }
 
@@ -347,6 +367,7 @@ function mapBlog(post: BackendBlogPost): UiBlogPost {
     excerpt: post.excerpt || '',
     image: post.coverImage || '/images/blog-guide.jpg',
     category: 'Blog',
+    hashtags: post.hashtags || [],
     author: post.author || 'Gele Trek Team',
     date: formatDate(post.createdAt),
     readTime: estimateReadTime(post.content || ''),
@@ -401,6 +422,15 @@ export async function getTestimonials(): Promise<UiTestimonial[]> {
     return data.map(mapTestimonial)
   } catch {
     return fallbackTestimonials
+  }
+}
+
+export async function getGoogleReviews(): Promise<UiGoogleReview[]> {
+  try {
+    const data = await fetchJson<{ reviews?: UiGoogleReview[] }>('/api/reviews/google')
+    return data.reviews || []
+  } catch {
+    return []
   }
 }
 

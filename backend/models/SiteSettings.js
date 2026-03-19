@@ -7,11 +7,16 @@ const siteSettingsSchema = new mongoose.Schema(
     phone: { type: String, default: "" },
     email: { type: String, default: "" },
     address: { type: String, default: "" },
+    officeHoursWeekdays: { type: String, default: "" },
+    officeHoursWeekend: { type: String, default: "" },
+    mapEmbedUrl: { type: String, default: "" },
     social: {
       facebook: { type: String, default: "" },
       instagram: { type: String, default: "" },
       twitter: { type: String, default: "" },
       linkedin: { type: String, default: "" },
+      youtube: { type: String, default: "" },
+      whatsapp: { type: String, default: "" },
     },
   },
   { timestamps: true }

@@ -38,6 +38,7 @@ exports.updateAboutPage = async (req, res) => {
       "storyTitle",
       "storyBody",
       "highlights",
+      "whyChooseUs",
       "stats",
     ];
 
