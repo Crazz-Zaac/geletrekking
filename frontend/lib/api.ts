@@ -58,19 +58,65 @@ interface AuthMeResponse {
     role?: string
   }
 }
-
 export interface AdminTrek {
   _id: string
   name: string
+  slug?: string
   description: string
+  region?: string
   image_url?: string
+  gallery_images?: string[]
+  map_image_url?: string
+  highlights?: string[]
+  includes?: string[]
+  excludes?: string[]
+  itinerary?: Array<{
+    _id?: string
+    day: number
+    title: string
+    description?: string
+    altitude?: string
+    distance?: string
+    accommodation?: string
+    highlights?: string[]
+  }>
+  best_season?: string
+  start_point?: string
+  end_point?: string
+  price_gbp?: number
+  price_usd?: number
   duration_days?: number
   difficulty?: 'Easy' | 'Moderate' | 'Hard'
-  price_usd?: number
-  is_optional?: boolean
-  is_active?: boolean
+  group_size_min?: number
+  group_size_max?: number
+  max_altitude_meters?: number
+  tour_type?: string
+  transportation?: string
+  itinerary_pdf_url?: string
+  trek_map_embed_url?: string
+  has_offer?: boolean
+  offer_title?: string
+  offer_description?: string
+  discounted_price_gbp?: number
+  discounted_price_usd?: number
+  offer_valid_from?: string
+  offer_valid_to?: string
+  season_tag?: string
+  faqs?: Array<{
+    _id?: string
+    question: string
+    answer: string
+  }>
   is_featured?: boolean
+  is_active?: boolean
+  is_optional?: boolean
+  rating?: number
+  review_count?: number
   createdAt?: string
+  // coordinates and location name used to fetch live weather on the frontend
+  latitude?: number
+  longitude?: number
+  location_name?: string
 }
 
 export interface AdminBlog {
@@ -178,8 +224,10 @@ export interface AdminTestimonial {
 interface BackendTrek {
   _id: string
   name: string
+  slug?: string
   description?: string
   overview?: string
+  region?: string
   image_url?: string
   gallery_images?: string[]
   highlights?: string[]
@@ -189,6 +237,7 @@ interface BackendTrek {
     description?: string
     altitude?: string | number
     distance?: string
+    accommodation?: string
   }>
   includes?: string[]
   excludes?: string[]
@@ -204,6 +253,13 @@ interface BackendTrek {
   trek_map_embed_url?: string
   faqs?: Array<{ question: string; answer: string }>
   is_optional?: boolean
+  tour_type?: string
+  transportation?: string
+  season_tag?: string
+  // coordinates and location name used to fetch live weather on the frontend
+  latitude?: number
+  longitude?: number
+  location_name?: string
 }
 
 interface BackendBlogPost {
@@ -318,25 +374,54 @@ function toAvatar(name: string): string {
     .map((part) => part[0]?.toUpperCase() || '')
     .join('') || 'GT'
 }
-
 function mapTrek(trek: BackendTrek): Trek {
   const title = trek.name || 'Untitled Trek'
   const fullDescription = (trek.description || trek.overview || 'Explore this amazing Himalayan trek.').trim()
   const shortDescription = fullDescription.split('.')[0] + '.'
 
+  // use the region from the database if it matches a known value, otherwise infer it from the trek name
+  const knownRegions: Trek['region'][] = ['Everest', 'Annapurna', 'Langtang', 'Mustang', 'Manaslu', 'Other']
+  const regionFromDb = trek.region as Trek['region']
+  const region: Trek['region'] = knownRegions.includes(regionFromDb)
+    ? regionFromDb
+    : inferRegion(title)
+
+  // use the slug from the database if available, otherwise generate one from the name
+  const slug = trek.slug?.trim() || slugify(title)
+
+  // map difficulty from backend values to what the frontend Trek type expects
+  function normalizeDifficultyFull(level?: string): Trek['difficulty'] {
+    if (level === 'Easy') return 'Easy'
+    if (level === 'Moderate') return 'Moderate'
+    if (level === 'Hard') return 'Challenging'
+    return 'Challenging'
+  }
+
+  // build the group size string from min and max values stored separately in the database
+  const groupSize =
+    trek.group_size_min && trek.group_size_max
+      ? `${trek.group_size_min}–${trek.group_size_max}`
+      : 'Flexible'
+
+  // build transportation string from start and end point if no dedicated field exists
+  const transportation =
+    trek.transportation?.trim() ||
+    [trek.start_point, trek.end_point].filter(Boolean).join(' → ') ||
+    'On request'
+
   return {
     id: trek._id,
-    slug: slugify(title),
+    slug,
     title,
-    region: inferRegion(title),
+    region,
     duration: trek.duration_days || 0,
-    difficulty: normalizeDifficulty(trek.difficulty),
+    difficulty: normalizeDifficultyFull(trek.difficulty),
     maxAltitude: trek.max_altitude_meters || 0,
     price: trek.price_usd || 0,
-    groupSize: `${trek.group_size_min || 1}–${trek.group_size_max || 15}`,
+    groupSize,
     bestSeason: trek.best_season || 'All year',
-    transportation: [trek.start_point, trek.end_point].filter(Boolean).join(' → ') || 'On request',
-    tourType: trek.is_optional ? 'Optional Trek' : 'Group / Private',
+    transportation,
+    tourType: trek.tour_type || (trek.is_optional ? 'Optional Trek' : 'Group / Private'),
     shortDescription,
     fullDescription,
     image: trek.image_url || '/images/hero-himalaya.jpg',
@@ -347,15 +432,20 @@ function mapTrek(trek: BackendTrek): Trek {
       description: day.description || '',
       altitude: toNumber(day.altitude),
       distance: day.distance,
-      accommodation: 'Teahouse',
+      accommodation: day.accommodation || 'Teahouse',
     })),
     includes: trek.includes || [],
     excludes: trek.excludes || [],
     faqs: trek.faqs || [],
-    gallery: trek.gallery_images && trek.gallery_images.length > 0
-      ? trek.gallery_images
-      : [trek.image_url || '/images/hero-himalaya.jpg'],
+    gallery:
+      trek.gallery_images && trek.gallery_images.length > 0
+        ? trek.gallery_images
+        : [trek.image_url || '/images/hero-himalaya.jpg'],
     mapEmbed: trek.trek_map_embed_url,
+    // pass coordinates and location name through so the detail page can fetch live weather
+    latitude: trek.latitude,
+    longitude: trek.longitude,
+    locationName: trek.location_name,
   }
 }
 

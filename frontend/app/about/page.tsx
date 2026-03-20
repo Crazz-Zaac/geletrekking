@@ -71,10 +71,10 @@ const defaultAbout: Required<Pick<AdminAbout, 'heroTitle' | 'heroSubtitle' | 'st
 };
 
 const associations = [
-  { name: 'Nepal Government', logo: '/images/associations/nepal-government.svg' },
-  { name: 'Nepal Tourism Board', logo: '/images/associations/nepal-tourism-board.svg' },
-  { name: 'Nepal Mountaineering Association', logo: '/images/associations/nepal-mountaineering-association.svg' },
-  { name: "Trekking Agencies' Association of Nepal", logo: '/images/associations/taan.svg' },
+  { name: 'Nepal Government', logo: '/public/images/associations/nepal-government.svg' },
+  { name: 'Nepal Tourism Board', logo: 'https://ik.imagekit.io/dj8jxmvvw/Nepal-Tourism-Board_Logo-compact.jpg' },
+  { name: 'Nepal Mountaineering Association', logo: 'https://ik.imagekit.io/dj8jxmvvw/logo-header.png' },
+  { name: "Trekking Agencies' Association of Nepal", logo: 'https://ik.imagekit.io/dj8jxmvvw/taan-logo.jpg' },
 ];
 
 const teamMembers = [

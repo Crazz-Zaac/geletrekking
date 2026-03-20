@@ -3,10 +3,10 @@ export interface Trek {
   slug: string
   title: string
   region: 'Everest' | 'Annapurna' | 'Langtang' | 'Mustang' | 'Manaslu' | 'Other'
-  duration: number // days
+  duration: number
   difficulty: 'Easy' | 'Moderate' | 'Strenuous' | 'Challenging'
-  maxAltitude: number // meters
-  price: number // USD
+  maxAltitude: number
+  price: number
   groupSize: string
   bestSeason: string
   transportation: string
@@ -21,6 +21,10 @@ export interface Trek {
   faqs: FAQ[]
   gallery: string[]
   mapEmbed?: string
+  // used to fetch live weather from Open-Meteo on the trek detail page
+  latitude?: number
+  longitude?: number
+  locationName?: string
 }
 
 export interface ItineraryDay {
@@ -111,6 +115,9 @@ export const treks: Trek[] = [
       '/images/hero-himalaya.jpg',
       '/images/region-everest.jpg',
     ],
+    latitude: 27.8069,
+    longitude: 86.7144,
+    locationName: 'Namche Bazaar',
   },
   {
     id: '2',
@@ -181,6 +188,9 @@ export const treks: Trek[] = [
       '/images/annapurna-circuit.jpg',
       '/images/region-annapurna.jpg',
     ],
+    latitude: 28.2096,
+    longitude: 83.9856,
+    locationName: 'Pokhara',
   },
   {
     id: '3',
@@ -244,6 +254,9 @@ export const treks: Trek[] = [
       '/images/langtang-valley.jpg',
       '/images/region-langtang.jpg',
     ],
+    latitude: 28.2122,
+    longitude: 85.5636,
+    locationName: 'Kyanjin Gompa',
   },
   {
     id: '4',
@@ -310,6 +323,9 @@ export const treks: Trek[] = [
     gallery: [
       '/images/manaslu-circuit.jpg',
     ],
+    latitude: 28.5833,
+    longitude: 84.9167,
+    locationName: 'Samagaon',
   },
   {
     id: '5',
@@ -375,6 +391,9 @@ export const treks: Trek[] = [
     gallery: [
       '/images/upper-mustang.jpg',
     ],
+    latitude: 29.1833,
+    longitude: 83.9667,
+    locationName: 'Lo Manthang',
   },
 ]
 

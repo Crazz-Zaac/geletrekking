@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { BookingForm, FAQAccordion } from '@/components/booking-form';
+import { useTrekWeather } from '@/hooks/use-trek-weather'
 import { treks } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -44,14 +45,14 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
-const regionWeather = {
-  Everest: { condition: 'Clear & crisp', temp: '2°C', humidity: '48%', wind: '18 km/h' },
-  Annapurna: { condition: 'Partly cloudy', temp: '8°C', humidity: '56%', wind: '14 km/h' },
-  Langtang: { condition: 'Sunny intervals', temp: '6°C', humidity: '52%', wind: '12 km/h' },
-  Mustang: { condition: 'Dry & windy', temp: '10°C', humidity: '30%', wind: '22 km/h' },
-  Manaslu: { condition: 'Cool and clear', temp: '4°C', humidity: '50%', wind: '16 km/h' },
-  Other: { condition: 'Variable', temp: '7°C', humidity: '55%', wind: '15 km/h' },
-};
+// const regionWeather = {
+//   Everest: { condition: 'Clear & crisp', temp: '2°C', humidity: '48%', wind: '18 km/h' },
+//   Annapurna: { condition: 'Partly cloudy', temp: '8°C', humidity: '56%', wind: '14 km/h' },
+//   Langtang: { condition: 'Sunny intervals', temp: '6°C', humidity: '52%', wind: '12 km/h' },
+//   Mustang: { condition: 'Dry & windy', temp: '10°C', humidity: '30%', wind: '22 km/h' },
+//   Manaslu: { condition: 'Cool and clear', temp: '4°C', humidity: '50%', wind: '16 km/h' },
+//   Other: { condition: 'Variable', temp: '7°C', humidity: '55%', wind: '15 km/h' },
+// };
 
 function getAltitudeLabel(maxAltitude: number) {
   if (maxAltitude >= 5000) return 'Extreme High Altitude';
@@ -78,6 +79,7 @@ export default function TrekDetailPage() {
 
   const trek = trekList.find((t) => t.id === trekId || t.slug === trekId);
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
+  const weather = useTrekWeather(trek?.latitude, trek?.longitude)
 
   if (!trek) {
     return (
@@ -402,24 +404,50 @@ export default function TrekDetailPage() {
                 </div>
               </Card>
 
-              <Card className="border-sky-300/40 bg-gradient-to-br from-sky-500/10 via-cyan-500/5 to-indigo-500/10 p-6 md:p-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-foreground text-xl">Current Weather</h3>
-                  <CloudSun className="w-5 h-5 text-sky-500" />
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">{trek.region} Region • Live mountain conditions vary by altitude</p>
-                <div className="space-y-2 text-sm">
-                  <p className="flex items-center justify-between"><span className="text-muted-foreground">Condition</span><span className="font-medium">{regionWeather[trek.region].condition}</span></p>
-                  <p className="flex items-center justify-between"><span className="text-muted-foreground">Temperature</span><span className="font-medium">{regionWeather[trek.region].temp}</span></p>
-                  <p className="flex items-center justify-between"><span className="text-muted-foreground">Humidity</span><span className="font-medium">{regionWeather[trek.region].humidity}</span></p>
-                  <p className="flex items-center justify-between"><span className="text-muted-foreground">Wind</span><span className="font-medium">{regionWeather[trek.region].wind}</span></p>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                  <p className="flex items-center gap-1"><Compass className="w-3.5 h-3.5" /> {trek.region}</p>
-                  <p className="flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5" /> {getAltitudeLabel(trek.maxAltitude)}</p>
-                  <p className="flex items-center gap-1"><Bus className="w-3.5 h-3.5" /> {trek.transportation}</p>
-                  <p className="flex items-center gap-1"><Wind className="w-3.5 h-3.5" /> Seasonal shifts</p>
-                </div>
+             <Card className="border-sky-300/40 bg-gradient-to-br from-sky-500/10 via-cyan-500/5 to-indigo-500/10 p-6 md:p-8">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-bold text-foreground text-xl">Current Weather</h3>
+                        <CloudSun className="w-5 h-5 text-sky-500" />
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        {trek.locationName || trek.region} • Live mountain conditions vary by altitude
+                      </p>
+
+                      {weather.status === 'loading' && (
+                        <p className="text-sm text-muted-foreground">Loading weather...</p>
+                      )}
+
+                      {weather.status === 'unavailable' && (
+                        <p className="text-sm text-muted-foreground">Weather data unavailable for this location.</p>
+                      )}
+
+                      {weather.status === 'ready' && (
+                        <div className="space-y-2 text-sm">
+                          <p className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Condition</span>
+                            <span className="font-medium">{weather.data.condition}</span>
+                          </p>
+                          <p className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Temperature</span>
+                            <span className="font-medium">{weather.data.temp}</span>
+                          </p>
+                          <p className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Humidity</span>
+                            <span className="font-medium">{weather.data.humidity}</span>
+                          </p>
+                          <p className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Wind</span>
+                            <span className="font-medium">{weather.data.wind}</span>
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                        <p className="flex items-center gap-1"><Compass className="w-3.5 h-3.5" /> {trek.region}</p>
+                        <p className="flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5" /> {getAltitudeLabel(trek.maxAltitude)}</p>
+                        <p className="flex items-center gap-1"><Bus className="w-3.5 h-3.5" /> {trek.transportation}</p>
+                        <p className="flex items-center gap-1"><Wind className="w-3.5 h-3.5" /> Seasonal shifts</p>
+                      </div>
               </Card>
             </motion.aside>
           </motion.div>
