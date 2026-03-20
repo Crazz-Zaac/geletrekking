@@ -21,6 +21,12 @@ export interface Trek {
   faqs: FAQ[]
   gallery: string[]
   mapEmbed?: string
+  hasOffer?: boolean
+  offerType?: string
+  offerDescription?: string
+  offerDiscountPercent?: number
+  originalPrice?: number
+  discountedPrice?: number
   // used to fetch live weather from Open-Meteo on the trek detail page
   latitude?: number
   longitude?: number

@@ -60,7 +60,7 @@ type TrekForm = {
   itinerary: ItineraryDay[]
   faqs: FaqItem[]
   has_offer: boolean
-  offer_title: string
+  offer_type: string
   offer_description: string
   discounted_price_usd: number
   discounted_price_gbp: number
@@ -112,7 +112,7 @@ const initialForm: TrekForm = {
   itinerary: [emptyDay()],
   faqs: [emptyFaq()],
   has_offer: false,
-  offer_title: '',
+  offer_type: '',
   offer_description: '',
   discounted_price_usd: 0,
   discounted_price_gbp: 0,
@@ -163,7 +163,8 @@ function formToPayload(form: TrekForm): Partial<AdminTrek> {
     itinerary: form.itinerary.filter((d) => d.title.trim()),
     faqs: form.faqs.filter((f) => f.question.trim() && f.answer.trim()),
     has_offer: form.has_offer,
-    offer_title: form.offer_title.trim() || undefined,
+    offer_type: form.offer_type.trim() || undefined,
+    offer_title: form.offer_type.trim() || undefined,
     offer_description: form.offer_description.trim() || undefined,
     discounted_price_usd: form.discounted_price_usd || undefined,
     discounted_price_gbp: form.discounted_price_gbp || undefined,
@@ -219,7 +220,7 @@ function trekToForm(item: AdminTrek): TrekForm {
         ? item.faqs.map((f) => ({ question: f.question, answer: f.answer }))
         : [emptyFaq()],
     has_offer: item.has_offer || false,
-    offer_title: item.offer_title || '',
+    offer_type: item.offer_type || item.offer_title || '',
     offer_description: item.offer_description || '',
     discounted_price_usd: item.discounted_price_usd || 0,
     discounted_price_gbp: item.discounted_price_gbp || 0,
@@ -765,11 +766,11 @@ export default function AdminTreksPage() {
                 </label>
                 {form.has_offer && (
                   <div className="space-y-3">
-                    {field('Offer title', (
+                    {field('Offer type', (
                       <Input
-                        placeholder="e.g. Early Bird 20% Off"
-                        value={form.offer_title}
-                        onChange={(e) => setForm((p) => ({ ...p, offer_title: e.target.value }))}
+                        placeholder="e.g. Summer Deal, Christmas Discount"
+                        value={form.offer_type}
+                        onChange={(e) => setForm((p) => ({ ...p, offer_type: e.target.value }))}
                       />
                     ))}
                     {field('Offer description', textarea('Describe the offer', form.offer_description, (v) => setForm((p) => ({ ...p, offer_description: v })), 3))}

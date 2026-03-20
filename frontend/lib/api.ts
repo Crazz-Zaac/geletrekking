@@ -95,12 +95,17 @@ export interface AdminTrek {
   itinerary_pdf_url?: string
   trek_map_embed_url?: string
   has_offer?: boolean
+  offer_type?: string
   offer_title?: string
   offer_description?: string
   discounted_price_gbp?: number
   discounted_price_usd?: number
   offer_valid_from?: string
   offer_valid_to?: string
+  offer_discount_percent?: number
+  offer_active_now?: boolean
+  original_price_gbp?: number
+  original_price_usd?: number
   season_tag?: string
   faqs?: Array<{
     _id?: string
@@ -251,6 +256,18 @@ interface BackendTrek {
   group_size_max?: number
   max_altitude_meters?: number
   trek_map_embed_url?: string
+  has_offer?: boolean
+  offer_type?: string
+  offer_title?: string
+  offer_description?: string
+  discounted_price_gbp?: number
+  discounted_price_usd?: number
+  offer_valid_from?: string
+  offer_valid_to?: string
+  offer_discount_percent?: number
+  offer_active_now?: boolean
+  original_price_gbp?: number
+  original_price_usd?: number
   faqs?: Array<{ question: string; answer: string }>
   is_optional?: boolean
   tour_type?: string
@@ -409,6 +426,22 @@ function mapTrek(trek: BackendTrek): Trek {
     [trek.start_point, trek.end_point].filter(Boolean).join(' → ') ||
     'On request'
 
+  const hasOffer = Boolean(trek.has_offer)
+  const offerDiscountPercent =
+    trek.offer_discount_percent ||
+    (trek.price_usd && trek.discounted_price_usd && trek.discounted_price_usd < trek.price_usd
+      ? Math.round(((trek.price_usd - trek.discounted_price_usd) / trek.price_usd) * 100)
+      : undefined)
+
+  const originalPrice =
+    trek.original_price_usd ||
+    (hasOffer && trek.discounted_price_usd && trek.price_usd ? trek.price_usd : undefined)
+
+  const currentPrice =
+    hasOffer && trek.discounted_price_usd
+      ? trek.discounted_price_usd
+      : trek.price_usd || 0
+
   return {
     id: trek._id,
     slug,
@@ -417,7 +450,7 @@ function mapTrek(trek: BackendTrek): Trek {
     duration: trek.duration_days || 0,
     difficulty: normalizeDifficultyFull(trek.difficulty),
     maxAltitude: trek.max_altitude_meters || 0,
-    price: trek.price_usd || 0,
+    price: currentPrice,
     groupSize,
     bestSeason: trek.best_season || 'All year',
     transportation,
@@ -442,6 +475,12 @@ function mapTrek(trek: BackendTrek): Trek {
         ? trek.gallery_images
         : [trek.image_url || '/images/hero-himalaya.jpg'],
     mapEmbed: trek.trek_map_embed_url,
+    hasOffer,
+    offerType: trek.offer_type || trek.offer_title,
+    offerDescription: trek.offer_description,
+    offerDiscountPercent,
+    originalPrice,
+    discountedPrice: trek.discounted_price_usd,
     // pass coordinates and location name through so the detail page can fetch live weather
     latitude: trek.latitude,
     longitude: trek.longitude,

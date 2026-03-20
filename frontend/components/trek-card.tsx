@@ -17,14 +17,44 @@ interface TrekCardProps {
 }
 
 export function TrekCard({ trek, className }: TrekCardProps) {
+  const hasActiveOffer = Boolean(trek.hasOffer)
+  const discountPercent = trek.offerDiscountPercent || 10
+
   return (
     <Link
       href={`/trek/${trek.id}`}
       className={cn(
-        'group flex flex-col bg-card rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300',
+        'group relative flex flex-col bg-card rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300',
+        hasActiveOffer && 'border-red-300/70 shadow-red-500/10',
         className
       )}
     >
+      {hasActiveOffer && (
+        <>
+          {/* Ribbon */}
+          <div className="pointer-events-none absolute -top-3 -left-3 z-40">
+            <Image
+              src="/ribbon.png"
+              alt="Offer ribbon"
+              width={140}
+              height={140}
+              className="object-contain drop-shadow-xl"
+              priority
+            />
+          </div>
+
+          {/* Discount badge */}
+          <div className="absolute top-3 right-3 z-40 bg-red-600 text-white px-2 py-1 rounded-md shadow-md text-center">
+            <p className="text-lg font-extrabold leading-none">
+              {discountPercent}%
+            </p>
+            <p className="text-[10px] font-bold uppercase tracking-wide">
+              OFF
+            </p>
+          </div>
+        </>
+      )}
+
       {/* Image */}
       <div className="relative h-52 overflow-hidden">
         <Image
@@ -35,10 +65,7 @@ export function TrekCard({ trek, className }: TrekCardProps) {
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
         {/* Overlay badges */}
-        <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
-          <span className="bg-primary/90 text-primary-foreground text-xs font-semibold px-2.5 py-1 rounded-full">
-            {trek.region}
-          </span>
+        <div className="absolute right-3 bottom-3 z-20">
           <span className={cn('text-xs font-semibold px-2.5 py-1 rounded-full', difficultyColors[trek.difficulty])}>
             {trek.difficulty}
           </span>
@@ -74,7 +101,14 @@ export function TrekCard({ trek, className }: TrekCardProps) {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground">From</p>
-            <p className="text-xl font-bold text-primary">${trek.price.toLocaleString()}</p>
+            {hasActiveOffer && trek.originalPrice ? (
+              <>
+                <p className="text-xs text-muted-foreground line-through">${trek.originalPrice.toLocaleString()}</p>
+                <p className="text-xl font-bold text-red-600">${trek.price.toLocaleString()}</p>
+              </>
+            ) : (
+              <p className="text-xl font-bold text-primary">${trek.price.toLocaleString()}</p>
+            )}
           </div>
           <span className="flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
             View Trek

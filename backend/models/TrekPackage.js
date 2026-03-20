@@ -121,6 +121,7 @@ const trekPackageSchema = new mongoose.Schema(
 
     // whether there is an active discount or special offer on this trek
     has_offer: { type: Boolean, default: false },
+    offer_type: { type: String },
     offer_title: { type: String },
     offer_description: { type: String },
 

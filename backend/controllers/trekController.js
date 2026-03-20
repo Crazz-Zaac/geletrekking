@@ -2,11 +2,29 @@
 const TrekPackage = require("../models/TrekPackage");
 const mongoose = require("mongoose");
 
-// creates a new trek package, only admin and superadmin can do this
+const toDiscountPercent = (originalPrice, discountedPrice) => {
+  if (!originalPrice || !discountedPrice || discountedPrice >= originalPrice) return null;
+  return Math.round(((originalPrice - discountedPrice) / originalPrice) * 100);
+};
+
+const isOfferActiveNow = (trek, now = new Date()) => {
+  if (!trek.has_offer) return false;
+  if (trek.offer_valid_from && now < trek.offer_valid_from) return false;
+  if (trek.offer_valid_to && now > trek.offer_valid_to) return false;
+  return true;
+};
+
 const createTrek = async (req, res) => {
   try {
     const trekData = { ...req.body };
     delete trekData.overview;
+
+    if (trekData.offer_type && !trekData.offer_title) {
+      trekData.offer_title = trekData.offer_type;
+    }
+    if (trekData.offer_title && !trekData.offer_type) {
+      trekData.offer_type = trekData.offer_title;
+    }
 
     if (req.user && req.user._id) {
       trekData.createdBy = req.user._id;
@@ -25,7 +43,6 @@ const createTrek = async (req, res) => {
   }
 };
 
-// returns all treks, admins see everything including inactive ones, public users only see active treks
 const getAllTreks = async (req, res) => {
   try {
     const isAdmin = req.user?.role === "admin" || req.user?.role === "superadmin";
@@ -36,18 +53,23 @@ const getAllTreks = async (req, res) => {
     else if (type === "optional") filter.is_optional = true;
 
     const treks = await TrekPackage.find(filter).sort({ createdAt: -1 });
-
     const today = new Date();
 
-    // if a trek has an active offer and today falls within the offer window, replace the price with the discounted one
     const updatedTreks = treks.map((trek) => {
       const t = trek.toObject();
-      if (trek.has_offer && trek.offer_valid_from && trek.offer_valid_to) {
-        if (today >= trek.offer_valid_from && today <= trek.offer_valid_to) {
-          t.price_gbp = trek.discounted_price_gbp || trek.price_gbp;
-          t.price_usd = trek.discounted_price_usd || trek.price_usd;
-        }
+      const offerActiveNow = isOfferActiveNow(trek, today);
+
+      t.offer_type = trek.offer_type || trek.offer_title || null;
+      t.offer_discount_percent = toDiscountPercent(trek.price_usd, trek.discounted_price_usd);
+      t.offer_active_now = offerActiveNow;
+
+      if (offerActiveNow) {
+        t.original_price_gbp = trek.price_gbp || null;
+        t.original_price_usd = trek.price_usd || null;
+        t.price_gbp = trek.discounted_price_gbp || trek.price_gbp;
+        t.price_usd = trek.discounted_price_usd || trek.price_usd;
       }
+
       return t;
     });
 
@@ -58,8 +80,6 @@ const getAllTreks = async (req, res) => {
   }
 };
 
-// finds a single trek by either its slug or its mongodb id
-// slug is tried first since the frontend uses it in the url, mongodb id is the fallback
 const getTrekById = async (req, res) => {
   const { id } = req.params;
 
@@ -75,21 +95,23 @@ const getTrekById = async (req, res) => {
     }
 
     const isAdmin = req.user?.role === "admin" || req.user?.role === "superadmin";
-
-    // if the trek is not active, only admins can see it
     if (!trek.is_active && !isAdmin) {
       return res.status(404).json({ message: "Trek not found" });
     }
 
     const today = new Date();
     const finalTrek = trek.toObject();
+    const offerActiveNow = isOfferActiveNow(trek, today);
 
-    // replace the price with the discounted one if an offer is currently active
-    if (trek.has_offer && trek.offer_valid_from && trek.offer_valid_to) {
-      if (today >= trek.offer_valid_from && today <= trek.offer_valid_to) {
-        finalTrek.price_gbp = trek.discounted_price_gbp || trek.price_gbp;
-        finalTrek.price_usd = trek.discounted_price_usd || trek.price_usd;
-      }
+    finalTrek.offer_type = trek.offer_type || trek.offer_title || null;
+    finalTrek.offer_discount_percent = toDiscountPercent(trek.price_usd, trek.discounted_price_usd);
+    finalTrek.offer_active_now = offerActiveNow;
+
+    if (offerActiveNow) {
+      finalTrek.original_price_gbp = trek.price_gbp || null;
+      finalTrek.original_price_usd = trek.price_usd || null;
+      finalTrek.price_gbp = trek.discounted_price_gbp || trek.price_gbp;
+      finalTrek.price_usd = trek.discounted_price_usd || trek.price_usd;
     }
 
     res.status(200).json(finalTrek);
@@ -99,8 +121,6 @@ const getTrekById = async (req, res) => {
   }
 };
 
-// updates an existing trek, only admin and superadmin can do this
-// if the name is changed but no new slug is provided, the slug gets regenerated from the new name
 const updateTrek = async (req, res) => {
   const { id } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -109,6 +129,13 @@ const updateTrek = async (req, res) => {
   try {
     const payload = { ...req.body };
     delete payload.overview;
+
+    if (payload.offer_type && !payload.offer_title) {
+      payload.offer_title = payload.offer_type;
+    }
+    if (payload.offer_title && !payload.offer_type) {
+      payload.offer_type = payload.offer_title;
+    }
 
     if (payload.name && !payload.slug) {
       payload.slug = payload.name
@@ -137,7 +164,6 @@ const updateTrek = async (req, res) => {
   }
 };
 
-// permanently removes a trek from the database, only admin and superadmin can do this
 const deleteTrek = async (req, res) => {
   const { id } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -155,7 +181,6 @@ const deleteTrek = async (req, res) => {
   }
 };
 
-// returns all availability windows for a trek sorted by start date
 const getAvailability = async (req, res) => {
   const { id } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -176,7 +201,6 @@ const getAvailability = async (req, res) => {
   }
 };
 
-// adds a new date range to the trek's availability list
 const addAvailability = async (req, res) => {
   const { id } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -219,7 +243,6 @@ const addAvailability = async (req, res) => {
   }
 };
 
-// updates an existing availability entry by its id inside the trek's availability array
 const updateAvailability = async (req, res) => {
   const { id, availId } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(availId)) {
@@ -259,7 +282,6 @@ const updateAvailability = async (req, res) => {
   }
 };
 
-// removes a single availability entry from the trek
 const deleteAvailability = async (req, res) => {
   const { id, availId } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(availId)) {
