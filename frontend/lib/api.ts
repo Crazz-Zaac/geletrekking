@@ -193,6 +193,13 @@ export interface AdminAboutStat {
   value: string
 }
 
+export interface AdminAboutTeamMember {
+  name: string
+  role: string
+  description: string
+  imageUrl: string
+}
+
 export interface AdminAbout {
   heroTitle?: string
   heroSubtitle?: string
@@ -204,6 +211,8 @@ export interface AdminAbout {
   highlights?: AdminAboutHighlight[]
   whyChooseUs?: string[]
   stats?: AdminAboutStat[]
+  teamTitle?: string
+  teamMembers?: AdminAboutTeamMember[]
 }
 
 export interface AdminActivity {

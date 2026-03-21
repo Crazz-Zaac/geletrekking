@@ -4,28 +4,12 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { Menu, X, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { treks } from '@/lib/data'
+import { treks as defaultTreks } from '@/lib/data'
 import { WhatsAppIcon } from '@/components/whatsapp-icon'
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons'
 import Image from 'next/image'
 import { useSiteSettings } from '@/hooks/use-site-settings'
-
-const navLinks = [
-  { label: 'Home', href: '/' },
-  { label: 'About Us', href: '/about' },
-  {
-    label: 'Destinations',
-    href: '/destinations',
-    children: treks.map((trek) => ({
-      label: trek.title.replace(/\s+Trek$/i, ''),
-      href: `/trek/${trek.slug}`,
-    })),
-  },
-  { label: 'Gallery', href: '/gallery' },
-  { label: 'Blog', href: '/blog' },
-  { label: "FAQ's", href: '/faq' },
-  { label: 'Contact', href: '/contact' },
-]
+import { getTreks } from '@/lib/api'
 
 export function Navbar() {
   const { settings, social } = useSiteSettings()
@@ -41,12 +25,62 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [destinationChildren, setDestinationChildren] = useState<Array<{ label: string; href: string }>>([])
+
+  // Load treks from database
+  useEffect(() => {
+    const loadTreks = async () => {
+      try {
+        const dbTreks = await getTreks()
+        if (dbTreks && dbTreks.length > 0) {
+          setDestinationChildren(
+            dbTreks.map((trek: any) => ({
+              label: trek.name || trek.title,
+              href: `/trek/${trek.id || trek.slug}`,
+            }))
+          )
+        } else {
+          // Fallback to default treks if database is empty
+          setDestinationChildren(
+            defaultTreks.map((trek) => ({
+              label: trek.title.replace(/\s+Trek$/i, ''),
+              href: `/trek/${trek.slug}`,
+            }))
+          )
+        }
+      } catch {
+        // Fallback to default treks on error
+        setDestinationChildren(
+          defaultTreks.map((trek) => ({
+            label: trek.title.replace(/\s+Trek$/i, ''),
+            href: `/trek/${trek.slug}`,
+          }))
+        )
+      }
+    }
+
+    void loadTreks()
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  const navLinks = [
+    { label: 'Home', href: '/' },
+    { label: 'About Us', href: '/about' },
+    {
+      label: 'Destinations',
+      href: '/destinations',
+      children: destinationChildren,
+    },
+    { label: 'Gallery', href: '/gallery' },
+    { label: 'Blog', href: '/blog' },
+    { label: "FAQ's", href: '/faq' },
+    { label: 'Contact', href: '/contact' },
+  ]
 
   return (
     <header
@@ -103,15 +137,21 @@ export function Navbar() {
                 {openDropdown === link.label && (
                   <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2">
                     <div className="bg-white rounded-xl shadow-2xl border border-border p-2 min-w-52">
-                      {link.children.map((child) => (
-                        <Link
-                          key={child.label}
-                          href={child.href}
-                          className="block px-4 py-2.5 text-sm text-foreground hover:bg-secondary hover:text-primary rounded-lg transition-colors font-medium"
-                        >
-                          {child.label}
-                        </Link>
-                      ))}
+                      {link.children.length > 0 ? (
+                        link.children.map((child) => (
+                          <Link
+                            key={child.label}
+                            href={child.href}
+                            className="block px-4 py-2.5 text-sm text-foreground hover:bg-secondary hover:text-primary rounded-lg transition-colors font-medium"
+                          >
+                            {child.label}
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="px-4 py-2.5 text-sm text-muted-foreground">
+                          No treks available
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, ArrowRight, FileText, Image as ImageIcon, Mountain, Newspaper, ShieldCheck } from 'lucide-react'
+import { Activity, ArrowRight, FileText, Image as ImageIcon, Mountain, Newspaper, ShieldCheck, TrendingUp } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { API_BASE_URL } from '@/lib/api'
@@ -133,6 +133,12 @@ export default function AdminDashboardPage() {
               <Button variant="outline" className="w-full justify-between">
                 View Website
                 <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Link href="/admin/performance" className="block">
+              <Button variant="outline" className="w-full justify-between">
+                Performance Analytics
+                <TrendingUp className="w-4 h-4" />
               </Button>
             </Link>
             <Link href="/blog" className="block">

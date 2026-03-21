@@ -77,23 +77,7 @@ const associations = [
   { name: "Trekking Agencies' Association of Nepal", logo: 'https://ik.imagekit.io/dj8jxmvvw/taan-logo.jpg' },
 ];
 
-const teamMembers = [
-  {
-    name: 'Gele Sherpa',
-    role: 'Founder & Lead Trek Director',
-    description: 'Leads expedition standards, safety systems, and route planning with deep Himalayan field experience.',
-  },
-  {
-    name: 'Lhakpa Sherpa',
-    role: 'Senior Mountain Guide',
-    description: 'Specializes in high-altitude pacing, acclimatization strategy, and client safety across major trekking regions.',
-  },
-  {
-    name: 'Pasang Dolma',
-    role: 'Operations & Guest Care',
-    description: 'Coordinates permits, logistics, and personalized guest support from arrival to departure.',
-  },
-];
+
 
 type CombinedReview = {
   id: string
@@ -315,11 +299,17 @@ export default function AboutPage() {
                     </p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {teamMembers.map((member) => (
+                    {(about?.teamMembers || []).map((member) => (
                       <Card key={member.name} className="border-border p-5 h-full bg-gradient-to-b from-background to-muted/20">
-                        <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                          <Users className="w-5 h-5 text-primary" />
-                        </div>
+                        {member.imageUrl ? (
+                          <div className="w-11 h-11 rounded-full mb-3 overflow-hidden border border-border">
+                            <img src={member.imageUrl} alt={member.name} className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                            <Users className="w-5 h-5 text-primary" />
+                          </div>
+                        )}
                         <h3 className="text-lg font-bold text-foreground mb-1">{member.name}</h3>
                         <p className="text-sm font-medium text-primary mb-2">{member.role}</p>
                         <p className="text-sm text-muted-foreground leading-relaxed">{member.description}</p>

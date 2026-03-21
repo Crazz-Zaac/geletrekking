@@ -5,13 +5,16 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   AdminAbout,
   AdminAboutHighlight,
+  AdminAboutTeamMember,
   getAdminAbout,
   updateAdminAbout,
 } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
+import { Bold, Italic, Heading2, List, Trash2, Plus, AlertCircle, CheckCircle, BookOpen, Heart, Users, Zap, Users2, Link as LinkIcon } from 'lucide-react'
 
 const defaultAbout: AdminAbout = {
   heroTitle: 'About Us',
@@ -46,6 +49,51 @@ const defaultAbout: AdminAbout = {
     'Personalized service from first inquiry to post-trek follow-up.',
   ],
   stats: [],
+  teamTitle: 'Meet Our Team',
+  teamMembers: [],
+}
+
+const TextFormattingTools = ({ onInsert }: { onInsert: (text: string) => void }) => {
+  return (
+    <div className="flex items-center gap-1 p-2 bg-muted rounded-md border border-border mb-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onInsert('**bold text**')}
+        className="h-8 w-8 p-0"
+        title="Bold"
+      >
+        <Bold className="w-4 h-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onInsert('*italic text*')}
+        className="h-8 w-8 p-0"
+        title="Italic"
+      >
+        <Italic className="w-4 h-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onInsert('## Heading\n')}
+        className="h-8 w-8 p-0"
+        title="Heading"
+      >
+        <Heading2 className="w-4 h-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onInsert('- List item\n')}
+        className="h-8 w-8 p-0"
+        title="Bullet List"
+      >
+        <List className="w-4 h-4" />
+      </Button>
+    </div>
+  )
 }
 
 export default function AdminAboutPage() {
@@ -83,6 +131,8 @@ export default function AdminAboutPage() {
         highlights: incomingHighlights.length > 0 ? incomingHighlights : (defaultAbout.highlights || []),
         whyChooseUs: incomingWhyChoose.length > 0 ? incomingWhyChoose : (defaultAbout.whyChooseUs || []),
         stats: data.stats || [],
+        teamTitle: fallbackText(data.teamTitle, defaultAbout.teamTitle),
+        teamMembers: (data.teamMembers || []).filter((member) => member.name?.trim() || member.role?.trim()),
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load about content')
@@ -103,6 +153,14 @@ export default function AdminAboutPage() {
     })
   }
 
+  const updateTeamMember = (index: number, next: Partial<AdminAboutTeamMember>) => {
+    setForm((prev) => {
+      const teamMembers = [...(prev.teamMembers || [])]
+      teamMembers[index] = { ...(teamMembers[index] || { name: '', role: '', description: '', imageUrl: '' }), ...next }
+      return { ...prev, teamMembers }
+    })
+  }
+
   const onSave = async () => {
     if (!token) {
       setError('Missing admin token. Please login again.')
@@ -116,6 +174,7 @@ export default function AdminAboutPage() {
     try {
       await updateAdminAbout(token, form)
       setMessage('About page updated successfully.')
+      setTimeout(() => setMessage(''), 5000)
       await refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save about page')
@@ -124,100 +183,447 @@ export default function AdminAboutPage() {
     }
   }
 
+  const handleTextAreaInsert = (textareaId: string, text: string) => {
+    const textarea = document.getElementById(textareaId) as HTMLTextAreaElement
+    if (textarea) {
+      const start = textarea.selectionStart || 0
+      const end = textarea.selectionEnd || 0
+      const value = textarea.value
+      const newValue = value.substring(0, start) + text + value.substring(end)
+
+      if (textareaId === 'heroSubtitle') {
+        setForm((prev) => ({ ...prev, heroSubtitle: newValue }))
+      } else if (textareaId === 'storyBody') {
+        setForm((prev) => ({ ...prev, storyBody: newValue }))
+      } else if (textareaId === 'missionBody') {
+        setForm((prev) => ({ ...prev, missionBody: newValue }))
+      }
+
+      setTimeout(() => {
+        textarea.focus()
+        textarea.setSelectionRange(start + text.length, start + text.length)
+      }, 0)
+    }
+  }
+
   return (
-    <Card className="border-border bg-gradient-to-b from-background to-muted/20">
-      <CardHeader className="border-b border-border">
-        <CardTitle>About Page Content Studio</CardTitle>
-        <CardDescription>Manage the same blocks shown on the public About page.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6 pt-6">
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-foreground mb-2">About Page Editor</h1>
+          <p className="text-muted-foreground">Customize the content shown on your public About page</p>
+        </div>
 
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Loading about page...</p>
-        ) : (
-          <>
-            <div className="rounded-xl border border-border bg-background p-4 md:p-5 space-y-3">
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Hero Section</h3>
-              <Input
-                placeholder="Page heading (About title)"
-                value={form.heroTitle || ''}
-                onChange={(e) => setForm((prev) => ({ ...prev, heroTitle: e.target.value }))}
-              />
-              <Textarea
-                rows={3}
-                value={form.heroSubtitle || ''}
-                onChange={(e) => setForm((prev) => ({ ...prev, heroSubtitle: e.target.value }))}
-                placeholder="Top intro paragraph"
-              />
-            </div>
-
-            <div className="rounded-xl border border-border bg-background p-4 md:p-5 space-y-3">
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Story & Mission</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Input
-                  placeholder="Story section title"
-                  value={form.storyTitle || ''}
-                  onChange={(e) => setForm((prev) => ({ ...prev, storyTitle: e.target.value }))}
-                />
-                <Input
-                  placeholder="Mission section title"
-                  value={form.missionTitle || ''}
-                  onChange={(e) => setForm((prev) => ({ ...prev, missionTitle: e.target.value }))}
-                />
+        {error && (
+          <Card className="mb-6 border-red-500/50 bg-red-50/50 dark:bg-red-950/20">
+            <CardContent className="flex items-start gap-3 pt-6">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-red-900 dark:text-red-400">Error</p>
+                <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
               </div>
-              <Textarea
-                rows={5}
-                value={form.storyBody || ''}
-                onChange={(e) => setForm((prev) => ({ ...prev, storyBody: e.target.value }))}
-                placeholder="Story paragraph"
-              />
-              <Textarea
-                rows={5}
-                value={form.missionBody || ''}
-                onChange={(e) => setForm((prev) => ({ ...prev, missionBody: e.target.value }))}
-                placeholder="Mission paragraph"
-              />
-            </div>
-
-            <div className="rounded-xl border border-border bg-background p-4 md:p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold uppercase tracking-wide">Our Values</p>
-                <Button variant="outline" size="sm" onClick={() => setForm((prev) => ({ ...prev, highlights: [...(prev.highlights || []), { title: '', description: '' }] }))}>Add Value</Button>
-              </div>
-              {(form.highlights || []).map((highlight, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-2 rounded-md border border-border/70 p-2">
-                  <Input value={highlight.title} onChange={(e) => updateHighlight(index, { title: e.target.value })} placeholder="Title" />
-                  <Input value={highlight.description} onChange={(e) => updateHighlight(index, { description: e.target.value })} placeholder="Description" />
-                  <Button variant="destructive" size="sm" onClick={() => setForm((prev) => ({ ...prev, highlights: (prev.highlights || []).filter((_, idx) => idx !== index) }))}>Remove</Button>
-                </div>
-              ))}
-            </div>
-
-            <div className="rounded-xl border border-border bg-background p-4 md:p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold uppercase tracking-wide">Why Choose Us</p>
-                <Button variant="outline" size="sm" onClick={() => setForm((prev) => ({ ...prev, whyChooseUs: [...(prev.whyChooseUs || []), ''] }))}>Add Point</Button>
-              </div>
-              {(form.whyChooseUs || []).map((point, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 rounded-md border border-border/70 p-2">
-                  <Input value={point} onChange={(e) => setForm((prev) => {
-                    const next = [...(prev.whyChooseUs || [])]
-                    next[index] = e.target.value
-                    return { ...prev, whyChooseUs: next }
-                  })} placeholder="Bullet point text" />
-                  <Button variant="destructive" size="sm" onClick={() => setForm((prev) => ({ ...prev, whyChooseUs: (prev.whyChooseUs || []).filter((_, idx) => idx !== index) }))}>Remove</Button>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-center justify-end">
-              <Button onClick={onSave} disabled={saving}>{saving ? 'Saving...' : 'Save About Page'}</Button>
-            </div>
-          </>
+            </CardContent>
+          </Card>
         )}
-      </CardContent>
-    </Card>
+
+        {message && (
+          <Card className="mb-6 border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/20">
+            <CardContent className="flex items-start gap-3 pt-6">
+              <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-emerald-800 dark:text-emerald-300">{message}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card className="border-border shadow-lg">
+          <CardHeader className="border-b border-border bg-gradient-to-r from-muted/50 to-background">
+            <CardTitle>About Page Content</CardTitle>
+            <CardDescription>Edit sections that appear on the public About page. Supports markdown formatting.</CardDescription>
+          </CardHeader>
+
+          <CardContent className="pt-6">
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <span className="ml-3 text-muted-foreground">Loading about page...</span>
+              </div>
+            ) : (
+              <Tabs defaultValue="hero" className="w-full">
+                <TabsList className="grid w-full grid-cols-5 lg:w-auto mb-6 overflow-x-auto">
+                  <TabsTrigger value="hero" className="gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    <span className="hidden sm:inline">Hero</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="story" className="gap-2">
+                    <Users className="w-4 h-4" />
+                    <span className="hidden sm:inline">Story</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="values" className="gap-2">
+                    <Heart className="w-4 h-4" />
+                    <span className="hidden sm:inline">Values</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="why" className="gap-2">
+                    <Zap className="w-4 h-4" />
+                    <span className="hidden sm:inline">Why Us</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="team" className="gap-2">
+                    <Users2 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Team</span>
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Hero Section Tab */}
+                <TabsContent value="hero" className="space-y-6">
+                  <div className="bg-gradient-to-br from-blue-50/50 to-cyan-50/50 dark:from-blue-950/20 dark:to-cyan-950/20 p-6 rounded-lg border border-blue-200/50 dark:border-blue-800/30">
+                    <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      Hero Section
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">Page Heading</label>
+                        <Input
+                          placeholder="e.g., About Us"
+                          value={form.heroTitle || ''}
+                          onChange={(e) => setForm((prev) => ({ ...prev, heroTitle: e.target.value }))}
+                          className="h-10"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">Subtitle / Introduction</label>
+                        <TextFormattingTools onInsert={(text) => handleTextAreaInsert('heroSubtitle', text)} />
+                        <Textarea
+                          id="heroSubtitle"
+                          rows={4}
+                          value={form.heroSubtitle || ''}
+                          onChange={(e) => setForm((prev) => ({ ...prev, heroSubtitle: e.target.value }))}
+                          placeholder="Write a compelling introduction..."
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {form.heroSubtitle?.length || 0} characters
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Story & Mission Tab */}
+                <TabsContent value="story" className="space-y-6">
+                  <div className="bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20 p-6 rounded-lg border border-purple-200/50 dark:border-purple-800/30">
+                    <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                      Story & Mission
+                    </h3>
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-2">Story Section Title</label>
+                          <Input
+                            placeholder="e.g., Our Story"
+                            value={form.storyTitle || ''}
+                            onChange={(e) => setForm((prev) => ({ ...prev, storyTitle: e.target.value }))}
+                            className="h-10"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-2">Mission Section Title</label>
+                          <Input
+                            placeholder="e.g., Our Mission"
+                            value={form.missionTitle || ''}
+                            onChange={(e) => setForm((prev) => ({ ...prev, missionTitle: e.target.value }))}
+                            className="h-10"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">Story Content</label>
+                        <TextFormattingTools onInsert={(text) => handleTextAreaInsert('storyBody', text)} />
+                        <Textarea
+                          id="storyBody"
+                          rows={6}
+                          value={form.storyBody || ''}
+                          onChange={(e) => setForm((prev) => ({ ...prev, storyBody: e.target.value }))}
+                          placeholder="Tell your company's origin story..."
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {form.storyBody?.length || 0} characters
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">Mission Content</label>
+                        <TextFormattingTools onInsert={(text) => handleTextAreaInsert('missionBody', text)} />
+                        <Textarea
+                          id="missionBody"
+                          rows={6}
+                          value={form.missionBody || ''}
+                          onChange={(e) => setForm((prev) => ({ ...prev, missionBody: e.target.value }))}
+                          placeholder="Describe your mission and vision..."
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {form.missionBody?.length || 0} characters
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Values Tab */}
+                <TabsContent value="values" className="space-y-6">
+                  <div className="bg-gradient-to-br from-red-50/50 to-orange-50/50 dark:from-red-950/20 dark:to-orange-950/20 p-6 rounded-lg border border-red-200/50 dark:border-red-800/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                        <Heart className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        Our Values / Highlights
+                      </h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setForm((prev) => ({ ...prev, highlights: [...(prev.highlights || []), { title: '', description: '' }] }))}
+                        className="gap-1.5"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Value
+                      </Button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {(form.highlights || []).map((highlight, index) => (
+                        <div key={index} className="bg-white dark:bg-slate-950 border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-3">
+                            <div>
+                              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Title</label>
+                              <Input
+                                value={highlight.title}
+                                onChange={(e) => updateHighlight(index, { title: e.target.value })}
+                                placeholder="e.g., Excellence"
+                                className="h-9"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Description</label>
+                              <Input
+                                value={highlight.description}
+                                onChange={(e) => updateHighlight(index, { description: e.target.value })}
+                                placeholder="Describe this value..."
+                                className="h-9"
+                              />
+                            </div>
+                            <div className="flex items-end">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setForm((prev) => ({ ...prev, highlights: (prev.highlights || []).filter((_, idx) => idx !== index) }))}
+                                className="w-full md:w-auto"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Why Choose Us Tab */}
+                <TabsContent value="why" className="space-y-6">
+                  <div className="bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20 p-6 rounded-lg border border-green-200/50 dark:border-green-800/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                        <Zap className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        Why Choose Us
+                      </h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setForm((prev) => ({ ...prev, whyChooseUs: [...(prev.whyChooseUs || []), ''] }))}
+                        className="gap-1.5"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Point
+                      </Button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {(form.whyChooseUs || []).map((point, index) => (
+                        <div key={index} className="bg-white dark:bg-slate-950 border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-start">
+                            <div>
+                              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Point {index + 1}</label>
+                              <Input
+                                value={point}
+                                onChange={(e) => {
+                                  const next = [...(form.whyChooseUs || [])]
+                                  next[index] = e.target.value
+                                  setForm((prev) => ({ ...prev, whyChooseUs: next }))
+                                }}
+                                placeholder="Enter a reason to choose us..."
+                                className="h-9"
+                              />
+                            </div>
+                            <div className="flex items-end">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setForm((prev) => ({ ...prev, whyChooseUs: (prev.whyChooseUs || []).filter((_, idx) => idx !== index) }))}
+                                className="w-full md:w-auto"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Meet Our Team Tab */}
+                <TabsContent value="team" className="space-y-6">
+                  <div className="bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-950/20 dark:to-purple-950/20 p-6 rounded-lg border border-indigo-200/50 dark:border-indigo-800/30">
+                    <div className="space-y-4 mb-6">
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">Section Title</label>
+                        <Input
+                          placeholder="e.g., Meet Our Team"
+                          value={form.teamTitle || ''}
+                          onChange={(e) => setForm((prev) => ({ ...prev, teamTitle: e.target.value }))}
+                          className="h-10"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                        <Users2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                        Team Members
+                      </h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setForm((prev) => ({ ...prev, teamMembers: [...(prev.teamMembers || []), { name: '', role: '', description: '', imageUrl: '' }] }))}
+                        className="gap-1.5"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Team Member
+                      </Button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {(form.teamMembers || []).map((member, index) => (
+                        <div key={index} className="bg-white dark:bg-slate-950 border border-border rounded-lg p-5 hover:shadow-md transition-shadow">
+                          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4">
+                            {/* Team Member Details */}
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Name</label>
+                                  <Input
+                                    value={member.name}
+                                    onChange={(e) => updateTeamMember(index, { name: e.target.value })}
+                                    placeholder="e.g., John Sherpa"
+                                    className="h-9"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Role</label>
+                                  <Input
+                                    value={member.role}
+                                    onChange={(e) => updateTeamMember(index, { role: e.target.value })}
+                                    placeholder="e.g., Lead Guide"
+                                    className="h-9"
+                                  />
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Profile Image URL</label>
+                                <div className="flex gap-2">
+                                  <Input
+                                    value={member.imageUrl}
+                                    onChange={(e) => updateTeamMember(index, { imageUrl: e.target.value })}
+                                    placeholder="https://example.com/image.jpg or S3 URL"
+                                    className="h-9"
+                                  />
+                                  {member.imageUrl && (
+                                    <Button variant="outline" size="sm" asChild className="h-9">
+                                      <a href={member.imageUrl} target="_blank" rel="noopener noreferrer">
+                                        <LinkIcon className="w-4 h-4" />
+                                      </a>
+                                    </Button>
+                                  )}
+                                </div>
+                                {member.imageUrl && (
+                                  <div className="mt-2 rounded-lg overflow-hidden border border-border max-w-xs">
+                                    <img src={member.imageUrl} alt={member.name} className="w-full h-32 object-cover" />
+                                  </div>
+                                )}
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Bio / Description</label>
+                                <Textarea
+                                  value={member.description}
+                                  onChange={(e) => updateTeamMember(index, { description: e.target.value })}
+                                  placeholder="Brief bio about this team member..."
+                                  rows={3}
+                                  className="text-sm"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Delete Button */}
+                            <div className="flex items-start">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setForm((prev) => ({ ...prev, teamMembers: (prev.teamMembers || []).filter((_, idx) => idx !== index) }))}
+                                className="w-full md:w-auto"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {(!form.teamMembers || form.teamMembers.length === 0) && (
+                        <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-lg">
+                          <Users2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No team members added yet. Add one to get started!</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            )}
+
+            {!loading && (
+              <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
+                <p className="text-sm text-muted-foreground">
+                  Last updated: <span className="font-medium text-foreground">Just now</span>
+                </p>
+                <Button onClick={onSave} disabled={saving} size="lg" className="gap-2">
+                  {saving ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   )
 }
