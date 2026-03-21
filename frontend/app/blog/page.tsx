@@ -29,8 +29,8 @@ export default function BlogPage() {
   const [posts, setPosts] = useState<UiBlogPost[]>(blogPosts);
   const hashtags = useMemo(
     () => ['All', ...Array.from(new Set(posts.flatMap((post) => post.hashtags || [])))],
-    [posts]
-  );
+    [posts]                                                                                                                                                                                                                                                                                                                                                                     
+  );                                                                                            
   const [selectedHashtag, setSelectedHashtag] = useState('All');
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export default function BlogPage() {
         setPosts(blogPosts);
       }
     };
-
+                                                                          
     void loadPosts();
   }, []);
 
@@ -97,12 +97,12 @@ export default function BlogPage() {
                 initial={false}
                 animate="visible"
                 variants={containerVariants}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 justify-items-start"
               >
                 {filteredPosts.map((post) => (
                   <motion.div key={post.slug} variants={itemVariants}>
                     <Link href={`/blog/${post.slug}`}>
-                      <Card className="group h-full w-full max-w-[320px] mx-auto border-border overflow-hidden hover:shadow-sm transition-shadow">
+                      <Card className="group h-full w-full max-w-[320px] border-border overflow-hidden hover:shadow-sm transition-shadow">
                         <div className="relative h-28 md:h-32 overflow-hidden">
                           <Image
                             src={post.image}

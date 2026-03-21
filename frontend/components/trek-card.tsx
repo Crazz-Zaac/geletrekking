@@ -100,12 +100,11 @@ export function TrekCard({ trek, className }: TrekCardProps) {
         {/* Price + CTA */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-muted-foreground">From</p>
             {hasActiveOffer && trek.originalPrice ? (
-              <>
+              <div className="flex items-baseline gap-2">
                 <p className="text-xs text-muted-foreground line-through">${trek.originalPrice.toLocaleString()}</p>
                 <p className="text-xl font-bold text-red-600">${trek.price.toLocaleString()}</p>
-              </>
+              </div>
             ) : (
               <p className="text-xl font-bold text-primary">${trek.price.toLocaleString()}</p>
             )}

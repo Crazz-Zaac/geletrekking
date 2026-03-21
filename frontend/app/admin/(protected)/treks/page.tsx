@@ -403,6 +403,86 @@ export default function AdminTreksPage() {
     </div>
   )
 
+
+  // Text editing utilities for textareas
+  const insertMarkdown = (fieldName: 'dayDescription' | 'includes' | 'excludes' | 'dayAltitude', index: number | null, before: string, after: string = '', placeholder: string = '') => {
+    let currentValue = ''
+    let setter: (v: string) => void = () => {}
+
+    if (fieldName === 'dayDescription' && index !== null) {
+      currentValue = form.itinerary[index]?.description || ''
+      setter = (v) => updateDay(index, 'description', v)
+    } else if (fieldName === 'includes') {
+      currentValue = form.includes
+      setter = (v) => setForm((p) => ({ ...p, includes: v }))
+    } else if (fieldName === 'excludes') {
+      currentValue = form.excludes
+      setter = (v) => setForm((p) => ({ ...p, excludes: v }))
+    }
+
+    const textarea = document.querySelector(`textarea[data-field="${fieldName}-${index}"]`) as HTMLTextAreaElement
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const selectedText = currentValue.substring(start, end) || placeholder
+    const newValue = currentValue.substring(0, start) + before + selectedText + after + currentValue.substring(end)
+
+    setter(newValue)
+
+    setTimeout(() => {
+      textarea.focus()
+      textarea.setSelectionRange(start + before.length + selectedText.length, start + before.length + selectedText.length)
+    }, 0)
+  }
+
+  const TextToolbar = ({ fieldName, index }: { fieldName: 'dayDescription' | 'includes' | 'excludes', index?: number }) => (
+    <div className="border border-input rounded-t-md bg-muted/30 p-2 flex flex-wrap gap-1">
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        onClick={() => insertMarkdown(fieldName, index ?? null, '**', '**', 'bold text')}
+        className="h-7 w-7 p-0"
+        title="Bold"
+      >
+        <strong>B</strong>
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        onClick={() => insertMarkdown(fieldName, index ?? null, '_', '_', 'italic text')}
+        className="h-7 w-7 p-0"
+        title="Italic"
+      >
+        <em>I</em>
+      </Button>
+      <div className="w-px bg-border mx-1" />
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        onClick={() => insertMarkdown(fieldName, index ?? null, '- ', '', 'List item')}
+        className="h-7 px-2 text-xs"
+        title="Bullet List"
+      >
+        • List
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        onClick={() => insertMarkdown(fieldName, index ?? null, '1. ', '', 'Item')}
+        className="h-7 px-2 text-xs"
+        title="Numbered List"
+      >
+        1. List
+      </Button>
+    </div>
+  )
+
+
   return (
     <div className="space-y-6">
 
@@ -414,9 +494,9 @@ export default function AdminTreksPage() {
           { label: 'Active', value: stats.active },
         ].map((s) => (
           <Card key={s.label} className="border-border">
-            <CardContent className="pt-6">
+            <CardContent className="pt-3 pb-3">
               <p className="text-xs text-muted-foreground">{s.label}</p>
-              <p className="text-2xl font-bold">{s.value}</p>
+              <p className="text-xl font-bold">{s.value}</p>
             </CardContent>
           </Card>
         ))}
@@ -680,7 +760,19 @@ export default function AdminTreksPage() {
                         onChange={(e) => updateDay(index, 'title', e.target.value)}
                       />
                     ))}
-                    {field('Day description', textarea('What happens on this day', day.description, (v) => updateDay(index, 'description', v), 3))}
+                    {field('Day description', (
+                      <>
+                        <TextToolbar fieldName="dayDescription" index={index} />
+                        <textarea
+                          data-field={`dayDescription-${index}`}
+                          placeholder="What happens on this day"
+                          value={day.description}
+                          onChange={(e) => updateDay(index, 'description', e.target.value)}
+                          rows={3}
+                          className="w-full rounded-b-md border border-t-0 border-input bg-background px-3 py-2 text-sm resize-vertical"
+                        />
+                      </>
+                    ))}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       {field('Altitude', (
                         <Input
@@ -715,8 +807,32 @@ export default function AdminTreksPage() {
             {/* includes and excludes tab */}
             {activeTab === 'includes' && (
               <div className="space-y-4">
-                {field('What is included in the price — one item per line', textarea('e.g. All airport transfers', form.includes, (v) => setForm((p) => ({ ...p, includes: v })), 6))}
-                {field('What the trekker pays separately — one item per line', textarea('e.g. International flights', form.excludes, (v) => setForm((p) => ({ ...p, excludes: v })), 6))}
+                {field('What is included in the price — one item per line', (
+                <>
+                  <TextToolbar fieldName="includes" />
+                  <textarea
+                    data-field="includes-null"
+                    placeholder="e.g. All airport transfers"
+                    value={form.includes}
+                    onChange={(e) => setForm((p) => ({ ...p, includes: e.target.value }))}
+                    rows={6}
+                    className="w-full rounded-b-md border border-t-0 border-input bg-background px-3 py-2 text-sm resize-vertical"
+                  />
+                </>
+              ))}
+                {field('What the trekker pays separately — one item per line', (
+                <>
+                  <TextToolbar fieldName="excludes" />
+                  <textarea
+                    data-field="excludes-null"
+                    placeholder="e.g. International flights"
+                    value={form.excludes}
+                    onChange={(e) => setForm((p) => ({ ...p, excludes: e.target.value }))}
+                    rows={6}
+                    className="w-full rounded-b-md border border-t-0 border-input bg-background px-3 py-2 text-sm resize-vertical"
+                  />
+                </>
+              ))}
               </div>
             )}
 
