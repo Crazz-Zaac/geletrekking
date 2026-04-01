@@ -92,7 +92,7 @@ export default function AdminGalleryPage() {
   }, [])
 
   const categories = useMemo(() => {
-    return Array.from(new Set(items.map((item) => item.category).filter(Boolean)))
+    return Array.from(new Set(items.map((item) => item.category).filter((cat): cat is string => Boolean(cat))))
   }, [items])
 
   const filteredItems = useMemo(() => {

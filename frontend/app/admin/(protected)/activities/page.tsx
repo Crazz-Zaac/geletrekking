@@ -481,111 +481,266 @@ export default function AdminActivitiesPage() {
               </div>
 
               {editorSection === 'basic' && (
-                <div className="space-y-3">
-                  <Input placeholder="Title" value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} />
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <Input placeholder="Slug" value={form.slug} onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))} />
-                    <Button type="button" variant="outline" onClick={() => setForm((prev) => ({ ...prev, slug: slugify(prev.title) }))}>Generate Slug</Button>
-                    <select value={form.category} onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value as ActivityForm['category'] }))} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                      {CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
-                    </select>
-                  </div>
-                  <textarea rows={2} value={form.shortDescription} onChange={(e) => setForm((prev) => ({ ...prev, shortDescription: e.target.value }))} placeholder="Short Description (1-2 sentences)" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-
-                  <div className="rounded-md border border-input overflow-hidden">
-                    <div className="flex flex-wrap items-center gap-1 border-b border-input bg-muted/30 px-2 py-2">
-                      <Button type="button" size="sm" variant="ghost" onClick={() => insertMarkdown('**', '**', 'bold text')}>Bold</Button>
-                      <Button type="button" size="sm" variant="ghost" onClick={() => insertMarkdown('*', '*', 'italic text')}>Italic</Button>
-                      <Button type="button" size="sm" variant="ghost" onClick={() => insertMarkdown('## ', '', 'Heading')}>H2</Button>
-                      <Button type="button" size="sm" variant="ghost" onClick={() => insertMarkdown('- ', '', 'List item')}>List</Button>
-                      <Button type="button" size="sm" variant="ghost" onClick={() => insertMarkdown('[', '](https://)', 'Link text')}>Link</Button>
-                      <Button type="button" size="sm" variant="ghost" onClick={() => setShowDescriptionPreview((value) => !value)}>
-                        {showDescriptionPreview ? 'Hide Preview' : 'Show Preview'}
-                      </Button>
-                    </div>
-                    <textarea
-                      data-field="activity-full-description"
-                      rows={10}
-                      value={form.fullDescription}
-                      onChange={(e) => setForm((prev) => ({ ...prev, fullDescription: e.target.value }))}
-                      placeholder="Full Description (rich content in markdown)"
-                      className="w-full px-3 py-2 text-sm bg-background resize-vertical"
-                    />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Activity Title *</label>
+                    <Input placeholder="e.g., Everest Base Camp Trek" value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} />
                   </div>
 
-                  {showDescriptionPreview ? (
-                    <div className="rounded-md border border-input bg-background p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">Description Preview</p>
-                      <div className="markdown-content" dangerouslySetInnerHTML={{ __html: descriptionPreviewHtml }} />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">URL Slug</label>
+                      <div className="flex gap-2">
+                        <Input placeholder="everest-base-camp" value={form.slug} onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))} />
+                        <Button type="button" variant="outline" onClick={() => setForm((prev) => ({ ...prev, slug: slugify(prev.title) }))} className="shrink-0">Generate</Button>
+                      </div>
                     </div>
-                  ) : null}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Category *</label>
+                      <select value={form.category} onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value as ActivityForm['category'] }))} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                        {CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Date</label>
+                      <Input type="date" value={form.date} onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Short Description *</label>
+                    <p className="text-xs text-muted-foreground mb-1">1-2 sentences shown on activity cards</p>
+                    <textarea rows={2} value={form.shortDescription} onChange={(e) => setForm((prev) => ({ ...prev, shortDescription: e.target.value }))} placeholder="e.g., Experience the breathtaking views and challenge of reaching Everest Base Camp on this guided trek." className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Full Description</label>
+                    <p className="text-xs text-muted-foreground mb-2">Rich content in markdown format. Use formatting buttons below.</p>
+                    <div className="rounded-md border border-input overflow-hidden">
+                      <div className="flex flex-wrap items-center gap-1 border-b border-input bg-muted/30 px-2 py-2">
+                        <Button type="button" size="sm" variant="ghost" onClick={() => insertMarkdown('**', '**', 'bold text')}>Bold</Button>
+                        <Button type="button" size="sm" variant="ghost" onClick={() => insertMarkdown('*', '*', 'italic text')}>Italic</Button>
+                        <Button type="button" size="sm" variant="ghost" onClick={() => insertMarkdown('## ', '', 'Heading')}>H2</Button>
+                        <Button type="button" size="sm" variant="ghost" onClick={() => insertMarkdown('- ', '', 'List item')}>List</Button>
+                        <Button type="button" size="sm" variant="ghost" onClick={() => insertMarkdown('[', '](https://)', 'Link text')}>Link</Button>
+                        <Button type="button" size="sm" variant="ghost" onClick={() => setShowDescriptionPreview((value) => !value)}>
+                          {showDescriptionPreview ? 'Hide Preview' : 'Show Preview'}
+                        </Button>
+                      </div>
+                      <textarea
+                        data-field="activity-full-description"
+                        rows={10}
+                        value={form.fullDescription}
+                        onChange={(e) => setForm((prev) => ({ ...prev, fullDescription: e.target.value }))}
+                        placeholder="Detailed description with markdown support. E.g., ## Day 1\nAcclimatization day at Kathmandu..."
+                        className="w-full px-3 py-2 text-sm bg-background resize-vertical"
+                      />
+                    </div>
+
+                    {showDescriptionPreview ? (
+                      <div className="rounded-md border border-input bg-background p-4">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">Description Preview</p>
+                        <div className="markdown-content" dangerouslySetInnerHTML={{ __html: descriptionPreviewHtml }} />
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               )}
 
               {editorSection === 'logistics' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <Input type="number" placeholder="Price" value={form.price} onChange={(e) => setForm((prev) => ({ ...prev, price: Number(e.target.value) || 0 }))} />
-                  <Input placeholder="Currency" value={form.currency} onChange={(e) => setForm((prev) => ({ ...prev, currency: e.target.value.toUpperCase() }))} />
-                  <Input placeholder="Duration (e.g., 1 Day)" value={form.duration} onChange={(e) => setForm((prev) => ({ ...prev, duration: e.target.value }))} />
-                  <Input placeholder="Max Altitude (e.g., 1400m)" value={form.maxAltitude} onChange={(e) => setForm((prev) => ({ ...prev, maxAltitude: e.target.value }))} />
-                  <select value={form.difficultyLevel} onChange={(e) => setForm((prev) => ({ ...prev, difficultyLevel: e.target.value as ActivityForm['difficultyLevel'] }))} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                    {DIFFICULTIES.map((difficulty) => <option key={difficulty} value={difficulty}>{difficulty}</option>)}
-                  </select>
-                  <Input type="number" placeholder="Min Group Size" value={form.groupSizeMin} onChange={(e) => setForm((prev) => ({ ...prev, groupSizeMin: Number(e.target.value) || 1 }))} />
-                  <Input type="number" placeholder="Max Group Size" value={form.groupSizeMax} onChange={(e) => setForm((prev) => ({ ...prev, groupSizeMax: Number(e.target.value) || 1 }))} />
+                <div className="space-y-6">
+                  {/* Pricing Section */}
+                  <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                    <h3 className="font-semibold text-sm">Pricing Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Price per Person</label>
+                        <Input type="number" value={form.price} onChange={(e) => setForm((prev) => ({ ...prev, price: Number(e.target.value) || 0 }))} placeholder="500" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Currency Code</label>
+                        <Input value={form.currency} onChange={(e) => setForm((prev) => ({ ...prev, currency: e.target.value.toUpperCase() }))} placeholder="USD, EUR, GBP, etc." maxLength={3} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Display Order</label>
+                        <Input type="number" value={form.displayOrder} onChange={(e) => setForm((prev) => ({ ...prev, displayOrder: Number(e.target.value) || 0 }))} placeholder="0" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Duration & Physical Details */}
+                  <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                    <h3 className="font-semibold text-sm">Duration & Physical Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Duration</label>
+                        <Input value={form.duration} onChange={(e) => setForm((prev) => ({ ...prev, duration: e.target.value }))} placeholder="e.g., 5 Days, 1 Week, Full Day" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Max Altitude</label>
+                        <Input value={form.maxAltitude} onChange={(e) => setForm((prev) => ({ ...prev, maxAltitude: e.target.value }))} placeholder="e.g., 5,364m or 17,598 ft" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Difficulty & Group Size */}
+                  <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                    <h3 className="font-semibold text-sm">Difficulty & Group Size</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Difficulty Level</label>
+                        <select value={form.difficultyLevel} onChange={(e) => setForm((prev) => ({ ...prev, difficultyLevel: e.target.value as ActivityForm['difficultyLevel'] }))} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                          {DIFFICULTIES.map((difficulty) => <option key={difficulty} value={difficulty}>{difficulty}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Minimum Group Size</label>
+                        <Input type="number" value={form.groupSizeMin} onChange={(e) => setForm((prev) => ({ ...prev, groupSizeMin: Number(e.target.value) || 1 }))} placeholder="1" min="1" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Maximum Group Size</label>
+                        <Input type="number" value={form.groupSizeMax} onChange={(e) => setForm((prev) => ({ ...prev, groupSizeMax: Number(e.target.value) || 1 }))} placeholder="10" min="1" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {editorSection === 'media' && (
-                <div className="space-y-3">
-                  <Input placeholder="Main Image URL" value={form.mainImage} onChange={(e) => setForm((prev) => ({ ...prev, mainImage: e.target.value }))} />
-                  <textarea rows={4} value={form.galleryImages} onChange={(e) => setForm((prev) => ({ ...prev, galleryImages: e.target.value }))} placeholder="Gallery Images (one URL per line)" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                  <Input placeholder="Meta Title" value={form.metaTitle} onChange={(e) => setForm((prev) => ({ ...prev, metaTitle: e.target.value }))} />
-                  <textarea rows={3} value={form.metaDescription} onChange={(e) => setForm((prev) => ({ ...prev, metaDescription: e.target.value }))} placeholder="Meta Description" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                  <Input placeholder="Video URL (YouTube/Vimeo)" value={form.videoUrl} onChange={(e) => setForm((prev) => ({ ...prev, videoUrl: e.target.value }))} />
+                <div className="space-y-6">
+                  {/* Images */}
+                  <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                    <h3 className="font-semibold text-sm">Images</h3>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Main/Hero Image URL</label>
+                      <p className="text-xs text-muted-foreground">Shown as hero image on activity detail page</p>
+                      <Input value={form.mainImage} onChange={(e) => setForm((prev) => ({ ...prev, mainImage: e.target.value }))} placeholder="https://example.com/hero-image.jpg" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Gallery Images</label>
+                      <p className="text-xs text-muted-foreground">One URL per line. Displayed in image grid on detail page</p>
+                      <textarea rows={4} value={form.galleryImages} onChange={(e) => setForm((prev) => ({ ...prev, galleryImages: e.target.value }))} placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;https://example.com/image3.jpg" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                    </div>
+                  </div>
+
+                  {/* Video */}
+                  <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                    <h3 className="font-semibold text-sm">Video</h3>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Video Embed URL</label>
+                      <p className="text-xs text-muted-foreground">YouTube or Vimeo embed URL (e.g., https://www.youtube.com/embed/...)</p>
+                      <Input value={form.videoUrl} onChange={(e) => setForm((prev) => ({ ...prev, videoUrl: e.target.value }))} placeholder="https://www.youtube.com/embed/dQw4w9WgXcQ" />
+                    </div>
+                  </div>
+
+                  {/* SEO */}
+                  <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                    <h3 className="font-semibold text-sm">SEO Metadata</h3>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Meta Title</label>
+                      <p className="text-xs text-muted-foreground">Appears in browser title and search results (50-60 chars)</p>
+                      <Input value={form.metaTitle} onChange={(e) => setForm((prev) => ({ ...prev, metaTitle: e.target.value }))} placeholder="Everest Base Camp Trek - 5 Day Adventure" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Meta Description</label>
+                      <p className="text-xs text-muted-foreground">Search engine snippet (150-160 chars)</p>
+                      <textarea rows={3} value={form.metaDescription} onChange={(e) => setForm((prev) => ({ ...prev, metaDescription: e.target.value }))} placeholder="Join our guided Everest Base Camp trek. Experience stunning Himalayan views, acclimatization, and expert mountaineering guides." className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                    </div>
+                  </div>
                 </div>
               )}
 
               {editorSection === 'controls' && (
-                <div className="space-y-3">
-                  <Input type="number" placeholder="Display Order" value={form.displayOrder} onChange={(e) => setForm((prev) => ({ ...prev, displayOrder: Number(e.target.value) || 0 }))} />
-                  <Input placeholder="Tags (comma separated)" value={form.tags} onChange={(e) => setForm((prev) => ({ ...prev, tags: e.target.value }))} />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <label className="flex items-center gap-2 text-sm rounded-md border border-input px-3 py-2">
-                      <input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm((prev) => ({ ...prev, isFeatured: e.target.checked }))} />
-                      isFeatured (HOT/BESTSELLER)
+                <div className="space-y-6">
+                  {/* Tags & Organization */}
+                  <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                    <h3 className="font-semibold text-sm">Organization</h3>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Tags</label>
+                      <p className="text-xs text-muted-foreground">Comma-separated keywords (e.g., trek, safety, community). Used to group activities in menus.</p>
+                      <Input value={form.tags} onChange={(e) => setForm((prev) => ({ ...prev, tags: e.target.value }))} placeholder="trek, hiking, mountain, family-friendly" />
+                    </div>
+                  </div>
+
+                  {/* Visibility & Features */}
+                  <div className="bg-muted/30 rounded-lg p-4 space-y-4">
+                    <h3 className="font-semibold text-sm">Visibility & Features</h3>
+                    <label className="flex items-start gap-3 p-3 rounded-md border border-input hover:bg-muted/50 cursor-pointer transition">
+                      <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((prev) => ({ ...prev, isActive: e.target.checked }))} className="mt-1" />
+                      <div>
+                        <p className="text-sm font-medium">Show Activity</p>
+                        <p className="text-xs text-muted-foreground">Enable to display on the public Activities page</p>
+                      </div>
                     </label>
-                    <label className="flex items-center gap-2 text-sm rounded-md border border-input px-3 py-2">
-                      <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((prev) => ({ ...prev, isActive: e.target.checked }))} />
-                      isActive (show/hide)
+                    <label className="flex items-start gap-3 p-3 rounded-md border border-input hover:bg-muted/50 cursor-pointer transition">
+                      <input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm((prev) => ({ ...prev, isFeatured: e.target.checked }))} className="mt-1" />
+                      <div>
+                        <p className="text-sm font-medium">Mark as Featured</p>
+                        <p className="text-xs text-muted-foreground">Badge activity as HOT or BESTSELLER</p>
+                      </div>
                     </label>
                   </div>
                 </div>
               )}
 
               {editorSection === 'itinerary' && (
-                <div className="space-y-4">
-                  <div className="space-y-3">
-                    {form.itinerary.map((entry, index) => (
-                      <div key={index} className="rounded-md border border-input p-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold">Day {entry.day}</p>
-                          {form.itinerary.length > 1 ? (
-                            <Button type="button" size="sm" variant="destructive" onClick={() => removeItineraryDay(index)}>Remove</Button>
-                          ) : null}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                          <Input type="number" value={entry.day} onChange={(e) => updateItinerary(index, 'day', Number(e.target.value) || index + 1)} placeholder="Day" />
-                          <Input value={entry.title} onChange={(e) => updateItinerary(index, 'title', e.target.value)} placeholder="Title" className="md:col-span-2" />
-                        </div>
-                        <textarea rows={2} value={entry.description} onChange={(e) => updateItinerary(index, 'description', e.target.value)} placeholder="Description" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                <div className="space-y-6">
+                  {/* Itinerary Days */}
+                  <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-sm">Itinerary</h3>
+                        <p className="text-xs text-muted-foreground">Day-by-day breakdown of the activity</p>
                       </div>
-                    ))}
-                    <Button type="button" variant="outline" onClick={addItineraryDay}>+ Add Itinerary Day</Button>
+                    </div>
+                    <div className="space-y-3">
+                      {form.itinerary.map((entry, index) => (
+                        <div key={index} className="rounded-md border border-input bg-background p-4 space-y-2">
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-sm font-semibold text-primary">Day {entry.day}</p>
+                            {form.itinerary.length > 1 ? (
+                              <Button type="button" size="sm" variant="destructive" onClick={() => removeItineraryDay(index)}>Remove</Button>
+                            ) : null}
+                          </div>
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                              <div className="space-y-1">
+                                <label className="text-xs font-medium text-muted-foreground">Day Number</label>
+                                <Input type="number" value={entry.day} onChange={(e) => updateItinerary(index, 'day', Number(e.target.value) || index + 1)} placeholder="1" min="1" />
+                              </div>
+                              <div className="space-y-1 md:col-span-2">
+                                <label className="text-xs font-medium text-muted-foreground">Day Title</label>
+                                <Input value={entry.title} onChange={(e) => updateItinerary(index, 'title', e.target.value)} placeholder="e.g., Acclimatization at Namche Bazaar" />
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Description</label>
+                              <textarea rows={2} value={entry.description} onChange={(e) => updateItinerary(index, 'description', e.target.value)} placeholder="Detailed description of activities, meals, accommodation, etc." className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <Button type="button" variant="outline" onClick={addItineraryDay} className="w-full">+ Add Itinerary Day</Button>
+                    </div>
                   </div>
 
-                  <textarea rows={5} value={form.includes} onChange={(e) => setForm((prev) => ({ ...prev, includes: e.target.value }))} placeholder="What's Included (one item per line)" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                  <textarea rows={5} value={form.excludes} onChange={(e) => setForm((prev) => ({ ...prev, excludes: e.target.value }))} placeholder="What's Excluded (one item per line)" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                  {/* Inclusions */}
+                  <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                    <div>
+                      <h3 className="font-semibold text-sm">What's Included</h3>
+                      <p className="text-xs text-muted-foreground">Items included in the activity price. One item per line.</p>
+                    </div>
+                    <textarea rows={5} value={form.includes} onChange={(e) => setForm((prev) => ({ ...prev, includes: e.target.value }))} placeholder="Professional guide&#10;Accommodation (3 nights)&#10;All meals&#10;Transportation&#10;Permits" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                  </div>
+
+                  {/* Exclusions */}
+                  <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                    <div>
+                      <h3 className="font-semibold text-sm">What's Excluded</h3>
+                      <p className="text-xs text-muted-foreground">Items NOT included in the price. One item per line.</p>
+                    </div>
+                    <textarea rows={5} value={form.excludes} onChange={(e) => setForm((prev) => ({ ...prev, excludes: e.target.value }))} placeholder="Personal insurance&#10;International flights&#10;Meals not mentioned&#10;Optional activities" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                  </div>
                 </div>
               )}
 

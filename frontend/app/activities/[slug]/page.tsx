@@ -96,7 +96,7 @@ export default function ActivityDetailPage({ params }: ActivityDetailPageProps) 
       <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pt-16">
         {/* Hero Section - Enhanced */}
         {activity.mainImage && (
-          <section className="relative h-96 md:h-[500px] overflow-hidden group">
+          <section className="relative h-64 md:h-80 overflow-hidden group">
             <img
               src={activity.mainImage}
               alt={activity.title}
@@ -115,7 +115,7 @@ export default function ActivityDetailPage({ params }: ActivityDetailPageProps) 
         )}
 
         {/* Header Section */}
-        <section className="relative -mt-20 md:-mt-32 z-10">
+        <section className="relative -mt-12 md:-mt-20 z-10">
           <div className="container mx-auto px-4 md:px-6">
             <div className="max-w-5xl">
               {/* Title and Category */}
@@ -341,107 +341,109 @@ export default function ActivityDetailPage({ params }: ActivityDetailPageProps) 
                 )}
               </div>
 
-              {/* Right Sidebar - Enhanced CTA */}
+              {/* Right Sidebar - CTA and Highlights */}
               <aside className="space-y-6">
-                {/* Primary CTA Card - More Prominent */}
-                <Card className="p-8 sticky top-32 bg-gradient-to-br from-primary/95 to-primary/85 border-0 text-white shadow-2xl hover:shadow-3xl transition-shadow max-h-[calc(100vh-200px)] overflow-y-auto">
-                  <div className="space-y-6">
-                    <div>
-                      <p className="text-sm font-medium text-white/90 uppercase tracking-wider">Book Your Adventure</p>
-                      {activity.price !== undefined && (
-                        <div className="mt-3">
-                          <p className="text-white/80 text-sm">Starting from</p>
-                          <p className="text-4xl md:text-5xl font-bold mt-1">
-                            {activity.currency} <span className="text-3xl md:text-4xl">{activity.price}</span>
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="border-t border-white/20 space-y-4 pt-6">
-                      {activity.maxAltitude && (
-                        <div className="flex items-start gap-3 pb-4 border-b border-white/20">
-                          <Mountain className="w-5 h-5 text-white/90 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-xs text-white/80 font-medium">Max Altitude</p>
-                            <p className="text-sm font-semibold mt-1">{activity.maxAltitude}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {activity.date && (
-                        <div className="flex items-start gap-3 pb-4 border-b border-white/20">
-                          <Calendar className="w-5 h-5 text-white/90 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-xs text-white/80 font-medium">Availability</p>
-                            <p className="text-sm font-semibold mt-1">
-                              {new Date(activity.date).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })}
+                {/* Primary CTA Card */}
+                <div className="sticky top-32 space-y-6">
+                  <div className="bg-gradient-to-br from-primary/95 to-primary/85 rounded-xl p-8 text-white">
+                    <div className="space-y-6">
+                      <div>
+                        <p className="text-sm font-medium text-white/90 uppercase tracking-wider">Book Your Adventure</p>
+                        {activity.price !== undefined && (
+                          <div className="mt-3">
+                            <p className="text-white/80 text-sm">Starting from</p>
+                            <p className="text-4xl md:text-5xl font-bold mt-1">
+                              {activity.currency} <span className="text-3xl md:text-4xl">{activity.price}</span>
                             </p>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
 
-                      {activity.groupSizeMin && (
-                        <div className="flex items-start gap-3">
-                          <Users className="w-5 h-5 text-white/90 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-xs text-white/80 font-medium">Group Size</p>
-                            <p className="text-sm font-semibold mt-1">
-                              {activity.groupSizeMin}-{activity.groupSizeMax} people
-                            </p>
+                      <div className="space-y-4">
+                        {activity.maxAltitude && (
+                          <div className="flex items-start gap-3">
+                            <Mountain className="w-5 h-5 text-white/90 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs text-white/80 font-medium">Max Altitude</p>
+                              <p className="text-sm font-semibold mt-1">{activity.maxAltitude}</p>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
+                        )}
 
-                    <div className="space-y-3 pt-2">
-                      <Link href="/contact" className="block">
-                        <Button className="w-full h-12 md:h-14 bg-white text-primary hover:bg-gray-100 font-bold text-base md:text-lg shadow-lg hover:shadow-xl transition-all">
-                          <Trophy className="w-5 h-5 mr-2" />
-                          Book Now
-                        </Button>
-                      </Link>
+                        {activity.date && (
+                          <div className="flex items-start gap-3">
+                            <Calendar className="w-5 h-5 text-white/90 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs text-white/80 font-medium">Availability</p>
+                              <p className="text-sm font-semibold mt-1">
+                                {new Date(activity.date).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        )}
 
-                      <Link href="/contact" className="block">
-                        <Button variant="outline" className="w-full h-11 border-white/30 text-white hover:bg-white/10 font-semibold">
-                          Get More Info
-                        </Button>
-                      </Link>
+                        {activity.groupSizeMin && (
+                          <div className="flex items-start gap-3">
+                            <Users className="w-5 h-5 text-white/90 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs text-white/80 font-medium">Group Size</p>
+                              <p className="text-sm font-semibold mt-1">
+                                {activity.groupSizeMin}-{activity.groupSizeMax} people
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-3 pt-2">
+                        <Link href="/contact" className="block">
+                          <Button className="w-full h-12 md:h-14 bg-white text-primary hover:bg-gray-100 font-bold text-base md:text-lg shadow-lg hover:shadow-xl transition-all">
+                            <Trophy className="w-5 h-5 mr-2" />
+                            Book Now
+                          </Button>
+                        </Link>
+
+                        <Link href="/contact" className="block">
+                          <Button className="w-full h-11 bg-white/20 text-white border border-white/30 hover:bg-white/30 font-semibold transition-colors">
+                            Get More Info
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </Card>
 
-                {/* Highlights Card */}
-                {activity.difficultyLevel && (
-                  <Card className="p-6 bg-card border-border/50">
-                    <h3 className="font-bold mb-4 flex items-center gap-2">
-                      <Zap className="w-5 h-5 text-primary" />
-                      Activity Highlights
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/30">
-                        <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
-                        <span className="text-sm font-medium">{activity.difficultyLevel} difficulty level</span>
+                  {/* Highlights Inline */}
+                  {activity.difficultyLevel && (
+                    <div className="bg-muted/40 rounded-lg p-6">
+                      <h3 className="font-bold mb-4 flex items-center gap-2 text-sm">
+                        <Zap className="w-5 h-5 text-primary" />
+                        Activity Highlights
+                      </h3>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                          <span className="text-sm">{activity.difficultyLevel} difficulty</span>
+                        </div>
+                        {activity.category && (
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                            <span className="text-sm">{activity.category} adventure</span>
+                          </div>
+                        )}
+                        {activity.duration && (
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                            <span className="text-sm">{activity.duration} duration</span>
+                          </div>
+                        )}
                       </div>
-                      {activity.category && (
-                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/30">
-                          <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
-                          <span className="text-sm font-medium">{activity.category} adventure</span>
-                        </div>
-                      )}
-                      {activity.duration && (
-                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/30">
-                          <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
-                          <span className="text-sm font-medium">{activity.duration} duration</span>
-                        </div>
-                      )}
                     </div>
-                  </Card>
-                )}
+                  )}
+                </div>
 
                 {/* Tags */}
                 {activity.tags && activity.tags.length > 0 && (
