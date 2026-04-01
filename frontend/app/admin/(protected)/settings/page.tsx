@@ -16,6 +16,9 @@ const defaultSettings: AdminSiteSettings = {
   officeHoursWeekdays: '',
   officeHoursWeekend: '',
   mapEmbedUrl: '',
+  navigation: {
+    activitiesEnabled: true,
+  },
   social: {
     facebook: '',
     instagram: '',
@@ -103,6 +106,23 @@ export default function AdminSettingsPage() {
             <Input placeholder="Office hours (weekdays)" value={form.officeHoursWeekdays || ''} onChange={(e) => setForm((prev) => ({ ...prev, officeHoursWeekdays: e.target.value }))} />
             <Input placeholder="Office hours (weekend)" value={form.officeHoursWeekend || ''} onChange={(e) => setForm((prev) => ({ ...prev, officeHoursWeekend: e.target.value }))} />
             <Input placeholder="Map embed URL (Google Maps embed link)" value={form.mapEmbedUrl || ''} onChange={(e) => setForm((prev) => ({ ...prev, mapEmbedUrl: e.target.value }))} />
+
+            <label className="flex items-center gap-2 text-sm rounded-md border border-input px-3 py-2">
+              <input
+                type="checkbox"
+                checked={form.navigation?.activitiesEnabled ?? true}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    navigation: {
+                      ...(prev.navigation || {}),
+                      activitiesEnabled: e.target.checked,
+                    },
+                  }))
+                }
+              />
+              Show Activities tab in website navbar
+            </label>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <Input placeholder="Facebook" value={form.social?.facebook || ''} onChange={(e) => setForm((prev) => ({ ...prev, social: { ...(prev.social || {}), facebook: e.target.value } }))} />

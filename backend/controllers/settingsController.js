@@ -31,6 +31,7 @@ exports.updateSettings = async (req, res) => {
       "officeHoursWeekdays",
       "officeHoursWeekend",
       "mapEmbedUrl",
+      "navigation",
       "social",
     ];
 

@@ -76,9 +76,9 @@ export function RegionsSection({ regions }: RegionsSectionProps) {
                   <p className="text-white/80 text-sm mb-2 line-clamp-2">
                     {region.description}
                   </p>
-                  <span className="text-primary-foreground/90 bg-primary/80 text-xs px-2 py-1 rounded">
+                  {/* <span className="text-primary-foreground/90 bg-primary/80 text-xs px-2 py-1 rounded">
                     {region.treksCount} treks
-                  </span>
+                  </span> */}
                 </div>
               </Link>
             </motion.div>

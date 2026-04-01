@@ -41,14 +41,14 @@ function DestinationsPageContent() {
     void loadTreks();
   }, []);
 
-  const regionOptions = useMemo(() => Array.from(new Set(filteredTreks.map((trek) => trek.region))), [filteredTreks]);
-  const difficultyOptions = useMemo(() => Array.from(new Set(trekList.map((trek) => trek.difficulty))), [trekList]);
-
   const normalizeRegion = (value: string | null) => {
     if (!value) return '';
     const normalized = value.toLowerCase().replace(' region', '').trim();
-    const match = regionOptions.find((region) => region.toLowerCase() === normalized || region.toLowerCase().includes(normalized));
-    return match || '';
+    const match = trekList.find((trek) => {
+      const region = trek.region.toLowerCase();
+      return region === normalized || region.includes(normalized);
+    });
+    return match?.region || '';
   };
 
   const getSeasonsFromBestSeason = (bestSeason: string) => {
@@ -99,6 +99,16 @@ function DestinationsPageContent() {
 
     return regionMatch && difficultyMatch && durationMatch && seasonMatch;
   });
+
+  const regionOptions = useMemo(
+    () => Array.from(new Set(trekList.map((trek) => trek.region))),
+    [trekList]
+  );
+
+  const difficultyOptions = useMemo(
+    () => Array.from(new Set(trekList.map((trek) => trek.difficulty))),
+    [trekList]
+  );
 
   return (
     <>

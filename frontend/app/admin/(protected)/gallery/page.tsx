@@ -1,9 +1,35 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import {
   AdminGalleryItem,
   createAdminGalleryItem,
@@ -14,7 +40,7 @@ import {
   updateAdminGalleryItem,
 } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
-import { ImageIcon, Trash2, Edit2, CheckCircle2, AlertCircle, LinkIcon } from 'lucide-react'
+import { ImageIcon, Trash2, Edit2, CheckCircle2, AlertCircle, LinkIcon, Plus, Grid3x3, LayoutList } from 'lucide-react'
 
 type GalleryForm = {
   title: string
@@ -40,6 +66,10 @@ export default function AdminGalleryPage() {
   const [form, setForm] = useState<GalleryForm>(initialForm)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [search, setSearch] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [openDialog, setOpenDialog] = useState(false)
 
   const token = getAdminToken()
 
@@ -61,6 +91,27 @@ export default function AdminGalleryPage() {
     void refresh()
   }, [])
 
+  const categories = useMemo(() => {
+    return Array.from(new Set(items.map((item) => item.category).filter(Boolean)))
+  }, [items])
+
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      const matchesSearch = !search || item.title?.toLowerCase().includes(search.toLowerCase()) || item.category?.toLowerCase().includes(search.toLowerCase())
+      const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter
+      return matchesSearch && matchesCategory
+    })
+  }, [items, search, categoryFilter])
+
+  const stats = useMemo(
+    () => ({
+      total: items.length,
+      featured: items.filter((i) => i.isFeatured).length,
+      categories: categories.length,
+    }),
+    [items, categories]
+  )
+
   const onEdit = (item: AdminGalleryItem) => {
     setEditingId(item._id)
     setForm({
@@ -69,11 +120,13 @@ export default function AdminGalleryPage() {
       category: item.category || '',
       isFeatured: !!item.isFeatured,
     })
+    setOpenDialog(true)
   }
 
   const onReset = () => {
     setEditingId(null)
     setForm(initialForm)
+    setOpenDialog(false)
   }
 
   const onSaveHero = async () => {
@@ -133,8 +186,6 @@ export default function AdminGalleryPage() {
       return
     }
 
-    if (!window.confirm('Delete this gallery item?')) return
-
     try {
       await deleteAdminGalleryItem(token, item._id)
       setMessage('Gallery item deleted successfully.')
@@ -145,101 +196,377 @@ export default function AdminGalleryPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Status Messages */}
-      {error && (
-        <div className="flex items-center gap-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
-          <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
-        </div>
-      )}
-      {message && (
-        <div className="flex items-center gap-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-          <p className="text-sm text-emerald-800 dark:text-emerald-300">{message}</p>
-        </div>
-      )}
-
-      {/* Gallery Hero Image Section */}
-      <div className="bg-gradient-to-br from-blue-50/50 to-cyan-50/50 dark:from-blue-950/20 dark:to-cyan-950/20 border border-blue-200/50 dark:border-blue-800/50 rounded-xl p-6 space-y-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <ImageIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            Gallery Hero Image
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">Controls the hero image shown on the public gallery page</p>
-        </div>
-        
-        <div className="space-y-3 bg-white dark:bg-slate-950 rounded-lg p-4 border border-blue-100/50 dark:border-blue-900/50">
-          <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Hero Image URL</label>
-            <div className="flex gap-2">
-              <Input
-                value={heroImageUrl}
-                onChange={(e) => setHeroImageUrl(e.target.value)}
-                placeholder="https://example.com/image.jpg or S3 URL"
-                className="h-10"
-              />
-              {heroImageUrl && (
-                <Button variant="outline" size="sm" asChild className="h-10">
-                  <a href={heroImageUrl} target="_blank" rel="noopener noreferrer">
-                    <LinkIcon className="w-4 h-4" />
-                  </a>
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {heroImageUrl && (
-            <div className="rounded-lg overflow-hidden border border-border">
-              <img src={heroImageUrl} alt="Hero preview" className="w-full h-48 object-cover" />
-            </div>
-          )}
-
-          <Button onClick={onSaveHero} disabled={heroSaving} className="w-full">
-            {heroSaving ? 'Saving...' : 'Save Hero Image'}
-          </Button>
+          <h1 className="text-3xl font-bold tracking-tight">Gallery Manager</h1>
+          <p className="text-muted-foreground mt-1">Manage your gallery hero image and photo collections</p>
         </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Form Section */}
-        <div className="xl:col-span-1">
-          <div className="bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20 border border-purple-200/50 dark:border-purple-800/50 rounded-xl p-6 space-y-4">
-            <div>
-              <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-                <Edit2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                {editingId ? 'Edit Gallery Item' : 'Add Gallery Item'}
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                {editingId ? 'Update the selected gallery item' : 'Create a new gallery item'}
-              </p>
+      {/* Status Messages */}
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {message && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="pt-4">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-green-800">{message}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Tabs defaultValue="items" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 lg:w-fit">
+          <TabsTrigger value="items">Gallery Items</TabsTrigger>
+          <TabsTrigger value="hero">Hero Image</TabsTrigger>
+        </TabsList>
+
+        {/* Gallery Items Tab */}
+        <TabsContent value="items" className="space-y-6 mt-6">
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Total Items</CardDescription>
+                <CardTitle className="text-3xl">{stats.total}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Featured Items</CardDescription>
+                <CardTitle className="text-3xl">{stats.featured}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Categories</CardDescription>
+                <CardTitle className="text-3xl">{stats.categories}</CardTitle>
+              </CardHeader>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Add Item Form */}
+            <div className="lg:col-span-1">
+              <Card className="sticky top-20">
+                <CardHeader>
+                  <CardTitle className="text-lg">Add Item</CardTitle>
+                  <CardDescription>Create a new gallery item</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => onReset()} className="w-full gap-2">
+                        <Plus className="w-4 h-4" />
+                        New Item
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-lg">
+                      <DialogHeader>
+                        <DialogTitle>{editingId ? 'Edit Gallery Item' : 'Create Gallery Item'}</DialogTitle>
+                        <DialogDescription>
+                          {editingId ? 'Update the gallery item details below.' : 'Add a new image to your gallery collection.'}
+                        </DialogDescription>
+                      </DialogHeader>
+
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Title *</label>
+                          <Input
+                            placeholder="e.g., Everest Base Camp Trek"
+                            value={form.title}
+                            onChange={(e) => setForm({ ...form, title: e.target.value })}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Image URL *</label>
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="https://example.com/image.jpg or S3 URL"
+                              value={form.imageUrl}
+                              onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+                            />
+                            {form.imageUrl && (
+                              <Button variant="outline" size="sm" asChild>
+                                <a href={form.imageUrl} target="_blank" rel="noopener noreferrer">
+                                  <LinkIcon className="w-4 h-4" />
+                                </a>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Category</label>
+                          <Input
+                            placeholder="e.g., Mountains, Culture, Adventure"
+                            value={form.category}
+                            onChange={(e) => setForm({ ...form, category: e.target.value })}
+                          />
+                        </div>
+
+                        <label className="flex items-center gap-2 cursor-pointer p-2.5 rounded-lg border border-border hover:bg-muted/50 transition">
+                          <input
+                            type="checkbox"
+                            checked={form.isFeatured}
+                            onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })}
+                            className="w-4 h-4 rounded"
+                          />
+                          <span className="text-sm font-medium">Featured</span>
+                        </label>
+
+                        {form.imageUrl && (
+                          <div className="rounded-lg overflow-hidden border border-border">
+                            <img src={form.imageUrl} alt="Preview" className="w-full h-40 object-cover" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex gap-2 justify-end mt-6">
+                        <Button variant="outline" onClick={onReset}>
+                          Cancel
+                        </Button>
+                        <Button onClick={onSaveItem} disabled={saving}>
+                          {saving ? 'Saving...' : editingId ? 'Update Item' : 'Create Item'}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <div className="pt-4 border-t space-y-3">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Search</label>
+                      <Input
+                        placeholder="Search by title..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Filter Category</label>
+                      <Select value={categoryFilter || 'all'} onValueChange={setCategoryFilter}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Categories</SelectItem>
+                          {categories.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex gap-2 border-t pt-3">
+                      <Button
+                        variant={viewMode === 'grid' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setViewMode('grid')}
+                        className="flex-1 gap-2"
+                      >
+                        <Grid3x3 className="w-4 h-4" />
+                        Grid
+                      </Button>
+                      <Button
+                        variant={viewMode === 'list' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setViewMode('list')}
+                        className="flex-1 gap-2"
+                      >
+                        <LayoutList className="w-4 h-4" />
+                        List
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            <div className="bg-white dark:bg-slate-950 rounded-lg p-4 border border-purple-100/50 dark:border-purple-900/50 space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Title</label>
-                <Input
-                  placeholder="e.g., Everest Base Camp Trek"
-                  value={form.title}
-                  onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                  className="h-9"
-                />
-              </div>
+            {/* Items Display */}
+            <div className="lg:col-span-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    Items {filteredItems.length > 0 && <span className="text-muted-foreground font-normal ml-2">({filteredItems.length})</span>}
+                  </CardTitle>
+                  <CardDescription>Manage your gallery collection</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <p className="text-muted-foreground">Loading gallery items...</p>
+                    </div>
+                  ) : filteredItems.length === 0 ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="text-center">
+                        <ImageIcon className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                        <p className="text-muted-foreground">{items.length === 0 ? 'No gallery items yet.' : 'No items match your filters.'}</p>
+                      </div>
+                    </div>
+                  ) : viewMode === 'grid' ? (
+                    /* Grid View */
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {filteredItems.map((item) => (
+                        <div key={item._id} className="group relative rounded-lg overflow-hidden border border-border hover:border-primary transition cursor-pointer">
+                          <div className="relative h-40 bg-muted overflow-hidden">
+                            {item.imageUrl ? (
+                              <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                              </div>
+                            )}
+                            {item.isFeatured && <div className="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded">⭐</div>}
+                          </div>
 
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Image URL</label>
+                          <div className="p-3 bg-card absolute inset-0 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition">
+                            <p className="font-semibold text-sm text-white line-clamp-2 mb-2">{item.title || 'Untitled'}</p>
+                            {item.category && <p className="text-xs text-gray-300 mb-3">{item.category}</p>}
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => onEdit(item)}
+                                className="flex-1 h-8 gap-1"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                                Edit
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="destructive" className="h-8 w-8 p-0">
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Item</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete "{item.title}"? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <div className="flex gap-2 justify-end">
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      onClick={() => onDelete(item)}
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </div>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    /* List View */
+                    <div className="space-y-2">
+                      {filteredItems.map((item) => (
+                        <div
+                          key={item._id}
+                          className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition group"
+                        >
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                            {item.imageUrl ? (
+                              <div className="w-16 h-16 flex-shrink-0 rounded overflow-hidden border border-border">
+                                <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                              </div>
+                            ) : (
+                              <div className="w-16 h-16 flex-shrink-0 rounded bg-muted flex items-center justify-center border border-border">
+                                <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-sm">{item.title || 'Untitled'}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {item.category || 'Uncategorized'} {item.isFeatured && '• ⭐ Featured'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2 flex-shrink-0 ml-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onEdit(item)}
+                              className="gap-2"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Item</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "{item.title}"? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <div className="flex gap-2 justify-end">
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    onClick={() => onDelete(item)}
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </div>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Hero Image Tab */}
+        <TabsContent value="hero" className="space-y-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gallery Hero Image</CardTitle>
+              <CardDescription>The image displayed at the top of the public gallery page</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Image URL</label>
                 <div className="flex gap-2">
                   <Input
+                    value={heroImageUrl}
+                    onChange={(e) => setHeroImageUrl(e.target.value)}
                     placeholder="https://example.com/image.jpg or S3 URL"
-                    value={form.imageUrl}
-                    onChange={(e) => setForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
-                    className="h-9"
                   />
-                  {form.imageUrl && (
-                    <Button variant="outline" size="sm" asChild className="h-9">
-                      <a href={form.imageUrl} target="_blank" rel="noopener noreferrer">
+                  {heroImageUrl && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={heroImageUrl} target="_blank" rel="noopener noreferrer">
                         <LinkIcon className="w-4 h-4" />
                       </a>
                     </Button>
@@ -247,122 +574,19 @@ export default function AdminGalleryPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Category</label>
-                <Input
-                  placeholder="e.g., Mountains, Culture, Adventure"
-                  value={form.category}
-                  onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
-                  className="h-9"
-                />
-              </div>
-
-              <label className="flex items-center gap-2 cursor-pointer p-2.5 rounded-lg border border-border hover:bg-muted/50 transition">
-                <input
-                  type="checkbox"
-                  checked={form.isFeatured}
-                  onChange={(e) => setForm((prev) => ({ ...prev, isFeatured: e.target.checked }))}
-                  className="w-4 h-4 rounded"
-                />
-                <span className="text-sm font-medium text-foreground">Mark as Featured</span>
-              </label>
-
-              {form.imageUrl && (
+              {heroImageUrl && (
                 <div className="rounded-lg overflow-hidden border border-border">
-                  <img src={form.imageUrl} alt="Preview" className="w-full h-32 object-cover" />
+                  <img src={heroImageUrl} alt="Hero preview" className="w-full h-96 object-cover" />
                 </div>
               )}
 
-              <div className="flex gap-2 pt-2">
-                <Button onClick={onSaveItem} disabled={saving} className="flex-1">
-                  {saving ? 'Saving...' : editingId ? 'Update Item' : 'Create Item'}
-                </Button>
-                {editingId && (
-                  <Button variant="outline" onClick={onReset} className="flex-1">
-                    Cancel
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Items List Section */}
-        <div className="xl:col-span-2">
-          <div className="bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200/50 dark:border-amber-800/50 rounded-xl p-6 space-y-4">
-            <div>
-              <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-                <ImageIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                Gallery Items ({items.length})
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1">Manage all gallery items</p>
-            </div>
-
-            <div className="bg-white dark:bg-slate-950 rounded-lg border border-amber-100/50 dark:border-amber-900/50">
-              {loading ? (
-                <div className="p-6 text-center">
-                  <p className="text-sm text-muted-foreground">Loading gallery items...</p>
-                </div>
-              ) : items.length === 0 ? (
-                <div className="p-6 text-center">
-                  <p className="text-sm text-muted-foreground">No gallery items yet. Create your first one!</p>
-                </div>
-              ) : (
-                <div className="max-h-[600px] overflow-y-auto">
-                  <div className="space-y-2 p-4">
-                    {items.map((item) => (
-                      <div key={item._id} className="rounded-lg border border-border hover:border-amber-300 dark:hover:border-amber-700 transition p-4 bg-gradient-to-r from-transparent to-amber-50/30 dark:to-amber-950/10">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex gap-3 flex-1 min-w-0">
-                            {item.imageUrl ? (
-                              <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-border">
-                                <img src={item.imageUrl} alt={item.title || 'Gallery'} className="w-full h-full object-cover" />
-                              </div>
-                            ) : (
-                              <div className="w-16 h-16 flex-shrink-0 rounded-lg bg-muted flex items-center justify-center border border-border">
-                                <ImageIcon className="w-6 h-6 text-muted-foreground" />
-                              </div>
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <p className="font-semibold text-sm text-foreground truncate">{item.title || 'Untitled'}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {item.category || 'Uncategorized'} • {item.isFeatured ? '⭐ Featured' : 'Standard'}
-                              </p>
-                              {item.imageUrl && (
-                                <p className="text-xs text-muted-foreground mt-1 truncate">{item.imageUrl}</p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex gap-1.5 flex-shrink-0">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => onEdit(item)}
-                              className="h-8 w-8 p-0"
-                              title="Edit"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => onDelete(item)}
-                              className="h-8 w-8 p-0"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+              <Button onClick={onSaveHero} disabled={heroSaving} size="lg" className="w-full">
+                {heroSaving ? 'Saving...' : 'Save Hero Image'}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

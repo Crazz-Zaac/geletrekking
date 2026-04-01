@@ -18,6 +18,7 @@ import {
   Newspaper,
   Image as ImageIcon,
   Settings,
+  BookOpen,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -38,7 +39,8 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, available: true },
-  { label: 'Treks', href: '/admin/treks', icon: Mountain, available: true },
+  { label: 'Destinations', href: '/admin/treks', icon: Mountain, available: true },
+  { label: 'Trip Plan', href: '/admin/trip-plan', icon: BookOpen, available: true },
   { label: 'Blogs', href: '/admin/blogs', icon: Newspaper, available: true },
   { label: 'Gallery', href: '/admin/gallery', icon: ImageIcon, available: true },
   { label: 'Hero', href: '/admin/hero', icon: Flame, available: true },

@@ -12,6 +12,9 @@ const defaultSettings: Required<AdminSiteSettings> = {
   officeHoursWeekdays: 'Sunday – Friday: 9:00 AM – 6:00 PM',
   officeHoursWeekend: 'Saturday: By appointment only',
   mapEmbedUrl: 'https://maps.google.com/maps?q=Kathmandu%2C%20Nepal&t=&z=12&ie=UTF8&iwloc=&output=embed',
+  navigation: {
+    activitiesEnabled: true,
+  },
   social: {
     facebook: '',
     instagram: '',
@@ -69,6 +72,10 @@ export function useSiteSettings() {
           ...defaultSettings,
           ...data,
           logoUrl: (data.logoUrl || '').trim() || defaultSettings.logoUrl,
+          navigation: {
+            ...defaultSettings.navigation,
+            ...(data.navigation || {}),
+          },
           social: {
             ...defaultSettings.social,
             ...(data.social || {}),

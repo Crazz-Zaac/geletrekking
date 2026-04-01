@@ -164,6 +164,9 @@ export interface AdminSiteSettings {
   officeHoursWeekdays?: string
   officeHoursWeekend?: string
   mapEmbedUrl?: string
+  navigation?: {
+    activitiesEnabled?: boolean
+  }
   social?: {
     facebook?: string
     instagram?: string
@@ -218,11 +221,72 @@ export interface AdminAbout {
 export interface AdminActivity {
   _id: string
   title: string
-  description: string
-  date: string
-  image?: string | null
+  slug: string
+  category: 'Day Tour' | 'Adrenaline' | 'Wildlife' | 'Water Sports'
+  shortDescription: string
+  fullDescription: string
+  price: number
+  currency: string
+  duration: string
+  maxAltitude: string
+  difficultyLevel: 'Easy' | 'Moderate' | 'Difficult' | 'Technical'
+  groupSizeMin: number
+  groupSizeMax: number
+  mainImage?: string | null
+  galleryImages?: string[]
+  metaTitle?: string
+  metaDescription?: string
+  videoUrl?: string
+  isFeatured: boolean
+  isActive: boolean
+  displayOrder: number
+  itinerary?: Array<{
+    day: number
+    title: string
+    description?: string
+  }>
+  includes?: string[]
+  excludes?: string[]
   tags?: string[]
-  isPublished: boolean
+  description?: string
+  date?: string
+  image?: string | null
+  isPublished?: boolean
+}
+
+export interface PublicActivity {
+  _id: string
+  title: string
+  slug: string
+  category: 'Day Tour' | 'Adrenaline' | 'Wildlife' | 'Water Sports'
+  shortDescription: string
+  fullDescription: string
+  price: number
+  currency: string
+  duration: string
+  maxAltitude: string
+  difficultyLevel: 'Easy' | 'Moderate' | 'Difficult' | 'Technical'
+  groupSizeMin: number
+  groupSizeMax: number
+  mainImage?: string | null
+  galleryImages?: string[]
+  metaTitle?: string
+  metaDescription?: string
+  videoUrl?: string
+  isFeatured: boolean
+  isActive: boolean
+  displayOrder: number
+  itinerary?: Array<{
+    day: number
+    title: string
+    description?: string
+  }>
+  includes?: string[]
+  excludes?: string[]
+  tags?: string[]
+  description?: string
+  date?: string
+  image?: string | null
 }
 
 export interface AdminTestimonial {
@@ -782,6 +846,10 @@ export async function getAdminActivities(token: string): Promise<AdminActivity[]
   return fetchAdminJson<AdminActivity[]>('/api/activities/admin/all', token)
 }
 
+export async function getActivities(): Promise<PublicActivity[]> {
+  return fetchJson<PublicActivity[]>('/api/activities')
+}
+
 export async function createAdminActivity(token: string, payload: Partial<AdminActivity>): Promise<AdminActivity> {
   const response = await fetchAdminJson<{ activity: AdminActivity }>('/api/activities', token, {
     method: 'POST',
@@ -824,6 +892,114 @@ export async function updateAdminTestimonial(token: string, id: string, payload:
 
 export async function deleteAdminTestimonial(token: string, id: string): Promise<void> {
   await fetchAdminJson<{ message: string }>(`/api/testimonials/admin/${id}`, token, {
+    method: 'DELETE',
+  })
+}
+
+// Travel Guide APIs
+export interface TravelGuide {
+  _id?: string
+  id?: string
+  title: string
+  slug: string
+  category: string
+  description: string
+  icon?: string
+  content: string
+  order: number
+  region?: string
+  relatedGuides?: string[]
+  isActive: boolean
+  viewCount: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface GuideCategory {
+  name: string
+  count: number
+}
+
+export async function getGuides(): Promise<{ guides: TravelGuide[]; categories: GuideCategory[] }> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/guides`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+    })
+    if (!response.ok) throw new Error(`Failed to fetch guides: ${response.status}`)
+    return response.json()
+  } catch (error) {
+    console.error('Error fetching guides:', error)
+    return { guides: [], categories: [] }
+  }
+}
+
+export async function getGuideBySlug(slug: string): Promise<TravelGuide | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/guides/slug/${slug}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+    })
+    if (!response.ok) throw new Error(`Failed to fetch guide: ${response.status}`)
+    const data = await response.json()
+    return data.guide || null
+  } catch (error) {
+    console.error(`Error fetching guide ${slug}:`, error)
+    return null
+  }
+}
+
+export async function getGuidesByCategory(category: string): Promise<TravelGuide[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/guides/category/${category}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+    })
+    if (!response.ok) throw new Error(`Failed to fetch guides by category: ${response.status}`)
+    const data = await response.json()
+    return data.guides || []
+  } catch (error) {
+    console.error(`Error fetching guides for category ${category}:`, error)
+    return []
+  }
+}
+
+export async function getPermitFees(region?: string): Promise<{ [key: string]: string | number }> {
+  try {
+    const url = region ? `${API_BASE_URL}/api/guides/permits/${region}` : `${API_BASE_URL}/api/guides/permits`
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+    })
+    if (!response.ok) throw new Error(`Failed to fetch permit fees: ${response.status}`)
+    const data = await response.json()
+    return data.fees || {}
+  } catch (error) {
+    console.error('Error fetching permit fees:', error)
+    return {}
+  }
+}
+
+export async function createGuide(token: string, payload: Partial<TravelGuide>): Promise<TravelGuide> {
+  return fetchAdminJson<TravelGuide>('/api/guides', token, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function updateGuide(token: string, id: string, payload: Partial<TravelGuide>): Promise<TravelGuide> {
+  return fetchAdminJson<TravelGuide>(`/api/guides/${id}`, token, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function deleteGuide(token: string, id: string): Promise<void> {
+  await fetchAdminJson<{ message: string }>(`/api/guides/${id}`, token, {
     method: 'DELETE',
   })
 }

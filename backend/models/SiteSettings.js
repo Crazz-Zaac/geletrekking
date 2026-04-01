@@ -10,6 +10,9 @@ const siteSettingsSchema = new mongoose.Schema(
     officeHoursWeekdays: { type: String, default: "" },
     officeHoursWeekend: { type: String, default: "" },
     mapEmbedUrl: { type: String, default: "" },
+    navigation: {
+      activitiesEnabled: { type: Boolean, default: true },
+    },
     social: {
       facebook: { type: String, default: "" },
       instagram: { type: String, default: "" },
