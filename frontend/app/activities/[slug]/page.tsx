@@ -1,7 +1,5 @@
-'use client'
-
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
@@ -28,64 +26,20 @@ interface ActivityDetailPageProps {
   params: Promise<{ slug: string }>
 }
 
-export default function ActivityDetailPage({ params }: ActivityDetailPageProps) {
-  const [activity, setActivity] = useState<PublicActivity | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [slug, setSlug] = useState('')
+export default async function ActivityDetailPage({ params }: ActivityDetailPageProps) {
+  const { slug } = await params
 
-  useEffect(() => {
-    params.then((p) => setSlug(p.slug))
-  }, [params])
+  let activity: PublicActivity | null = null
 
-  useEffect(() => {
-    const load = async () => {
-      if (!slug) return
-      try {
-        const data = await getActivities()
-        const found = data.find((a) => a.slug === slug)
-        setActivity(found || null)
-      } catch {
-        setActivity(null)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    void load()
-  }, [slug])
-
-  if (loading) {
-    return (
-      <>
-        <Navbar />
-        <main className="min-h-screen bg-background pt-16">
-          <div className="container mx-auto px-4 md:px-6 py-12">
-            <p className="text-muted-foreground">Loading activity...</p>
-          </div>
-        </main>
-        <Footer />
-      </>
-    )
+  try {
+    const data = await getActivities()
+    activity = data.find((a) => a.slug === slug) || null
+  } catch {
+    activity = null
   }
 
   if (!activity) {
-    return (
-      <>
-        <Navbar />
-        <main className="min-h-screen bg-background pt-16">
-          <div className="container mx-auto px-4 md:px-6 py-12">
-            <div className="max-w-2xl">
-              <h1 className="text-3xl font-bold mb-4">Activity Not Found</h1>
-              <p className="text-muted-foreground mb-6">The activity you're looking for doesn't exist or has been removed.</p>
-              <Link href="/activities">
-                <Button>Back to Activities</Button>
-              </Link>
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </>
-    )
+    notFound()
   }
 
   const Icon = getActivityMenuIcon(activity)

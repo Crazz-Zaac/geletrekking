@@ -1,8 +1,5 @@
-'use client'
-
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
@@ -11,60 +8,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getGuideBySlug, type TravelGuide } from '@/lib/api'
 import { marked } from 'marked'
 
-export default function GuideDetailPage() {
-  const params = useParams()
-  const slug = params?.slug as string
-  const [guide, setGuide] = useState<TravelGuide | null>(null)
-  const [contentHtml, setContentHtml] = useState('')
-  const [loading, setLoading] = useState(true)
+interface GuideDetailPageProps {
+  params: Promise<{ slug: string }>
+}
 
-  useEffect(() => {
-    const loadGuide = async () => {
-      setLoading(true)
-      try {
-        const data = await getGuideBySlug(slug)
-        setGuide(data)
-        if (data?.content) {
-          const html = await marked(data.content)
-          setContentHtml(html as string)
-        } else {
-          setContentHtml('')
-        }
-      } finally {
-        setLoading(false)
-      }
+export default async function GuideDetailPage({ params }: GuideDetailPageProps) {
+  const { slug } = await params
+
+  let guide: TravelGuide | null = null
+  let contentHtml = ''
+
+  try {
+    const data = await getGuideBySlug(slug)
+    guide = data
+    if (data?.content) {
+      contentHtml = (await marked(data.content)) as string
     }
-
-    if (slug) void loadGuide()
-  }, [slug])
-
-  if (loading) {
-    return (
-      <>
-        <Navbar />
-        <div className="min-h-screen bg-background pt-28 flex items-center justify-center text-muted-foreground">
-          Loading guide...
-        </div>
-        <Footer />
-      </>
-    )
+  } catch {
+    guide = null
   }
 
   if (!guide) {
-    return (
-      <>
-        <Navbar />
-        <div className="min-h-screen bg-background pt-28 pb-16">
-          <div className="max-w-3xl mx-auto px-4 text-center">
-            <h1 className="text-3xl font-bold mb-3">Guide not found</h1>
-            <Link href="/guides">
-              <Button>Back to Trip Plan</Button>
-            </Link>
-          </div>
-        </div>
-        <Footer />
-      </>
-    )
+    notFound()
   }
 
   return (

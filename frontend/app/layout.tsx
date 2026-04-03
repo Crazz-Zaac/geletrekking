@@ -27,8 +27,11 @@ export const metadata: Metadata = {
     'Nepal adventure',
     'guided trekking',
   ],
+  icons: {
+    icon: '/geletrekking.png',
+  },
   openGraph: {
-    title: 'Himalayan Treks — Premium Nepal Trekking & Himalaya Tours',
+    title: 'Gele Trekking — Premium Nepal Trekking & Himalaya Tours',
     description:
       'Expert-guided trekking in Nepal. Everest, Annapurna, Langtang and beyond.',
     type: 'website',
