@@ -14,33 +14,27 @@ import {
   updateAdminAbout,
 } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
-import { Bold, Italic, Heading2, List, Trash2, Plus, AlertCircle, CheckCircle, BookOpen, Heart, Users, Zap, Users2, Link as LinkIcon } from 'lucide-react'
+import { Bold, Italic, Heading2, List, Trash2, Plus, AlertCircle, CheckCircle, BookOpen, Heart, Users, Zap, Users2, Link as LinkIcon, Building2 } from 'lucide-react'
 
-const defaultAbout: AdminAbout = {
+// ── Association type ─────────────────────────────────────────────────────────
+type AdminAboutAssociation = {
+  name: string
+  logoUrl: string
+}
+
+const defaultAbout: AdminAbout & { associations: AdminAboutAssociation[] } = {
   heroTitle: 'About Us',
   heroSubtitle: 'We are a Nepal-based trekking company focused on safe, authentic, and responsibly operated Himalayan experiences.',
   heroImageUrl: '',
   missionTitle: 'Our Mission',
   missionBody: 'Our mission is to deliver safe, memorable, and responsibly operated trekking journeys while supporting local livelihoods and preserving mountain environments for future generations.',
   storyTitle: 'Our Story',
-  storyBody: 'Gele Trekking began with a local team of mountain professionals who believed travelers deserve honest guidance, strong safety standards, and authentic connections with Nepal\'s mountain culture. Today, we continue the same approach—small details handled well, local teams treated fairly, and every itinerary built for a meaningful Himalayan experience.',
+  storyBody: "Gele Trekking began with a local team of mountain professionals who believed travelers deserve honest guidance, strong safety standards, and authentic connections with Nepal's mountain culture. Today, we continue the same approach—small details handled well, local teams treated fairly, and every itinerary built for a meaningful Himalayan experience.",
   highlights: [
-    {
-      title: 'Excellence',
-      description: 'We maintain the highest standards in safety, service, and experiences for all our trekkers.',
-    },
-    {
-      title: 'Community',
-      description: 'We believe in building lasting relationships with our guides, porters, and trekking community.',
-    },
-    {
-      title: 'Expertise',
-      description: 'Our team brings decades of combined experience trekking the Himalayan mountains.',
-    },
-    {
-      title: 'Sustainability',
-      description: 'We are committed to preserving Nepal\'s natural beauty for future generations.',
-    },
+    { title: 'Excellence', description: 'We maintain the highest standards in safety, service, and experiences for all our trekkers.' },
+    { title: 'Community', description: 'We believe in building lasting relationships with our guides, porters, and trekking community.' },
+    { title: 'Expertise', description: 'Our team brings decades of combined experience trekking the Himalayan mountains.' },
+    { title: 'Sustainability', description: "We are committed to preserving Nepal's natural beauty for future generations." },
   ],
   whyChooseUs: [
     'Licensed and experienced local guide team with strong mountain safety practices.',
@@ -51,53 +45,33 @@ const defaultAbout: AdminAbout = {
   stats: [],
   teamTitle: 'Meet Our Team',
   teamMembers: [],
+  associations: [
+    { name: 'Nepal Government', logoUrl: 'https://ik.imagekit.io/dj8jxmvvw/Screenshot%202026-03-22%20123026.png' },
+    { name: 'Nepal Tourism Board', logoUrl: 'https://ik.imagekit.io/dj8jxmvvw/Nepal-Tourism-Board_Logo-compact.jpg' },
+    { name: 'Nepal Mountaineering Association', logoUrl: 'https://ik.imagekit.io/dj8jxmvvw/logo-header.png' },
+    { name: "Trekking Agencies' Association of Nepal", logoUrl: 'https://ik.imagekit.io/dj8jxmvvw/taan-logo.jpg' },
+  ],
 }
 
-const TextFormattingTools = ({ onInsert }: { onInsert: (text: string) => void }) => {
-  return (
-    <div className="flex items-center gap-1 p-2 bg-muted rounded-md border border-border mb-2">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => onInsert('**bold text**')}
-        className="h-8 w-8 p-0"
-        title="Bold"
-      >
-        <Bold className="w-4 h-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => onInsert('*italic text*')}
-        className="h-8 w-8 p-0"
-        title="Italic"
-      >
-        <Italic className="w-4 h-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => onInsert('## Heading\n')}
-        className="h-8 w-8 p-0"
-        title="Heading"
-      >
-        <Heading2 className="w-4 h-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => onInsert('- List item\n')}
-        className="h-8 w-8 p-0"
-        title="Bullet List"
-      >
-        <List className="w-4 h-4" />
-      </Button>
-    </div>
-  )
-}
+const TextFormattingTools = ({ onInsert }: { onInsert: (text: string) => void }) => (
+  <div className="flex items-center gap-1 p-2 bg-muted rounded-md border border-border mb-2">
+    <Button variant="ghost" size="sm" onClick={() => onInsert('**bold text**')} className="h-8 w-8 p-0" title="Bold">
+      <Bold className="w-4 h-4" />
+    </Button>
+    <Button variant="ghost" size="sm" onClick={() => onInsert('*italic text*')} className="h-8 w-8 p-0" title="Italic">
+      <Italic className="w-4 h-4" />
+    </Button>
+    <Button variant="ghost" size="sm" onClick={() => onInsert('## Heading\n')} className="h-8 w-8 p-0" title="Heading">
+      <Heading2 className="w-4 h-4" />
+    </Button>
+    <Button variant="ghost" size="sm" onClick={() => onInsert('- List item\n')} className="h-8 w-8 p-0" title="Bullet List">
+      <List className="w-4 h-4" />
+    </Button>
+  </div>
+)
 
 export default function AdminAboutPage() {
-  const [form, setForm] = useState<AdminAbout>(defaultAbout)
+  const [form, setForm] = useState<AdminAbout & { associations: AdminAboutAssociation[] }>(defaultAbout)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -118,6 +92,9 @@ export default function AdminAboutPage() {
 
       const incomingHighlights = (data.highlights || []).filter((item) => item.title?.trim() || item.description?.trim())
       const incomingWhyChoose = (data.whyChooseUs || []).map((item) => item.trim()).filter(Boolean)
+      const incomingAssociations = ((data as any).associations || []).filter(
+        (item: AdminAboutAssociation) => item.name?.trim() || item.logoUrl?.trim()
+      )
 
       setForm({
         ...data,
@@ -133,6 +110,7 @@ export default function AdminAboutPage() {
         stats: data.stats || [],
         teamTitle: fallbackText(data.teamTitle, defaultAbout.teamTitle),
         teamMembers: (data.teamMembers || []).filter((member) => member.name?.trim() || member.role?.trim()),
+        associations: incomingAssociations.length > 0 ? incomingAssociations : defaultAbout.associations,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load about content')
@@ -161,16 +139,22 @@ export default function AdminAboutPage() {
     })
   }
 
+  const updateAssociation = (index: number, next: Partial<AdminAboutAssociation>) => {
+    setForm((prev) => {
+      const associations = [...(prev.associations || [])]
+      associations[index] = { ...(associations[index] || { name: '', logoUrl: '' }), ...next }
+      return { ...prev, associations }
+    })
+  }
+
   const onSave = async () => {
     if (!token) {
       setError('Missing admin token. Please login again.')
       return
     }
-
     setSaving(true)
     setError('')
     setMessage('')
-
     try {
       await updateAdminAbout(token, form)
       setMessage('About page updated successfully.')
@@ -249,7 +233,7 @@ export default function AdminAboutPage() {
               </div>
             ) : (
               <Tabs defaultValue="hero" className="w-full">
-                <TabsList className="grid w-full grid-cols-5 lg:w-auto mb-6 overflow-x-auto">
+                <TabsList className="grid w-full grid-cols-6 lg:w-auto mb-6 overflow-x-auto">
                   <TabsTrigger value="hero" className="gap-2">
                     <BookOpen className="w-4 h-4" />
                     <span className="hidden sm:inline">Hero</span>
@@ -270,9 +254,13 @@ export default function AdminAboutPage() {
                     <Users2 className="w-4 h-4" />
                     <span className="hidden sm:inline">Team</span>
                   </TabsTrigger>
+                  <TabsTrigger value="associations" className="gap-2">
+                    <Building2 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Associates</span>
+                  </TabsTrigger>
                 </TabsList>
 
-                {/* Hero Section Tab */}
+                {/* ── Hero Tab ── */}
                 <TabsContent value="hero" className="space-y-6">
                   <div className="bg-gradient-to-br from-blue-50/50 to-cyan-50/50 dark:from-blue-950/20 dark:to-cyan-950/20 p-6 rounded-lg border border-blue-200/50 dark:border-blue-800/30">
                     <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -300,15 +288,13 @@ export default function AdminAboutPage() {
                           placeholder="Write a compelling introduction..."
                           className="font-mono text-sm"
                         />
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {form.heroSubtitle?.length || 0} characters
-                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">{form.heroSubtitle?.length || 0} characters</p>
                       </div>
                     </div>
                   </div>
                 </TabsContent>
 
-                {/* Story & Mission Tab */}
+                {/* ── Story & Mission Tab ── */}
                 <TabsContent value="story" className="space-y-6">
                   <div className="bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20 p-6 rounded-lg border border-purple-200/50 dark:border-purple-800/30">
                     <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -336,7 +322,6 @@ export default function AdminAboutPage() {
                           />
                         </div>
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">Story Content</label>
                         <TextFormattingTools onInsert={(text) => handleTextAreaInsert('storyBody', text)} />
@@ -348,11 +333,8 @@ export default function AdminAboutPage() {
                           placeholder="Tell your company's origin story..."
                           className="font-mono text-sm"
                         />
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {form.storyBody?.length || 0} characters
-                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">{form.storyBody?.length || 0} characters</p>
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">Mission Content</label>
                         <TextFormattingTools onInsert={(text) => handleTextAreaInsert('missionBody', text)} />
@@ -364,15 +346,13 @@ export default function AdminAboutPage() {
                           placeholder="Describe your mission and vision..."
                           className="font-mono text-sm"
                         />
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {form.missionBody?.length || 0} characters
-                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">{form.missionBody?.length || 0} characters</p>
                       </div>
                     </div>
                   </div>
                 </TabsContent>
 
-                {/* Values Tab */}
+                {/* ── Values Tab ── */}
                 <TabsContent value="values" className="space-y-6">
                   <div className="bg-gradient-to-br from-red-50/50 to-orange-50/50 dark:from-red-950/20 dark:to-orange-950/20 p-6 rounded-lg border border-red-200/50 dark:border-red-800/30">
                     <div className="flex items-center justify-between mb-4">
@@ -390,36 +370,20 @@ export default function AdminAboutPage() {
                         Add Value
                       </Button>
                     </div>
-
                     <div className="space-y-3">
                       {(form.highlights || []).map((highlight, index) => (
                         <div key={index} className="bg-white dark:bg-slate-950 border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
                           <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-3">
                             <div>
                               <label className="block text-xs font-medium text-muted-foreground mb-1.5">Title</label>
-                              <Input
-                                value={highlight.title}
-                                onChange={(e) => updateHighlight(index, { title: e.target.value })}
-                                placeholder="e.g., Excellence"
-                                className="h-9"
-                              />
+                              <Input value={highlight.title} onChange={(e) => updateHighlight(index, { title: e.target.value })} placeholder="e.g., Excellence" className="h-9" />
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-muted-foreground mb-1.5">Description</label>
-                              <Input
-                                value={highlight.description}
-                                onChange={(e) => updateHighlight(index, { description: e.target.value })}
-                                placeholder="Describe this value..."
-                                className="h-9"
-                              />
+                              <Input value={highlight.description} onChange={(e) => updateHighlight(index, { description: e.target.value })} placeholder="Describe this value..." className="h-9" />
                             </div>
                             <div className="flex items-end">
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => setForm((prev) => ({ ...prev, highlights: (prev.highlights || []).filter((_, idx) => idx !== index) }))}
-                                className="w-full md:w-auto"
-                              >
+                              <Button variant="destructive" size="sm" onClick={() => setForm((prev) => ({ ...prev, highlights: (prev.highlights || []).filter((_, idx) => idx !== index) }))}>
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
@@ -430,7 +394,7 @@ export default function AdminAboutPage() {
                   </div>
                 </TabsContent>
 
-                {/* Why Choose Us Tab */}
+                {/* ── Why Choose Us Tab ── */}
                 <TabsContent value="why" className="space-y-6">
                   <div className="bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20 p-6 rounded-lg border border-green-200/50 dark:border-green-800/30">
                     <div className="flex items-center justify-between mb-4">
@@ -448,7 +412,6 @@ export default function AdminAboutPage() {
                         Add Point
                       </Button>
                     </div>
-
                     <div className="space-y-3">
                       {(form.whyChooseUs || []).map((point, index) => (
                         <div key={index} className="bg-white dark:bg-slate-950 border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -467,12 +430,7 @@ export default function AdminAboutPage() {
                               />
                             </div>
                             <div className="flex items-end">
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => setForm((prev) => ({ ...prev, whyChooseUs: (prev.whyChooseUs || []).filter((_, idx) => idx !== index) }))}
-                                className="w-full md:w-auto"
-                              >
+                              <Button variant="destructive" size="sm" onClick={() => setForm((prev) => ({ ...prev, whyChooseUs: (prev.whyChooseUs || []).filter((_, idx) => idx !== index) }))}>
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
@@ -483,7 +441,7 @@ export default function AdminAboutPage() {
                   </div>
                 </TabsContent>
 
-                {/* Meet Our Team Tab */}
+                {/* ── Team Tab ── */}
                 <TabsContent value="team" className="space-y-6">
                   <div className="bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-950/20 dark:to-purple-950/20 p-6 rounded-lg border border-indigo-200/50 dark:border-indigo-800/30">
                     <div className="space-y-4 mb-6">
@@ -497,7 +455,6 @@ export default function AdminAboutPage() {
                         />
                       </div>
                     </div>
-
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
                         <Users2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -513,48 +470,28 @@ export default function AdminAboutPage() {
                         Add Team Member
                       </Button>
                     </div>
-
                     <div className="space-y-4">
                       {(form.teamMembers || []).map((member, index) => (
                         <div key={index} className="bg-white dark:bg-slate-950 border border-border rounded-lg p-5 hover:shadow-md transition-shadow">
                           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4">
-                            {/* Team Member Details */}
                             <div className="space-y-3">
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div>
                                   <label className="block text-xs font-medium text-muted-foreground mb-1.5">Name</label>
-                                  <Input
-                                    value={member.name}
-                                    onChange={(e) => updateTeamMember(index, { name: e.target.value })}
-                                    placeholder="e.g., John Sherpa"
-                                    className="h-9"
-                                  />
+                                  <Input value={member.name} onChange={(e) => updateTeamMember(index, { name: e.target.value })} placeholder="e.g., John Sherpa" className="h-9" />
                                 </div>
                                 <div>
                                   <label className="block text-xs font-medium text-muted-foreground mb-1.5">Role</label>
-                                  <Input
-                                    value={member.role}
-                                    onChange={(e) => updateTeamMember(index, { role: e.target.value })}
-                                    placeholder="e.g., Lead Guide"
-                                    className="h-9"
-                                  />
+                                  <Input value={member.role} onChange={(e) => updateTeamMember(index, { role: e.target.value })} placeholder="e.g., Lead Guide" className="h-9" />
                                 </div>
                               </div>
-
                               <div>
                                 <label className="block text-xs font-medium text-muted-foreground mb-1.5">Profile Image URL</label>
                                 <div className="flex gap-2">
-                                  <Input
-                                    value={member.imageUrl}
-                                    onChange={(e) => updateTeamMember(index, { imageUrl: e.target.value })}
-                                    placeholder="https://example.com/image.jpg or S3 URL"
-                                    className="h-9"
-                                  />
+                                  <Input value={member.imageUrl} onChange={(e) => updateTeamMember(index, { imageUrl: e.target.value })} placeholder="https://example.com/image.jpg or S3 URL" className="h-9" />
                                   {member.imageUrl && (
                                     <Button variant="outline" size="sm" asChild className="h-9">
-                                      <a href={member.imageUrl} target="_blank" rel="noopener noreferrer">
-                                        <LinkIcon className="w-4 h-4" />
-                                      </a>
+                                      <a href={member.imageUrl} target="_blank" rel="noopener noreferrer"><LinkIcon className="w-4 h-4" /></a>
                                     </Button>
                                   )}
                                 </div>
@@ -564,26 +501,115 @@ export default function AdminAboutPage() {
                                   </div>
                                 )}
                               </div>
-
                               <div>
                                 <label className="block text-xs font-medium text-muted-foreground mb-1.5">Bio / Description</label>
-                                <Textarea
-                                  value={member.description}
-                                  onChange={(e) => updateTeamMember(index, { description: e.target.value })}
-                                  placeholder="Brief bio about this team member..."
-                                  rows={3}
-                                  className="text-sm"
-                                />
+                                <Textarea value={member.description} onChange={(e) => updateTeamMember(index, { description: e.target.value })} placeholder="Brief bio about this team member..." rows={3} className="text-sm" />
                               </div>
                             </div>
-
-                            {/* Delete Button */}
                             <div className="flex items-start">
+                              <Button variant="destructive" size="sm" onClick={() => setForm((prev) => ({ ...prev, teamMembers: (prev.teamMembers || []).filter((_, idx) => idx !== index) }))}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {(!form.teamMembers || form.teamMembers.length === 0) && (
+                        <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-lg">
+                          <Users2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No team members added yet. Add one to get started!</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* ── Associations Tab ── */}
+                <TabsContent value="associations" className="space-y-6">
+                  <div className="bg-gradient-to-br from-amber-50/50 to-yellow-50/50 dark:from-amber-950/20 dark:to-yellow-950/20 p-6 rounded-lg border border-amber-200/50 dark:border-amber-800/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                        <Building2 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                        Association Logos
+                      </h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setForm((prev) => ({
+                            ...prev,
+                            associations: [...(prev.associations || []), { name: '', logoUrl: '' }],
+                          }))
+                        }
+                        className="gap-1.5"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Association
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-5">
+                      These logos appear in the &quot;We&apos;re Associates With&quot; section on the public About page.
+                    </p>
+
+                    <div className="space-y-3">
+                      {(form.associations || []).map((assoc, index) => (
+                        <div key={index} className="bg-white dark:bg-slate-950 border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-3 items-end">
+                            {/* Name */}
+                            <div>
+                              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Organisation Name</label>
+                              <Input
+                                value={assoc.name}
+                                onChange={(e) => updateAssociation(index, { name: e.target.value })}
+                                placeholder="e.g., Nepal Tourism Board"
+                                className="h-9"
+                              />
+                            </div>
+
+                            {/* Logo URL + preview */}
+                            <div>
+                              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Logo Image URL</label>
+                              <div className="flex gap-2">
+                                <Input
+                                  value={assoc.logoUrl}
+                                  onChange={(e) => updateAssociation(index, { logoUrl: e.target.value })}
+                                  placeholder="https://example.com/logo.png or ImageKit URL"
+                                  className="h-9"
+                                />
+                                {assoc.logoUrl && (
+                                  <Button variant="outline" size="sm" asChild className="h-9 shrink-0">
+                                    <a href={assoc.logoUrl} target="_blank" rel="noopener noreferrer">
+                                      <LinkIcon className="w-4 h-4" />
+                                    </a>
+                                  </Button>
+                                )}
+                              </div>
+                              {/* Inline logo preview */}
+                              {assoc.logoUrl && (
+                                <div className="mt-2 inline-flex items-center justify-center rounded-md border border-border bg-muted/30 px-3 py-2 max-w-[140px]">
+                                  <img
+                                    src={assoc.logoUrl}
+                                    alt={assoc.name || 'logo preview'}
+                                    className="h-10 w-auto max-w-[120px] object-contain"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).style.display = 'none'
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Delete */}
+                            <div className="flex items-start pt-1">
                               <Button
                                 variant="destructive"
                                 size="sm"
-                                onClick={() => setForm((prev) => ({ ...prev, teamMembers: (prev.teamMembers || []).filter((_, idx) => idx !== index) }))}
-                                className="w-full md:w-auto"
+                                onClick={() =>
+                                  setForm((prev) => ({
+                                    ...prev,
+                                    associations: (prev.associations || []).filter((_, idx) => idx !== index),
+                                  }))
+                                }
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
@@ -592,10 +618,10 @@ export default function AdminAboutPage() {
                         </div>
                       ))}
 
-                      {(!form.teamMembers || form.teamMembers.length === 0) && (
+                      {(!form.associations || form.associations.length === 0) && (
                         <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-lg">
-                          <Users2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm">No team members added yet. Add one to get started!</p>
+                          <Building2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No associations added yet. Add one to get started!</p>
                         </div>
                       )}
                     </div>

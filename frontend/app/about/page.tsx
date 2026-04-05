@@ -43,7 +43,7 @@ const values = [
   {
     icon: Heart,
     title: 'Sustainability',
-    description: 'We are committed to preserving Nepal\'s natural beauty for future generations.',
+    description: "We are committed to preserving Nepal's natural beauty for future generations.",
   },
 ];
 
@@ -54,6 +54,14 @@ const whyChooseUs = [
   'Personalized service from first inquiry to post-trek follow-up.',
 ];
 
+// Fallback associations shown if admin hasn't saved any yet
+const defaultAssociations = [
+  { name: 'Nepal Government', logoUrl: 'https://ik.imagekit.io/dj8jxmvvw/Screenshot%202026-03-22%20123026.png' },
+  { name: 'Nepal Tourism Board', logoUrl: 'https://ik.imagekit.io/dj8jxmvvw/Nepal-Tourism-Board_Logo-compact.jpg' },
+  { name: 'Nepal Mountaineering Association', logoUrl: 'https://ik.imagekit.io/dj8jxmvvw/logo-header.png' },
+  { name: "Trekking Agencies' Association of Nepal", logoUrl: 'https://ik.imagekit.io/dj8jxmvvw/taan-logo.jpg' },
+];
+
 const defaultAbout: Required<Pick<AdminAbout, 'heroTitle' | 'heroSubtitle' | 'storyTitle' | 'storyBody' | 'missionTitle' | 'missionBody'>> & {
   highlights: Array<{ title: string; description: string }>
   whyChooseUs: string[]
@@ -62,22 +70,13 @@ const defaultAbout: Required<Pick<AdminAbout, 'heroTitle' | 'heroSubtitle' | 'st
   heroSubtitle: 'We are a Nepal-based trekking company focused on safe, authentic, and responsibly operated Himalayan experiences.',
   storyTitle: 'Our Story',
   storyBody:
-    'Gele Trekking began with a local team of mountain professionals who believed travelers deserve honest guidance, strong safety standards, and authentic connections with Nepal\'s mountain culture. Today, we continue the same approach—small details handled well, local teams treated fairly, and every itinerary built for a meaningful Himalayan experience.',
+    "Gele Trekking began with a local team of mountain professionals who believed travelers deserve honest guidance, strong safety standards, and authentic connections with Nepal's mountain culture. Today, we continue the same approach—small details handled well, local teams treated fairly, and every itinerary built for a meaningful Himalayan experience.",
   missionTitle: 'Our Mission',
   missionBody:
     'Our mission is to deliver safe, memorable, and responsibly operated trekking journeys while supporting local livelihoods and preserving mountain environments for future generations.',
   highlights: values.map((item) => ({ title: item.title, description: item.description })),
   whyChooseUs,
 };
-
-const associations = [
-  { name: 'Nepal Government', logo: '/public/images/associations/nepal-government.svg' },
-  { name: 'Nepal Tourism Board', logo: 'https://ik.imagekit.io/dj8jxmvvw/Nepal-Tourism-Board_Logo-compact.jpg' },
-  { name: 'Nepal Mountaineering Association', logo: 'https://ik.imagekit.io/dj8jxmvvw/logo-header.png' },
-  { name: "Trekking Agencies' Association of Nepal", logo: 'https://ik.imagekit.io/dj8jxmvvw/taan-logo.jpg' },
-];
-
-
 
 type CombinedReview = {
   id: string
@@ -202,10 +201,18 @@ export default function AboutPage() {
     return points.length > 0 ? points : defaultAbout.whyChooseUs;
   }, [about?.whyChooseUs]);
 
+  // Read associations from API response, fall back to hardcoded defaults
+  const associationList = useMemo(() => {
+    const fromApi = ((about as any)?.associations || []) as Array<{ name: string; logoUrl: string }>
+    const valid = fromApi.filter((a) => a.name?.trim() && a.logoUrl?.trim())
+    return valid.length > 0 ? valid : defaultAssociations
+  }, [about]);
+
   return (
     <>
       <Navbar />
       <main className="min-h-screen bg-background pt-16">
+        {/* ── Hero ── */}
         <section className="py-12 md:py-16 bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border">
           <div className="container mx-auto px-4 md:px-6">
             <motion.div
@@ -227,6 +234,7 @@ export default function AboutPage() {
           </div>
         </section>
 
+        {/* ── Main Content ── */}
         <section className="py-10 md:py-14">
           <div className="container mx-auto px-4 md:px-6">
             <motion.div
@@ -240,18 +248,14 @@ export default function AboutPage() {
                 <motion.div variants={itemVariants}>
                   <div className="p-1 md:p-2">
                     <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">{storyTitle}</h2>
-                    <p className="text-muted-foreground leading-relaxed text-[15px] md:text-base">
-                      {storyBody}
-                    </p>
+                    <p className="text-muted-foreground leading-relaxed text-[15px] md:text-base">{storyBody}</p>
                   </div>
                 </motion.div>
 
                 <motion.div variants={itemVariants}>
                   <div className="p-1 md:p-2">
                     <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">{missionTitle}</h2>
-                    <p className="text-muted-foreground leading-relaxed text-[15px] md:text-base">
-                      {missionBody}
-                    </p>
+                    <p className="text-muted-foreground leading-relaxed text-[15px] md:text-base">{missionBody}</p>
                   </div>
                 </motion.div>
 
@@ -379,6 +383,7 @@ export default function AboutPage() {
           </div>
         </section>
 
+        {/* ── Associations Section ── */}
         <section className="py-12 md:py-16 border-t border-border bg-muted/20">
           <div className="container mx-auto px-4 md:px-6">
             <motion.div
@@ -386,25 +391,25 @@ export default function AboutPage() {
               whileInView="visible"
               viewport={{ once: true }}
               variants={containerVariants}
-              className="space-y-6"
+              className="space-y-8"
             >
               <motion.div variants={itemVariants} className="text-center max-w-3xl mx-auto">
                 <p className="text-xs md:text-sm font-semibold uppercase tracking-widest text-primary mb-2">Legally Registered Trekking Company in Nepal</p>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">We Are Associated With</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">We&apos;re Associates With</h2>
                 <p className="text-sm md:text-base text-muted-foreground">
                   We are affiliated with key tourism and mountaineering institutions in Nepal and maintain transparent legal registration details.
                 </p>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {associations.map((association) => (
-                  <div key={association.name} className="text-center">
+              {/* Dynamic logo row */}
+              <motion.div variants={itemVariants} className="flex flex-wrap items-center justify-center gap-8 md:gap-14">
+                {associationList.map((association) => (
+                  <div key={association.name} className="flex items-center justify-center">
                     <img
-                      src={association.logo}
+                      src={association.logoUrl}
                       alt={association.name}
-                      className="mx-auto h-20 w-full max-w-[240px] object-contain"
+                      className="h-16 w-auto max-w-[120px] object-contain"
                     />
-                    <p className="text-sm text-muted-foreground mt-2">{association.name}</p>
                   </div>
                 ))}
               </motion.div>
