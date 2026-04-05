@@ -19,6 +19,7 @@ import {
   Image as ImageIcon,
   Settings,
   BookOpen,
+  HelpCircle, 
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -36,7 +37,6 @@ type NavItem = {
   icon: React.ComponentType<{ className?: string }>
   available: boolean
 }
-
 const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, available: true },
   { label: 'Destinations', href: '/admin/treks', icon: Mountain, available: true },
@@ -45,6 +45,10 @@ const navItems: NavItem[] = [
   { label: 'Gallery', href: '/admin/gallery', icon: ImageIcon, available: true },
   { label: 'Hero', href: '/admin/hero', icon: Flame, available: true },
   { label: 'About', href: '/admin/about', icon: Info, available: true },
+
+  
+  { label: 'FAQ', href: '/admin/faq', icon: HelpCircle, available: true },
+
   { label: 'Activities', href: '/admin/activities', icon: Activity, available: true },
   { label: 'Testimonials', href: '/admin/testimonials', icon: MessageSquare, available: true },
   { label: 'Messages', href: '/admin/messages', icon: Mail, available: true },

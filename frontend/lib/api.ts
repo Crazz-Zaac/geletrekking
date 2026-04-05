@@ -1003,5 +1003,28 @@ export async function deleteGuide(token: string, id: string): Promise<void> {
     method: 'DELETE',
   })
 }
+// ── FAQ ──────────────────────────────────────────────────────────────────────
 
+export interface AdminFaqItem {
+  question: string
+  answer: string
+  order: number
+}
+
+export interface AdminFaq {
+  heroTitle?: string
+  heroSubtitle?: string
+  faqs?: AdminFaqItem[]
+}
+
+export async function getAdminFaq(): Promise<AdminFaq> {
+  return fetchJson<AdminFaq>('/api/faq')
+}
+
+export async function updateAdminFaq(token: string, payload: AdminFaq): Promise<AdminFaq> {
+  return fetchAdminJson<AdminFaq>('/api/faq', token, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
 export { API_BASE_URL }

@@ -76,6 +76,7 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const travelGuideRoutes = require("./routes/travelGuideRoutes");
+const faqRoutes = require("./routes/faqRoutes");
 
 // Settings / Hero / Uploads
 const settingsRoutes = require("./routes/settingsRoutes");
@@ -101,6 +102,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/gallery", galleryRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/guides", travelGuideRoutes);
+app.use("/api/faq", faqRoutes);
 
 // Settings/Hero/Uploads
 app.use("/api/settings", settingsRoutes);
