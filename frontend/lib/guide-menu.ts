@@ -11,6 +11,10 @@ import {
   Backpack,
   CircleHelp,
   BookOpen,
+  Heart,
+  AlertCircle,
+  Phone,
+  Eye,
 } from 'lucide-react'
 import type { TravelGuide } from '@/lib/api'
 
@@ -32,9 +36,20 @@ export const getGuideMenuLabel = (guide: Pick<TravelGuide, 'slug' | 'title'>): s
   return bySlug[guide.slug] || guide.title
 }
 
+// Maps the icon name strings saved by the admin form to actual components
+const iconNameMap: Record<string, ComponentType<{ className?: string }>> = {
+  BookOpen,
+  Heart,
+  AlertCircle,
+  Shield: ShieldCheck,
+  Phone,
+  Eye,
+}
+
 export const getGuideMenuIcon = (
-  guide: Pick<TravelGuide, 'slug'>
+  guide: Pick<TravelGuide, 'slug' | 'icon'>
 ): ComponentType<{ className?: string }> => {
+  // 1. Try to match by slug first (keeps existing behaviour for known guides)
   const bySlug: Record<string, ComponentType<{ className?: string }>> = {
     'visa-information': FileBadge2,
     'permits-and-regulations': FileCheck,
@@ -49,7 +64,13 @@ export const getGuideMenuIcon = (
     'guide-rules-and-etiquette': CircleHelp,
   }
 
-  return bySlug[guide.slug] || BookOpen
+  if (bySlug[guide.slug]) return bySlug[guide.slug]
+
+  // 2. Fall back to the icon name saved in the admin form
+  if (guide.icon && iconNameMap[guide.icon]) return iconNameMap[guide.icon]
+
+  // 3. Default
+  return BookOpen
 }
 
 export const getGuideMenuColumn = (
