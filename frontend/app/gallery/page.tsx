@@ -2,12 +2,30 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
-import { treks } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+
+type BackendGalleryItem = {
+  _id: string;
+  title?: string;
+  imageUrl?: string;
+  category?: string;
+  isFeatured?: boolean;
+};
+
+type BackendHeroResponse = {
+  heroImageUrl?: string;
+};
+
+type GalleryItem = {
+  id: string;
+  image: string;
+  trekTitle: string;
+  region: string;
+  isFeatured: boolean;
+};
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -25,84 +43,98 @@ const itemVariants = {
 const ITEMS_PER_PAGE = 6;
 
 function GalleryPageContent() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
+  const [items, setItems] = useState<GalleryItem[]>([]);
+  const [heroImageUrl, setHeroImageUrl] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const regionOptions = Array.from(new Set(treks.map((trek) => trek.region)));
-  const selectedRegion = searchParams.get('region') ?? '';
-  const selectedTrekSlug = searchParams.get('trek') ?? '';
-  const pageFromQuery = Number.parseInt(searchParams.get('page') ?? '1', 10);
+  const fetchGalleryItems = async (): Promise<BackendGalleryItem[]> => {
+    // Change this endpoint if your backend route is different
+    const response = await fetch('/api/gallery/items', {
+      cache: 'no-store',
+    });
 
-  const selectedTrek = treks.find(
-    (trek) => trek.slug === selectedTrekSlug || trek.id === selectedTrekSlug
-  );
-
-  const updateRegion = (region: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (!region) {
-      params.delete('region');
-    } else {
-      params.set('region', region);
+    if (!response.ok) {
+      throw new Error('Failed to fetch gallery items');
     }
 
-    params.delete('trek');
-    params.delete('page');
-
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname);
+    return response.json();
   };
 
-  const updatePage = (page: number) => {
-    const params = new URLSearchParams(searchParams.toString());
+  const fetchHeroImage = async (): Promise<BackendHeroResponse> => {
+    // Change this endpoint if your backend route is different
+    const response = await fetch('/api/gallery/hero', {
+      cache: 'no-store',
+    });
 
-    if (page <= 1) {
-      params.delete('page');
-    } else {
-      params.set('page', String(page));
+    if (!response.ok) {
+      throw new Error('Failed to fetch hero image');
     }
 
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname);
+    return response.json();
   };
 
-  const filteredTreks = selectedTrek
-    ? [selectedTrek]
-    : selectedRegion
-      ? treks.filter((trek) => trek.region === selectedRegion)
-      : treks;
+  const refresh = async () => {
+    setLoading(true);
+    setError('');
 
-  const galleryItems = filteredTreks.flatMap((trek) =>
-    (trek.gallery.length > 0 ? trek.gallery : [trek.image]).map((image, index) => ({
-      id: `${trek.id}-${index}`,
-      image,
-      trekTitle: trek.title,
-      region: trek.region,
-      trekId: trek.id,
-      slug: trek.slug,
-    }))
-  );
+    try {
+      const [galleryItems, hero] = await Promise.all([
+        fetchGalleryItems(),
+        fetchHeroImage(),
+      ]);
 
-  const isAllDestinations = selectedRegion === '' && !selectedTrek;
-  const totalPages = isAllDestinations
-    ? Math.max(1, Math.ceil(galleryItems.length / ITEMS_PER_PAGE))
-    : 1;
+      const mappedItems: GalleryItem[] = galleryItems
+        .filter((item) => item.imageUrl)
+        .map((item) => ({
+          id: item._id,
+          image: item.imageUrl || '',
+          trekTitle: item.title || 'Untitled',
+          region: item.category || 'Uncategorized',
+          isFeatured: Boolean(item.isFeatured),
+        }));
 
-  const currentPage = Number.isNaN(pageFromQuery)
-    ? 1
-    : Math.min(Math.max(pageFromQuery, 1), totalPages);
+      setItems(mappedItems);
+      setHeroImageUrl(hero.heroImageUrl || '');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load gallery');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const paginatedItems = isAllDestinations
-    ? galleryItems.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
-    : galleryItems;
+  useEffect(() => {
+    void refresh();
+  }, []);
 
-  const modalItems = useMemo(() => paginatedItems, [paginatedItems]);
+  const categoryOptions = useMemo(() => {
+    return Array.from(
+      new Set(items.map((item) => item.region).filter(Boolean))
+    );
+  }, [items]);
+
+  const filteredItems = useMemo(() => {
+    if (!selectedCategory) return items;
+    return items.filter((item) => item.region === selectedCategory);
+  }, [items, selectedCategory]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / ITEMS_PER_PAGE));
+
+  const paginatedItems = useMemo(() => {
+    const safePage = Math.min(currentPage, totalPages);
+    const start = (safePage - 1) * ITEMS_PER_PAGE;
+    return filteredItems.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredItems, currentPage, totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory]);
 
   const selectedImage =
-    selectedImageIndex !== null ? modalItems[selectedImageIndex] : null;
+    selectedImageIndex !== null ? paginatedItems[selectedImageIndex] : null;
 
   const openImage = (index: number) => {
     setSelectedImageIndex(index);
@@ -113,16 +145,16 @@ function GalleryPageContent() {
   };
 
   const showPrev = () => {
-    if (selectedImageIndex === null) return;
+    if (selectedImageIndex === null || paginatedItems.length === 0) return;
     setSelectedImageIndex(
-      selectedImageIndex === 0 ? modalItems.length - 1 : selectedImageIndex - 1
+      selectedImageIndex === 0 ? paginatedItems.length - 1 : selectedImageIndex - 1
     );
   };
 
   const showNext = () => {
-    if (selectedImageIndex === null) return;
+    if (selectedImageIndex === null || paginatedItems.length === 0) return;
     setSelectedImageIndex(
-      selectedImageIndex === modalItems.length - 1 ? 0 : selectedImageIndex + 1
+      selectedImageIndex === paginatedItems.length - 1 ? 0 : selectedImageIndex + 1
     );
   };
 
@@ -131,8 +163,23 @@ function GalleryPageContent() {
       <Navbar />
 
       <main className="min-h-screen bg-background pt-16">
-        <section className="py-10 md:py-14 bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border">
-          <div className="container mx-auto px-4 md:px-6">
+        <section className="relative py-16 md:py-24 border-b border-border overflow-hidden">
+          {heroImageUrl ? (
+            <div className="absolute inset-0">
+              <Image
+                src={heroImageUrl}
+                alt="Gallery hero"
+                fill
+                priority
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-black/55" />
+            </div>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10" />
+          )}
+
+          <div className="container relative z-10 mx-auto px-4 md:px-6">
             <motion.div
               initial="hidden"
               animate="visible"
@@ -141,15 +188,16 @@ function GalleryPageContent() {
             >
               <motion.h1
                 variants={itemVariants}
-                className="text-4xl md:text-5xl font-bold text-foreground text-balance"
+                className="text-4xl md:text-5xl font-bold text-white text-balance"
               >
                 Trek Gallery
               </motion.h1>
+
               <motion.p
                 variants={itemVariants}
-                className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto"
+                className="text-base md:text-lg text-white/80 max-w-2xl mx-auto"
               >
-                Explore destination photos and filter images by trekking region or specific package
+                Explore destination photos from the gallery managed in your backend
               </motion.p>
             </motion.div>
           </div>
@@ -158,119 +206,126 @@ function GalleryPageContent() {
         <section className="py-6 md:py-8 border-b border-border">
           <div className="container mx-auto px-4 md:px-6 space-y-4">
             <h2 className="text-xl md:text-2xl font-semibold text-foreground">
-              Filter by Destination
+              Filter by Category
             </h2>
-
-            {selectedTrek && (
-              <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3">
-                <p className="text-sm text-foreground">
-                  Showing package gallery: <span className="font-semibold">{selectedTrek.title}</span>
-                </p>
-                <Button variant="outline" onClick={() => router.replace('/gallery')}>
-                  Show All
-                </Button>
-              </div>
-            )}
 
             <div className="flex flex-wrap gap-3">
               <Button
-                variant={isAllDestinations ? 'default' : 'outline'}
-                className={isAllDestinations ? 'bg-primary text-white' : ''}
-                onClick={() => updateRegion('')}
+                variant={selectedCategory === '' ? 'default' : 'outline'}
+                className={selectedCategory === '' ? 'bg-primary text-white' : ''}
+                onClick={() => setSelectedCategory('')}
               >
-                All Destinations
+                All Categories
               </Button>
 
-              {regionOptions.map((region) => (
+              {categoryOptions.map((category) => (
                 <Button
-                  key={region}
-                  variant={selectedRegion === region ? 'default' : 'outline'}
-                  className={selectedRegion === region ? 'bg-primary text-white' : ''}
-                  onClick={() => updateRegion(region)}
+                  key={category}
+                  variant={selectedCategory === category ? 'default' : 'outline'}
+                  className={selectedCategory === category ? 'bg-primary text-white' : ''}
+                  onClick={() => setSelectedCategory(category)}
                 >
-                  {region}
+                  {category}
                 </Button>
               ))}
             </div>
 
             <p className="text-sm text-muted-foreground">
-              Showing {paginatedItems.length} of {galleryItems.length} image
-              {galleryItems.length === 1 ? '' : 's'}
-              {selectedTrek
-                ? ` from ${selectedTrek.title}`
-                : selectedRegion
-                  ? ` from ${selectedRegion}`
-                  : ' from all destinations'}
-              .
+              Showing {paginatedItems.length} of {filteredItems.length} image
+              {filteredItems.length === 1 ? '' : 's'}
+              {selectedCategory ? ` from ${selectedCategory}` : ' from all categories'}.
             </p>
           </div>
         </section>
 
         <section className="py-10 md:py-14">
           <div className="container mx-auto px-4 md:px-6">
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={containerVariants}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
-            >
-              {paginatedItems.map((item, index) => (
-                <motion.div key={item.id} variants={itemVariants}>
-                  <article
-                    className="overflow-hidden rounded-xl border border-border bg-card hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() => openImage(index)}
-                  >
-                    <div className="relative h-44 overflow-hidden">
-                      <Image
-                        src={item.image}
-                        alt={`${item.trekTitle} - ${item.region}`}
-                        fill
-                        className="object-cover hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    <div className="p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-1">
-                        {item.region}
-                      </p>
-                      <h3 className="text-sm font-bold text-foreground line-clamp-2">
-                        {item.trekTitle}
-                      </h3>
-                    </div>
-                  </article>
-                </motion.div>
-              ))}
-            </motion.div>
-
-            {isAllDestinations && totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-8">
-                <Button
-                  variant="outline"
-                  onClick={() => updatePage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <span className="text-sm text-muted-foreground px-2">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  onClick={() => updatePage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
+            {loading ? (
+              <div className="py-16 text-center text-muted-foreground">
+                Loading gallery...
               </div>
+            ) : error ? (
+              <div className="py-16 text-center text-red-500">
+                {error}
+              </div>
+            ) : paginatedItems.length === 0 ? (
+              <div className="py-16 text-center text-muted-foreground">
+                No gallery items found.
+              </div>
+            ) : (
+              <>
+                <motion.div
+                  initial="hidden"
+                  animate="visible"
+                  variants={containerVariants}
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+                >
+                  {paginatedItems.map((item, index) => (
+                    <motion.div key={item.id} variants={itemVariants}>
+                      <article
+                        className="overflow-hidden rounded-xl border border-border bg-card hover:shadow-lg transition-shadow cursor-pointer"
+                        onClick={() => openImage(index)}
+                      >
+                        <div className="relative h-44 overflow-hidden">
+                          <Image
+                            src={item.image}
+                            alt={`${item.trekTitle} - ${item.region}`}
+                            fill
+                            className="object-cover hover:scale-105 transition-transform duration-500"
+                          />
+                          {item.isFeatured && (
+                            <div className="absolute top-3 right-3 rounded-full bg-yellow-400 px-2.5 py-1 text-xs font-bold text-yellow-900">
+                              Featured
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="p-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-1">
+                            {item.region}
+                          </p>
+                          <h3 className="text-sm font-bold text-foreground line-clamp-2">
+                            {item.trekTitle}
+                          </h3>
+                        </div>
+                      </article>
+                    </motion.div>
+                  ))}
+                </motion.div>
+
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-8">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+
+                    <span className="text-sm text-muted-foreground px-2">
+                      Page {Math.min(currentPage, totalPages)} of {totalPages}
+                    </span>
+
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </section>
       </main>
 
       {selectedImage && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90"
-          onClick={closeModal}
-        >
+        <div className="fixed inset-0 z-50 bg-black/90" onClick={closeModal}>
           <div
             className="h-full w-full flex flex-col lg:flex-row"
             onClick={(e) => e.stopPropagation()}
@@ -283,7 +338,7 @@ function GalleryPageContent() {
                 ✕
               </button>
 
-              {modalItems.length > 1 && (
+              {paginatedItems.length > 1 && (
                 <>
                   <button
                     onClick={showPrev}
@@ -323,7 +378,7 @@ function GalleryPageContent() {
 
             <aside className="w-full lg:w-32 xl:w-40 border-t lg:border-t-0 lg:border-l border-white/10 bg-black/60 p-3 overflow-x-auto lg:overflow-y-auto">
               <div className="flex lg:flex-col gap-3">
-                {modalItems.map((item, index) => {
+                {paginatedItems.map((item, index) => {
                   const isActive = index === selectedImageIndex;
 
                   return (
