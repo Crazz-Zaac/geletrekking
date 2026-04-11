@@ -21,6 +21,21 @@ const siteSettingsSchema = new mongoose.Schema(
       youtube: { type: String, default: "" },
       whatsapp: { type: String, default: "" },
     },
+    registrationsAffiliations: [
+      {
+        title: { type: String, required: true },
+        code: { type: String, required: true },
+        description: { type: String, default: "" },
+        documentUrl: { type: String, default: "" },
+        documentType: { type: String, enum: ["image", "pdf"], default: "image" },
+        uploadedAt: { type: Date, default: null },
+        status: {
+          type: String,
+          enum: ["placeholder", "uploaded", "pending"],
+          default: "placeholder",
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

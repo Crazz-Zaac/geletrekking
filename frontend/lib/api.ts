@@ -175,7 +175,20 @@ export interface AdminSiteSettings {
     youtube?: string
     whatsapp?: string
   }
+  registrationsAffiliations?: RegistrationDocument[]
 }
+
+export interface RegistrationDocument {
+  _id?: string
+  title: string
+  code: string
+  description: string
+  documentUrl: string
+  documentType: 'image' | 'pdf'
+  uploadedAt: Date | null
+  status: 'placeholder' | 'uploaded' | 'pending'
+}
+
 
 export interface AdminHero {
   title?: string
@@ -821,9 +834,45 @@ export async function updateAdminSettings(token: string, payload: AdminSiteSetti
   })
 }
 
+export async function getRegistrationsAffiliations(): Promise<RegistrationDocument[]> {
+  return fetchJson<RegistrationDocument[]>('/api/settings/registrations-affiliations')
+}
+
+export async function updateRegistrationDocument(
+  token: string,
+  code: string,
+  payload: { documentUrl: string; documentType: 'image' | 'pdf'; status: string }
+): Promise<RegistrationDocument> {
+  return fetchAdminJson<RegistrationDocument>(
+    `/api/settings/registrations-affiliations/${code}`,
+    token,
+    {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }
+  )
+}
+
+export async function addRegistrationDocument(
+  token: string,
+  payload: { title: string; code: string; description: string }
+): Promise<RegistrationDocument> {
+  return fetchAdminJson<RegistrationDocument>('/api/settings/registrations-affiliations', token, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function deleteRegistrationDocument(token: string, code: string): Promise<void> {
+  return fetchAdminJson<void>(`/api/settings/registrations-affiliations/${code}`, token, {
+    method: 'DELETE',
+  })
+}
+
 export async function getAdminHero(): Promise<AdminHero> {
   return fetchJson<AdminHero>('/api/hero')
 }
+
 
 export async function updateAdminHero(token: string, payload: AdminHero): Promise<AdminHero> {
   return fetchAdminJson<AdminHero>('/api/hero', token, {
