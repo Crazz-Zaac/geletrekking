@@ -5,61 +5,53 @@ import Link from 'next/link'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { getActivities, type PublicActivity } from '@/lib/api'
 import { getActivityMenuColumn, getActivityMenuIcon, getActivityMenuLabel } from '@/lib/activity-menu'
 import {
-  Mountain,
-  Heart,
-  Users,
-  ArrowRight,
-  Calendar,
-  MapPin,
-  Sparkles,
+  Star,
   Compass,
 } from 'lucide-react'
 
-type ColumnTitle = 'Adventures' | 'Wellness & Safety' | 'Culture & Community'
-
-const columnTitles: ColumnTitle[] = ['Adventures', 'Wellness & Safety', 'Culture & Community']
+type CategoryKey = 'Adventures' | 'Wellness' | 'Culture'
 
 const categoryMeta: Record<
-  ColumnTitle,
+  CategoryKey,
   {
-    icon: React.ReactNode
-    description: string
+    label: string
+    key: string
     color: string
-    softBg: string
-    accent: string
+    bgColor: string
+    accentColor: string
   }
 > = {
   Adventures: {
-    icon: <Mountain className="w-7 h-7" />,
-    description: 'Thrilling expeditions and unforgettable trekking moments across breathtaking landscapes.',
-    color: 'from-orange-500 via-amber-500 to-red-500',
-    softBg: 'from-orange-500/10 via-amber-500/10 to-red-500/10',
-    accent: 'text-orange-600',
+    label: 'Adventures',
+    key: 'o',
+    color: '#D85A30',
+    bgColor: '#FAECE7',
+    accentColor: 'text-orange-600',
   },
-  'Wellness & Safety': {
-    icon: <Heart className="w-7 h-7" />,
-    description: 'Programs designed around care, preparation, health, and confidence throughout your journey.',
-    color: 'from-emerald-500 via-green-500 to-lime-500',
-    softBg: 'from-emerald-500/10 via-green-500/10 to-lime-500/10',
-    accent: 'text-emerald-600',
+  Wellness: {
+    label: 'Wellness',
+    key: 'g',
+    color: '#1D9E75',
+    bgColor: '#E1F5EE',
+    accentColor: 'text-green-600',
   },
-  'Culture & Community': {
-    icon: <Users className="w-7 h-7" />,
-    description: 'Meaningful experiences that connect travelers with local traditions, stories, and communities.',
-    color: 'from-sky-500 via-blue-500 to-cyan-500',
-    softBg: 'from-sky-500/10 via-blue-500/10 to-cyan-500/10',
-    accent: 'text-sky-600',
+  Culture: {
+    label: 'Culture',
+    key: 'b',
+    color: '#378ADD',
+    bgColor: '#E6F1FB',
+    accentColor: 'text-blue-600',
   },
 }
 
 export default function ActivitiesPage() {
   const [activities, setActivities] = useState<PublicActivity[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeCategory, setActiveCategory] = useState('All')
+  const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const load = async () => {
@@ -76,284 +68,299 @@ export default function ActivitiesPage() {
     void load()
   }, [])
 
-  const grouped = useMemo(() => {
-    const initial: Record<ColumnTitle, PublicActivity[]> = {
-      Adventures: [],
-      'Wellness & Safety': [],
-      'Culture & Community': [],
-    }
-
+  // Get all unique tags
+  const allTags = useMemo(() => {
+    const tags = new Set<string>()
     activities.forEach((activity) => {
-      initial[getActivityMenuColumn(activity)].push(activity)
+      if (activity.tags) {
+        activity.tags.forEach((tag) => tags.add(tag))
+      }
     })
-
-    return initial
+    return Array.from(tags).sort()
   }, [activities])
 
-  const totalActivities = activities.length
+  // Get category from activity
+  const getCategoryKey = (activity: PublicActivity): CategoryKey => {
+    const column = getActivityMenuColumn(activity)
+    if (column === 'Wellness & Safety') return 'Wellness'
+    if (column === 'Culture & Community') return 'Culture'
+    return 'Adventures'
+  }
 
-  const filledSections = useMemo(
-    () => columnTitles.filter((title) => grouped[title].length > 0),
-    [grouped]
-  )
+  // Filter activities
+  const filteredActivities = useMemo(() => {
+    return activities.filter((activity) => {
+      const cat = getCategoryKey(activity)
+      const catOk = activeCategory === 'All' || cat === activeCategory
+      const tagOk = activeTags.size === 0 || (activity.tags && [...activeTags].every((t) => activity.tags?.includes(t)))
+      return catOk && tagOk
+    })
+  }, [activities, activeCategory, activeTags])
 
-  const emptySections = useMemo(
-    () => columnTitles.filter((title) => grouped[title].length === 0),
-    [grouped]
-  )
+  // Get visible tags based on current category filter
+  const visibleTags = useMemo(() => {
+    const catFiltered = activeCategory === 'All' 
+      ? activities 
+      : activities.filter((a) => getCategoryKey(a) === activeCategory)
+    const tags = new Set<string>()
+    catFiltered.forEach((activity) => {
+      if (activity.tags) {
+        activity.tags.forEach((tag) => tags.add(tag))
+      }
+    })
+    return Array.from(tags).sort()
+  }, [activities, activeCategory])
+
+  // Top picks (activities with highest rating or featured flag)
+  const topPicks = useMemo(() => {
+    return activities
+      .filter((a) => a.description && a.description.length > 0) // Filter complete activities
+      .sort((a, b) => (b.duration || '').localeCompare(a.duration || ''))
+      .slice(0, 3)
+  }, [activities])
+
+  const handleCategoryChange = (cat: string) => {
+    setActiveCategory(cat)
+    setActiveTags(new Set()) // Clear tags when changing category
+  }
+
+  const handleTagToggle = (tag: string) => {
+    const newTags = new Set(activeTags)
+    if (newTags.has(tag)) {
+      newTags.delete(tag)
+    } else {
+      newTags.add(tag)
+    }
+    setActiveTags(newTags)
+  }
+
+  const clearFilters = () => {
+    setActiveCategory('All')
+    setActiveTags(new Set())
+  }
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <main className="min-h-screen bg-background pt-16">
+          <div className="container mx-auto px-4 md:px-6 py-12">
+            <Card className="p-12 text-center rounded-2xl">
+              <p className="text-muted-foreground">Loading activities...</p>
+            </Card>
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
+  }
 
   return (
     <>
       <Navbar />
-
       <main className="min-h-screen bg-background pt-16">
-        <section className="relative overflow-hidden border-b border-border">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/10" />
-          <div className="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
-          <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
+        <div className="px-4 md:px-6 py-6 md:py-8">
+          <div className="container mx-auto max-w-6xl">
+            {/* Top Picks Section */}
+            {topPicks.length > 0 && (
+              <div className="mb-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1">
+                    <Star className="w-3 h-3 fill-amber-700 text-amber-700" />
+                    <span className="text-xs font-semibold text-amber-900">Top picks</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">Highest rated by our travellers</span>
+                </div>
 
-          <div className="container relative mx-auto px-4 md:px-6 py-16 md:py-24">
-            <div className="max-w-4xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-background/70 backdrop-blur px-4 py-2 text-xs font-semibold text-primary shadow-sm">
-                <Sparkles className="w-4 h-4" />
-                Carefully curated experiences
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+                  {topPicks.map((activity) => {
+                    const cat = getCategoryKey(activity)
+                    const meta = categoryMeta[cat]
+                    const Icon = getActivityMenuIcon(activity)
+
+                    return (
+                      <Link key={activity._id} href={`/activities/${activity.slug}`}>
+                        <Card
+                          className={`relative h-full border-2 border-primary/20 rounded-lg overflow-hidden hover:border-primary/50 transition-colors cursor-pointer`}
+                          style={{ borderTopColor: meta.color, borderTopWidth: '3px' }}
+                        >
+                          <div
+                            className="h-16 flex items-center justify-center text-2xl relative"
+                            style={{ backgroundColor: meta.bgColor }}
+                          >
+                            <div className="absolute top-2 left-2 inline-flex items-center gap-1 bg-blue-50 text-blue-900 text-[10px] font-semibold rounded px-2 py-1">
+                              <Star className="w-3 h-3 fill-blue-900" />
+                              Top pick
+                            </div>
+                            <Icon className="w-7 h-7" />
+                          </div>
+
+                          <div className="p-3">
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">
+                              {meta.label}
+                            </p>
+                            <p className="text-sm font-semibold text-foreground mb-2 line-clamp-2">
+                              {getActivityMenuLabel(activity)}
+                            </p>
+
+                            {activity.tags && activity.tags.length > 0 && (
+                              <div className="flex gap-1 mb-3 flex-wrap">
+                                {activity.tags.slice(0, 3).map((tag) => (
+                                  <span key={tag} className="text-[10px] border border-border rounded-full px-2 py-0.5 text-muted-foreground">
+                                    #{tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="border-t border-border bg-muted/40 px-3 py-2 flex justify-between items-center text-xs">
+                            <span className="font-semibold text-foreground">
+                              {activity.duration || 'Custom'}
+                            </span>
+                            <span className="text-muted-foreground">{activity.category || 'Trek'}</span>
+                          </div>
+                        </Card>
+                      </Link>
+                    )
+                  })}
+                </div>
+
+                <hr className="border-border/30 my-8" />
               </div>
+            )}
 
-              <h1 className="mt-5 text-4xl md:text-6xl font-bold tracking-tight text-foreground">
-                Explore Our
-                <span className="block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  Activities
+            {/* Controls and Filters */}
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <h2 className="text-lg font-semibold text-foreground">All activities</h2>
+                <span className="text-xs bg-muted text-muted-foreground rounded-full px-3 py-1">
+                  {filteredActivities.length} activit{filteredActivities.length === 1 ? 'y' : 'ies'}
                 </span>
-              </h1>
-
-              <p className="mt-5 max-w-2xl text-base md:text-lg text-muted-foreground leading-7">
-                Discover adventure programs, wellness-focused experiences, and community-centered
-                journeys thoughtfully prepared by our team.
-              </p>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Button asChild size="lg" className="rounded-full px-6">
-                  <Link href="/contact">Book Your Adventure</Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="rounded-full px-6">
-                  <Link href="/gallery">View Gallery</Link>
-                </Button>
               </div>
 
-              <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
-                <div className="rounded-2xl border border-border bg-background/70 backdrop-blur p-4 shadow-sm">
-                  <p className="text-2xl font-bold text-foreground">{totalActivities}</p>
-                  <p className="text-sm text-muted-foreground">Published activities</p>
-                </div>
-                <div className="rounded-2xl border border-border bg-background/70 backdrop-blur p-4 shadow-sm">
-                  <p className="text-2xl font-bold text-foreground">{columnTitles.length}</p>
-                  <p className="text-sm text-muted-foreground">Experience categories</p>
-                </div>
-                <div className="rounded-2xl border border-border bg-background/70 backdrop-blur p-4 shadow-sm">
-                  <p className="text-2xl font-bold text-foreground">100%</p>
-                  <p className="text-sm text-muted-foreground">Curated with care</p>
-                </div>
+              {/* Category Filters */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {['All', 'Adventures', 'Wellness', 'Culture'].map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => handleCategoryChange(cat)}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                      activeCategory === cat
+                        ? `text-white border-transparent ${
+                            cat === 'Adventures'
+                              ? 'bg-orange-700'
+                              : cat === 'Wellness'
+                                ? 'bg-green-700'
+                                : cat === 'Culture'
+                                  ? 'bg-blue-700'
+                                  : 'bg-gray-700'
+                          }`
+                        : 'border-border bg-background text-muted-foreground hover:bg-muted'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
               </div>
+
+              {/* Tag Filters */}
+              {visibleTags.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-muted-foreground font-semibold">Tags:</span>
+                  {visibleTags.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => handleTagToggle(tag)}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                        activeTags.has(tag)
+                          ? 'bg-amber-100 text-amber-900 border-amber-200'
+                          : 'border-border bg-background text-muted-foreground hover:border-border'
+                      }`}
+                    >
+                      #{tag}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        </section>
 
-        <section className="py-12 md:py-16">
-          <div className="container mx-auto px-4 md:px-6">
-            {loading ? (
-              <Card className="p-12 text-center rounded-3xl">
-                <p className="text-muted-foreground">Loading activities...</p>
-              </Card>
-            ) : activities.length === 0 ? (
-              <Card className="p-10 text-center rounded-3xl border-border shadow-sm">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Compass className="w-7 h-7" />
-                </div>
-                <p className="font-semibold text-xl text-foreground">No activities published yet.</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Check back soon or contact us for a custom adventure plan.
-                </p>
-                <Link href="/contact">
-                  <Button className="mt-6 rounded-full px-6">Book Your Adventure</Button>
-                </Link>
-              </Card>
+            {/* Activities Grid */}
+            {filteredActivities.length === 0 ? (
+              <div className="text-center py-12">
+                <Compass className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <p className="text-muted-foreground mb-4">No activities match these filters.</p>
+                <button
+                  onClick={clearFilters}
+                  className="text-xs font-semibold px-4 py-2 rounded-full border border-border bg-background text-muted-foreground hover:bg-muted"
+                >
+                  Clear all filters
+                </button>
+              </div>
             ) : (
-              <div className="space-y-20">
-                {filledSections.map((title) => {
-                  const meta = categoryMeta[title]
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {filteredActivities.map((activity) => {
+                  const cat = getCategoryKey(activity)
+                  const meta = categoryMeta[cat]
+                  const Icon = getActivityMenuIcon(activity)
 
                   return (
-                    <section key={title} className="space-y-8">
-                      <div className={`rounded-3xl border border-border bg-gradient-to-br ${meta.softBg} p-6 md:p-8`}>
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                          <div className="flex items-start gap-4">
-                            <div className={`bg-gradient-to-br ${meta.color} p-4 rounded-2xl text-white shadow-lg`}>
-                              {meta.icon}
-                            </div>
-
-                            <div>
-                              <div className="inline-flex items-center rounded-full border border-border bg-background/80 px-3 py-1 text-xs font-semibold text-muted-foreground">
-                                {grouped[title].length} activities
-                              </div>
-
-                              <h2 className="mt-3 text-3xl md:text-4xl font-bold text-foreground">
-                                {title}
-                              </h2>
-                              <p className="mt-2 max-w-2xl text-muted-foreground leading-7">
-                                {meta.description}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="hidden md:flex items-center">
-                            <div className="h-16 w-16 rounded-full bg-background/70 border border-border flex items-center justify-center shadow-sm">
-                              <span className={meta.accent}>{meta.icon}</span>
-                            </div>
-                          </div>
+                    <Link key={activity._id} href={`/activities/${activity.slug}`}>
+                      <Card
+                        className="relative h-full border border-border rounded-lg overflow-hidden hover:border-border/80 transition-colors cursor-pointer"
+                        style={{ borderTopColor: meta.color, borderTopWidth: '3px' }}
+                      >
+                        <div
+                          className="h-16 flex items-center justify-center text-2xl"
+                          style={{ backgroundColor: meta.bgColor }}
+                        >
+                          <Icon className="w-6 h-6" />
                         </div>
-                      </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {grouped[title].map((activity) => {
-                          const Icon = getActivityMenuIcon(activity)
+                        <div className="p-3">
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">
+                            {meta.label}
+                          </p>
+                          <p className="text-sm font-semibold text-foreground mb-2 line-clamp-2">
+                            {getActivityMenuLabel(activity)}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground line-clamp-2 mb-3">
+                            {activity.shortDescription || activity.description}
+                          </p>
 
-                          return (
-                            <Link key={activity._id} href={`/activities/${activity.slug}`} className="group">
-                              <Card className="relative h-full overflow-hidden rounded-3xl border-border bg-card/80 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:border-primary/40">
-                                <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${meta.color}`} />
+                          {activity.tags && activity.tags.length > 0 && (
+                            <div className="flex gap-1 mb-3 flex-wrap">
+                              {activity.tags.slice(0, 3).map((tag) => (
+                                <span
+                                  key={tag}
+                                  className={`text-[10px] border rounded-full px-2 py-0.5 ${
+                                    activeTags.has(tag)
+                                      ? 'bg-amber-100 text-amber-900 border-amber-200'
+                                      : 'border-border text-muted-foreground'
+                                  }`}
+                                >
+                                  #{tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
 
-                                <div className="p-6 pb-4">
-                                  <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                      <Badge
-                                        variant="secondary"
-                                        className="rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
-                                      >
-                                        {title}
-                                      </Badge>
-
-                                      <h3 className="mt-4 text-xl font-bold text-foreground leading-snug group-hover:text-primary transition-colors">
-                                        {getActivityMenuLabel(activity)}
-                                      </h3>
-                                    </div>
-
-                                    <div className={`shrink-0 rounded-2xl bg-gradient-to-br ${meta.color} p-3 text-white shadow-md`}>
-                                      <Icon className="w-5 h-5" />
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="px-6 pb-6 space-y-5">
-                                  <div className="grid grid-cols-1 gap-3">
-                                    {activity.duration && (
-                                      <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/40 px-4 py-3 text-sm">
-                                        <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
-                                        <span className="text-muted-foreground">{activity.duration}</span>
-                                      </div>
-                                    )}
-
-                                    {activity.category && (
-                                      <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/40 px-4 py-3 text-sm">
-                                        <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
-                                        <span className="text-muted-foreground">{activity.category}</span>
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  <p className="text-sm leading-6 text-muted-foreground line-clamp-3">
-                                    {activity.shortDescription || activity.description}
-                                  </p>
-
-                                  {activity.tags && activity.tags.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                      {activity.tags.slice(0, 3).map((tag) => (
-                                        <span
-                                          key={tag}
-                                          className="rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground"
-                                        >
-                                          #{tag}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  )}
-
-                                  <div className="pt-2">
-                                    <div className="flex items-center justify-between rounded-2xl border border-border bg-background px-4 py-3 transition-colors group-hover:border-primary/40">
-                                      <span className="text-sm font-semibold text-foreground">
-                                        View Details
-                                      </span>
-                                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform group-hover:translate-x-1">
-                                        <ArrowRight className="w-4 h-4" />
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </Card>
-                            </Link>
-                          )
-                        })}
-                      </div>
-                    </section>
+                        <div className="border-t border-border bg-muted/40 px-3 py-2 flex justify-between items-center text-xs">
+                          <span className="font-semibold text-foreground">
+                            {activity.duration || 'Custom'}
+                          </span>
+                          <span className="text-muted-foreground">{activity.category || 'Trek'}</span>
+                        </div>
+                      </Card>
+                    </Link>
                   )
                 })}
-
-                {emptySections.length > 0 && (
-                  <section className="space-y-6">
-                    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-                      <div>
-                        <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                          More Experiences Coming Soon
-                        </h2>
-                        <p className="mt-2 text-muted-foreground max-w-2xl">
-                          We’re preparing more curated experiences in these categories.
-                        </p>
-                      </div>
-
-                      <div className="text-sm text-muted-foreground">
-                        {emptySections.length} category{emptySections.length === 1 ? '' : 'ies'} not yet published
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {emptySections.map((title) => {
-                        const meta = categoryMeta[title]
-
-                        return (
-                          <Card
-                            key={title}
-                            className="rounded-3xl border border-dashed border-border bg-muted/30 p-6"
-                          >
-                            <div className="flex items-start gap-4">
-                              <div className={`bg-gradient-to-br ${meta.color} p-3 rounded-2xl text-white shadow-sm`}>
-                                {meta.icon}
-                              </div>
-
-                              <div className="flex-1">
-                                <div className="inline-flex items-center rounded-full border border-border bg-background/80 px-3 py-1 text-xs font-semibold text-muted-foreground">
-                                  Coming soon
-                                </div>
-
-                                <h3 className="mt-3 text-xl font-bold text-foreground">
-                                  {title}
-                                </h3>
-
-                                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                                  {meta.description}
-                                </p>
-                              </div>
-                            </div>
-                          </Card>
-                        )
-                      })}
-                    </div>
-                  </section>
-                )}
               </div>
             )}
           </div>
-        </section>
+        </div>
       </main>
-
       <Footer />
     </>
   )

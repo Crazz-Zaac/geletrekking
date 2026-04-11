@@ -40,6 +40,7 @@ type ActivityForm = {
   excludes: string
   tags: string
   isFeatured: boolean
+  isTopPick: boolean
   isActive: boolean
   description: string
   date: string
@@ -73,6 +74,7 @@ const initialForm: ActivityForm = {
   excludes: '',
   tags: '',
   isFeatured: false,
+  isTopPick: false,
   isActive: true,
   description: '',
   date: '',
@@ -160,6 +162,7 @@ export default function AdminActivitiesPage() {
       excludes: (item.excludes || []).join('\n'),
       tags: (item.tags || []).join(', '),
       isFeatured: !!item.isFeatured,
+      isTopPick: !!item.isTopPick,
       isActive: typeof item.isActive === 'boolean' ? item.isActive : !!item.isPublished,
       description: item.description || item.shortDescription || '',
       date: item.date ? new Date(item.date).toISOString().split('T')[0] : '',
@@ -219,6 +222,7 @@ export default function AdminActivitiesPage() {
       excludes: form.excludes.split('\n').map((item) => item.trim()).filter(Boolean),
       tags: form.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
       isFeatured: form.isFeatured,
+      isTopPick: form.isTopPick,
       isActive: form.isActive,
       description: form.shortDescription.trim(),
       date: form.date || new Date().toISOString().slice(0, 10),
@@ -677,6 +681,13 @@ export default function AdminActivitiesPage() {
                       <div>
                         <p className="text-sm font-medium">Mark as Featured</p>
                         <p className="text-xs text-muted-foreground">Badge activity as HOT or BESTSELLER</p>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-3 p-3 rounded-md border border-input hover:bg-muted/50 cursor-pointer transition">
+                      <input type="checkbox" checked={form.isTopPick} onChange={(e) => setForm((prev) => ({ ...prev, isTopPick: e.target.checked }))} className="mt-1" />
+                      <div>
+                        <p className="text-sm font-medium">Mark as Top Pick</p>
+                        <p className="text-xs text-muted-foreground">Highlight as a recommended activity in featured section</p>
                       </div>
                     </label>
                   </div>

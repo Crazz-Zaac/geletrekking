@@ -1,4 +1,4 @@
-const TravelGuide = require('../models/TravelGuide');
+const { planYourTripGuides } = require('../data/plan-your-trip-data');
 
 const slugify = (value = '') =>
   value
@@ -9,104 +9,67 @@ const slugify = (value = '') =>
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-');
 
-exports.getAllGuides = async (req, res) => {
-  try {
-    const guides = await TravelGuide.find({ isActive: true }).sort({ category: 1, order: 1, title: 1 }).exec();
-    const categories = Array.from(new Set(guides.map((guide) => guide.category))).map((name) => ({
-      name,
-      count: guides.filter((guide) => guide.category === name).length,
-    }));
+/**
+ * Format guide for API response
+ */
+const formatGuide = (guide) => ({
+  _id: guide.id,
+  ...guide,
+  isActive: true,
+  viewCount: 0,
+});
 
-    res.json({ guides, categories });
+/**
+ * Get all guides from static data with categories
+ */
+exports.getGuides = async (req, res) => {
+  try {
+    const guides = planYourTripGuides.map(formatGuide);
+    const categories = Array.from(new Set(guides.map((g) => g.category)));
+    res.json({
+      guides,
+      categories: categories.map((cat) => ({
+        name: cat,
+        count: guides.filter((g) => g.category === cat).length,
+      })),
+    });
   } catch (err) {
-    console.error('getAllGuides error:', err);
+    console.error('getGuides error:', err);
     res.status(500).json({ message: 'Failed to fetch guides' });
   }
 };
 
+/**
+ * Get guide by slug from static data
+ * Individual guides are served from hardcoded data, not database
+ */
 exports.getGuideBySlug = async (req, res) => {
   try {
-    const guide = await TravelGuide.findOne({ slug: req.params.slug, isActive: true }).exec();
+    const guide = planYourTripGuides.find((g) => g.slug === req.params.slug);
     if (!guide) return res.status(404).json({ message: 'Guide not found' });
 
-    guide.viewCount += 1;
-    await guide.save();
-
-    res.json({ guide });
+    res.json({ guide: formatGuide(guide) });
   } catch (err) {
     console.error('getGuideBySlug error:', err);
     res.status(500).json({ message: 'Failed to fetch guide' });
   }
 };
 
+/**
+ * Get guides by category from static data
+ */
 exports.getGuidesByCategory = async (req, res) => {
   try {
-    const guides = await TravelGuide.find({
-      category: req.params.category,
-      isActive: true,
-    })
-      .sort({ order: 1, title: 1 })
-      .exec();
+    const { category } = req.params;
+    const guides = planYourTripGuides.filter((g) => g.category === category).map(formatGuide);
+
+    if (guides.length === 0) {
+      return res.status(404).json({ message: 'No guides found for this category' });
+    }
 
     res.json({ guides });
   } catch (err) {
     console.error('getGuidesByCategory error:', err);
-    res.status(500).json({ message: 'Failed to fetch guides' });
-  }
-};
-
-exports.createGuide = async (req, res) => {
-  try {
-    const payload = { ...req.body };
-    if (!payload.slug && payload.title) payload.slug = slugify(payload.title);
-    if (!payload.title || !payload.slug || !payload.category || !payload.content) {
-      return res.status(400).json({ message: 'title, slug, category, content are required' });
-    }
-
-    const exists = await TravelGuide.findOne({ slug: payload.slug }).select('_id');
-    if (exists) return res.status(400).json({ message: 'Guide slug already exists' });
-
-    const guide = await TravelGuide.create({ ...payload, updatedBy: req.user?._id });
-    res.status(201).json(guide);
-  } catch (err) {
-    console.error('createGuide error:', err);
-    res.status(500).json({ message: 'Failed to create guide' });
-  }
-};
-
-exports.updateGuide = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const payload = { ...req.body };
-
-    if (payload.slug) {
-      const dup = await TravelGuide.findOne({ slug: payload.slug, _id: { $ne: id } }).select('_id');
-      if (dup) return res.status(400).json({ message: 'Guide slug already exists' });
-    }
-
-    const guide = await TravelGuide.findByIdAndUpdate(
-      id,
-      { ...payload, updatedBy: req.user?._id },
-      { new: true, runValidators: true }
-    );
-
-    if (!guide) return res.status(404).json({ message: 'Guide not found' });
-    res.json(guide);
-  } catch (err) {
-    console.error('updateGuide error:', err);
-    res.status(500).json({ message: 'Failed to update guide' });
-  }
-};
-
-exports.deleteGuide = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const guide = await TravelGuide.findByIdAndUpdate(id, { isActive: false }, { new: true });
-    if (!guide) return res.status(404).json({ message: 'Guide not found' });
-
-    res.json({ message: 'Guide deleted' });
-  } catch (err) {
-    console.error('deleteGuide error:', err);
-    res.status(500).json({ message: 'Failed to delete guide' });
+    res.status(500).json({ message: 'Failed to fetch guides by category' });
   }
 };

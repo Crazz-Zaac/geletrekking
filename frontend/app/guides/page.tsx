@@ -66,15 +66,15 @@ function GuidesContent() {
       <Navbar />
 
       <div className="min-h-screen bg-[#eeede9] dark:bg-[#1e1e1c] pt-28 pb-16">
-        <div className="max-w-[860px] mx-auto px-4">
+        <div className="container mx-auto max-w-6xl px-4">
 
           {/* ── Hero ── */}
           <div className="bg-[#f5f4f0] dark:bg-[#262624] border border-black/10 dark:border-white/9 rounded-xl p-8 mb-3.5 flex flex-wrap items-center gap-6">
             <div className="flex-1 min-w-[200px]">
-              <h1 className="text-[22px] font-medium text-[#1a1a18] dark:text-[#f0efe9] mb-1.5">
+              <h1 className="text-2xl font-medium text-[#1a1a18] dark:text-[#f0efe9] mb-1.5">
                 Plan Your Trek Adventure
               </h1>
-              <p className="text-[13px] text-[#6b6a65] dark:text-[#9b9a94] leading-relaxed">
+              <p className="text-sm text-[#6b6a65] dark:text-[#9b9a94] leading-relaxed">
                 Essential guides to prepare for your trekking journey — from gear to safety.
               </p>
             </div>
@@ -155,7 +155,7 @@ function GuidesContent() {
                         </svg>
                         <p className="text-[12px] font-medium text-[#1a1a18] dark:text-[#f0efe9]">More coming soon</p>
                         <p className="text-[11px] text-[#6b6a65] dark:text-[#9b9a94] leading-relaxed">
-                          Additional guides<br />are in development
+                          Additional guides <br/> are in development
                         </p>
                       </div>
                     )}
@@ -208,8 +208,8 @@ function FeaturedCard({ guide }: { guide: TravelGuide }) {
         <p className="text-[11px] font-medium tracking-[0.06em] uppercase text-[#3B6D11] mb-2">
           Featured · {guide.category}
         </p>
-        <h2 className="text-[18px] font-medium text-[#27500A] leading-tight mb-1.5">{guide.title}</h2>
-        <p className="text-[12px] text-[#3B6D11] leading-relaxed line-clamp-2">{guide.description}</p>
+        <h2 className="text-lg font-medium text-[#27500A] leading-tight mb-1.5">{guide.title}</h2>
+        <p className="text-sm text-[#3B6D11] leading-relaxed line-clamp-2">{guide.description}</p>
       </div>
 
       {/* Body */}
@@ -219,12 +219,12 @@ function FeaturedCard({ guide }: { guide: TravelGuide }) {
           <div className="w-7 h-7 rounded-lg bg-[#EAF3DE] flex items-center justify-center flex-shrink-0">
             <GuideIcon className="w-3.5 h-3.5 text-[#3B6D11]" />
           </div>
-          <span className="text-[11px] bg-[#EAF3DE] text-[#27500A] font-medium px-2 py-1 rounded-full">
+          <span className="text-xs bg-[#EAF3DE] text-[#27500A] font-medium px-2 py-1 rounded-full">
             #{guide.category?.toLowerCase().replace(/\s+/g, '-')}
           </span>
         </div>
 
-        <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#3B6D11] bg-[#EAF3DE] border border-[#97C459] rounded-lg px-3.5 py-1.5 hover:bg-[#C0DD97] transition-colors">
+        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[#3B6D11] bg-[#EAF3DE] border border-[#97C459] rounded-lg px-3.5 py-1.5 hover:bg-[#C0DD97] transition-colors">
           Read Guide
           <ArrowRight className="w-3.5 h-3.5" />
         </span>
@@ -244,12 +244,12 @@ function SmallCard({ guide }: { guide: TravelGuide }) {
         <div className="w-[26px] h-[26px] rounded-lg bg-[#EAF3DE] flex items-center justify-center flex-shrink-0">
           <GuideIcon className="w-3 h-3 text-[#3B6D11]" />
         </div>
-        <span className="text-[13px] font-medium text-[#1a1a18] dark:text-[#f0efe9]">{guide.title}</span>
+        <span className="text-sm font-medium text-[#1a1a18] dark:text-[#f0efe9]">{guide.title}</span>
       </div>
-      <p className="text-[12px] text-[#6b6a65] dark:text-[#9b9a94] leading-relaxed line-clamp-2 flex-1">
+      <p className="text-sm text-[#6b6a65] dark:text-[#9b9a94] leading-relaxed line-clamp-2 flex-1">
         {guide.description}
       </p>
-      <div className="flex items-center justify-between text-[11px] text-[#6b6a65] dark:text-[#9b9a94]">
+      <div className="flex items-center justify-between text-xs text-[#6b6a65] dark:text-[#9b9a94]">
         <span>{guide.category}</span>
         <ArrowRight className="w-3 h-3" />
       </div>
@@ -269,15 +269,15 @@ function GridCard({ guide }: { guide: TravelGuide }) {
           <div className="w-[26px] h-[26px] rounded-lg bg-[#EAF3DE] flex items-center justify-center flex-shrink-0">
             <GuideIcon className="w-3 h-3 text-[#3B6D11]" />
           </div>
-          <span className="text-[11px] font-medium text-[#3B6D11] uppercase tracking-wide">{guide.category}</span>
+          <span className="text-xs font-medium text-[#3B6D11] uppercase tracking-wide">{guide.category}</span>
         </div>
-        <h3 className="text-[13px] font-medium text-[#1a1a18] dark:text-[#f0efe9]">{guide.title}</h3>
-        <p className="text-[12px] text-[#6b6a65] dark:text-[#9b9a94] leading-relaxed line-clamp-3 flex-1">
+        <h3 className="text-sm font-medium text-[#1a1a18] dark:text-[#f0efe9]">{guide.title}</h3>
+        <p className="text-sm text-[#6b6a65] dark:text-[#9b9a94] leading-relaxed line-clamp-3 flex-1">
           {guide.description}
         </p>
       </div>
       <div className="px-4 pb-4">
-        <span className="inline-flex items-center gap-1 text-[12px] font-medium text-[#3B6D11]">
+        <span className="inline-flex items-center gap-1 text-sm font-medium text-[#3B6D11]">
           Read Guide <ArrowRight className="w-3 h-3" />
         </span>
       </div>

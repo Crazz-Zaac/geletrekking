@@ -4,9 +4,14 @@ import { ArrowLeft } from 'lucide-react'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { getGuideBySlug, type TravelGuide } from '@/lib/api'
+import { calculateReadingTime } from '@/lib/guide-utils'
+import { GuideHero } from '@/components/guide-hero'
+import { ReadingProgressBar } from '@/components/reading-progress-bar'
+import { GuideContentClient } from '@/components/guide-content-client'
 import { marked } from 'marked'
+import GuideContent from '@/components/guide-content'
 
 interface GuideDetailPageProps {
   params: Promise<{ slug: string }>
@@ -17,12 +22,14 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
 
   let guide: TravelGuide | null = null
   let contentHtml = ''
+  let readingTime = 0
 
   try {
     const data = await getGuideBySlug(slug)
     guide = data
     if (data?.content) {
       contentHtml = (await marked(data.content)) as string
+      readingTime = calculateReadingTime(data.content)
     }
   } catch {
     guide = null
@@ -35,45 +42,52 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
   return (
     <>
       <Navbar />
+      <ReadingProgressBar />
+      
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 pt-28 pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto max-w-6xl px-4">
           <div className="mb-8">
             <Link href="/guides" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="w-4 h-4" /> Back to Trip Plan
+              <ArrowLeft className="w-4 h-4" /> Back to Guides
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-8 items-start">
+          {/* Hero Section */}
+          <GuideHero guide={guide} readingTime={readingTime} />
+
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-8 items-start">
+            {/* Content Area */}
             <div>
-              <Card className="border-border/70 shadow-sm">
-                <CardHeader className="border-b border-border/60">
-                  <div className="text-xs uppercase tracking-wide font-semibold text-muted-foreground">{guide.category}</div>
-                  <CardTitle className="text-3xl md:text-4xl leading-tight">{guide.title}</CardTitle>
-                  <p className="text-muted-foreground text-base md:text-lg leading-relaxed max-w-3xl">{guide.description}</p>
-                </CardHeader>
-                <CardContent className="py-8 md:py-10">
-                  <div className="markdown-content max-w-[92ch] mx-auto" dangerouslySetInnerHTML={{ __html: contentHtml }} />
-                </CardContent>
+              <Card className="border-border/70 shadow-sm overflow-hidden">
+                <div className="p-8 md:p-10">
+                  <GuideContent html={contentHtml} />
+                </div>
               </Card>
+
+              {/* Related Actions */}
+              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Link href="/guides" className="block">
+                  <Button variant="outline" className="w-full">
+                    Browse all guides
+                  </Button>
+                </Link>
+                <Link href="/contact" className="block">
+                  <Button className="w-full">
+                    Have questions? Contact us
+                  </Button>
+                </Link>
+              </div>
             </div>
 
-            <div className="xl:col-span-1">
-              <Card className="xl:sticky xl:top-28 border-border/70 shadow-sm bg-card/90 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-xl">Ready for your adventure?</CardTitle>
-                  <p className="text-sm text-muted-foreground leading-relaxed">Browse our curated trek packages across Nepal and pick your perfect route.</p>
-                </CardHeader>
-                <CardContent>
-                  <Link href="/destinations" className="block">
-                    <Button className="w-full h-11 text-base font-semibold">View Destinations</Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </div>
+            {/* Sidebar */}
+            <GuideContentClient content={contentHtml} guide={guide} />
           </div>
         </div>
       </div>
+
       <Footer />
     </>
   )
 }
+

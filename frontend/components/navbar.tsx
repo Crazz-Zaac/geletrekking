@@ -13,13 +13,11 @@ import { WhatsAppIcon } from '@/components/whatsapp-icon'
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons'
 import Image from 'next/image'
 import { useSiteSettings } from '@/hooks/use-site-settings'
-import { getTreks, getGuides, getActivities, type TravelGuide, type PublicActivity } from '@/lib/api'
-import { getGuideMenuColumn, getGuideMenuIcon, getGuideMenuLabel } from '@/lib/guide-menu'
+import { getTreks, getActivities, type PublicActivity } from '@/lib/api'
+import { getPlanYourTripColumns, type PlanYourTripGuide } from '@/lib/plan-your-trip-data'
 import { getActivityMenuColumn, getActivityMenuIcon, getActivityMenuLabel } from '@/lib/activity-menu'
 
-interface Guide extends TravelGuide {
-  _id?: string
-}
+interface Guide extends PlanYourTripGuide {}
 
 interface GuideColumn {
   title: string
@@ -84,35 +82,8 @@ export function Navbar() {
   const isMobileMenuExpanded = (menuName: string) => expandedMobileMenu.has(menuName)
 
   // Map guides to mega-menu columns
-  const mapGuidesToColumns = (allGuides: Guide[]): GuideColumn[] => {
-    const columns: GuideColumn[] = [
-      {
-        title: 'Logistics',
-        items: [],
-      },
-      {
-        title: 'Health & Safety',
-        items: [],
-      },
-      {
-        title: 'Preparation',
-        items: [],
-      },
-    ]
-
-    // Map guides to columns based on category and rules
-    allGuides.forEach((guide) => {
-      const column = getGuideMenuColumn(guide)
-      if (column === 'Logistics') {
-        columns[0].items.push(guide)
-      } else if (column === 'Health & Safety') {
-        columns[1].items.push(guide)
-      } else {
-        columns[2].items.push(guide)
-      }
-    })
-
-    return columns
+  const mapGuidesToColumns = (): GuideColumn[] => {
+    return getPlanYourTripColumns() as GuideColumn[]
   }
 
   const mapActivitiesToColumns = (activities: PublicActivity[]): ActivityColumn[] => {
@@ -182,20 +153,9 @@ export function Navbar() {
     void loadTreks()
   }, [])
 
-  // Load guides from database
+  // Load guides from local data
   useEffect(() => {
-    const loadGuides = async () => {
-      try {
-        const data = await getGuides()
-        const allGuides = data.guides || []
-        setGuideColumns(mapGuidesToColumns(allGuides))
-      } catch (err) {
-        console.error('Error loading guides:', err)
-        setGuideColumns([])
-      }
-    }
-
-    void loadGuides()
+    setGuideColumns(mapGuidesToColumns())
   }, [])
 
   // Load activities from database
@@ -439,20 +399,32 @@ export function Navbar() {
                           {column.items.length > 0 ? (
                             column.items.map((guide) => (
                               <Link
-                                key={guide._id || guide.slug}
+                                key={guide.id}
                                 href={`/guides/${guide.slug}`}
                                 className="group/item block"
                               >
                                 <div className="flex items-start gap-3">
                                   <div className="mt-1 rounded-lg bg-primary/10 p-2 group-hover/item:bg-primary/20 transition-colors">
                                     {(() => {
-                                      const ItemIcon = getGuideMenuIcon(guide)
-                                      return <ItemIcon className="w-4 h-4 text-primary" />
+                                      // Simple icon mapping for guide icons
+                                      const iconMap: Record<string, string> = {
+                                        CheckCircle: '✓',
+                                        Heart: '♥',
+                                        AlertCircle: '!',
+                                        Smartphone: '📱',
+                                        FileCheck: '✓',
+                                        Shield: '🛡',
+                                        Backpack: '🎒',
+                                        CloudSun: '☀',
+                                        FileBadge2: '📄',
+                                        CircleHelp: '?',
+                                      }
+                                      return <span className="text-primary text-lg">{iconMap[guide.icon] || '📌'}</span>
                                     })()}
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-gray-900 group-hover/item:text-primary transition-colors line-clamp-2">
-                                      {getGuideMenuLabel(guide)}
+                                      {guide.title}
                                     </p>
                                     <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
                                       {guide.description}
@@ -683,7 +655,7 @@ export function Navbar() {
                   {guideColumns.flatMap((column) =>
                     column.items.map((guide) => (
                       <Link
-                        key={guide._id || guide.slug}
+                        key={guide.id}
                         href={`/guides/${guide.slug}`}
                         className="block px-3 py-2 text-white/70 text-sm hover:text-white hover:bg-white/10 rounded-md transition-colors"
                         onClick={() => {
@@ -691,7 +663,7 @@ export function Navbar() {
                           setExpandedMobileMenu(new Set())
                         }}
                       >
-                        {getGuideMenuLabel(guide)}
+                        {guide.title}
                       </Link>
                     ))
                   )}

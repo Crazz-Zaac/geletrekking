@@ -1,15 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/travelGuideController');
-const protect = require('../middleware/authMiddleware');
-const restrictToRoles = require('../middleware/roleMiddleware');
 
-router.get('/', controller.getAllGuides);
-router.get('/slug/:slug', controller.getGuideBySlug);
+// Public routes only - guides are now served from static data
+router.get('/', controller.getGuides);
 router.get('/category/:category', controller.getGuidesByCategory);
-
-router.post('/', protect, restrictToRoles('admin', 'superadmin'), controller.createGuide);
-router.put('/:id', protect, restrictToRoles('admin', 'superadmin'), controller.updateGuide);
-router.delete('/:id', protect, restrictToRoles('admin', 'superadmin'), controller.deleteGuide);
+router.get('/slug/:slug', controller.getGuideBySlug);
 
 module.exports = router;

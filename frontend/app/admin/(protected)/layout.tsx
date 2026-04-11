@@ -45,10 +45,7 @@ const navItems: NavItem[] = [
   { label: 'Gallery', href: '/admin/gallery', icon: ImageIcon, available: true },
   { label: 'Hero', href: '/admin/hero', icon: Flame, available: true },
   { label: 'About', href: '/admin/about', icon: Info, available: true },
-
-  
   { label: 'FAQ', href: '/admin/faq', icon: HelpCircle, available: true },
-
   { label: 'Activities', href: '/admin/activities', icon: Activity, available: true },
   { label: 'Testimonials', href: '/admin/testimonials', icon: MessageSquare, available: true },
   { label: 'Messages', href: '/admin/messages', icon: Mail, available: true },

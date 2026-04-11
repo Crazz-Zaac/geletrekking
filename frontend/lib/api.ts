@@ -238,6 +238,7 @@ export interface AdminActivity {
   metaDescription?: string
   videoUrl?: string
   isFeatured: boolean
+  isTopPick: boolean
   isActive: boolean
   displayOrder: number
   itinerary?: Array<{
@@ -908,6 +909,7 @@ export interface TravelGuide {
   content: string
   order: number
   region?: string
+  section?: string
   relatedGuides?: string[]
   isActive: boolean
   viewCount: number

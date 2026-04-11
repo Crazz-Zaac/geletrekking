@@ -1,22 +1,25 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { getActivities, type PublicActivity } from '@/lib/api'
 import { getActivityMenuIcon, getActivityMenuLabel } from '@/lib/activity-menu'
 import {
+  ArrowLeft,
+  Share2,
   Calendar,
-  Clock,
   Users,
-  DollarSign,
+  Zap,
+  Clock,
+  Mountain,
   CheckCircle2,
   XCircle,
-  ArrowLeft,
-  Zap,
-  Mountain,
+  Star,
   Trophy,
 } from 'lucide-react'
 
@@ -24,20 +27,45 @@ interface ActivityDetailPageProps {
   params: Promise<{ slug: string }>
 }
 
-export default async function ActivityDetailPage({ params }: ActivityDetailPageProps) {
-  const { slug } = await params
+export default function ActivityDetailPage({ params }: ActivityDetailPageProps) {
+  const [activity, setActivity] = useState<PublicActivity | null>(null)
+  const [slug, setSlug] = useState<string>('')
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
-  let activity: PublicActivity | null = null
+  useEffect(() => {
+    const loadData = async () => {
+      const { slug: pageSlug } = await params
+      setSlug(pageSlug)
 
-  try {
-    const data = await getActivities()
-    activity = data.find((a) => a.slug === slug) || null
-  } catch {
-    activity = null
-  }
+      try {
+        const data = await getActivities()
+        const found = data.find((a) => a.slug === pageSlug) || null
+        setActivity(found)
+        if (!found) {
+          router.push('/not-found')
+        }
+      } catch {
+        setActivity(null)
+        router.push('/not-found')
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  if (!activity) {
-    notFound()
+    loadData()
+  }, [params, router])
+
+  if (loading || !activity) {
+    return (
+      <>
+        <Navbar />
+        <main className="min-h-screen bg-background pt-16 flex items-center justify-center">
+          <p>Loading...</p>
+        </main>
+        <Footer />
+      </>
+    )
   }
 
   const Icon = getActivityMenuIcon(activity)
@@ -46,458 +74,289 @@ export default async function ActivityDetailPage({ params }: ActivityDetailPageP
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pt-16">
-        {activity.mainImage && (
-          <section className="relative h-[320px] md:h-[420px] lg:h-[520px] overflow-hidden">
-            <img
-              src={activity.mainImage}
-              alt={activity.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-black/50 to-black/20" />
+      <main className="min-h-screen bg-background pt-16">
+        <div className="px-4 md:px-6 py-6 md:py-8 pb-32">
+          <div className="container mx-auto space-y-6">
+            {/* Back Button */}
+            <Link href="/activities" className="inline-flex items-center gap-2 text-sm text-foreground bg-muted hover:bg-muted/80 border border-border rounded-lg px-4 py-2 transition font-medium">
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </Link>
 
-            <div className="absolute top-8 left-4 md:left-6">
-              <Link
-                href="/activities"
-                className="inline-flex items-center gap-2 rounded-full bg-black/35 px-4 py-2 text-white backdrop-blur hover:bg-black/50 transition"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="text-sm font-medium">Back to Activities</span>
-              </Link>
-            </div>
+            {/* Hero Card */}
+            <div className="rounded-lg overflow-hidden relative h-48" style={{ backgroundColor: '#CC8B79' }}>
 
-            <div className="absolute inset-x-0 bottom-0">
-              <div className="container mx-auto px-4 md:px-6 pb-8 md:pb-12">
-                <div className="max-w-4xl">
-                  <div className="mb-4 flex items-center gap-3">
-                    <div className="inline-flex rounded-2xl bg-white/10 p-3 border border-white/20 backdrop-blur">
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
-
-                    {activity.category && (
-                      <Badge className="bg-white/15 text-white border border-white/25 hover:bg-white/20">
-                        {activity.category}
-                      </Badge>
-                    )}
-                  </div>
-
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white drop-shadow-lg">
-                    {getActivityMenuLabel(activity)}
-                  </h1>
-
-                  {activity.shortDescription && (
-                    <p className="mt-4 max-w-2xl text-base md:text-xl text-white/90 leading-7 drop-shadow">
-                      {activity.shortDescription}
-                    </p>
-                  )}
-                </div>
+              <div className="absolute top-3 right-3">
+                <button className="w-7 h-7 rounded-full bg-black/25 border border-white/20 backdrop-blur flex items-center justify-center text-white/70 hover:bg-black/35 transition">
+                  <Share2 className="w-3.5 h-3.5" />
+                </button>
               </div>
-            </div>
-          </section>
-        )}
 
-        {!activity.mainImage && (
-          <section className="border-b border-border bg-gradient-to-br from-primary/10 via-background to-accent/10">
-            <div className="container mx-auto px-4 md:px-6 py-14 md:py-20">
-              <Link
-                href="/activities"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back to Activities
-              </Link>
-
-              <div className="mt-6 max-w-4xl">
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="inline-flex rounded-2xl bg-primary/10 p-3 border border-primary/20">
-                    <Icon className="w-6 h-6 text-primary" />
-                  </div>
-
-                  {activity.category && (
-                    <Badge className="bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15">
-                      {activity.category}
-                    </Badge>
-                  )}
-                </div>
-
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
+              <div className="relative p-5 h-full flex flex-col justify-end space-y-3">
+                <h1 className="text-3xl font-semibold text-white line-clamp-3">
                   {getActivityMenuLabel(activity)}
                 </h1>
 
-                {activity.shortDescription && (
-                  <p className="mt-4 max-w-2xl text-base md:text-xl text-muted-foreground leading-7">
-                    {activity.shortDescription}
-                  </p>
-                )}
-              </div>
-            </div>
-          </section>
-        )}
-
-        <section className="py-8 md:py-10">
-          <div className="container mx-auto px-4 md:px-6">
-            <div className="max-w-6xl">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {activity.duration && (
-                  <Card className="rounded-3xl p-5 border-border/60 bg-card/80 backdrop-blur shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <div className="rounded-2xl bg-primary/10 p-3">
-                        <Clock className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          Duration
-                        </p>
-                        <p className="mt-1 font-semibold text-foreground">{activity.duration}</p>
-                      </div>
-                    </div>
-                  </Card>
-                )}
-
-                {activity.price !== undefined && (
-                  <Card className="rounded-3xl p-5 border-primary/20 bg-primary/5 shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <div className="rounded-2xl bg-primary/15 p-3">
-                        <DollarSign className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          Starting Price
-                        </p>
-                        <p className="mt-1 font-semibold text-foreground">
-                          {activity.currency} {activity.price}
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                )}
-
-                {activity.groupSizeMin && (
-                  <Card className="rounded-3xl p-5 border-border/60 bg-card/80 backdrop-blur shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <div className="rounded-2xl bg-primary/10 p-3">
-                        <Users className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          Group Size
-                        </p>
-                        <p className="mt-1 font-semibold text-foreground">
-                          {activity.groupSizeMin}-{activity.groupSizeMax}
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                )}
-
-                {activity.difficultyLevel && (
-                  <Card className="rounded-3xl p-5 border-border/60 bg-card/80 backdrop-blur shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <div className="rounded-2xl bg-primary/10 p-3">
-                        <Zap className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          Difficulty
-                        </p>
-                        <p className="mt-1 font-semibold text-foreground">{activity.difficultyLevel}</p>
-                      </div>
-                    </div>
-                  </Card>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="py-10 md:py-14">
-          <div className="container mx-auto px-4 md:px-6">
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-              <div className="xl:col-span-3 space-y-8">
-                {activity.fullDescription && (
-                  <Card className="rounded-[2rem] p-6 md:p-8 border-border/60 shadow-sm">
-                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4 text-foreground">
-                      Overview
-                    </h2>
-                    <p className="text-muted-foreground leading-8 whitespace-pre-wrap">
-                      {activity.fullDescription}
-                    </p>
-                  </Card>
-                )}
-
-                {activity.itinerary && activity.itinerary.length > 0 && (
-                  <section>
-                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-6 text-foreground">
-                      Itinerary
-                    </h2>
-
-                    <div className="space-y-4">
-                      {activity.itinerary.map((item, idx) => (
-                        <Card
-                          key={idx}
-                          className="rounded-[2rem] p-6 md:p-7 border-border/60 shadow-sm hover:shadow-md transition"
-                        >
-                          <div className="flex gap-4">
-                            <div className="flex-shrink-0">
-                              <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-bold">
-                                {item.day}
-                              </div>
-                            </div>
-
-                            <div className="flex-1 pt-1">
-                              <h3 className="text-lg md:text-xl font-semibold text-foreground">
-                                {item.title}
-                              </h3>
-                              {item.description && (
-                                <p className="mt-2 text-sm md:text-base text-muted-foreground leading-7">
-                                  {item.description}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {(activity.includes || activity.excludes) && (
-                  <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {activity.includes && activity.includes.length > 0 && (
-                      <Card className="rounded-[2rem] p-6 md:p-8 border-green-200/40 bg-gradient-to-br from-green-50/60 to-background dark:from-green-950/20 dark:border-green-900/30">
-                        <h3 className="text-xl font-bold mb-5 flex items-center gap-3">
-                          <CheckCircle2 className="w-6 h-6 text-green-600" />
-                          What&apos;s Included
-                        </h3>
-                        <ul className="space-y-3">
-                          {activity.includes.map((item, idx) => (
-                            <li key={idx} className="flex items-start gap-3">
-                              <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm md:text-base text-muted-foreground leading-7">
-                                {item}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </Card>
-                    )}
-
-                    {activity.excludes && activity.excludes.length > 0 && (
-                      <Card className="rounded-[2rem] p-6 md:p-8 border-red-200/40 bg-gradient-to-br from-red-50/60 to-background dark:from-red-950/20 dark:border-red-900/30">
-                        <h3 className="text-xl font-bold mb-5 flex items-center gap-3">
-                          <XCircle className="w-6 h-6 text-red-600" />
-                          What&apos;s Excluded
-                        </h3>
-                        <ul className="space-y-3">
-                          {activity.excludes.map((item, idx) => (
-                            <li key={idx} className="flex items-start gap-3">
-                              <XCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm md:text-base text-muted-foreground leading-7">
-                                {item}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </Card>
-                    )}
-                  </section>
-                )}
-
-                {activity.galleryImages && activity.galleryImages.length > 0 && (
-                  <section>
-                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-6 text-foreground">
-                      Gallery
-                    </h2>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {activity.galleryImages.map((img, idx) => (
-                        <div
-                          key={idx}
-                          className="group relative overflow-hidden rounded-2xl bg-muted aspect-square shadow-sm"
-                        >
-                          <img
-                            src={img}
-                            alt={`${activity.title} - ${idx + 1}`}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {activity.videoUrl && (
-                  <section>
-                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-6 text-foreground">
-                      Experience Preview
-                    </h2>
-                    <Card className="rounded-[2rem] overflow-hidden border-border/60 shadow-sm">
-                      <div className="aspect-video bg-muted">
-                        <iframe
-                          src={activity.videoUrl}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          className="w-full h-full"
-                        />
-                      </div>
-                    </Card>
-                  </section>
-                )}
-              </div>
-
-              <aside className="xl:col-span-1">
-                <div className="sticky top-28 space-y-6">
-                  <div className="rounded-[2rem] bg-gradient-to-br from-primary to-primary/85 p-7 text-white shadow-xl">
-                    <div className="space-y-6">
-                      <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/80">
-                          Book Your Adventure
-                        </p>
-
-                        {activity.price !== undefined && (
-                          <div className="mt-4">
-                            <p className="text-sm text-white/75">Starting from</p>
-                            <p className="mt-2 text-4xl font-bold leading-none">
-                              {activity.currency}{' '}
-                              <span className="text-3xl">{activity.price}</span>
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-4">
-                        {activity.maxAltitude && (
-                          <div className="flex items-start gap-3">
-                            <Mountain className="w-5 h-5 text-white/85 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-xs font-medium uppercase tracking-wide text-white/70">
-                                Max Altitude
-                              </p>
-                              <p className="mt-1 text-sm font-semibold">{activity.maxAltitude}</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {activity.date && (
-                          <div className="flex items-start gap-3">
-                            <Calendar className="w-5 h-5 text-white/85 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-xs font-medium uppercase tracking-wide text-white/70">
-                                Availability
-                              </p>
-                              <p className="mt-1 text-sm font-semibold">
-                                {new Date(activity.date).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric',
-                                })}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
-                        {activity.groupSizeMin && (
-                          <div className="flex items-start gap-3">
-                            <Users className="w-5 h-5 text-white/85 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-xs font-medium uppercase tracking-wide text-white/70">
-                                Group Size
-                              </p>
-                              <p className="mt-1 text-sm font-semibold">
-                                {activity.groupSizeMin}-{activity.groupSizeMax} people
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
-                        {activity.difficultyLevel && (
-                          <div className="flex items-start gap-3">
-                            <Zap className="w-5 h-5 text-white/85 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-xs font-medium uppercase tracking-wide text-white/70">
-                                Difficulty
-                              </p>
-                              <p className="mt-1 text-sm font-semibold">{activity.difficultyLevel}</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-3 pt-2">
-                        <Link href="/contact" className="block">
-                          <Button className="w-full h-12 bg-white text-primary hover:bg-white/90 font-bold text-base rounded-full shadow-lg">
-                            <Trophy className="w-5 h-5 mr-2" />
-                            Book Now
-                          </Button>
-                        </Link>
-
-                        <Link href="/contact" className="block">
-                          <Button
-                            variant="outline"
-                            className="w-full h-11 rounded-full border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                          >
-                            Get More Info
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-
-                  {activity.tags && activity.tags.length > 0 && (
-                    <Card className="rounded-[2rem] p-6 border-border/60 shadow-sm">
-                      <h3 className="font-bold text-foreground mb-4">Tags</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {activity.tags.map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="secondary"
-                            className="rounded-full cursor-default"
-                          >
-                            #{tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </Card>
+                <div className="flex gap-2 flex-wrap">
+                  {activity.duration && (
+                    <span className="text-xs border border-white/22 bg-white/12 text-white/80 rounded-full px-3 py-1 font-medium">
+                      {activity.duration}
+                    </span>
+                  )}
+                  {activity.difficultyLevel && (
+                    <span className="text-xs border border-orange-400/40 bg-orange-500/20 text-orange-100 rounded-full px-3 py-1 font-medium">
+                      {activity.difficultyLevel}
+                    </span>
+                  )}
+                  {activity.maxAltitude && (
+                    <span className="text-xs border border-purple-400/40 bg-purple-500/20 text-purple-100 rounded-full px-3 py-1 font-medium">
+                      {activity.maxAltitude}
+                    </span>
                   )}
                 </div>
-              </aside>
-            </div>
-          </div>
-        </section>
-
-        <section className="py-16 border-t border-border/50 bg-gradient-to-b from-muted/30 to-background">
-          <div className="container mx-auto px-4 md:px-6">
-            <div className="max-w-5xl mx-auto text-center space-y-6">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-                Ready to Start Your Adventure?
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-8">
-                Join us for an unforgettable experience and let our team help you plan every detail.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/contact" className="block">
-                  <Button size="lg" className="w-full sm:w-auto h-12 px-8 rounded-full text-base font-semibold">
-                    <Trophy className="w-5 h-5 mr-2" />
-                    Book Now
-                  </Button>
-                </Link>
-
-                <Link href="/contact" className="block">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full sm:w-auto h-12 px-8 rounded-full text-base font-semibold"
-                  >
-                    Request Information
-                  </Button>
-                </Link>
               </div>
             </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              <div className="bg-muted rounded-lg p-3 text-center">
+                <p className="text-sm font-semibold text-foreground">
+                  {activity.currency}{activity.price || 'POA'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1 uppercase">PRICE</p>
+              </div>
+              <div className="bg-muted rounded-lg p-3 text-center">
+                <p className="text-sm font-semibold text-foreground">
+                  {activity.groupSizeMin}–{activity.groupSizeMax || '?'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1 uppercase">Group</p>
+              </div>
+              <div className="bg-muted rounded-lg p-3 text-center">
+                <p className="text-sm font-semibold text-foreground">4.8</p>
+                <p className="text-xs text-muted-foreground mt-1 uppercase">Rating</p>
+              </div>
+              <div className="bg-muted rounded-lg p-3 text-center">
+                <p className="text-sm font-semibold text-foreground">120+</p>
+                <p className="text-xs text-muted-foreground mt-1 uppercase">Reviews</p>
+              </div>
+              {activity.maxAltitude && (
+                <div className="bg-muted rounded-lg p-3 text-center">
+                  <p className="text-sm font-semibold text-foreground">{activity.maxAltitude}</p>
+                  <p className="text-xs text-muted-foreground mt-1 uppercase">Max altitude</p>
+                </div>
+              )}
+              {activity.date && (
+                <div className="bg-muted rounded-lg p-3 text-center">
+                  <p className="text-sm font-semibold text-foreground">
+                    {new Date(activity.date).toLocaleDateString('en-US', { month: 'short' })}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1 uppercase">Best season</p>
+                </div>
+              )}
+            </div>
+
+            {/* Tabs Navigation */}
+            <ActivityDetailTabs activity={activity} />
           </div>
-        </section>
+        </div>
+
       </main>
 
       <Footer />
     </>
+  )
+}
+
+function ActivityDetailTabs({ activity }: { activity: PublicActivity }) {
+  const [activeTab, setActiveTab] = useState('overview')
+  
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'itinerary', label: 'Itinerary' },
+    { id: 'included', label: 'Included' },
+    { id: 'reviews', label: 'Reviews' },
+  ]
+
+  return (
+    <div className="space-y-6">
+      {/* Tab Navigation */}
+      <div className="border-b border-border flex gap-0">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`text-sm font-semibold px-4 py-3 border-b-2 transition-colors ${
+              activeTab === tab.id
+                ? 'text-foreground border-foreground'
+                : 'text-muted-foreground border-transparent hover:text-foreground'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Overview Panel */}
+      {activeTab === 'overview' && (
+        <div className="space-y-6">
+          {activity.fullDescription && (
+            <p className="text-base text-muted-foreground leading-7">
+              {activity.fullDescription}
+            </p>
+          )}
+
+          {/* Highlights */}
+          <div className="grid grid-cols-3 gap-2">
+            {activity.duration && (
+              <div className="bg-muted rounded-lg p-3">
+                <div className="w-7 h-7 rounded bg-blue-100 flex items-center justify-center mb-2">
+                  <Clock className="w-3.5 h-3.5 text-blue-700" />
+                </div>
+                <p className="text-xs text-muted-foreground uppercase mb-1">Daily trek</p>
+                <p className="text-base font-semibold text-foreground">5-7 hrs avg</p>
+              </div>
+            )}
+          </div>
+
+          {/* Tags */}
+          {activity.tags && activity.tags.length > 0 && (
+            <div className="flex gap-2 flex-wrap pt-2">
+              {activity.tags.map((tag) => (
+                <span key={tag} className="text-sm border border-border rounded-full px-3 py-1.5 text-muted-foreground">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Itinerary Panel */}
+      {activeTab === 'itinerary' && (
+        <div className="space-y-0">
+          {activity.itinerary && activity.itinerary.length > 0 ? (
+            activity.itinerary.map((item, idx) => (
+              <div key={idx} className="flex gap-3 pb-4 relative">
+                <div className="flex flex-col items-center flex-shrink-0 pt-1">
+                  <div className="w-7 h-7 rounded-full bg-blue-700 text-white text-xs font-semibold flex items-center justify-center z-10">
+                    {item.day}
+                  </div>
+                  {idx < (activity.itinerary?.length || 0) - 1 && (
+                    <div className="w-0.5 h-12 bg-border mt-2" />
+                  )}
+                </div>
+                <div className="pt-0.5 flex-1">
+                  <p className="text-base font-semibold text-foreground">{item.title}</p>
+                  {item.description && (
+                    <p className="text-sm text-muted-foreground mt-1 leading-6">{item.description}</p>
+                  )}
+                  {idx === 0 && (
+                    <span className="inline-block text-xs bg-blue-100 text-blue-900 rounded px-2 py-1 mt-2 font-medium">
+                      Trekking · {activity.duration}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">No itinerary details available.</p>
+          )}
+        </div>
+      )}
+
+      {/* Included Panel */}
+      {activeTab === 'included' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {activity.includes && activity.includes.length > 0 && (
+            <div className="border border-border rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                <p className="text-base font-semibold text-foreground">What's included</p>
+              </div>
+              <ul className="space-y-2">
+                {activity.includes.map((item, idx) => (
+                  <li key={idx} className="flex gap-2 text-sm text-muted-foreground leading-6">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-green-600 mt-0.5 flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {activity.excludes && activity.excludes.length > 0 && (
+            <div className="border border-border rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <XCircle className="w-5 h-5 text-red-600" />
+                <p className="text-base font-semibold text-foreground">What's excluded</p>
+              </div>
+              <ul className="space-y-2">
+                {activity.excludes.map((item, idx) => (
+                  <li key={idx} className="flex gap-2 text-sm text-muted-foreground leading-6">
+                    <XCircle className="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Reviews Panel */}
+      {activeTab === 'reviews' && (
+        <div className="space-y-4">
+          <div className="space-y-2 mb-6">
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-semibold text-foreground">4.8</span>
+              <div className="flex gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">120+ reviews</p>
+          </div>
+
+          <div className="space-y-2">
+            {['5', '4', '3', '2', '1'].map((rating) => (
+              <div key={rating} className="flex items-center gap-2 text-sm">
+                <span className="w-5 text-right text-muted-foreground">{rating}</span>
+                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-700"
+                    style={{ width: ['82%', '13%', '4%', '1%', '0%'][parseInt(rating) - 1] }}
+                  />
+                </div>
+                <span className="w-10 text-right text-muted-foreground">{['82', '13', '4', '1', '0'][parseInt(rating) - 1]}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Sample Reviews */}
+          <div className="space-y-3 mt-6">
+            {[
+              { name: 'Sarah R.', date: 'March 2025', text: 'Guide was phenomenal with encyclopaedic knowledge. The acclimatisation days are well-planned.' },
+              { name: 'James M.', date: 'October 2024', text: 'Life-changing experience. Teahouses were basic but the warmth of Sherpa hosts was amazing.' },
+            ].map((review, idx) => (
+              <div key={idx} className="bg-muted rounded-lg p-3">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{review.name}</p>
+                    <p className="text-xs text-muted-foreground">{review.date}</p>
+                  </div>
+                  <div className="flex gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-3 h-3 fill-amber-500 text-amber-500" />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground leading-6">{review.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

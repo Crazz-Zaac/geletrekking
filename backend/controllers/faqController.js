@@ -1,15 +1,11 @@
 const FaqPage = require("../models/FaqPage");
+const { generalFAQ } = require("../data/faq-data");
 
 // GET /api/faq  (Public)
+// Returns hardcoded FAQ data instead of database data
 exports.getFaqPage = async (req, res) => {
   try {
-    let faq = await FaqPage.findOne();
-
-    if (!faq) {
-      faq = await FaqPage.create({});
-    }
-
-    res.json(faq);
+    res.json(generalFAQ);
   } catch (err) {
     console.error("Error fetching FAQ page:", err);
     res.status(500).json({ message: "Failed to load FAQ page" });
