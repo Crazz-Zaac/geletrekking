@@ -9,6 +9,7 @@ const {
   getMessages,
   markAsRead,
   markAsUnread,
+  deleteMessage,
 } = require("../controllers/contactController");
 
 /* ─────────────────────────────────────────────
@@ -42,6 +43,14 @@ router.patch(
   authMiddleware,
   restrictToRoles("admin", "superadmin"),
   markAsUnread
+);
+
+// DELETE /api/contact/admin/:id        – permanently delete a message
+router.delete(
+  "/admin/:id",
+  authMiddleware,
+  restrictToRoles("admin", "superadmin"),
+  deleteMessage
 );
 
 module.exports = router;

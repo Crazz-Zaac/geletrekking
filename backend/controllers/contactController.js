@@ -27,7 +27,7 @@ exports.submitMessage = async (req, res) => {
 // GET /api/contact/admin     – list all messages, oldest first
 exports.getMessages = async (req, res) => {
   try {
-    const messages = await ContactMessage.find().sort({ createdAt: 1 }); // oldest on top
+    const messages = await ContactMessage.find().sort({ createdAt: 1 });
     res.json(messages);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -61,6 +61,18 @@ exports.markAsUnread = async (req, res) => {
 
     if (!msg) return res.status(404).json({ message: "Message not found" });
     res.json(msg);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// DELETE /api/contact/admin/:id – permanently delete a message
+exports.deleteMessage = async (req, res) => {
+  try {
+    const msg = await ContactMessage.findByIdAndDelete(req.params.id);
+
+    if (!msg) return res.status(404).json({ message: "Message not found" });
+    res.json({ message: "Message deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
