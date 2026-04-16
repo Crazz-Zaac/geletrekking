@@ -1,4 +1,3 @@
-// backend/controllers/aboutController.js
 const AboutPage = require("../models/AboutPage");
 
 // GET /api/about  (Public)
@@ -6,7 +5,6 @@ exports.getAboutPage = async (req, res) => {
   try {
     let about = await AboutPage.findOne();
 
-    // If nothing exists yet, create with defaults (so frontend always gets something)
     if (!about) {
       about = await AboutPage.create({});
     }
@@ -28,7 +26,6 @@ exports.updateAboutPage = async (req, res) => {
       about = new AboutPage();
     }
 
-    // Update only fields we allow
     const allowedFields = [
       "heroTitle",
       "heroSubtitle",
@@ -38,7 +35,9 @@ exports.updateAboutPage = async (req, res) => {
       "storyTitle",
       "storyBody",
       "highlights",
+      "whyChooseUs",
       "stats",
+      "associations",
     ];
 
     allowedFields.forEach((field) => {

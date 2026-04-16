@@ -16,6 +16,14 @@ const statSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const associationSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    logoUrl: { type: String, required: true, trim: true },
+  },
+  { _id: false }
+);
+
 const aboutPageSchema = new mongoose.Schema(
   {
     heroTitle: {
@@ -30,7 +38,6 @@ const aboutPageSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-
     missionTitle: {
       type: String,
       default: "",
@@ -39,7 +46,6 @@ const aboutPageSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-
     storyTitle: {
       type: String,
       default: "",
@@ -48,17 +54,22 @@ const aboutPageSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-
     highlights: {
       type: [highlightSchema],
       default: [],
     },
-
+    whyChooseUs: {
+      type: [String],
+      default: [],
+    },
     stats: {
       type: [statSchema],
       default: [],
     },
-
+    associations: {
+      type: [associationSchema],
+      default: [],
+    },
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

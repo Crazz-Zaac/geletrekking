@@ -67,12 +67,16 @@ const superadminRoutes = require("./routes/superadmin/superadmin");
 const trekRoutes = require("./routes/trekroutes");
 const authRoutes = require("./routes/authroutes");
 const aboutRoutes = require("./routes/aboutRoutes");
+const activityRoutes = require("./routes/activityRoutes");
 
 // Content routes
 const blogRoutes = require("./routes/blogRoutes");
 const testimonialRoutes = require("./routes/testimonialRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
 const contactRoutes = require("./routes/contactRoutes");
+const travelGuideRoutes = require("./routes/travelGuideRoutes");
+const faqRoutes = require("./routes/faqRoutes");
 
 // Settings / Hero / Uploads
 const settingsRoutes = require("./routes/settingsRoutes");
@@ -89,12 +93,16 @@ app.use("/api/superadmin", superadminRoutes);
 app.use("/api/treks", trekRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/about", aboutRoutes);
+app.use("/api/activities", activityRoutes);
 
 // Mount new content routes
 app.use("/api/blogs", blogRoutes);
 app.use("/api/testimonials", testimonialRoutes);
+app.use("/api/reviews", reviewRoutes);
 app.use("/api/gallery", galleryRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/guides", travelGuideRoutes);
+app.use("/api/faq", faqRoutes);
 
 // Settings/Hero/Uploads
 app.use("/api/settings", settingsRoutes);
@@ -120,6 +128,11 @@ if (process.env.NODE_ENV === "production") {
 ========================================================= */
 app.get("/", (req, res) => {
   res.send("GeleTrekking backend is running.");
+});
+
+// Health check endpoint for Docker
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "healthy", message: "Backend is running" });
 });
 
 /* =========================================================

@@ -43,3 +43,5 @@ coverage/
 .parcel-cache/
 .tmp/
 temp/
+frontend_old/
+node_modules/*

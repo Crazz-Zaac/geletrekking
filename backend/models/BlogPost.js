@@ -19,6 +19,7 @@ const blogPostSchema = new mongoose.Schema(
     content: { type: String, required: true },
     coverImage: { type: String, trim: true },
     author: { type: String, trim: true },
+    hashtags: [{ type: String, trim: true }],
     isPublished: { type: Boolean, default: false },
   },
   { timestamps: true }
