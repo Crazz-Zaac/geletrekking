@@ -209,41 +209,6 @@ HAPE is a potentially fatal condition where fluid accumulates in the lungs, prev
 **Golden Rule:** *If you feel unwell at altitude, assume it is altitude sickness until proven otherwise.* Do not ascend further if symptoms are present or worsening. Never leave a person with severe altitude sickness alone.`,
   },
   {
-    id: '69ccf499658024d8ddb7a1b5',
-    slug: 'tims-card',
-    title: 'TIMS Card',
-    description: 'Trekking Information Management System (TIMS) card requirements for 2026',
-    category: 'Logistics',
-    section: 'Entry Requirements',
-    icon: 'FileCheck',
-    order: 5,
-    content: `# TIMS Card: What You Need to Know for 2026
-
-## What is TIMS?
-TIMS (Trekking Information Management System) is a permit designed to track trekkers in Nepal for their safety and to help regulate tourism. It is managed jointly by the Nepal Tourism Board (NTB) and the Trekking Agencies' Association of Nepal (TAAN).
-
-## Important 2026 Update: TIMS is Phasing Out in Key Areas
-**This is the most critical update for 2026.** The TIMS card is **no longer enforced in the Everest (Khumbu) and Annapurna regions**. In these areas, it has been replaced by other local permits.
-- **Where TIMS is NO LONGER required:** Everest Base Camp, Annapurna Circuit, Annapurna Base Camp, and other treks within the Khumbu Pasang Lhamu Rural Municipality and Annapurna Conservation Area.
-- **Where TIMS is STILL required:** The TIMS card remains a mandatory requirement for treks in **Langtang, Manaslu, and far western regions** like Rara.
-
-## Who Needs a TIMS Card?
-All foreign and SAARC trekkers entering a designated trekking zone where TIMS is still enforced. Your trekking agency will handle this and confirm if one is required for your chosen trek.
-
-## Types of TIMS Cards and Fees (2026)
-- **Blue TIMS (Group/Guided):** This is the only type issued now. It is for trekkers with a licensed guide. The cost is **NPR 2,000** (approx. $15 USD) for foreign nationals and **NPR 1,000** for SAARC nationals.
-- **Green TIMS (Individual):** The permit for solo trekkers has been **officially retired**. Since solo trekking is no longer permitted in most areas, this card is obsolete.
-
-## How to Get a TIMS Card
-You **cannot** apply for a TIMS card independently. It can only be issued through a registered trekking agency, like those used by Gele Trekking. Your agency will collect your passport details and photo and obtain the card on your behalf. This process is typically done in Kathmandu or Pokhara before your trek begins.
-
-## Why is TIMS Being Phased Out?
-The changes are part of a larger shift in Nepal's tourism management. In the Khumbu region, the TIMS card has been replaced by the **Khumbu Pasang Lhamu Rural Municipality Permit** (a local fee). This, combined with the **Mandatory Guide Rule**, has made the central TIMS database redundant in that area.
-
-## Key Takeaway for 2026
-Do not assume you need a TIMS card. Discuss your specific trek with your trekking agency. They will provide the most up-to-date information and arrange all necessary permits for you, whether it's a TIMS card, a National Park Permit, or a local area permit.`,
-  },
-  {
     id: '69ccf499658024d8ddb7a1b6',
     slug: 'insurance',
     title: 'Insurance',

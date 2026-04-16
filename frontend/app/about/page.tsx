@@ -302,21 +302,23 @@ export default function AboutPage() {
                       Our local mountain team combines field-tested leadership, high-altitude safety expertise, and warm Nepalese hospitality.
                     </p>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {(about?.teamMembers || []).map((member) => (
-                      <Card key={member.name} className="border-border p-5 h-full bg-gradient-to-b from-background to-muted/20">
+                      <Card key={member.name} className="border-border overflow-hidden h-full bg-gradient-to-b from-background to-muted/20 hover:shadow-lg transition-shadow">
                         {member.imageUrl ? (
-                          <div className="w-11 h-11 rounded-full mb-3 overflow-hidden border border-border">
+                          <div className="w-full h-64 md:h-72 overflow-hidden bg-muted">
                             <img src={member.imageUrl} alt={member.name} className="w-full h-full object-cover" />
                           </div>
                         ) : (
-                          <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                            <Users className="w-5 h-5 text-primary" />
+                          <div className="w-full h-64 md:h-72 bg-primary/10 flex items-center justify-center">
+                            <Users className="w-16 h-16 text-primary/30" />
                           </div>
                         )}
-                        <h3 className="text-lg font-bold text-foreground mb-1">{member.name}</h3>
-                        <p className="text-sm font-medium text-primary mb-2">{member.role}</p>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{member.description}</p>
+                        <div className="p-5">
+                          <h3 className="text-lg font-bold text-foreground mb-1">{member.name}</h3>
+                          <p className="text-sm font-medium text-primary mb-3">{member.role}</p>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{member.description}</p>
+                        </div>
                       </Card>
                     ))}
                   </div>

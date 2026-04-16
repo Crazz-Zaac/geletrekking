@@ -93,10 +93,6 @@ export default function AdminTripPlanPage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-primary rounded-full"></span>
-                  <span>TIMS Card</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-primary rounded-full"></span>
                   <span>Communication Services</span>
                 </li>
               </ul>
