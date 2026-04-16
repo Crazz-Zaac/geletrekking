@@ -338,6 +338,7 @@ interface BackendTrek {
   tour_type?: string
   transportation?: string
   season_tag?: string
+  is_featured?: boolean
   latitude?: number
   longitude?: number
   location_name?: string
@@ -509,6 +510,7 @@ function mapTrek(trek: BackendTrek): Trek {
     offerDiscountPercent,
     originalPrice,
     discountedPrice: trek.discounted_price_usd,
+    isFeatured: trek.is_featured,
     latitude: trek.latitude,
     longitude: trek.longitude,
     locationName: trek.location_name,

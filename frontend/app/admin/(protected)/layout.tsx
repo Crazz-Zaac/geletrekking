@@ -39,17 +39,26 @@ type NavItem = {
   available: boolean
 }
 const navItems: NavItem[] = [
+  // Primary Navigation
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, available: true },
   { label: 'Destinations', href: '/admin/treks', icon: Mountain, available: true },
-  { label: 'Trip Plan', href: '/admin/trip-plan', icon: BookOpen, available: true },
+  { label: 'Activities', href: '/admin/activities', icon: Activity, available: true },
   { label: 'Blogs', href: '/admin/blogs', icon: Newspaper, available: true },
+  
+  // Media & Gallery
   { label: 'Gallery', href: '/admin/gallery', icon: ImageIcon, available: true },
+  
+  // Page Management
   { label: 'Hero', href: '/admin/hero', icon: Flame, available: true },
   { label: 'About', href: '/admin/about', icon: Info, available: true },
   { label: 'FAQ', href: '/admin/faq', icon: HelpCircle, available: true },
-  { label: 'Activities', href: '/admin/activities', icon: Activity, available: true },
+  { label: 'Trip Plan', href: '/admin/trip-plan', icon: BookOpen, available: true },
+  
+  // Community & Feedback
   { label: 'Testimonials', href: '/admin/testimonials', icon: MessageSquare, available: true },
   { label: 'Messages', href: '/admin/messages', icon: Mail, available: true },
+  
+  // Settings
   { label: 'Company', href: '/admin/company', icon: Building2, available: true },
   { label: 'Settings', href: '/admin/settings', icon: Settings, available: true },
 ]

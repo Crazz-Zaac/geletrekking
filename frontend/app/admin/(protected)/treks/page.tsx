@@ -226,9 +226,9 @@ function trekToForm(item: AdminTrek): TrekForm {
     discounted_price_gbp: item.discounted_price_gbp || 0,
     offer_valid_from: item.offer_valid_from ? item.offer_valid_from.slice(0, 10) : '',
     offer_valid_to: item.offer_valid_to ? item.offer_valid_to.slice(0, 10) : '',
-    is_optional: item.is_optional || false,
+    is_optional: item.is_optional ?? false,
     is_active: item.is_active ?? true,
-    is_featured: item.is_featured || false,
+    is_featured: item.is_featured ?? false,
   }
 }
 
@@ -584,7 +584,7 @@ export default function AdminTreksPage() {
                   </label>
                   <label className="flex items-center gap-2">
                     <input type="checkbox" checked={form.is_optional} onChange={(e) => setForm((p) => ({ ...p, is_optional: e.target.checked }))} />
-                    Optional add-on trek
+                    Add to activities
                   </label>
                   <label className="flex items-center gap-2">
                     <input type="checkbox" checked={form.is_featured} onChange={(e) => setForm((p) => ({ ...p, is_featured: e.target.checked }))} />
@@ -741,25 +741,24 @@ export default function AdminTreksPage() {
               <div className="space-y-4">
                 {form.itinerary.map((day, index) => (
                   <div key={index} className="rounded-md border border-border p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="font-semibold text-sm">Day {day.day}</p>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold text-primary shrink-0 px-3 py-2 bg-primary/10 rounded">Day {day.day}</span>
+                      <Input
+                        placeholder="e.g. Arrive Kathmandu"
+                        value={day.title}
+                        onChange={(e) => updateDay(index, 'title', e.target.value)}
+                        className="flex-1"
+                      />
                       {form.itinerary.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeDay(index)}
-                          className="text-xs text-red-500 hover:text-red-700"
+                          className="text-xs text-red-500 hover:text-red-700 shrink-0"
                         >
                           Remove
                         </button>
                       )}
                     </div>
-                    {field('Day title', (
-                      <Input
-                        placeholder="e.g. Arrive Kathmandu"
-                        value={day.title}
-                        onChange={(e) => updateDay(index, 'title', e.target.value)}
-                      />
-                    ))}
                     {field('Day description', (
                       <>
                         <TextToolbar fieldName="dayDescription" index={index} />
@@ -840,26 +839,25 @@ export default function AdminTreksPage() {
             {activeTab === 'faqs' && (
               <div className="space-y-4">
                 {form.faqs.map((faq, index) => (
-                  <div key={index} className="rounded-md border border-border p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">FAQ {index + 1}</p>
+                  <div key={index} className="rounded-md border border-border p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold text-primary shrink-0 px-3 py-2 bg-primary/10 rounded">FAQ {index + 1}</span>
+                      <Input
+                        placeholder="e.g. Do I need prior experience?"
+                        value={faq.question}
+                        onChange={(e) => updateFaq(index, 'question', e.target.value)}
+                        className="flex-1"
+                      />
                       {form.faqs.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeFaq(index)}
-                          className="text-xs text-red-500 hover:text-red-700"
+                          className="text-xs text-red-500 hover:text-red-700 shrink-0"
                         >
                           Remove
                         </button>
                       )}
                     </div>
-                    {field('Question', (
-                      <Input
-                        placeholder="e.g. Do I need prior experience?"
-                        value={faq.question}
-                        onChange={(e) => updateFaq(index, 'question', e.target.value)}
-                      />
-                    ))}
                     {field('Answer', textarea('Write the answer here', faq.answer, (v) => updateFaq(index, 'answer', v), 3))}
                   </div>
                 ))}
@@ -936,44 +934,46 @@ export default function AdminTreksPage() {
         </Card>
       )}
 
-      <Card className="border-border">
-        <CardHeader>
-          <CardTitle>All Treks</CardTitle>
-          <CardDescription>Click Edit to load a trek into the form above.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Loading treks...</p>
-          ) : items.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No treks yet.</p>
-          ) : (
-            <div className="space-y-2 max-h-[600px] overflow-auto pr-1">
-              {items.map((item) => (
-                <div key={item._id} className="rounded-md border border-border p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-sm">{item.name}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {item.duration_days || 0} days •
-                        ${item.price_usd || 0} USD •
-                        {item.difficulty || 'Moderate'} •
-                        {item.region || 'No region'} •
-                        {item.is_active ? 'Active' : 'Inactive'}
-                        {item.is_featured ? ' • Featured' : ''}
-                        {item.is_optional ? ' • Optional' : ''}
-                      </p>
-                    </div>
-                    <div className="flex gap-2 shrink-0">
-                      <Button variant="outline" size="sm" onClick={() => onEdit(item)}>Edit</Button>
-                      <Button variant="destructive" size="sm" onClick={() => onDelete(item)}>Delete</Button>
+      {!showForm && (
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle>All Treks</CardTitle>
+            <CardDescription>Click Edit to load a trek into the form above.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <p className="text-sm text-muted-foreground">Loading treks...</p>
+            ) : items.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No treks yet.</p>
+            ) : (
+              <div className="space-y-2 max-h-[600px] overflow-auto pr-1">
+                {items.map((item) => (
+                  <div key={item._id} className="rounded-md border border-border p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-sm">{item.name}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {item.duration_days || 0} days •
+                          ${item.price_usd || 0} USD •
+                          {item.difficulty || 'Moderate'} •
+                          {item.region || 'No region'} •
+                          {item.is_active ? 'Active' : 'Inactive'}
+                          {item.is_featured ? ' • Featured' : ''}
+                          {item.is_optional ? ' • Optional' : ''}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <Button variant="outline" size="sm" onClick={() => onEdit(item)}>Edit</Button>
+                        <Button variant="destructive" size="sm" onClick={() => onDelete(item)}>Delete</Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
     </div>
   )

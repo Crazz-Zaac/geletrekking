@@ -560,73 +560,75 @@ export default function AdminBlogsPage() {
       )}
 
       {/* Posts List Section */}
-      <Card className="border-border">
-        <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent border-b border-border">
-          <CardTitle>Your Blog Posts</CardTitle>
-          <CardDescription>Manage and organize your published and draft posts</CardDescription>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {loading ? (
-            <div className="text-center py-8">
-              <p className="text-sm text-muted-foreground">Loading posts...</p>
-            </div>
-          ) : items.length === 0 ? (
-            <div className="text-center py-8 bg-muted/30 rounded-lg border border-dashed border-border">
-              <p className="text-sm text-muted-foreground mb-4">No posts yet. Create one to get started!</p>
-              <Button onClick={onCreateNew} variant="outline">Create Your First Blog Post</Button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {items.map((item) => (
-                <div key={item._id} className="rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-semibold text-sm truncate">{item.title}</p>
-                        <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${
-                          item.isPublished 
-                            ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300' 
-                            : 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300'
-                        }`}>
-                          {item.isPublished ? '📢 Published' : '📝 Draft'}
-                        </span>
+      {!showForm && (
+        <Card className="border-border">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent border-b border-border">
+            <CardTitle>Your Blog Posts</CardTitle>
+            <CardDescription>Manage and organize your published and draft posts</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {loading ? (
+              <div className="text-center py-8">
+                <p className="text-sm text-muted-foreground">Loading posts...</p>
+              </div>
+            ) : items.length === 0 ? (
+              <div className="text-center py-8 bg-muted/30 rounded-lg border border-dashed border-border">
+                <p className="text-sm text-muted-foreground mb-4">No posts yet. Create one to get started!</p>
+                <Button onClick={onCreateNew} variant="outline">Create Your First Blog Post</Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {items.map((item) => (
+                  <div key={item._id} className="rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold text-sm truncate">{item.title}</p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${
+                            item.isPublished 
+                              ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300' 
+                              : 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300'
+                          }`}>
+                            {item.isPublished ? '📢 Published' : '📝 Draft'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Slug: <code className="bg-muted px-1 rounded">{item.slug}</code></p>
+                        {item.hashtags && item.hashtags.length > 0 ? (
+                          <p className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-1">
+                            {item.hashtags.map((tag, idx) => (
+                              <span key={idx} className="bg-primary/10 text-primary px-2 py-0.5 rounded">
+                                {tag}
+                              </span>
+                            ))}
+                          </p>
+                        ) : null}
                       </div>
-                      <p className="text-xs text-muted-foreground">Slug: <code className="bg-muted px-1 rounded">{item.slug}</code></p>
-                      {item.hashtags && item.hashtags.length > 0 ? (
-                        <p className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-1">
-                          {item.hashtags.map((tag, idx) => (
-                            <span key={idx} className="bg-primary/10 text-primary px-2 py-0.5 rounded">
-                              {tag}
-                            </span>
-                          ))}
-                        </p>
-                      ) : null}
-                    </div>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => onEdit(item)}
-                        className="whitespace-nowrap"
-                      >
-                        Edit
-                      </Button>
-                      <Button 
-                        variant="destructive" 
-                        size="sm" 
-                        onClick={() => onDelete(item)}
-                        className="whitespace-nowrap"
-                      >
-                        Delete
-                      </Button>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => onEdit(item)}
+                          className="whitespace-nowrap"
+                        >
+                          Edit
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => onDelete(item)}
+                          className="whitespace-nowrap"
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

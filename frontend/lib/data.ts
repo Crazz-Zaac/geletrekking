@@ -27,6 +27,7 @@ export interface Trek {
   offerDiscountPercent?: number
   originalPrice?: number
   discountedPrice?: number
+  isFeatured?: boolean
   // used to fetch live weather from Open-Meteo on the trek detail page
   latitude?: number
   longitude?: number

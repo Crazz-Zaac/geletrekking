@@ -23,7 +23,9 @@ export default async function HomePage() {
   const activeTreks = apiTreks.length > 0 ? apiTreks : treks
   const activeBlogs = apiBlogs.length > 0 ? apiBlogs : blogPosts
   const offerTreks = activeTreks.filter((trek) => trek.hasOffer).slice(0, 4)
-  const featuredTreks = activeTreks.slice(0, 4)
+  const featuredTreks = activeTreks.filter((trek) => trek.isFeatured).slice(0, 4).length > 0 
+    ? activeTreks.filter((trek) => trek.isFeatured).slice(0, 4)
+    : activeTreks.slice(0, 4)
 
   return (
     <>

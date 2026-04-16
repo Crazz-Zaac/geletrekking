@@ -111,11 +111,10 @@ export default function ActivitiesPage() {
     return Array.from(tags).sort()
   }, [activities, activeCategory])
 
-  // Top picks (activities with highest rating or featured flag)
+  // Top picks (activities marked as featured)
   const topPicks = useMemo(() => {
     return activities
-      .filter((a) => a.description && a.description.length > 0) // Filter complete activities
-      .sort((a, b) => (b.duration || '').localeCompare(a.duration || ''))
+      .filter((a) => a.isFeatured === true) // Only show featured activities
       .slice(0, 3)
   }, [activities])
 
@@ -172,53 +171,74 @@ export default function ActivitiesPage() {
                   <span className="text-xs text-muted-foreground">Highest rated by our travellers</span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                   {topPicks.map((activity) => {
                     const cat = getCategoryKey(activity)
                     const meta = categoryMeta[cat]
-                    const Icon = getActivityMenuIcon(activity)
 
                     return (
                       <Link key={activity._id} href={`/activities/${activity.slug}`}>
                         <Card
-                          className={`relative h-full border-2 border-primary/20 rounded-lg overflow-hidden hover:border-primary/50 transition-colors cursor-pointer`}
-                          style={{ borderTopColor: meta.color, borderTopWidth: '3px' }}
+                          className={`relative h-full rounded-2xl overflow-hidden hover:shadow-lg transition-shadow cursor-pointer border-0`}
                         >
-                          <div
-                            className="h-16 flex items-center justify-center text-2xl relative"
-                            style={{ backgroundColor: meta.bgColor }}
-                          >
-                            <div className="absolute top-2 left-2 inline-flex items-center gap-1 bg-blue-50 text-blue-900 text-[10px] font-semibold rounded px-2 py-1">
-                              <Star className="w-3 h-3 fill-blue-900" />
-                              Top pick
+                          {/* Image Section */}
+                          <div className="relative h-48 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden">
+                            {activity.mainImage && (
+                              <img
+                                src={activity.mainImage}
+                                alt={getActivityMenuLabel(activity)}
+                                className="w-full h-full object-cover"
+                              />
+                            )}
+
+                            {/* Category Badge */}
+                            <div className="absolute top-3 right-3">
+                              <span className="inline-flex items-center bg-white text-gray-700 text-xs font-bold uppercase px-3 py-1 rounded-full shadow-sm">
+                                {meta.label}
+                              </span>
                             </div>
-                            <Icon className="w-7 h-7" />
-                          </div>
 
-                          <div className="p-3">
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">
-                              {meta.label}
-                            </p>
-                            <p className="text-sm font-semibold text-foreground mb-2 line-clamp-2">
-                              {getActivityMenuLabel(activity)}
-                            </p>
-
+                            {/* Tags Overlay at Bottom */}
                             {activity.tags && activity.tags.length > 0 && (
-                              <div className="flex gap-1 mb-3 flex-wrap">
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3 flex gap-2 flex-wrap">
                                 {activity.tags.slice(0, 3).map((tag) => (
-                                  <span key={tag} className="text-[10px] border border-border rounded-full px-2 py-0.5 text-muted-foreground">
-                                    #{tag}
+                                  <span key={tag} className="text-xs bg-white/20 text-white rounded-full px-2.5 py-1 font-medium backdrop-blur-sm">
+                                    {tag}
                                   </span>
                                 ))}
                               </div>
                             )}
                           </div>
 
-                          <div className="border-t border-border bg-muted/40 px-3 py-2 flex justify-between items-center text-xs">
-                            <span className="font-semibold text-foreground">
-                              {activity.duration || 'Custom'}
-                            </span>
-                            <span className="text-muted-foreground">{activity.category || 'Trek'}</span>
+                          {/* Content Section */}
+                          <div className="p-4">
+                            <p className="text-sm font-bold text-foreground mb-2 line-clamp-2">
+                              {getActivityMenuLabel(activity)}
+                            </p>
+
+                            {/* Description */}
+                            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                              {activity.description || activity.shortDescription || 'No description available'}
+                            </p>
+
+                            {/* Duration and Location */}
+                            <div className="flex gap-4 text-xs text-muted-foreground mb-3">
+                              <span className="flex items-center gap-1">
+                                📅 {activity.duration || 'Custom'}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                📍 {activity.category || 'Trek'}
+                              </span>
+                            </div>
+
+                            {/* Arrow Button */}
+                            <div className="flex justify-end">
+                              <div className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600">
+                                  <path d="m9 6 6 6-6 6"></path>
+                                </svg>
+                              </div>
+                            </div>
                           </div>
                         </Card>
                       </Link>
@@ -298,59 +318,74 @@ export default function ActivitiesPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredActivities.map((activity) => {
                   const cat = getCategoryKey(activity)
                   const meta = categoryMeta[cat]
-                  const Icon = getActivityMenuIcon(activity)
 
                   return (
                     <Link key={activity._id} href={`/activities/${activity.slug}`}>
                       <Card
-                        className="relative h-full border border-border rounded-lg overflow-hidden hover:border-border/80 transition-colors cursor-pointer"
-                        style={{ borderTopColor: meta.color, borderTopWidth: '3px' }}
+                        className="relative h-full rounded-2xl overflow-hidden hover:shadow-lg transition-shadow cursor-pointer border-0"
                       >
-                        <div
-                          className="h-16 flex items-center justify-center text-2xl"
-                          style={{ backgroundColor: meta.bgColor }}
-                        >
-                          <Icon className="w-6 h-6" />
-                        </div>
+                        {/* Image Section */}
+                        <div className="relative h-48 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden">
+                          {activity.mainImage && (
+                            <img
+                              src={activity.mainImage}
+                              alt={getActivityMenuLabel(activity)}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
 
-                        <div className="p-3">
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">
-                            {meta.label}
-                          </p>
-                          <p className="text-sm font-semibold text-foreground mb-2 line-clamp-2">
-                            {getActivityMenuLabel(activity)}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground line-clamp-2 mb-3">
-                            {activity.shortDescription || activity.description}
-                          </p>
+                          {/* Category Badge */}
+                          <div className="absolute top-3 right-3">
+                            <span className="inline-flex items-center bg-white text-gray-700 text-xs font-bold uppercase px-3 py-1 rounded-full shadow-sm">
+                              {meta.label}
+                            </span>
+                          </div>
 
+                          {/* Tags Overlay at Bottom */}
                           {activity.tags && activity.tags.length > 0 && (
-                            <div className="flex gap-1 mb-3 flex-wrap">
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3 flex gap-2 flex-wrap">
                               {activity.tags.slice(0, 3).map((tag) => (
-                                <span
-                                  key={tag}
-                                  className={`text-[10px] border rounded-full px-2 py-0.5 ${
-                                    activeTags.has(tag)
-                                      ? 'bg-amber-100 text-amber-900 border-amber-200'
-                                      : 'border-border text-muted-foreground'
-                                  }`}
-                                >
-                                  #{tag}
+                                <span key={tag} className="text-xs bg-white/20 text-white rounded-full px-2.5 py-1 font-medium backdrop-blur-sm">
+                                  {tag}
                                 </span>
                               ))}
                             </div>
                           )}
                         </div>
 
-                        <div className="border-t border-border bg-muted/40 px-3 py-2 flex justify-between items-center text-xs">
-                          <span className="font-semibold text-foreground">
-                            {activity.duration || 'Custom'}
-                          </span>
-                          <span className="text-muted-foreground">{activity.category || 'Trek'}</span>
+                        {/* Content Section */}
+                        <div className="p-4">
+                          <p className="text-sm font-bold text-foreground mb-2 line-clamp-2">
+                            {getActivityMenuLabel(activity)}
+                          </p>
+
+                          {/* Description */}
+                          <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                            {activity.description || activity.shortDescription || 'No description available'}
+                          </p>
+
+                          {/* Duration and Location */}
+                          <div className="flex gap-4 text-xs text-muted-foreground mb-3">
+                            <span className="flex items-center gap-1">
+                              📅 {activity.duration || 'Custom'}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              📍 {activity.category || 'Trek'}
+                            </span>
+                          </div>
+
+                          {/* Arrow Button */}
+                          <div className="flex justify-end">
+                            <div className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600">
+                                <path d="m9 6 6 6-6 6"></path>
+                              </svg>
+                            </div>
+                          </div>
                         </div>
                       </Card>
                     </Link>
