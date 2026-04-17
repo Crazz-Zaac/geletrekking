@@ -17,3 +17,6 @@ docker
 .dockerignore
 dist
 build
+npm-debug.log*
+trekking_full_schema.sql
+.idea
