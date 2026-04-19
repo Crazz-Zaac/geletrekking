@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { MapPin, ChevronDown, ChevronUp } from 'lucide-react'
 import type { Trek } from '@/lib/data'
 import { submitContactMessage } from '@/lib/api'
+import { TurnstileWidget } from '@/components/turnstile-widget'
 
 interface BookingFormProps {
   trek?: Trek
@@ -14,6 +15,16 @@ export function BookingForm({ trek }: BookingFormProps) {
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [honeypot, setHoneypot] = useState('')
+  const [formStartedAt, setFormStartedAt] = useState<number>(() => Date.now())
+  const [captchaToken, setCaptchaToken] = useState('')
+  const [turnstileRenderKey, setTurnstileRenderKey] = useState(0)
+  const rawTurnstileSiteKey = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '').trim()
+  const hasPlaceholderTurnstileKey = /your_turnstile_site_key|your-site-key|changeme|placeholder/i.test(
+    rawTurnstileSiteKey
+  )
+  const turnstileSiteKey = hasPlaceholderTurnstileKey ? '' : rawTurnstileSiteKey
+  const requiresCaptcha = Boolean(turnstileSiteKey)
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -23,9 +34,22 @@ export function BookingForm({ trek }: BookingFormProps) {
     groupSize: '',
     message: '',
   })
+  const isFormReady = Boolean(form.name.trim()) && Boolean(form.email.trim())
+  const isCaptchaReady = !requiresCaptcha || Boolean(captchaToken)
+  const canSubmit = !submitting && isFormReady && isCaptchaReady
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isFormReady) {
+      setError('Please complete all required fields before submitting.')
+      return
+    }
+
+    if (requiresCaptcha && !captchaToken) {
+      setError('Please complete captcha verification before submitting.')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
 
@@ -41,16 +65,27 @@ export function BookingForm({ trek }: BookingFormProps) {
       ]
         .filter(Boolean)
         .join('\n'),
+      website: honeypot,
+      formStartedAt,
+      captchaToken,
     })
 
     setSubmitting(false)
 
     if (!result.success) {
       setError(result.message)
+      if (result.message.toLowerCase().includes('captcha')) {
+        setCaptchaToken('')
+        setTurnstileRenderKey((value) => value + 1)
+      }
       return
     }
 
     setSubmitted(true)
+    setHoneypot('')
+    setFormStartedAt(Date.now())
+    setCaptchaToken('')
+    setTurnstileRenderKey((value) => value + 1)
   }
 
   if (submitted) {
@@ -156,13 +191,61 @@ export function BookingForm({ trek }: BookingFormProps) {
           className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm resize-none"
         />
       </div>
+      <input
+        type="text"
+        name="website"
+        value={honeypot}
+        onChange={(e) => setHoneypot(e.target.value)}
+        autoComplete="off"
+        tabIndex={-1}
+        className="hidden"
+        aria-hidden="true"
+      />
+      {requiresCaptcha ? (
+        <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-sm font-semibold text-foreground">Security verification</p>
+            <span
+              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                isCaptchaReady
+                  ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                  : 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
+              }`}
+            >
+              {isCaptchaReady ? 'Verified' : 'Required'}
+            </span>
+          </div>
+          <TurnstileWidget
+            key={turnstileRenderKey}
+            siteKey={turnstileSiteKey}
+            onVerify={(token) => {
+              setCaptchaToken(token)
+              setError(null)
+            }}
+            onExpire={() => setCaptchaToken('')}
+            onError={() => setCaptchaToken('')}
+          />
+          <p className="text-xs text-muted-foreground" aria-live="polite">
+            {isCaptchaReady
+              ? 'Verification complete. You can send your inquiry now.'
+              : 'Complete the captcha to enable the send button.'}
+          </p>
+        </div>
+      ) : (
+        <p className="text-sm text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
+          {hasPlaceholderTurnstileKey
+            ? 'Captcha key is a placeholder. Set a real `NEXT_PUBLIC_TURNSTILE_SITE_KEY` to show verification.'
+            : 'Captcha is not configured in this environment.'}
+        </p>
+      )}
       <button
         type="submit"
-        disabled={submitting}
+        disabled={!canSubmit}
         className="w-full bg-primary text-primary-foreground font-semibold py-3 rounded-lg hover:bg-primary/90 transition-colors"
       >
         {submitting ? 'Sending...' : 'Send Inquiry'}
       </button>
+      {!isFormReady ? <p className="text-xs text-muted-foreground">Fill required fields to enable submission.</p> : null}
       <p className="text-xs text-muted-foreground text-center">
         We typically reply within 24 hours. Or{' '}
         <a href="https://wa.me/9779851234567" target="_blank" rel="noopener noreferrer" className="text-primary underline">

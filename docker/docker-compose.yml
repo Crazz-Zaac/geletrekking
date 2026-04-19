@@ -31,6 +31,17 @@ services:
       - ../backend/.env
     depends_on:
       - mongo
+      - redis
+    restart: unless-stopped
+    networks:
+      - geletrekking-network
+
+  # Redis - Risk profile and anti-abuse state store
+  redis:
+    image: redis:7-alpine
+    container_name: geletrekking-redis
+    ports:
+      - "6379:6379"
     restart: unless-stopped
     networks:
       - geletrekking-network

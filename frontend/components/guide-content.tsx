@@ -42,12 +42,18 @@ export default function GuideContent({ html }: GuideContentProps) {
 
       // Add inline styles based on heading level
       const styles = {
-        2: 'style="font-size: 1.5rem; font-weight: 700; margin-top: 2rem; margin-bottom: 1rem; color: inherit;"',
-        3: 'style="font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: inherit;"',
-        4: 'style="font-size: 1.125rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: inherit;"',
+        2: 'style="font-size: 1.625rem; font-weight: 700; margin-top: 2.25rem; margin-bottom: 1rem; color: inherit; line-height: 1.3;"',
+        3: 'style="font-size: 1.25rem; font-weight: 700; margin-top: 1.75rem; margin-bottom: 0.75rem; color: inherit; line-height: 1.4;"',
+        4: 'style="font-size: 1.0625rem; font-weight: 700; margin-top: 1.25rem; margin-bottom: 0.5rem; color: inherit; line-height: 1.4;"',
       }
 
       return `<h${level} id="${id}" ${styles[level as keyof typeof styles]}>${content}</h${level}>`
+    })
+
+    enhanced = enhanced.replace(/<h([2-4])([^>]*)style="([^"]*)"([^>]*)>/, (match, level, beforeStyle, styleValue, afterStyle) => {
+      const normalized = styleValue.replace(/margin-top:\s*[^;]+;?/i, '').trim()
+      const nextStyle = `margin-top: 0.125rem; ${normalized}`.trim()
+      return `<h${level}${beforeStyle}style="${nextStyle}"${afterStyle}>`
     })
 
     // Bold headings in content that appear in the text
@@ -85,25 +91,37 @@ export default function GuideContent({ html }: GuideContentProps) {
         if (items.length === 0) return match
 
         return (
-          '<ul style="list-style-type: disc; margin-left: 1.5rem; line-height: 1.75; margin-top: 0.5rem; margin-bottom: 0.5rem;">' +
-          items.map((item: string) => `<li style="margin-bottom: 0.5rem; color: inherit;">${item}</li>`).join('') +
+          '<ul style="list-style-type: disc; margin-left: 1.5rem; line-height: 1.8; margin-top: 0.75rem; margin-bottom: 1rem; padding-left: 0.5rem;">' +
+          items.map((item: string) => `<li style="margin-bottom: 0.5rem; color: inherit; padding-left: 0.125rem;">${item}</li>`).join('') +
           '</ul>'
         )
       }
     )
 
     // Style existing ul/li elements (created by marked from markdown lists)
-    enhanced = enhanced.replace(/<ul>/g, '<ul style="list-style-type: disc; margin-left: 1.5rem; line-height: 1.75; margin-top: 0.5rem; margin-bottom: 0.5rem;">')
-    enhanced = enhanced.replace(/<li>/g, '<li style="margin-bottom: 0.5rem; color: inherit;">')
+    enhanced = enhanced.replace(/<ul>/g, '<ul style="list-style-type: disc; margin-left: 1.5rem; line-height: 1.8; margin-top: 0.75rem; margin-bottom: 1rem; padding-left: 0.5rem;">')
+    enhanced = enhanced.replace(/<ol>/g, '<ol style="list-style-type: decimal; margin-left: 1.5rem; line-height: 1.8; margin-top: 0.75rem; margin-bottom: 1rem; padding-left: 0.5rem;">')
+    enhanced = enhanced.replace(/<li>/g, '<li style="margin-bottom: 0.5rem; color: inherit; padding-left: 0.125rem;">')
 
     // Style paragraphs
-    enhanced = enhanced.replace(/<p>/g, '<p style="line-height: 1.75; margin-bottom: 1rem; color: inherit;">')
+    enhanced = enhanced.replace(/<p>/g, '<p style="line-height: 1.85; margin-bottom: 1.05rem; color: inherit; font-size: 1rem;">')
+
+    // Style common inline text elements
+    enhanced = enhanced.replace(/<strong>/g, '<strong style="font-weight: 700; color: inherit;">')
+    enhanced = enhanced.replace(/<em>/g, '<em style="font-style: italic; color: inherit;">')
+    enhanced = enhanced.replace(/<a /g, '<a style="color: rgb(34, 197, 94); text-decoration: underline; text-underline-offset: 2px;" ')
+    enhanced = enhanced.replace(/<code>/g, '<code style="background: rgba(148, 163, 184, 0.18); border-radius: 0.375rem; padding: 0.12rem 0.35rem; font-size: 0.875rem;">')
+    enhanced = enhanced.replace(/<pre>/g, '<pre style="background: rgba(148, 163, 184, 0.16); border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 0.65rem; padding: 0.95rem; overflow-x: auto; margin: 1rem 0;">')
+
+    // Style blockquotes and separators
+    enhanced = enhanced.replace(/<blockquote>/g, '<blockquote style="margin: 1.25rem 0; padding: 0.75rem 1rem; border-left: 4px solid rgb(34, 197, 94); background: rgba(34, 197, 94, 0.06); border-radius: 0.375rem;">')
+    enhanced = enhanced.replace(/<hr\s*\/?>/g, '<hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid rgba(148, 163, 184, 0.35);" />')
 
     // Style tables
-    enhanced = enhanced.replace(/<table>/g, '<table style="width: 100%; border-collapse: collapse; margin: 1.5rem 0; border: 1px solid rgb(229, 231, 235);">')
-    enhanced = enhanced.replace(/<thead>/g, '<thead style="background-color: rgb(249, 250, 251);">')
-    enhanced = enhanced.replace(/<th>/g, '<th style="border: 1px solid rgb(229, 231, 235); padding: 0.75rem; text-align: left; font-weight: 600; color: inherit;">')
-    enhanced = enhanced.replace(/<td>/g, '<td style="border: 1px solid rgb(229, 231, 235); padding: 0.75rem; color: inherit;">')
+    enhanced = enhanced.replace(/<table>/g, '<table style="width: 100%; border-collapse: collapse; margin: 1.5rem 0; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 0.5rem; overflow: hidden; display: block; overflow-x: auto;">')
+    enhanced = enhanced.replace(/<thead>/g, '<thead style="background-color: rgba(148, 163, 184, 0.12);">')
+    enhanced = enhanced.replace(/<th>/g, '<th style="border: 1px solid rgba(148, 163, 184, 0.35); padding: 0.75rem; text-align: left; font-weight: 700; color: inherit; white-space: nowrap;">')
+    enhanced = enhanced.replace(/<td>/g, '<td style="border: 1px solid rgba(148, 163, 184, 0.35); padding: 0.7rem; color: inherit; vertical-align: top;">')
     enhanced = enhanced.replace(/<tbody>/g, '<tbody>')
 
     return enhanced

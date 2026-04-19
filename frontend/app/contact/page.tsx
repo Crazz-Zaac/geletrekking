@@ -7,9 +7,10 @@ import { Footer } from '@/components/footer';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Mail, Phone, MapPin, Clock3, MessageCircle, ShieldCheck } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock3, MessageCircle, ShieldCheck, Loader2 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/whatsapp-icon';
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons';
+import { TurnstileWidget } from '@/components/turnstile-widget';
 import { submitContactMessage } from '@/lib/api';
 import { useSiteSettings } from '@/hooks/use-site-settings';
 
@@ -95,6 +96,19 @@ export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const [formStartedAt, setFormStartedAt] = useState<number>(() => Date.now());
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [turnstileRenderKey, setTurnstileRenderKey] = useState(0);
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
+  const requiresCaptcha = Boolean(turnstileSiteKey);
+  const isFormReady =
+    Boolean(formData.name.trim()) &&
+    Boolean(formData.email.trim()) &&
+    Boolean(formData.subject.trim()) &&
+    Boolean(formData.message.trim());
+  const isCaptchaReady = !requiresCaptcha || Boolean(captchaToken);
+  const canSubmit = !submitting && isFormReady && isCaptchaReady;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -105,6 +119,16 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isFormReady) {
+      setSubmitError('Please complete all required fields before submitting.');
+      return;
+    }
+
+    if (requiresCaptcha && !captchaToken) {
+      setSubmitError('Please complete captcha verification before submitting.');
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError('');
 
@@ -119,17 +143,28 @@ export default function ContactPage() {
       ]
         .filter(Boolean)
         .join('\n'),
+      website: honeypot,
+      formStartedAt,
+      captchaToken,
     });
 
     setSubmitting(false);
 
     if (!result.success) {
       setSubmitError(result.message);
+      if (result.message.toLowerCase().includes('captcha')) {
+        setCaptchaToken('');
+        setTurnstileRenderKey((value) => value + 1);
+      }
       return;
     }
 
     setSubmitted(true);
     setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+    setHoneypot('');
+    setFormStartedAt(Date.now());
+    setCaptchaToken('');
+    setTurnstileRenderKey((value) => value + 1);
     setTimeout(() => {
       setSubmitted(false);
     }, 3000);
@@ -294,13 +329,70 @@ export default function ContactPage() {
                       />
                     </div>
 
+                    <input
+                      type="text"
+                      name="website"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                      autoComplete="off"
+                      tabIndex={-1}
+                      className="hidden"
+                      aria-hidden="true"
+                    />
+
+                    {requiresCaptcha ? (
+                      <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="text-sm font-semibold text-foreground">Security verification</p>
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              isCaptchaReady
+                                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                                : 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                            }`}
+                          >
+                            {isCaptchaReady ? 'Verified' : 'Required'}
+                          </span>
+                        </div>
+                        <TurnstileWidget
+                          key={turnstileRenderKey}
+                          siteKey={turnstileSiteKey}
+                          onVerify={(token) => {
+                            setCaptchaToken(token);
+                            setSubmitError('');
+                          }}
+                          onExpire={() => setCaptchaToken('')}
+                          onError={() => setCaptchaToken('')}
+                        />
+                        <p className="text-xs text-muted-foreground" aria-live="polite">
+                          {isCaptchaReady
+                            ? 'Verification complete. You can send your inquiry now.'
+                            : 'Complete the captcha to enable the send button.'}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
+                        Captcha is not configured in this environment. Submission remains available.
+                      </p>
+                    )}
+
                     <Button
                       type="submit"
-                      disabled={submitting}
+                      disabled={!canSubmit}
                       className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white h-11 px-8"
                     >
-                      {submitting ? 'Sending...' : 'Send Inquiry'}
+                      {submitting ? (
+                        <span className="inline-flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                          Sending...
+                        </span>
+                      ) : (
+                        'Send Inquiry'
+                      )}
                     </Button>
+                    {!isFormReady && (
+                      <p className="text-xs text-muted-foreground">Fill all required fields to enable submission.</p>
+                    )}
                   </form>
                 </Card>
 

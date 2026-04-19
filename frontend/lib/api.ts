@@ -346,6 +346,26 @@ export interface AdminAnalyticsResponse {
   regions: AdminAnalyticsRegion[]
   contentMix: AdminAnalyticsContentMixItem[]
 }
+export interface AdminRiskHealthRedis {
+  enabled: boolean
+  connected: boolean
+  reachable: boolean
+  urlConfigured: boolean
+  host: string
+  port: number
+  lastError: string | null
+  lastErrorAt: string | null
+  lastConnectedAt: string | null
+}
+export interface AdminRiskHealthResponse {
+  message: string
+  mode: 'redis' | 'memory-fallback'
+  redis: AdminRiskHealthRedis
+  memoryProfiles: {
+    ip: number
+    device: number
+  }
+}
 interface BackendTrek {
   _id: string
   name: string
@@ -392,6 +412,7 @@ interface BackendTrek {
   is_optional?: boolean
   tour_type?: string
   transportation?: string
+  itinerary_pdf_url?: string
   season_tag?: string
   is_featured?: boolean
   latitude?: number
@@ -446,7 +467,14 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
     cache: 'no-store',
   })
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status} ${response.statusText}`)
+    let message = `Request failed: ${response.status} ${response.statusText}`
+    try {
+      const data = (await response.json()) as { message?: string; error?: string }
+      message = data?.message || data?.error || message
+    } catch {
+      // Ignore JSON parsing errors and keep default message
+    }
+    throw new Error(message)
   }
   return response.json() as Promise<T>
 }
@@ -572,6 +600,7 @@ function mapTrek(trek: BackendTrek): Trek {
         ? trek.gallery_images
         : [trek.image_url || '/images/hero-himalaya.jpg'],
     mapEmbed: trek.trek_map_embed_url,
+    itineraryPdfUrl: trek.itinerary_pdf_url,
     hasOffer,
     offerType: trek.offer_type || trek.offer_title,
     offerDescription: trek.offer_description,
@@ -652,7 +681,14 @@ export async function getGoogleReviews(): Promise<UiGoogleReview[]> {
     return []
   }
 }
-export async function submitContactMessage(payload: { name: string; email: string; message: string }): Promise<{ success: boolean; message: string }> {
+export async function submitContactMessage(payload: {
+  name: string
+  email: string
+  message: string
+  website?: string
+  formStartedAt?: number
+  captchaToken?: string
+}): Promise<{ success: boolean; message: string }> {
   try {
     const response = await fetchJson<{ message?: string }>('/api/contact', {
       method: 'POST',
@@ -662,10 +698,11 @@ export async function submitContactMessage(payload: { name: string; email: strin
       success: true,
       message: response.message || 'Thank you for contacting us!',
     }
-  } catch {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unable to send message right now. Please try again shortly.'
     return {
       success: false,
-      message: 'Unable to send message right now. Please try again shortly.',
+      message,
     }
   }
 }
@@ -805,6 +842,9 @@ export async function deleteAdminMessage(token: string, id: string): Promise<voi
 }
 export async function getAdminAnalytics(token: string): Promise<AdminAnalyticsResponse> {
   return fetchAdminJson<AdminAnalyticsResponse>('/api/admin/analytics', token)
+}
+export async function getAdminRiskHealth(token: string): Promise<AdminRiskHealthResponse> {
+  return fetchAdminJson<AdminRiskHealthResponse>('/api/security/risk-health', token)
 }
 export async function getAdminSettings(): Promise<AdminSiteSettings> {
   return fetchJson<AdminSiteSettings>('/api/settings')

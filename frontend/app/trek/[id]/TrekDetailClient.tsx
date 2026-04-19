@@ -23,6 +23,10 @@ import {
   MapPin,
   Mountain,
   Download,
+  FileText,
+  Sparkles,
+  Timer,
+  ArrowRight,
   ShieldCheck,
   TrendingUp,
   Users,
@@ -57,6 +61,7 @@ export default function TrekDetailClient({
   trek,
 }: TrekDetailClientProps) {
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
+  const [downloadingItinerary, setDownloadingItinerary] = useState(false);
   const weather = useTrekWeather(trek?.latitude, trek?.longitude)
   const fallbackFaqs = getTrekFAQBySlug(trek.slug)?.faqs || []
   const trekFaqs = trek.faqs && trek.faqs.length > 0 ? trek.faqs : fallbackFaqs
@@ -72,49 +77,85 @@ export default function TrekDetailClient({
     { label: 'Group Size', value: trek.groupSize, icon: Users },
   ];
 
-  const handleDownloadItinerary = () => {
-    const itineraryContent = [
-      `${trek.title} - Detailed Itinerary`,
-      '',
-      `Region: ${trek.region}`,
-      `Duration: ${trek.duration} days`,
-      `Difficulty: ${trek.difficulty}`,
-      `Max Altitude: ${trek.maxAltitude}m`,
-      `Best Season: ${trek.bestSeason}`,
-      '',
-      'Day-by-Day Plan',
-      '----------------',
-      ...trek.itinerary.map((day) => {
-        const details = [
-          `Day ${day.day}: ${day.title}`,
-          `Description: ${day.description}`,
-          `Altitude: ${day.altitude ? `${day.altitude}m` : 'N/A'}`,
-          `Distance: ${day.distance ?? 'N/A'}`,
-          `Accommodation: ${day.accommodation}`,
-        ];
+  const scrollToBooking = () => {
+    const node = document.getElementById('booking-inquiry-section')
+    if (!node) return
+    node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
-        return details.join('\n');
-      }),
-      '',
-      'Cost Includes',
-      '-------------',
-      ...trek.includes.map((item) => `- ${item}`),
-      '',
-      'Cost Excludes',
-      '-------------',
-      ...trek.excludes.map((item) => `- ${item}`),
-    ].join('\n\n');
+  const scrollToSection = (sectionId: string) => {
+    const node = document.getElementById(sectionId)
+    if (!node) return
+    node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
-    const file = new Blob([itineraryContent], { type: 'text/plain;charset=utf-8' });
-    const fileUrl = URL.createObjectURL(file);
+  const handleDownloadItinerary = async () => {
+    if (downloadingItinerary) return
 
-    const anchor = document.createElement('a');
-    anchor.href = fileUrl;
-    anchor.download = `${trek.slug}-itinerary.txt`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(fileUrl);
+    if (trek.itineraryPdfUrl) {
+      window.open(trek.itineraryPdfUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+
+    setDownloadingItinerary(true)
+
+    try {
+      const { jsPDF } = await import('jspdf')
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4' })
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      const margin = 14
+      const maxWidth = pageWidth - margin * 2
+      let cursorY = margin
+
+      const ensureSpace = (needed = 8) => {
+        if (cursorY + needed <= pageHeight - margin) return
+        pdf.addPage()
+        cursorY = margin
+      }
+
+      const addHeading = (text: string, size = 16) => {
+        ensureSpace(10)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(size)
+        pdf.text(text, margin, cursorY)
+        cursorY += 7
+      }
+
+      const addBody = (text: string, size = 11) => {
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(size)
+        const lines = pdf.splitTextToSize(text, maxWidth)
+        lines.forEach((line: string) => {
+          ensureSpace(6)
+          pdf.text(line, margin, cursorY)
+          cursorY += 5
+        })
+      }
+
+      addHeading(`${trek.title} Itinerary`, 18)
+      addBody(`${trek.region} • ${trek.duration} days • ${trek.difficulty} • Max altitude ${trek.maxAltitude}m`)
+      addBody(`Best season: ${trek.bestSeason}`)
+      cursorY += 2
+
+      addHeading('Day-by-Day Plan', 14)
+      trek.itinerary.forEach((day) => {
+        addHeading(`Day ${day.day}: ${day.title}`, 12)
+        addBody(day.description)
+        addBody(`Altitude: ${day.altitude ? `${day.altitude}m` : 'N/A'} | Distance: ${day.distance ?? 'N/A'} | Stay: ${day.accommodation}`)
+        cursorY += 1
+      })
+
+      addHeading('Cost Includes', 14)
+      trek.includes.forEach((item) => addBody(`• ${item}`))
+
+      addHeading('Cost Excludes', 14)
+      trek.excludes.forEach((item) => addBody(`• ${item}`))
+
+      pdf.save(`${trek.slug}-itinerary.pdf`)
+    } finally {
+      setDownloadingItinerary(false)
+    }
   };
 
   return (
@@ -152,8 +193,33 @@ export default function TrekDetailClient({
         </div>
       </motion.section>
 
+      <section className="relative z-10 border-b border-border bg-gradient-to-r from-primary/10 via-background to-accent/10">
+        <div className="container mx-auto px-4 md:px-6 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Card className="p-3 border-border bg-background/80">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Conversion Booster</p>
+              <p className="mt-1 text-sm font-medium text-foreground inline-flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-primary" /> Free expert itinerary consultation</p>
+            </Card>
+            <Card className="p-3 border-border bg-background/80">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Decision Confidence</p>
+              <p className="mt-1 text-sm font-medium text-foreground inline-flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-primary" /> Licensed local team + safety-first planning</p>
+            </Card>
+            <Card className="p-3 border-border bg-background/80">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Speed to Lead</p>
+              <p className="mt-1 text-sm font-medium text-foreground inline-flex items-center gap-1.5"><Timer className="w-4 h-4 text-primary" /> Replies within 24 hours</p>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       <section className="relative z-10 border-b border-border bg-muted/30">
         <div className="container mx-auto px-4 md:px-6 py-8">
+          <div className="flex flex-wrap gap-2 mb-5">
+            <Button variant="outline" size="sm" onClick={() => scrollToSection('trek-overview')}>Overview</Button>
+            <Button variant="outline" size="sm" onClick={() => scrollToSection('trek-itinerary')}>Itinerary</Button>
+            <Button variant="outline" size="sm" onClick={() => scrollToSection('trek-faq')}>FAQ</Button>
+            <Button variant="outline" size="sm" onClick={scrollToBooking} className="text-primary border-primary/30">Book This Trek</Button>
+          </div>
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">Key Trek Information</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             {keyTrekInformation.map((info) => {
@@ -181,7 +247,7 @@ export default function TrekDetailClient({
             className="grid grid-cols-1 lg:grid-cols-3 gap-8"
           >
             <motion.div variants={itemVariants} className="lg:col-span-2 space-y-8">
-              <motion.div variants={itemVariants} className="space-y-4">
+              <motion.div id="trek-overview" variants={itemVariants} className="space-y-4 scroll-mt-24">
                 <h2 className="text-3xl font-bold text-foreground">About this trek</h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">{trek.fullDescription}</p>
               </motion.div>
@@ -198,17 +264,18 @@ export default function TrekDetailClient({
                 </ul>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="space-y-5">
+              <motion.div id="trek-itinerary" variants={itemVariants} className="space-y-5 scroll-mt-24">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <h2 className="text-3xl font-bold text-foreground">Itinerary Timeline</h2>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleDownloadItinerary}
+                    disabled={downloadingItinerary}
                     className="border-primary/30 text-primary hover:bg-primary/10 w-full sm:w-auto"
                   >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Itinerary
+                    <FileText className="w-4 h-4 mr-2" />
+                    {downloadingItinerary ? 'Preparing PDF...' : 'Download Itinerary (PDF)'}
                   </Button>
                 </div>
                 <div className="relative border-l border-border ml-3 space-y-5">
@@ -326,7 +393,7 @@ export default function TrekDetailClient({
                 </div>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="space-y-4">
+              <motion.div id="trek-faq" variants={itemVariants} className="space-y-4 scroll-mt-24">
                 <h2 className="text-3xl font-bold text-foreground">FAQ</h2>
                 {trekFaqs.length > 0 ? (
                   <FAQAccordion faqs={trekFaqs} />
@@ -339,7 +406,7 @@ export default function TrekDetailClient({
                 )}
               </motion.div>
 
-              <motion.div variants={itemVariants} className="space-y-4">
+              <motion.div id="booking-inquiry-section" variants={itemVariants} className="space-y-4 scroll-mt-24">
                 <h2 className="text-3xl font-bold text-foreground">Booking Inquiry Form</h2>
                 <Card className="border-border p-6 md:p-8">
                   <BookingForm trek={trek} />
@@ -357,17 +424,33 @@ export default function TrekDetailClient({
             </motion.div>
 
             <motion.aside variants={itemVariants} className="space-y-6 h-fit sticky top-20">
-              <Card className="border-border p-6 md:p-8 bg-gradient-to-br from-primary/5 to-accent/5">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Price of the Trek</p>
-                  <p className="text-4xl font-bold text-primary">${trek.price.toLocaleString()}</p>
-                  <p className="text-sm text-muted-foreground">Per person • Custom private departures available</p>
+              <Card className="border-border p-5 md:p-6 bg-gradient-to-br from-primary/5 to-accent/5">
+                <div className="space-y-1.5">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Price of the Trek</p>
+                  {trek.originalPrice && trek.originalPrice > trek.price ? (
+                    <p className="text-xs text-muted-foreground line-through">${trek.originalPrice.toLocaleString()}</p>
+                  ) : null}
+                  <p className="text-3xl md:text-[32px] font-bold text-primary leading-none">${trek.price.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Per person • Custom private departures available</p>
+                  {trek.offerDiscountPercent ? (
+                    <Badge className="bg-emerald-600 text-white text-[11px] px-2 py-0.5">Save {trek.offerDiscountPercent}% today</Badge>
+                  ) : null}
                 </div>
-                <div className="mt-5 grid grid-cols-2 gap-3 text-sm text-muted-foreground">
+                <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                   <div className="flex items-center gap-2"><CalendarRange className="w-4 h-4 text-primary" /> {trek.duration} days</div>
                   <div className="flex items-center gap-2"><Mountain className="w-4 h-4 text-primary" /> {trek.maxAltitude}m</div>
                   <div className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> {trek.groupSize}</div>
                   <div className="flex items-center gap-2"><CircleDollarSign className="w-4 h-4 text-primary" /> Flexible quote</div>
+                </div>
+                <div className="mt-4 space-y-2">
+                  <Button className="w-full" onClick={scrollToBooking}>
+                    Start Booking Inquiry
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={handleDownloadItinerary} disabled={downloadingItinerary}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF Itinerary
+                  </Button>
                 </div>
               </Card>
 
@@ -420,6 +503,16 @@ export default function TrekDetailClient({
           </motion.div>
         </div>
       </section>
+
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur md:hidden">
+        <div className="container mx-auto px-4 py-3 grid grid-cols-2 gap-2">
+          <Button className="w-full" onClick={scrollToBooking}>Book This Trek</Button>
+          <Button variant="outline" className="w-full" onClick={handleDownloadItinerary} disabled={downloadingItinerary}>
+            <Download className="w-4 h-4 mr-2" />
+            Itinerary PDF
+          </Button>
+        </div>
+      </div>
     </main>
   );
 }

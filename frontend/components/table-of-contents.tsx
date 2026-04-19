@@ -41,24 +41,27 @@ export function TableOfContents({ headings }: TableOfContentsProps) {
 
   return (
     <nav className="space-y-2">
-      <h3 className="font-semibold text-sm uppercase tracking-wider text-foreground mb-4">
-        In this guide
+      <h3 className="text-sm font-semibold text-slate-900 mb-3">
+        Quick Navigation
       </h3>
-      <ul className="space-y-1 text-sm">
-        {headings.map((heading) => (
+      <ul className="space-y-1.5 text-sm">
+        {headings.map((heading, index) => (
           <li key={heading.id}>
             <button
               onClick={() => handleClick(heading.id)}
-              className={`block text-left w-full px-3 py-1.5 rounded transition-colors ${
+              className={`group flex items-center gap-2 w-full text-left rounded-md px-2 py-1.5 transition-colors ${
                 activeId === heading.id
-                  ? 'bg-green-100 dark:bg-green-950/40 text-green-900 dark:text-green-100 font-medium'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  ? 'bg-white text-blue-700'
+                  : 'text-slate-600 hover:bg-white hover:text-blue-700'
               }`}
               style={{
-                paddingLeft: `${12 + (heading.level - 2) * 12}px`,
+                paddingLeft: `${8 + (heading.level - 2) * 10}px`,
               }}
             >
-              {heading.text}
+              <span className={`text-xs font-semibold min-w-6 ${activeId === heading.id ? 'text-blue-600' : 'text-slate-500 group-hover:text-blue-600'}`}>
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <span className="line-clamp-1">{heading.text}</span>
             </button>
           </li>
         ))}

@@ -2,9 +2,20 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const helmet = require("helmet");
 const path = require("path");
+const { apiLimiter } = require("./middleware/rateLimitMiddleware");
+const requestRiskMiddleware = require("./middleware/requestRiskMiddleware");
 
 const app = express();
+
+app.set("trust proxy", process.env.TRUST_PROXY === "false" ? false : 1);
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  })
+);
 
 /* =========================================================
    1. UNIVERSAL CORS CONFIG (LOCAL + DOCKER)
@@ -55,7 +66,10 @@ app.use((req, res, next) => {
 /* =========================================================
    3. MIDDLEWARE
 ========================================================= */
-app.use(express.json());
+app.use(express.urlencoded({ extended: true, limit: "20kb" }));
+app.use(express.json({ limit: "20kb" }));
+app.use("/api", requestRiskMiddleware);
+app.use("/api", apiLimiter);
 
 /* =========================================================
    4. ROUTES IMPORT
@@ -79,6 +93,7 @@ const travelGuideRoutes = require("./routes/travelGuideRoutes");
 const faqRoutes = require("./routes/faqRoutes");
 const alertRoutes = require("./routes/alertRoutes");
 const adminAnalyticsRoutes = require("./routes/adminAnalyticsRoutes");
+const securityRoutes = require("./routes/securityRoutes");
 
 // Settings / Hero / Uploads
 const settingsRoutes = require("./routes/settingsRoutes");
@@ -107,6 +122,7 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/guides", travelGuideRoutes);
 app.use("/api/faq", faqRoutes);
 app.use("/api/alerts", alertRoutes);
+app.use("/api/security", securityRoutes);
 
 // Settings/Hero/Uploads
 app.use("/api/settings", settingsRoutes);

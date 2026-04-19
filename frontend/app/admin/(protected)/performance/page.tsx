@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { getAdminAnalytics } from '@/lib/api'
+import { getAdminAnalytics, getAdminRiskHealth, type AdminRiskHealthResponse } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
 import {
   BarChart,
@@ -28,6 +28,9 @@ import {
   Activity,
   Eye,
   Download,
+  ShieldCheck,
+  Database,
+  AlertTriangle,
 } from 'lucide-react'
 
 type PerformanceMetric = {
@@ -62,6 +65,11 @@ export default function PerformancePage() {
   const [regionData, setRegionData] = useState<RegionData[]>([])
   const [deviceData, setDeviceData] = useState<DeviceData[]>([])
   const [metrics, setMetrics] = useState<PerformanceMetric[]>([])
+  const [riskHealth, setRiskHealth] = useState<AdminRiskHealthResponse | null>(null)
+  const [isRiskRefreshing, setIsRiskRefreshing] = useState(false)
+  const [autoRefreshRisk, setAutoRefreshRisk] = useState(true)
+  const [riskRefreshIntervalSec, setRiskRefreshIntervalSec] = useState<number>(20)
+  const [lastRiskRefreshAt, setLastRiskRefreshAt] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -78,7 +86,10 @@ export default function PerformancePage() {
           return
         }
 
-        const analytics = await getAdminAnalytics(token)
+        const [analytics, security] = await Promise.all([
+          getAdminAnalytics(token),
+          getAdminRiskHealth(token),
+        ])
 
         const liveMetrics: PerformanceMetric[] = [
           {
@@ -119,6 +130,8 @@ export default function PerformancePage() {
         setRegionData(analytics.regions)
         setDeviceData(analytics.contentMix)
         setMetrics(liveMetrics)
+        setRiskHealth(security)
+        setLastRiskRefreshAt(new Date().toISOString())
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load analytics data.')
       } finally {
@@ -128,6 +141,43 @@ export default function PerformancePage() {
 
     void loadData()
   }, [])
+
+  useEffect(() => {
+    if (!autoRefreshRisk) return
+
+    const timer = window.setInterval(async () => {
+      try {
+        const token = getAdminToken()
+        if (!token) return
+        const security = await getAdminRiskHealth(token)
+        setRiskHealth(security)
+        setLastRiskRefreshAt(new Date().toISOString())
+      } catch {}
+    }, Math.max(5, riskRefreshIntervalSec) * 1000)
+
+    return () => {
+      window.clearInterval(timer)
+    }
+  }, [autoRefreshRisk, riskRefreshIntervalSec])
+
+  const refreshRiskHealth = async () => {
+    if (isRiskRefreshing) return
+    setIsRiskRefreshing(true)
+    try {
+      const token = getAdminToken()
+      if (!token) {
+        setError('Missing admin token. Please log in again.')
+        return
+      }
+      const security = await getAdminRiskHealth(token)
+      setRiskHealth(security)
+      setLastRiskRefreshAt(new Date().toISOString())
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to refresh risk status right now.')
+    } finally {
+      setIsRiskRefreshing(false)
+    }
+  }
 
   const handleExport = () => {
     const csv = [
@@ -211,6 +261,86 @@ export default function PerformancePage() {
           )
         })}
       </div>
+
+      {riskHealth && (
+        <Card className="border-border bg-gradient-to-br from-slate-50/40 via-zinc-50/30 to-emerald-50/30 dark:from-slate-950/30 dark:via-zinc-950/20 dark:to-emerald-950/20">
+          <CardHeader>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  Security Risk Store Status
+                </CardTitle>
+                <CardDescription>Live anti-abuse storage health from backend behavior analysis pipeline</CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={autoRefreshRisk}
+                    onChange={(event) => setAutoRefreshRisk(event.target.checked)}
+                    className="h-4 w-4 rounded border-border"
+                  />
+                  Auto refresh
+                </label>
+                <select
+                  value={riskRefreshIntervalSec}
+                  onChange={(event) => setRiskRefreshIntervalSec(Number(event.target.value))}
+                  disabled={!autoRefreshRisk}
+                  className="h-9 rounded-md border border-border bg-background px-2 text-xs"
+                >
+                  <option value={10}>Every 10s</option>
+                  <option value={20}>Every 20s</option>
+                  <option value={30}>Every 30s</option>
+                  <option value={60}>Every 60s</option>
+                </select>
+                <Button variant="outline" size="sm" onClick={refreshRiskHealth} disabled={isRiskRefreshing}>
+                  {isRiskRefreshing ? 'Refreshing...' : 'Refresh Now'}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4 text-xs text-muted-foreground">
+              Last updated: {lastRiskRefreshAt ? new Date(lastRiskRefreshAt).toLocaleTimeString() : '—'}
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-4 rounded-lg border border-border bg-background/80">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Current Mode</p>
+                <p className={`mt-2 text-lg font-bold ${riskHealth.mode === 'redis' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                  {riskHealth.mode === 'redis' ? 'Redis Active' : 'Memory Fallback'}
+                </p>
+              </div>
+              <div className="p-4 rounded-lg border border-border bg-background/80">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Redis Reachability</p>
+                <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Database className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  {riskHealth.redis.reachable ? 'Reachable' : 'Unreachable'}
+                </p>
+              </div>
+              <div className="p-4 rounded-lg border border-border bg-background/80">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Memory Profiles</p>
+                <p className="mt-2 text-sm text-foreground font-semibold">
+                  IP: {riskHealth.memoryProfiles.ip.toLocaleString()} · Device: {riskHealth.memoryProfiles.device.toLocaleString()}
+                </p>
+              </div>
+              <div className="p-4 rounded-lg border border-border bg-background/80">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Last Error</p>
+                <p className="mt-2 text-sm text-foreground">
+                  {riskHealth.redis.lastError ? (
+                    <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                      <AlertTriangle className="w-4 h-4" />
+                      {riskHealth.redis.lastError}
+                    </span>
+                  ) : (
+                    'No active errors'
+                  )}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
