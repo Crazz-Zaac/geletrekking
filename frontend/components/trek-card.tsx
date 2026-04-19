@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Clock, Mountain, Users, ArrowRight } from 'lucide-react'
+import { Clock, Mountain, Users, ArrowRight, Check } from 'lucide-react'
 import type { Trek } from '@/lib/data'
 import { cn } from '@/lib/utils'
 
@@ -14,9 +14,12 @@ const difficultyColors: Record<Trek['difficulty'], string> = {
 interface TrekCardProps {
   trek: Trek
   className?: string
+  isCompared?: boolean
+  compareDisabled?: boolean
+  onToggleCompare?: (trekId: string) => void
 }
 
-export function TrekCard({ trek, className }: TrekCardProps) {
+export function TrekCard({ trek, className, isCompared = false, compareDisabled = false, onToggleCompare }: TrekCardProps) {
   const hasActiveOffer = Boolean(trek.hasOffer)
   const discountPercent = trek.offerDiscountPercent || 10
 
@@ -64,7 +67,34 @@ export function TrekCard({ trek, className }: TrekCardProps) {
           className="object-cover group-hover:scale-105 transition-transform duration-500"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
+        {onToggleCompare && (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              onToggleCompare(trek.id)
+            }}
+            disabled={compareDisabled}
+            className={cn(
+              'absolute left-3 top-3 z-30 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors',
+              isCompared
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-black/55 text-white hover:bg-black/70',
+              compareDisabled && 'cursor-not-allowed opacity-50'
+            )}
+            aria-label={isCompared ? 'Remove from compare' : 'Add to compare'}
+          >
+            {isCompared ? <Check className="h-3 w-3" /> : null}
+            {isCompared ? 'Compared' : 'Compare'}
+          </button>
+        )}
         {/* Overlay badges */}
+        <div className="absolute left-3 bottom-3 z-20">
+          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-black/55 text-white backdrop-blur-sm">
+            {trek.region}
+          </span>
+        </div>
         <div className="absolute right-3 bottom-3 z-20">
           <span className={cn('text-xs font-semibold px-2.5 py-1 rounded-full', difficultyColors[trek.difficulty])}>
             {trek.difficulty}
@@ -101,19 +131,28 @@ export function TrekCard({ trek, className }: TrekCardProps) {
         <div className="flex items-center justify-between">
           <div>
             {hasActiveOffer && trek.originalPrice ? (
-              <div className="flex items-baseline gap-2">
-                <p className="text-xs text-muted-foreground line-through">${trek.originalPrice.toLocaleString()}</p>
-                <p className="text-xl font-bold text-red-600">${trek.price.toLocaleString()}</p>
-              </div>
+              <>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-xs text-muted-foreground line-through">From ${trek.originalPrice.toLocaleString()}</p>
+                  <p className="text-xl font-bold text-red-600">${trek.price.toLocaleString()}</p>
+                </div>
+                <p className="text-[11px] text-muted-foreground">per person</p>
+              </>
             ) : (
-              <p className="text-xl font-bold text-primary">${trek.price.toLocaleString()}</p>
+              <>
+                <p className="text-xl font-bold text-primary">From ${trek.price.toLocaleString()}</p>
+                <p className="text-[11px] text-muted-foreground">per person</p>
+              </>
             )}
           </div>
           <span className="flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
-            View Trek
+            View Details
             <ArrowRight className="w-4 h-4" />
           </span>
         </div>
+        {hasActiveOffer && trek.offerDescription ? (
+          <p className="mt-2 text-[11px] text-red-700 line-clamp-1">{trek.offerDescription}</p>
+        ) : null}
       </div>
     </Link>
   )

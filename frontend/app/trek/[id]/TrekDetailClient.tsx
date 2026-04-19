@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookingForm, FAQAccordion } from '@/components/booking-form';
 import type { Trek } from '@/lib/data';
+import { getTrekFAQBySlug } from '@/lib/faq-data';
 import {
   BedDouble,
   Bus,
@@ -57,6 +58,8 @@ export default function TrekDetailClient({
 }: TrekDetailClientProps) {
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const weather = useTrekWeather(trek?.latitude, trek?.longitude)
+  const fallbackFaqs = getTrekFAQBySlug(trek.slug)?.faqs || []
+  const trekFaqs = trek.faqs && trek.faqs.length > 0 ? trek.faqs : fallbackFaqs
 
   const keyTrekInformation = [
     { label: 'Duration', value: `${trek.duration} days`, icon: CalendarRange },
@@ -325,7 +328,15 @@ export default function TrekDetailClient({
 
               <motion.div variants={itemVariants} className="space-y-4">
                 <h2 className="text-3xl font-bold text-foreground">FAQ</h2>
-                <FAQAccordion faqs={trek.faqs} />
+                {trekFaqs.length > 0 ? (
+                  <FAQAccordion faqs={trekFaqs} />
+                ) : (
+                  <Card className="border-border p-5">
+                    <p className="text-sm text-muted-foreground">
+                      FAQs for this destination will be added soon. Please contact us for trek-specific questions.
+                    </p>
+                  </Card>
+                )}
               </motion.div>
 
               <motion.div variants={itemVariants} className="space-y-4">

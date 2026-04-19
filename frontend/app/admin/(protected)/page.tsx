@@ -2,11 +2,13 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, ArrowRight, FileText, Image as ImageIcon, Mountain, Newspaper, ShieldCheck, TrendingUp } from 'lucide-react'
+import { Activity, ArrowRight, FileText, Image as ImageIcon, Mountain, Newspaper, ShieldCheck, TrendingUp, Bell } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { API_BASE_URL } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
+import { AlertsTab } from '@/components/admin/alerts-tab'
 
 type Metric = {
   label: string
@@ -86,76 +88,91 @@ export default function AdminDashboardPage() {
   )
 
   return (
-    <div className="space-y-6">
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {metrics.map((metric) => {
-          const Icon = metric.icon
-          return (
-            <Card key={metric.label} className="border-border bg-card/90">
-              <CardHeader className="pb-2">
-                <CardDescription className="flex items-center gap-2 text-xs uppercase tracking-wide">
-                  <Icon className="w-3.5 h-3.5" />
-                  {metric.label}
-                </CardDescription>
-                <CardTitle className="text-3xl font-bold">{metric.value}</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 text-sm text-muted-foreground">{metric.hint}</CardContent>
-            </Card>
-          )
-        })}
-      </section>
+    <Tabs defaultValue="overview" className="space-y-6 w-full">
+      <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="alerts" className="gap-2">
+          <Bell className="h-4 w-4" />
+          Alerts
+        </TabsTrigger>
+      </TabsList>
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="border-border lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Activity className="w-5 h-5 text-primary" />
-              Admin Workflow
-            </CardTitle>
-            <CardDescription>
-              This dashboard mirrors the old admin style with a cleaner shell, better spacing, and responsive navigation.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>Use the left sidebar for modules. Coming-soon modules are visible but intentionally disabled until migrated.</p>
-            <p>Current integration keeps authentication strict and centralized with route protection and server identity checks.</p>
-            <p>Next step is migrating each old module page (Treks, Blogs, Gallery, Messages, Settings) into this shell.</p>
-          </CardContent>
-        </Card>
+      <TabsContent value="overview" className="space-y-6">
+        <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {metrics.map((metric) => {
+            const Icon = metric.icon
+            return (
+              <Card key={metric.label} className="border-border bg-card/90">
+                <CardHeader className="pb-2">
+                  <CardDescription className="flex items-center gap-2 text-xs uppercase tracking-wide">
+                    <Icon className="w-3.5 h-3.5" />
+                    {metric.label}
+                  </CardDescription>
+                  <CardTitle className="text-3xl font-bold">{metric.value}</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0 text-sm text-muted-foreground">{metric.hint}</CardContent>
+              </Card>
+            )
+          })}
+        </section>
 
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="text-xl">Quick Actions</CardTitle>
-            <CardDescription>Fast links while module migration is in progress.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Link href="/" className="block">
-              <Button variant="outline" className="w-full justify-between">
-                View Website
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-            <Link href="/admin/performance" className="block">
-              <Button variant="outline" className="w-full justify-between">
-                Performance Analytics
-                <TrendingUp className="w-4 h-4" />
-              </Button>
-            </Link>
-            <Link href="/blog" className="block">
-              <Button variant="outline" className="w-full justify-between">
-                Open Public Blog
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-            <Link href="/gallery" className="block">
-              <Button variant="outline" className="w-full justify-between">
-                Open Public Gallery
-                <ImageIcon className="w-4 h-4" />
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </section>
-    </div>
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <Card className="border-border lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Activity className="w-5 h-5 text-primary" />
+                Admin Workflow
+              </CardTitle>
+              <CardDescription>
+                This dashboard mirrors the old admin style with a cleaner shell, better spacing, and responsive navigation.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-muted-foreground">
+              <p>Use the left sidebar for modules. Coming-soon modules are visible but intentionally disabled until migrated.</p>
+              <p>Current integration keeps authentication strict and centralized with route protection and server identity checks.</p>
+              <p>Next step is migrating each old module page (Treks, Blogs, Gallery, Messages, Settings) into this shell.</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border">
+            <CardHeader>
+              <CardTitle className="text-xl">Quick Actions</CardTitle>
+              <CardDescription>Fast links while module migration is in progress.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Link href="/" className="block">
+                <Button variant="outline" className="w-full justify-between">
+                  View Website
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+              <Link href="/admin/performance" className="block">
+                <Button variant="outline" className="w-full justify-between">
+                  Performance Analytics
+                  <TrendingUp className="w-4 h-4" />
+                </Button>
+              </Link>
+              <Link href="/blog" className="block">
+                <Button variant="outline" className="w-full justify-between">
+                  Open Public Blog
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+              <Link href="/gallery" className="block">
+                <Button variant="outline" className="w-full justify-between">
+                  Open Public Gallery
+                  <ImageIcon className="w-4 h-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </section>
+      </TabsContent>
+
+      <TabsContent value="alerts">
+        <AlertsTab />
+      </TabsContent>
+    </Tabs>
   )
 }
+

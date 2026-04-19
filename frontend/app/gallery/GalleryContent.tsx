@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Search, X } from 'lucide-react';
 
 type GalleryItem = {
   id: string;
@@ -28,16 +30,82 @@ const itemVariants = {
 
 const ITEMS_PER_PAGE = 6;
 
+type SortOption = 'featured' | 'recent' | 'title';
+
+function isSortOption(value: string | null): value is SortOption {
+  return value === 'featured' || value === 'recent' || value === 'title';
+}
+
 interface GalleryContentProps {
   initialItems: GalleryItem[];
   heroImageUrl: string;
 }
 
 export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [items] = useState<GalleryItem[]>(initialItems);
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('featured');
+  const [featuredOnly, setFeaturedOnly] = useState(false);
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const categoryParam = searchParams?.get('category') || '';
+    const qParam = searchParams?.get('q') || '';
+    const sortParam = searchParams?.get('sort');
+    const featuredParam = searchParams?.get('featured') === '1';
+    const pageParam = Number.parseInt(searchParams?.get('page') || '1', 10);
+
+    setSelectedCategory(categoryParam);
+    setSearchQuery(qParam);
+    setSortBy(isSortOption(sortParam) ? sortParam : 'featured');
+    setFeaturedOnly(featuredParam);
+    setCurrentPage(Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam);
+  }, [searchParams]);
+
+  const updateUrl = (next: {
+    category: string;
+    q: string;
+    sort: SortOption;
+    featured: boolean;
+    page: number;
+  }) => {
+    const params = new URLSearchParams(searchParams?.toString() || '');
+
+    if (next.category) params.set('category', next.category);
+    else params.delete('category');
+
+    if (next.q.trim()) params.set('q', next.q.trim());
+    else params.delete('q');
+
+    if (next.sort !== 'featured') params.set('sort', next.sort);
+    else params.delete('sort');
+
+    if (next.featured) params.set('featured', '1');
+    else params.delete('featured');
+
+    if (next.page > 1) params.set('page', String(next.page));
+    else params.delete('page');
+
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
+
+  const setPageAndUrl = (nextPage: number) => {
+    setCurrentPage(nextPage);
+    updateUrl({
+      category: selectedCategory,
+      q: searchQuery,
+      sort: sortBy,
+      featured: featuredOnly,
+      page: nextPage,
+    });
+  };
 
   const categoryOptions = useMemo(() => {
     return Array.from(
@@ -46,9 +114,35 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
   }, [items]);
 
   const filteredItems = useMemo(() => {
-    if (!selectedCategory) return items;
-    return items.filter((item) => item.region === selectedCategory);
-  }, [items, selectedCategory]);
+    let result = [...items];
+
+    if (selectedCategory) {
+      result = result.filter((item) => item.region === selectedCategory);
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (item) =>
+          item.trekTitle.toLowerCase().includes(q) ||
+          item.region.toLowerCase().includes(q)
+      );
+    }
+
+    if (featuredOnly) {
+      result = result.filter((item) => item.isFeatured);
+    }
+
+    if (sortBy === 'title') {
+      result.sort((a, b) => a.trekTitle.localeCompare(b.trekTitle));
+    } else if (sortBy === 'recent') {
+      result.sort((a, b) => b.id.localeCompare(a.id));
+    } else {
+      result.sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured));
+    }
+
+    return result;
+  }, [items, selectedCategory, searchQuery, featuredOnly, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / ITEMS_PER_PAGE));
 
@@ -59,33 +153,67 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
   }, [filteredItems, currentPage, totalPages]);
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCategory]);
+    if (currentPage > totalPages) {
+      setPageAndUrl(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const selectedImage =
-    selectedImageIndex !== null ? paginatedItems[selectedImageIndex] : null;
+    selectedImageId !== null
+      ? filteredItems.find((item) => item.id === selectedImageId) || null
+      : null;
 
-  const openImage = (index: number) => {
-    setSelectedImageIndex(index);
+  const selectedImageIndex = selectedImage
+    ? filteredItems.findIndex((item) => item.id === selectedImage.id)
+    : -1;
+
+  const openImage = (itemId: string) => {
+    setSelectedImageId(itemId);
   };
 
   const closeModal = () => {
-    setSelectedImageIndex(null);
+    setSelectedImageId(null);
   };
 
   const showPrev = () => {
-    if (selectedImageIndex === null || paginatedItems.length === 0) return;
-    setSelectedImageIndex(
-      selectedImageIndex === 0 ? paginatedItems.length - 1 : selectedImageIndex - 1
-    );
+    if (!selectedImage || filteredItems.length === 0 || selectedImageIndex < 0) return;
+    const prevIndex = selectedImageIndex === 0 ? filteredItems.length - 1 : selectedImageIndex - 1;
+    setSelectedImageId(filteredItems[prevIndex].id);
   };
 
   const showNext = () => {
-    if (selectedImageIndex === null || paginatedItems.length === 0) return;
-    setSelectedImageIndex(
-      selectedImageIndex === paginatedItems.length - 1 ? 0 : selectedImageIndex + 1
-    );
+    if (!selectedImage || filteredItems.length === 0 || selectedImageIndex < 0) return;
+    const nextIndex = selectedImageIndex === filteredItems.length - 1 ? 0 : selectedImageIndex + 1;
+    setSelectedImageId(filteredItems[nextIndex].id);
   };
+
+  const activeFilters = [
+    selectedCategory ? { key: 'category', label: 'Category', value: selectedCategory } : null,
+    searchQuery.trim() ? { key: 'q', label: 'Search', value: searchQuery.trim() } : null,
+    featuredOnly ? { key: 'featured', label: 'Type', value: 'Featured only' } : null,
+  ].filter(Boolean) as Array<{ key: string; label: string; value: string }>;
+
+  const clearAll = () => {
+    setSelectedCategory('');
+    setSearchQuery('');
+    setSortBy('featured');
+    setFeaturedOnly(false);
+    setPageAndUrl(1);
+    router.replace(pathname, { scroll: false });
+  };
+
+  const visiblePage = Math.min(currentPage, totalPages);
+
+  const pageNumbers = useMemo(() => {
+    const max = 5;
+    if (totalPages <= max) return Array.from({ length: totalPages }, (_, index) => index + 1);
+
+    const start = Math.max(1, visiblePage - 2);
+    const end = Math.min(totalPages, start + max - 1);
+    const adjustedStart = Math.max(1, end - max + 1);
+
+    return Array.from({ length: end - adjustedStart + 1 }, (_, index) => adjustedStart + index);
+  }, [totalPages, visiblePage]);
 
   return (
     <>
@@ -129,17 +257,72 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
         </div>
       </section>
 
-      <section className="py-6 md:py-8 border-b border-border">
-        <div className="container mx-auto px-4 md:px-6 space-y-4">
-          <h2 className="text-xl md:text-2xl font-semibold text-foreground">
-            Filter by Category
-          </h2>
+      <section className="sticky top-16 z-30 py-4 md:py-5 border-b border-border bg-background/95 backdrop-blur">
+        <div className="container mx-auto px-4 md:px-6 space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_220px_140px] gap-2.5">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search by trek or region..."
+                value={searchQuery}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  setSearchQuery(next);
+                  setPageAndUrl(1);
+                  updateUrl({
+                    category: selectedCategory,
+                    q: next,
+                    sort: sortBy,
+                    featured: featuredOnly,
+                    page: 1,
+                  });
+                }}
+                className="w-full h-10 rounded-md border border-border bg-background pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
 
-          <div className="flex flex-wrap gap-3">
+            <select
+              value={sortBy}
+              onChange={(event) => {
+                const nextSort = event.target.value as SortOption;
+                setSortBy(nextSort);
+                setPageAndUrl(1);
+                updateUrl({
+                  category: selectedCategory,
+                  q: searchQuery,
+                  sort: nextSort,
+                  featured: featuredOnly,
+                  page: 1,
+                });
+              }}
+              className="h-10 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <option value="featured">Sort: Featured first</option>
+              <option value="recent">Sort: Recently added</option>
+              <option value="title">Sort: Title A → Z</option>
+            </select>
+
+            <Button variant="outline" className="h-10" onClick={clearAll}>
+              Clear all
+            </Button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant={selectedCategory === '' ? 'default' : 'outline'}
               className={selectedCategory === '' ? 'bg-primary text-white' : ''}
-              onClick={() => setSelectedCategory('')}
+              onClick={() => {
+                setSelectedCategory('');
+                setPageAndUrl(1);
+                updateUrl({
+                  category: '',
+                  q: searchQuery,
+                  sort: sortBy,
+                  featured: featuredOnly,
+                  page: 1,
+                });
+              }}
             >
               All Categories
             </Button>
@@ -149,12 +332,92 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
                 key={category}
                 variant={selectedCategory === category ? 'default' : 'outline'}
                 className={selectedCategory === category ? 'bg-primary text-white' : ''}
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => {
+                  setSelectedCategory(category);
+                  setPageAndUrl(1);
+                  updateUrl({
+                    category,
+                    q: searchQuery,
+                    sort: sortBy,
+                    featured: featuredOnly,
+                    page: 1,
+                  });
+                }}
               >
                 {category}
               </Button>
             ))}
+
+            <Button
+              variant={featuredOnly ? 'default' : 'outline'}
+              className={featuredOnly ? 'bg-primary text-white' : ''}
+              onClick={() => {
+                const nextFeatured = !featuredOnly;
+                setFeaturedOnly(nextFeatured);
+                setPageAndUrl(1);
+                updateUrl({
+                  category: selectedCategory,
+                  q: searchQuery,
+                  sort: sortBy,
+                  featured: nextFeatured,
+                  page: 1,
+                });
+              }}
+            >
+              Featured only
+            </Button>
           </div>
+
+          {activeFilters.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {activeFilters.map((filter) => (
+                <button
+                  key={filter.key}
+                  onClick={() => {
+                    if (filter.key === 'category') {
+                      setSelectedCategory('');
+                      updateUrl({
+                        category: '',
+                        q: searchQuery,
+                        sort: sortBy,
+                        featured: featuredOnly,
+                        page: 1,
+                      });
+                      setPageAndUrl(1);
+                    }
+
+                    if (filter.key === 'q') {
+                      setSearchQuery('');
+                      updateUrl({
+                        category: selectedCategory,
+                        q: '',
+                        sort: sortBy,
+                        featured: featuredOnly,
+                        page: 1,
+                      });
+                      setPageAndUrl(1);
+                    }
+
+                    if (filter.key === 'featured') {
+                      setFeaturedOnly(false);
+                      updateUrl({
+                        category: selectedCategory,
+                        q: searchQuery,
+                        sort: sortBy,
+                        featured: false,
+                        page: 1,
+                      });
+                      setPageAndUrl(1);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium"
+                >
+                  {filter.label}: {filter.value}
+                  <X className="h-3 w-3" />
+                </button>
+              ))}
+            </div>
+          ) : null}
 
           <p className="text-sm text-muted-foreground">
             Showing {paginatedItems.length} of {filteredItems.length} image
@@ -182,7 +445,7 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
                   <motion.div key={item.id} variants={itemVariants}>
                     <article
                       className="overflow-hidden rounded-xl border border-border bg-card hover:shadow-lg transition-shadow cursor-pointer"
-                      onClick={() => openImage(index)}
+                      onClick={() => openImage(item.id)}
                     >
                       <div className="relative h-44 overflow-hidden">
                         <Image
@@ -212,25 +475,34 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
               </motion.div>
 
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-8">
+                <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
                   <Button
                     variant="outline"
-                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
+                    onClick={() => setPageAndUrl(Math.max(1, visiblePage - 1))}
+                    disabled={visiblePage === 1}
                   >
                     Previous
                   </Button>
 
+                  {pageNumbers.map((page) => (
+                    <Button
+                      key={page}
+                      variant={page === visiblePage ? 'default' : 'outline'}
+                      onClick={() => setPageAndUrl(page)}
+                      className="min-w-10"
+                    >
+                      {page}
+                    </Button>
+                  ))}
+
                   <span className="text-sm text-muted-foreground px-2">
-                    Page {Math.min(currentPage, totalPages)} of {totalPages}
+                    Page {visiblePage} of {totalPages}
                   </span>
 
                   <Button
                     variant="outline"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                    }
-                    disabled={currentPage === totalPages}
+                    onClick={() => setPageAndUrl(Math.min(totalPages, visiblePage + 1))}
+                    disabled={visiblePage === totalPages}
                   >
                     Next
                   </Button>
@@ -255,7 +527,7 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
                 ✕
               </button>
 
-              {paginatedItems.length > 1 && (
+              {filteredItems.length > 1 && (
                 <>
                   <button
                     onClick={showPrev}
@@ -295,13 +567,13 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
 
             <aside className="w-full lg:w-32 xl:w-40 border-t lg:border-t-0 lg:border-l border-white/10 bg-black/60 p-3 overflow-x-auto lg:overflow-y-auto">
               <div className="flex lg:flex-col gap-3">
-                {paginatedItems.map((item, index) => {
+                {filteredItems.map((item, index) => {
                   const isActive = index === selectedImageIndex;
 
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setSelectedImageIndex(index)}
+                      onClick={() => setSelectedImageId(item.id)}
                       className={`relative shrink-0 w-24 h-24 lg:w-full lg:h-24 rounded-lg overflow-hidden border-2 transition ${
                         isActive
                           ? 'border-white scale-[1.02]'

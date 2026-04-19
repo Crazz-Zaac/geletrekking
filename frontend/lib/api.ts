@@ -212,6 +212,25 @@ export interface AdminAbout {
   teamTitle?: string
   teamMembers?: AdminAboutTeamMember[]
 }
+export interface AdminAlert {
+  _id?: string
+  title: string
+  message: string
+  icon: 'info' | 'warning' | 'error' | 'success' | 'alert' | 'announcement' | 'critical' | 'neutral'
+  type: 'global' | 'destinations'
+  isActive: boolean
+  backgroundColor?: string
+  textColor?: string
+  borderColor?: string
+  accentColor?: string
+  titleColor?: string
+  bodyColor?: string
+  ctaUrl?: string
+  ctaLabel?: string
+  priority?: number
+  createdAt?: string
+  updatedAt?: string
+}
 export interface AdminActivity {
   _id: string
   title: string
@@ -362,11 +381,24 @@ interface BackendTestimonial {
   message: string
   createdAt?: string
 }
-const configuredApiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/+$/, '')
-const API_BASE_URL = typeof window === 'undefined' ? configuredApiUrl : ''
+const getApiBaseUrl = () => {
+  const isServer = typeof window === 'undefined'
+  
+  if (isServer) {
+    // Server-side: use INTERNAL_API_URL for Docker network access
+    const url = (globalThis as any).process?.env?.INTERNAL_API_URL || 'http://backend:5000'
+    return url.replace(/\/+$/, '')
+  } else {
+    // Client-side: use NEXT_PUBLIC_API_URL for browser access
+    const publicApiUrl = (globalThis as any).process?.env?.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+    return publicApiUrl.replace(/\/+$/, '')
+  }
+}
+
+const API_BASE_URL = getApiBaseUrl()
 const getApiUrl = (path: string) => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
-  return API_BASE_URL ? `${API_BASE_URL}${normalizedPath}` : normalizedPath
+  return `${API_BASE_URL}${normalizedPath}`
 }
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(getApiUrl(path), {
@@ -956,4 +988,50 @@ export async function updateAdminFaq(token: string, payload: AdminFaq): Promise<
     body: JSON.stringify(payload),
   })
 }
+
+// ============= ALERTS =============
+export async function getAlerts(): Promise<AdminAlert[]> {
+  try {
+    return await fetchJson<AdminAlert[]>('/api/alerts')
+  } catch {
+    return []
+  }
+}
+
+export async function getAlertsByType(type: 'global' | 'destinations'): Promise<AdminAlert[]> {
+  try {
+    return await fetchJson<AdminAlert[]>(`/api/alerts/type/${type}`)
+  } catch {
+    return []
+  }
+}
+
+export async function getAdminAlerts(token: string): Promise<AdminAlert[]> {
+  try {
+    return await fetchAdminJson<AdminAlert[]>('/api/alerts/admin/all', token)
+  } catch {
+    return []
+  }
+}
+
+export async function createAlert(token: string, payload: Partial<AdminAlert>): Promise<AdminAlert> {
+  return fetchAdminJson<AdminAlert>('/api/alerts', token, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function updateAlert(token: string, id: string, payload: Partial<AdminAlert>): Promise<AdminAlert> {
+  return fetchAdminJson<AdminAlert>(`/api/alerts/${id}`, token, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function deleteAlert(token: string, id: string): Promise<void> {
+  await fetchAdminJson<{ message: string }>(`/api/alerts/${id}`, token, {
+    method: 'DELETE',
+  })
+}
+
 export { API_BASE_URL }

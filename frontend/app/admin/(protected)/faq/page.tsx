@@ -104,7 +104,8 @@ export default function AdminFaqPage() {
             <p>✓ General FAQs: {generalFAQ.faqs.length} questions configured</p>
             <p>✓ Trek FAQs: {trekFAQs.length} destinations with FAQ content</p>
             <p>✓ Total Questions: {generalFAQ.faqs.length + trekFAQs.reduce((sum, t) => sum + t.faqs.length, 0)} questions</p>
-            <p>✓ FAQs appear on public <code className="bg-white/30 px-1 rounded text-xs">/faq</code> page and in destination detail pages</p>
+            <p>✓ General FAQs appear on public <code className="bg-white/30 px-1 rounded text-xs">/faq</code> page</p>
+            <p>✓ Trek-specific FAQs appear only in destination detail pages</p>
           </CardContent>
         </Card>
       </div>
