@@ -198,6 +198,10 @@ export interface AdminAboutTeamMember {
   description: string
   imageUrl: string
 }
+export interface AdminAboutAssociation {
+  name: string
+  logoUrl: string
+}
 export interface AdminAbout {
   heroTitle?: string
   heroSubtitle?: string
@@ -211,6 +215,8 @@ export interface AdminAbout {
   stats?: AdminAboutStat[]
   teamTitle?: string
   teamMembers?: AdminAboutTeamMember[]
+  associations?: AdminAboutAssociation[]
+  updatedAt?: string
 }
 export interface AdminAlert {
   _id?: string
@@ -309,6 +315,36 @@ export interface AdminTestimonial {
   message: string
   image?: string | null
   isApproved: boolean
+}
+export interface AdminAnalyticsMetricSummary {
+  totalInquiries: number
+  inquiriesChangePct: string
+  contentItems: number
+  contentChangePct: string
+  avgGuideViews: number
+  totalGuideViews: number
+  unreadRate: number
+  unreadMessages: number
+}
+export interface AdminAnalyticsTrendPoint {
+  date: string
+  inquiries: number
+  contentUpdates: number
+}
+export interface AdminAnalyticsRegion {
+  name: string
+  count: number
+}
+export interface AdminAnalyticsContentMixItem {
+  name: string
+  value: number
+}
+export interface AdminAnalyticsResponse {
+  generatedAt: string
+  metrics: AdminAnalyticsMetricSummary
+  trends: AdminAnalyticsTrendPoint[]
+  regions: AdminAnalyticsRegion[]
+  contentMix: AdminAnalyticsContentMixItem[]
 }
 interface BackendTrek {
   _id: string
@@ -766,6 +802,9 @@ export async function deleteAdminMessage(token: string, id: string): Promise<voi
   await fetchAdminJson<{ message: string }>(`/api/contact/admin/${id}`, token, {
     method: 'DELETE',
   })
+}
+export async function getAdminAnalytics(token: string): Promise<AdminAnalyticsResponse> {
+  return fetchAdminJson<AdminAnalyticsResponse>('/api/admin/analytics', token)
 }
 export async function getAdminSettings(): Promise<AdminSiteSettings> {
   return fetchJson<AdminSiteSettings>('/api/settings')

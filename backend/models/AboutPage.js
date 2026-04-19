@@ -24,6 +24,16 @@ const associationSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const teamMemberSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    role: { type: String, required: true, trim: true },
+    description: { type: String, default: "", trim: true },
+    imageUrl: { type: String, default: "", trim: true },
+  },
+  { _id: false }
+);
+
 const aboutPageSchema = new mongoose.Schema(
   {
     heroTitle: {
@@ -64,6 +74,14 @@ const aboutPageSchema = new mongoose.Schema(
     },
     stats: {
       type: [statSchema],
+      default: [],
+    },
+    teamTitle: {
+      type: String,
+      default: "",
+    },
+    teamMembers: {
+      type: [teamMemberSchema],
       default: [],
     },
     associations: {

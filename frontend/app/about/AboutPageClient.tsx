@@ -250,6 +250,7 @@ export function AboutPageClient() {
   const missionTitle = (about?.missionTitle || '').trim() || defaultAbout.missionTitle;
   const missionBody = (about?.missionBody || '').trim() || defaultAbout.missionBody;
   const teamTitle = (about?.teamTitle || '').trim() || defaultAbout.teamTitle;
+  const heroImageUrl = (about?.heroImageUrl || '').trim();
 
   const storyBullets = useMemo(() => toReadableBullets(storyBody), [storyBody]);
   const missionBullets = useMemo(() => toReadableBullets(missionBody), [missionBody]);
@@ -280,7 +281,7 @@ export function AboutPageClient() {
   }, [about?.teamMembers]);
 
   const associationList = useMemo(() => {
-    const fromApi = ((about as { associations?: Array<{ name: string; logoUrl: string }> } | null)?.associations || [])
+    const fromApi = (about?.associations || [])
       .filter((association) => association?.name?.trim() && association?.logoUrl?.trim());
     return fromApi.length > 0 ? fromApi : defaultAssociations;
   }, [about]);
@@ -293,18 +294,33 @@ export function AboutPageClient() {
 
   return (
     <>
-      <section className="py-12 md:py-16 bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border">
+      <section className="relative py-12 md:py-16 border-b border-border overflow-hidden">
+        {heroImageUrl ? (
+          <div className="absolute inset-0">
+            <Image
+              src={heroImageUrl}
+              alt="About page hero background"
+              fill
+              priority
+              className="object-cover"
+              unoptimized
+            />
+            <div className="absolute inset-0 bg-black/60" />
+          </div>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10" />
+        )}
         <div className="container mx-auto px-4 md:px-6">
           <motion.div
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="space-y-4 text-center"
+            className="relative z-10 space-y-4 text-center"
           >
-            <motion.h1 variants={itemVariants} className="text-4xl md:text-5xl font-bold text-foreground text-balance">
+            <motion.h1 variants={itemVariants} className={`text-4xl md:text-5xl font-bold text-balance ${heroImageUrl ? 'text-white' : 'text-foreground'}`}>
               {heroTitle}
             </motion.h1>
-            <motion.p variants={itemVariants} className="text-base md:text-lg text-muted-foreground max-w-3xl mx-auto">
+            <motion.p variants={itemVariants} className={`text-base md:text-lg max-w-3xl mx-auto ${heroImageUrl ? 'text-white/85' : 'text-muted-foreground'}`}>
               {heroSubtitle}
             </motion.p>
             <motion.div variants={itemVariants} className="flex flex-wrap justify-center gap-2.5 pt-1">

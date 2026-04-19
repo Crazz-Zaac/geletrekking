@@ -78,6 +78,7 @@ const contactRoutes = require("./routes/contactRoutes");
 const travelGuideRoutes = require("./routes/travelGuideRoutes");
 const faqRoutes = require("./routes/faqRoutes");
 const alertRoutes = require("./routes/alertRoutes");
+const adminAnalyticsRoutes = require("./routes/adminAnalyticsRoutes");
 
 // Settings / Hero / Uploads
 const settingsRoutes = require("./routes/settingsRoutes");
@@ -88,6 +89,7 @@ const heroRoutes = require("./routes/heroRoutes");
    5. ROUTES MOUNTING
 ========================================================= */
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin/analytics", adminAnalyticsRoutes);
 app.use("/api/protected", protectedRoutes);
 app.use("/api/superadmin/auth", superadminAuthRoutes);
 app.use("/api/superadmin", superadminRoutes);

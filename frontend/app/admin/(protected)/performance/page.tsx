@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { getAdminAnalytics } from '@/lib/api'
+import { getAdminToken } from '@/lib/admin-auth'
 import {
   BarChart,
   Bar,
@@ -32,14 +34,15 @@ type PerformanceMetric = {
   label: string
   value: string | number
   change: string
+  changeHint?: string
   icon: React.ComponentType<{ className?: string }>
   color: string
 }
 
 type VisitorData = {
   date: string
-  visitors: number
-  pageViews: number
+  inquiries: number
+  contentUpdates: number
 }
 
 type RegionData = {
@@ -59,82 +62,71 @@ export default function PerformancePage() {
   const [regionData, setRegionData] = useState<RegionData[]>([])
   const [deviceData, setDeviceData] = useState<DeviceData[]>([])
   const [metrics, setMetrics] = useState<PerformanceMetric[]>([])
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate fetching analytics data
-    // In production, this would call your actual analytics API
     const loadData = async () => {
-      // Mock visitor data for the last 7 days
-      const mockVisitors: VisitorData[] = [
-        { date: 'Mon', visitors: 2400, pageViews: 5200 },
-        { date: 'Tue', visitors: 1398, pageViews: 4210 },
-        { date: 'Wed', visitors: 9800, pageViews: 12290 },
-        { date: 'Thu', visitors: 3908, pageViews: 6200 },
-        { date: 'Fri', visitors: 4800, pageViews: 7300 },
-        { date: 'Sat', visitors: 3490, pageViews: 5900 },
-        { date: 'Sun', visitors: 4300, pageViews: 6800 },
-      ]
+      setLoading(true)
+      setError('')
 
-      // Mock region data
-      const mockRegions: RegionData[] = [
-        { name: 'Nepal', count: 3420 },
-        { name: 'India', count: 2210 },
-        { name: 'USA', count: 1890 },
-        { name: 'UK', count: 1240 },
-        { name: 'Australia', count: 890 },
-        { name: 'Others', count: 1450 },
-      ]
+      try {
+        const token = getAdminToken()
+        if (!token) {
+          setError('Missing admin token. Please log in again.')
+          setLoading(false)
+          return
+        }
 
-      // Mock device data
-      const mockDevices: DeviceData[] = [
-        { name: 'Mobile', value: 45 },
-        { name: 'Desktop', value: 40 },
-        { name: 'Tablet', value: 15 },
-      ]
+        const analytics = await getAdminAnalytics(token)
 
-      // Mock metrics
-      const mockMetrics: PerformanceMetric[] = [
-        {
-          label: 'Total Visitors',
-          value: '28,518',
-          change: '+12.5%',
-          icon: Users,
-          color: 'text-blue-600 dark:text-blue-400',
-        },
-        {
-          label: 'Page Views',
-          value: '47,892',
-          change: '+8.2%',
-          icon: Eye,
-          color: 'text-purple-600 dark:text-purple-400',
-        },
-        {
-          label: 'Avg. Session Duration',
-          value: '3m 42s',
-          change: '+5.1%',
-          icon: Clock,
-          color: 'text-emerald-600 dark:text-emerald-400',
-        },
-        {
-          label: 'Bounce Rate',
-          value: '32.4%',
-          change: '-2.3%',
-          icon: TrendingUp,
-          color: 'text-orange-600 dark:text-orange-400',
-        },
-      ]
+        const liveMetrics: PerformanceMetric[] = [
+          {
+            label: 'Total Inquiries',
+            value: analytics.metrics.totalInquiries.toLocaleString(),
+            change: analytics.metrics.inquiriesChangePct,
+            changeHint: 'vs previous 7 days',
+            icon: Users,
+            color: 'text-blue-600 dark:text-blue-400',
+          },
+          {
+            label: 'Content Items',
+            value: analytics.metrics.contentItems.toLocaleString(),
+            change: analytics.metrics.contentChangePct,
+            changeHint: 'new items vs previous 7 days',
+            icon: Eye,
+            color: 'text-purple-600 dark:text-purple-400',
+          },
+          {
+            label: 'Avg. Guide Views',
+            value: analytics.metrics.avgGuideViews.toLocaleString(),
+            change: `${analytics.metrics.totalGuideViews.toLocaleString()} total`,
+            changeHint: 'across travel guides',
+            icon: Clock,
+            color: 'text-emerald-600 dark:text-emerald-400',
+          },
+          {
+            label: 'Unread Rate',
+            value: `${analytics.metrics.unreadRate.toFixed(1)}%`,
+            change: `${analytics.metrics.unreadMessages} unread`,
+            changeHint: 'contact inbox health',
+            icon: TrendingUp,
+            color: 'text-orange-600 dark:text-orange-400',
+          },
+        ]
 
-      setVisitorData(mockVisitors)
-      setRegionData(mockRegions)
-      setDeviceData(mockDevices)
-      setMetrics(mockMetrics)
-      setLoading(false)
+        setVisitorData(analytics.trends)
+        setRegionData(analytics.regions)
+        setDeviceData(analytics.contentMix)
+        setMetrics(liveMetrics)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load analytics data.')
+      } finally {
+        setLoading(false)
+      }
     }
 
-    setTimeout(() => {
-      void loadData()
-    }, 500)
+    void loadData()
   }, [])
 
   const handleExport = () => {
@@ -164,6 +156,11 @@ export default function PerformancePage() {
     )
   }
 
+  const topRegion = regionData[0]
+  const strongestContent = deviceData[0]
+  const inquiriesMetric = metrics.find((item) => item.label === 'Total Inquiries')
+  const unreadMetric = metrics.find((item) => item.label === 'Unread Rate')
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -173,13 +170,21 @@ export default function PerformancePage() {
             <Activity className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             Website Performance
           </h1>
-          <p className="text-muted-foreground mt-1">Real-time analytics and key performance indicators</p>
+          <p className="text-muted-foreground mt-1">Live analytics generated from current admin data and inquiry activity.</p>
         </div>
         <Button onClick={handleExport} variant="outline" className="gap-2">
           <Download className="w-4 h-4" />
           Export Data
         </Button>
       </div>
+
+      {error && (
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
+          <CardContent className="pt-4">
+            <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -198,9 +203,8 @@ export default function PerformancePage() {
               <CardContent>
                 <div className="space-y-1">
                   <p className="text-2xl font-bold text-foreground">{metric.value}</p>
-                  <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                    {metric.change} from last week
-                  </p>
+                  <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">{metric.change}</p>
+                  <p className="text-[11px] text-muted-foreground">{metric.changeHint || 'latest window'}</p>
                 </div>
               </CardContent>
             </Card>
@@ -217,7 +221,7 @@ export default function PerformancePage() {
               <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               Visitor Trends
             </CardTitle>
-            <CardDescription>Last 7 days visitor and page view analytics</CardDescription>
+            <CardDescription>Last 7 days inquiry and content update activity</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -232,8 +236,8 @@ export default function PerformancePage() {
                     borderRadius: '8px',
                   }}
                 />
-                <Line type="monotone" dataKey="visitors" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
-                <Line type="monotone" dataKey="pageViews" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="inquiries" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="contentUpdates" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -244,9 +248,9 @@ export default function PerformancePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Globe className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              Device Type
+              Content Mix
             </CardTitle>
-            <CardDescription>User distribution by device</CardDescription>
+            <CardDescription>Distribution of currently published content</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -279,7 +283,7 @@ export default function PerformancePage() {
             <MapPin className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             Geographic Distribution
           </CardTitle>
-          <CardDescription>Visitor distribution by region/country</CardDescription>
+          <CardDescription>Trek distribution by region</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -323,25 +327,39 @@ export default function PerformancePage() {
       <Card className="border-border bg-gradient-to-br from-amber-50/30 to-orange-50/30 dark:from-amber-950/20 dark:to-orange-950/20">
         <CardHeader>
           <CardTitle className="text-lg">Performance Insights</CardTitle>
-          <CardDescription>Recommendations for website optimization</CardDescription>
+          <CardDescription>Automated insights based on live data</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 rounded-lg bg-white dark:bg-slate-950 border border-border">
-              <h4 className="font-semibold text-sm text-foreground mb-2">✓ Strong Engagement</h4>
-              <p className="text-xs text-muted-foreground">Mobile users show 45% of traffic. Ensure mobile experience is optimized.</p>
+              <h4 className="font-semibold text-sm text-foreground mb-2">📨 Inquiry Momentum</h4>
+              <p className="text-xs text-muted-foreground">
+                Total inquiries are currently {inquiriesMetric?.value ?? '0'} with a {inquiriesMetric?.change ?? '0.0%'} trend in the recent weekly window.
+              </p>
             </div>
             <div className="p-4 rounded-lg bg-white dark:bg-slate-950 border border-border">
-              <h4 className="font-semibold text-sm text-foreground mb-2">📍 Regional Growth</h4>
-              <p className="text-xs text-muted-foreground">Nepal leads with 3,420 visitors. Localize content for top regions.</p>
+              <h4 className="font-semibold text-sm text-foreground mb-2">📍 Regional Coverage</h4>
+              <p className="text-xs text-muted-foreground">
+                {topRegion
+                  ? `${topRegion.name} currently leads with ${topRegion.count} trek entries. Consider adding more content for underrepresented regions.`
+                  : 'No region data available yet. Add trek entries with region tags to unlock this insight.'}
+              </p>
             </div>
             <div className="p-4 rounded-lg bg-white dark:bg-slate-950 border border-border">
-              <h4 className="font-semibold text-sm text-foreground mb-2">⚡ Session Quality</h4>
-              <p className="text-xs text-muted-foreground">Avg. session duration: 3m 42s. Improve with longer-form content.</p>
+              <h4 className="font-semibold text-sm text-foreground mb-2">📦 Content Focus</h4>
+              <p className="text-xs text-muted-foreground">
+                {strongestContent
+                  ? `${strongestContent.name} represents ${strongestContent.value}% of your content mix. Balance this with supporting formats to improve discoverability.`
+                  : 'Publish treks, blogs, and guides to generate content distribution insights.'}
+              </p>
             </div>
             <div className="p-4 rounded-lg bg-white dark:bg-slate-950 border border-border">
-              <h4 className="font-semibold text-sm text-foreground mb-2">🎯 Bounce Rate</h4>
-              <p className="text-xs text-muted-foreground">32.4% bounce rate is healthy. Consider A/B testing CTAs.</p>
+              <h4 className="font-semibold text-sm text-foreground mb-2">📬 Inbox Health</h4>
+              <p className="text-xs text-muted-foreground">
+                {unreadMetric
+                  ? `${unreadMetric.change} (${unreadMetric.value}) in your contact inbox. Keep response turnaround tight to improve lead quality.`
+                  : 'No contact inbox activity yet.'}
+              </p>
             </div>
           </div>
         </CardContent>

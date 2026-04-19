@@ -40,7 +40,21 @@ import {
   updateAdminGalleryItem,
 } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
-import { ImageIcon, Trash2, Edit2, CheckCircle2, AlertCircle, LinkIcon, Plus, Grid3x3, LayoutList } from 'lucide-react'
+import {
+  ImageIcon,
+  Trash2,
+  Edit2,
+  CheckCircle2,
+  AlertCircle,
+  LinkIcon,
+  Plus,
+  Grid3x3,
+  LayoutList,
+  Search,
+  FilterX,
+  Sparkles,
+  FolderOpen,
+} from 'lucide-react'
 
 type GalleryForm = {
   title: string
@@ -102,6 +116,8 @@ export default function AdminGalleryPage() {
       return matchesSearch && matchesCategory
     })
   }, [items, search, categoryFilter])
+
+  const activeFiltersCount = Number(Boolean(search)) + Number(categoryFilter !== 'all')
 
   const stats = useMemo(
     () => ({
@@ -195,14 +211,29 @@ export default function AdminGalleryPage() {
     }
   }
 
+  const clearFilters = () => {
+    setSearch('')
+    setCategoryFilter('all')
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Gallery Manager</h1>
-          <p className="text-muted-foreground mt-1">Manage your gallery hero image and photo collections</p>
+          <p className="text-muted-foreground mt-1">Manage your gallery hero image and photo collections.</p>
         </div>
+        <Button
+          onClick={() => {
+            onReset()
+            setOpenDialog(true)
+          }}
+          className="gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Add Gallery Item
+        </Button>
       </div>
 
       {/* Status Messages */}
@@ -262,15 +293,15 @@ export default function AdminGalleryPage() {
             <div className="lg:col-span-1">
               <Card className="sticky top-20">
                 <CardHeader>
-                  <CardTitle className="text-lg">Add Item</CardTitle>
-                  <CardDescription>Create a new gallery item</CardDescription>
+                  <CardTitle className="text-lg">Quick Actions</CardTitle>
+                  <CardDescription>Create, search, and filter gallery items.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Dialog open={openDialog} onOpenChange={setOpenDialog}>
                     <DialogTrigger asChild>
                       <Button onClick={() => onReset()} className="w-full gap-2">
                         <Plus className="w-4 h-4" />
-                        New Item
+                        New Gallery Item
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-lg">
@@ -293,6 +324,7 @@ export default function AdminGalleryPage() {
 
                         <div className="space-y-2">
                           <label className="text-sm font-medium">Image URL *</label>
+                          <p className="text-xs text-muted-foreground">Paste a public image URL from Cloudinary, S3, or CDN.</p>
                           <div className="flex gap-2">
                             <Input
                               placeholder="https://example.com/image.jpg or S3 URL"
@@ -349,12 +381,15 @@ export default function AdminGalleryPage() {
                   <div className="pt-4 border-t space-y-3">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Search</label>
-                      <Input
-                        placeholder="Search by title..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="h-9"
-                      />
+                      <div className="relative">
+                        <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                        <Input
+                          placeholder="Search by title or category..."
+                          value={search}
+                          onChange={(e) => setSearch(e.target.value)}
+                          className="h-9 pl-9"
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-2">
@@ -394,6 +429,22 @@ export default function AdminGalleryPage() {
                         List
                       </Button>
                     </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs text-muted-foreground">
+                      <span>
+                        {activeFiltersCount > 0 ? `${activeFiltersCount} active filter${activeFiltersCount > 1 ? 's' : ''}` : 'No active filters'}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearFilters}
+                        disabled={activeFiltersCount === 0}
+                        className="h-7 gap-1 px-2"
+                      >
+                        <FilterX className="w-3.5 h-3.5" />
+                        Clear
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -403,21 +454,46 @@ export default function AdminGalleryPage() {
             <div className="lg:col-span-3">
               <Card>
                 <CardHeader>
-                  <CardTitle>
-                    Items {filteredItems.length > 0 && <span className="text-muted-foreground font-normal ml-2">({filteredItems.length})</span>}
+                  <CardTitle className="flex items-center gap-2">
+                    <FolderOpen className="w-5 h-5" />
+                    <span>
+                      Items {filteredItems.length > 0 && <span className="text-muted-foreground font-normal ml-2">({filteredItems.length})</span>}
+                    </span>
                   </CardTitle>
-                  <CardDescription>Manage your gallery collection</CardDescription>
+                  <CardDescription>
+                    {activeFiltersCount > 0 ? 'Filtered results based on your current search settings.' : 'Manage your gallery collection.'}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
                     <div className="flex items-center justify-center py-12">
-                      <p className="text-muted-foreground">Loading gallery items...</p>
+                      <div className="text-center">
+                        <Sparkles className="w-10 h-10 text-muted-foreground/60 mx-auto mb-3 animate-pulse" />
+                        <p className="text-muted-foreground">Loading gallery items...</p>
+                      </div>
                     </div>
                   ) : filteredItems.length === 0 ? (
                     <div className="flex items-center justify-center py-12">
                       <div className="text-center">
                         <ImageIcon className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-                        <p className="text-muted-foreground">{items.length === 0 ? 'No gallery items yet.' : 'No items match your filters.'}</p>
+                        <p className="text-muted-foreground mb-3">{items.length === 0 ? 'No gallery items yet.' : 'No items match your filters.'}</p>
+                        {items.length === 0 ? (
+                          <Button
+                            onClick={() => {
+                              onReset()
+                              setOpenDialog(true)
+                            }}
+                            className="gap-2"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Add First Item
+                          </Button>
+                        ) : (
+                          <Button variant="outline" onClick={clearFilters} className="gap-2">
+                            <FilterX className="w-4 h-4" />
+                            Clear Filters
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ) : viewMode === 'grid' ? (
