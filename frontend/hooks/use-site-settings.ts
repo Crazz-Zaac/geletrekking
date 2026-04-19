@@ -23,6 +23,7 @@ const defaultSettings: Required<AdminSiteSettings> = {
     youtube: '',
     whatsapp: '',
   },
+  registrationsAffiliations: [],
 }
 
 function ensureProtocol(url: string): string {

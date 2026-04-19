@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
+import { HomepageAlertBanner } from '@/components/homepage-alert-banner'
 import { TrekCard } from '@/components/trek-card'
 import { TestimonialsCarousel } from '@/components/testimonials-carousel'
 import { treks, regions, blogPosts } from '@/lib/data'
@@ -30,9 +31,11 @@ export default async function HomePage() {
   return (
     <>
       <Navbar />
-      <main>
-        <HeroSection />
-        <StatsBar />
+      <div className="pt-16">
+        <HomepageAlertBanner />
+        <main>
+          <HeroSection />
+          <StatsBar />
 
         {offerTreks.length > 0 ? (
           <section className="py-10 md:py-12 bg-gradient-to-b from-red-50/70 to-background dark:from-red-950/10 dark:to-background border-y border-red-200/60 dark:border-red-500/20">
@@ -89,8 +92,9 @@ export default async function HomePage() {
         <TestimonialsCarousel testimonials={apiTestimonials} />
         <RegionsSection regions={regions} />
         <BlogHighlights posts={activeBlogs} />
-        <BookingCTA />
-      </main>
+          <BookingCTA />
+        </main>
+      </div>
       <Footer />
     </>
   )

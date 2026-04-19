@@ -1,6 +1,7 @@
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { GalleryContent } from './GalleryContent';
+import { Suspense } from 'react';
 
 type BackendGalleryItem = {
   _id: string;
@@ -66,7 +67,9 @@ export default async function GalleryPage() {
     <>
       <Navbar />
       <main className="min-h-screen bg-background pt-16">
-        <GalleryContent initialItems={items} heroImageUrl={heroImageUrl} />
+        <Suspense fallback={<div className="min-h-[50vh]" />}>
+          <GalleryContent initialItems={items} heroImageUrl={heroImageUrl} />
+        </Suspense>
       </main>
       <Footer />
     </>

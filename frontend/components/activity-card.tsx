@@ -3,6 +3,8 @@ import { PublicActivity } from '@/lib/api'
 import { getActivityMenuLabel } from '@/lib/activity-menu'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
+import Image from 'next/image'
+import { ArrowRight } from 'lucide-react'
 
 interface ActivityCardProps {
   activity: PublicActivity
@@ -14,6 +16,8 @@ interface ActivityCardProps {
  * Ensures consistent 1-line description across all devices
  */
 export function ActivityCard({ activity, categoryLabel }: ActivityCardProps) {
+  const title = getActivityMenuLabel(activity)
+
   // Font specs matching your CSS: 14px Inter
   const descriptionLayout = useTextLayout(
     activity.description || activity.shortDescription || 'No description available',
@@ -26,15 +30,18 @@ export function ActivityCard({ activity, categoryLabel }: ActivityCardProps) {
   )
 
   return (
-    <Link href={`/activities/${activity.slug}`}>
-      <Card className="relative h-full rounded-2xl overflow-hidden hover:shadow-lg transition-shadow cursor-pointer border-0">
+    <Link href={`/activities/${activity.slug}`} className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-2xl">
+      <Card className="relative h-full rounded-2xl overflow-hidden hover:shadow-lg transition-shadow cursor-pointer border border-border bg-card">
         {/* Image Section */}
         <div className="relative h-48 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden">
           {activity.mainImage && (
-            <img
+            <Image
               src={activity.mainImage}
-              alt={getActivityMenuLabel(activity)}
-              className="w-full h-full object-cover"
+              alt={`${title} activity cover image`}
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              unoptimized
             />
           )}
 
@@ -60,7 +67,7 @@ export function ActivityCard({ activity, categoryLabel }: ActivityCardProps) {
         {/* Content Section */}
         <div className="p-4">
           <p className="text-sm font-bold text-foreground mb-2 line-clamp-2">
-            {getActivityMenuLabel(activity)}
+            {title}
           </p>
 
           {/* Description - Measured with Pretext for accuracy */}
@@ -68,23 +75,22 @@ export function ActivityCard({ activity, categoryLabel }: ActivityCardProps) {
             {descriptionLayout.truncated}
           </p>
 
-          {/* Duration and Location */}
-          <div className="flex gap-4 text-xs text-muted-foreground mb-3">
-            <span className="flex items-center gap-1">
-              📅 {activity.duration || 'Custom'}
+          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mb-3">
+            <span className="inline-flex items-center rounded-full bg-muted px-2 py-1">
+              {activity.duration || 'Custom duration'}
             </span>
-            <span className="flex items-center gap-1">
-              📍 {activity.category || 'Trek'}
+            <span className="inline-flex items-center rounded-full bg-muted px-2 py-1">
+              {activity.difficultyLevel || 'Flexible difficulty'}
             </span>
           </div>
 
-          {/* Arrow Button */}
-          <div className="flex justify-end">
-            <div className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600">
-                <path d="m9 6 6 6-6 6"></path>
-              </svg>
-            </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-primary">
+              {activity.currency || '$'}{activity.price}
+            </span>
+            <span className="inline-flex items-center gap-1 text-sm font-medium text-foreground">
+              View details <ArrowRight className="w-3.5 h-3.5" />
+            </span>
           </div>
         </div>
       </Card>

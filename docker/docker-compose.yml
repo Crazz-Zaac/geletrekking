@@ -5,13 +5,13 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.frontend
       args:
-        NEXT_PUBLIC_API_URL: http://backend:5000
+        NEXT_PUBLIC_API_URL: http://localhost:5000
         INTERNAL_API_URL: http://backend:5000
     container_name: geletrekking-frontend
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:5000
+      - NEXT_PUBLIC_API_URL=http://localhost:5000
       - INTERNAL_API_URL=http://backend:5000
     depends_on:
       - backend
