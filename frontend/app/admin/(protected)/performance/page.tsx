@@ -3,7 +3,13 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { getAdminAnalytics, getAdminRiskHealth, type AdminRiskHealthResponse } from '@/lib/api'
+import {
+  getAdminAnalytics,
+  getAdminRiskHealth,
+  getAdminSslHealth,
+  type AdminRiskHealthResponse,
+  type AdminSslHealthResponse,
+} from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
 import {
   BarChart,
@@ -66,6 +72,7 @@ export default function PerformancePage() {
   const [deviceData, setDeviceData] = useState<DeviceData[]>([])
   const [metrics, setMetrics] = useState<PerformanceMetric[]>([])
   const [riskHealth, setRiskHealth] = useState<AdminRiskHealthResponse | null>(null)
+  const [sslHealth, setSslHealth] = useState<AdminSslHealthResponse | null>(null)
   const [isRiskRefreshing, setIsRiskRefreshing] = useState(false)
   const [autoRefreshRisk, setAutoRefreshRisk] = useState(true)
   const [riskRefreshIntervalSec, setRiskRefreshIntervalSec] = useState<number>(20)
@@ -86,9 +93,10 @@ export default function PerformancePage() {
           return
         }
 
-        const [analytics, security] = await Promise.all([
+        const [analytics, security, ssl] = await Promise.all([
           getAdminAnalytics(token),
           getAdminRiskHealth(token),
+          getAdminSslHealth(token),
         ])
 
         const liveMetrics: PerformanceMetric[] = [
@@ -131,6 +139,7 @@ export default function PerformancePage() {
         setDeviceData(analytics.contentMix)
         setMetrics(liveMetrics)
         setRiskHealth(security)
+        setSslHealth(ssl)
         setLastRiskRefreshAt(new Date().toISOString())
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load analytics data.')
@@ -149,8 +158,12 @@ export default function PerformancePage() {
       try {
         const token = getAdminToken()
         if (!token) return
-        const security = await getAdminRiskHealth(token)
+        const [security, ssl] = await Promise.all([
+          getAdminRiskHealth(token),
+          getAdminSslHealth(token),
+        ])
         setRiskHealth(security)
+        setSslHealth(ssl)
         setLastRiskRefreshAt(new Date().toISOString())
       } catch {}
     }, Math.max(5, riskRefreshIntervalSec) * 1000)
@@ -169,8 +182,12 @@ export default function PerformancePage() {
         setError('Missing admin token. Please log in again.')
         return
       }
-      const security = await getAdminRiskHealth(token)
+      const [security, ssl] = await Promise.all([
+        getAdminRiskHealth(token),
+        getAdminSslHealth(token),
+      ])
       setRiskHealth(security)
+      setSslHealth(ssl)
       setLastRiskRefreshAt(new Date().toISOString())
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to refresh risk status right now.')
@@ -210,6 +227,12 @@ export default function PerformancePage() {
   const strongestContent = deviceData[0]
   const inquiriesMetric = metrics.find((item) => item.label === 'Total Inquiries')
   const unreadMetric = metrics.find((item) => item.label === 'Unread Rate')
+  const sslStatusColor =
+    sslHealth?.status === 'valid'
+      ? 'text-emerald-600 dark:text-emerald-400'
+      : sslHealth?.status === 'expiring-soon'
+        ? 'text-amber-600 dark:text-amber-400'
+        : 'text-red-600 dark:text-red-400'
 
   return (
     <div className="space-y-6">
@@ -338,6 +361,64 @@ export default function PerformancePage() {
                 </p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {sslHealth && (
+        <Card className="border-border bg-gradient-to-br from-blue-50/40 via-indigo-50/30 to-cyan-50/30 dark:from-blue-950/25 dark:via-indigo-950/20 dark:to-cyan-950/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              SSL Certificate Health
+            </CardTitle>
+            <CardDescription>Live TLS certificate validity and expiry status from active server certificate</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-4 rounded-lg border border-border bg-background/80">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Current Status</p>
+                <p className={`mt-2 text-lg font-bold ${sslStatusColor}`}>
+                  {sslHealth.status === 'valid'
+                    ? 'Valid'
+                    : sslHealth.status === 'expiring-soon'
+                      ? 'Expiring Soon'
+                      : sslHealth.status === 'expired'
+                        ? 'Expired'
+                        : sslHealth.status === 'missing'
+                          ? 'Missing Certificate'
+                          : 'Invalid Certificate'}
+                </p>
+              </div>
+              <div className="p-4 rounded-lg border border-border bg-background/80">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Days Remaining</p>
+                <p className="mt-2 text-sm font-semibold text-foreground">
+                  {sslHealth.daysRemaining == null ? 'N/A' : `${sslHealth.daysRemaining} days`}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Warning window: {sslHealth.warningThresholdDays} days
+                </p>
+              </div>
+              <div className="p-4 rounded-lg border border-border bg-background/80">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Expires At</p>
+                <p className="mt-2 text-sm text-foreground font-semibold">
+                  {sslHealth.validTo ? new Date(sslHealth.validTo).toLocaleString() : 'N/A'}
+                </p>
+              </div>
+              <div className="p-4 rounded-lg border border-border bg-background/80">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Certificate Path</p>
+                <p className="mt-2 text-sm text-foreground break-all">{sslHealth.certPath}</p>
+              </div>
+            </div>
+            {(sslHealth.status === 'expiring-soon' || sslHealth.status === 'expired' || sslHealth.status === 'invalid' || sslHealth.status === 'missing') && (
+              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
+                <span className="inline-flex items-center gap-1 font-medium">
+                  <AlertTriangle className="h-4 w-4" />
+                  Attention needed:
+                </span>{' '}
+                Your TLS certificate health is currently "{sslHealth.status}". Renew or replace the certificate to keep HTTPS trusted.
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

@@ -366,6 +366,21 @@ export interface AdminRiskHealthResponse {
     device: number
   }
 }
+export interface AdminSslHealthResponse {
+  message: string
+  status: 'valid' | 'expiring-soon' | 'expired' | 'missing' | 'invalid'
+  certPath: string
+  warningThresholdDays: number
+  validNow: boolean
+  validFrom: string | null
+  validTo: string | null
+  daysRemaining: number | null
+  issuer: string | null
+  subject: string | null
+  serialNumber: string | null
+  fingerprint256: string | null
+  checkedAt: string
+}
 interface BackendTrek {
   _id: string
   name: string
@@ -446,8 +461,8 @@ const getApiBaseUrl = () => {
     const url = (globalThis as any).process?.env?.INTERNAL_API_URL || 'http://backend:5000'
     return url.replace(/\/+$/, '')
   } else {
-    // Client-side: use NEXT_PUBLIC_API_URL for browser access
-    const publicApiUrl = (globalThis as any).process?.env?.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+    // Client-side: prefer same-origin to avoid mixed-content on HTTPS
+    const publicApiUrl = (globalThis as any).process?.env?.NEXT_PUBLIC_API_URL || ''
     return publicApiUrl.replace(/\/+$/, '')
   }
 }
@@ -455,7 +470,7 @@ const getApiBaseUrl = () => {
 const API_BASE_URL = getApiBaseUrl()
 const getApiUrl = (path: string) => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
-  return `${API_BASE_URL}${normalizedPath}`
+  return API_BASE_URL ? `${API_BASE_URL}${normalizedPath}` : normalizedPath
 }
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(getApiUrl(path), {
@@ -845,6 +860,9 @@ export async function getAdminAnalytics(token: string): Promise<AdminAnalyticsRe
 }
 export async function getAdminRiskHealth(token: string): Promise<AdminRiskHealthResponse> {
   return fetchAdminJson<AdminRiskHealthResponse>('/api/security/risk-health', token)
+}
+export async function getAdminSslHealth(token: string): Promise<AdminSslHealthResponse> {
+  return fetchAdminJson<AdminSslHealthResponse>('/api/security/ssl-health', token)
 }
 export async function getAdminSettings(): Promise<AdminSiteSettings> {
   return fetchJson<AdminSiteSettings>('/api/settings')

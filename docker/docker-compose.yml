@@ -1,17 +1,47 @@
 services:
-  # Frontend - React/Vite with Nginx (Production)
+  # Frontend - Next.js app
   frontend:
     build:
       context: ..
       dockerfile: docker/Dockerfile.frontend
     container_name: geletrekking-frontend
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     env_file:
       - ../frontend/.env.local
     depends_on:
       - backend
     restart: unless-stopped  # TODO: Change to 'on-failure' in production
+    networks:
+      - geletrekking-network
+
+  # Nginx reverse proxy - TLS termination (HTTPS)
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: geletrekking-nginx
+    depends_on:
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./ssl:/etc/nginx/certs:ro
+      - certbot_www:/var/www/certbot:ro
+    restart: unless-stopped
+    networks:
+      - geletrekking-network
+
+  # Certbot (run manually via scripts for production SSL issuance/renewal)
+  certbot:
+    image: certbot/certbot:latest
+    container_name: geletrekking-certbot
+    profiles:
+      - prod
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+      - ./ssl:/etc/nginx/certs
     networks:
       - geletrekking-network
 
@@ -25,6 +55,8 @@ services:
       - "5000:5000"
     env_file:
       - ../backend/.env
+    volumes:
+      - ./ssl:/etc/nginx/certs:ro
     depends_on:
       - mongo
       - redis
@@ -72,6 +104,10 @@ services:
 
 volumes:
   mongo_data:
+    driver: local
+  letsencrypt:
+    driver: local
+  certbot_www:
     driver: local
 
 networks:

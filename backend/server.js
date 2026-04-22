@@ -22,8 +22,11 @@ app.use(
 ========================================================= */
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(",")
+  ? process.env.ALLOWED_ORIGINS.split(",").map((item) => item.trim()).filter(Boolean)
   : [];
+
+const isLocalDevOrigin = (origin) =>
+  /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
 app.use(
   cors({
@@ -31,7 +34,11 @@ app.use(
       // Allow requests with no origin (Postman, curl, server-to-server)
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
+      const isAllowedByList = allowedOrigins.includes(origin);
+      const isDevLocalOrigin =
+        process.env.NODE_ENV !== "production" && isLocalDevOrigin(origin);
+
+      if (isAllowedByList || isDevLocalOrigin) {
         callback(null, true);
       } else {
         console.log("CORS BLOCKED:", origin);
