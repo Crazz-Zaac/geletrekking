@@ -633,7 +633,7 @@ function mapTestimonial(item: BackendTestimonial): UiTestimonial {
     id: item._id,
     name: item.name,
     country: item.country || 'Nepal',
-    trek: 'Himalayan Trek',
+    trek: 'Gele Trekking',
     rating: item.rating,
     text: item.message,
     date: formatDate(item.createdAt),

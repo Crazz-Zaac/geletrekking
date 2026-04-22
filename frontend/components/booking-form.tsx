@@ -202,7 +202,7 @@ export function BookingForm({ trek }: BookingFormProps) {
         aria-hidden="true"
       />
       {requiresCaptcha ? (
-        <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+        <div className="rounded-lg bg-muted/30 p-4 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <p className="text-sm font-semibold text-foreground">Security verification</p>
             <span
@@ -223,7 +223,10 @@ export function BookingForm({ trek }: BookingFormProps) {
               setError(null)
             }}
             onExpire={() => setCaptchaToken('')}
-            onError={() => setCaptchaToken('')}
+            onError={() => {
+              setCaptchaToken('')
+              setError('Captcha failed to load. Verify Turnstile site key domain settings and disable ad blockers for this site.')
+            }}
           />
           <p className="text-xs text-muted-foreground" aria-live="polite">
             {isCaptchaReady

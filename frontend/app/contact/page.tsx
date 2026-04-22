@@ -100,7 +100,11 @@ export default function ContactPage() {
   const [formStartedAt, setFormStartedAt] = useState<number>(() => Date.now());
   const [captchaToken, setCaptchaToken] = useState('');
   const [turnstileRenderKey, setTurnstileRenderKey] = useState(0);
-  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
+  const rawTurnstileSiteKey = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '').trim();
+  const hasPlaceholderTurnstileKey = /your_turnstile_site_key|your-site-key|changeme|placeholder/i.test(
+    rawTurnstileSiteKey
+  );
+  const turnstileSiteKey = hasPlaceholderTurnstileKey ? '' : rawTurnstileSiteKey;
   const requiresCaptcha = Boolean(turnstileSiteKey);
   const isFormReady =
     Boolean(formData.name.trim()) &&
@@ -341,7 +345,7 @@ export default function ContactPage() {
                     />
 
                     {requiresCaptcha ? (
-                      <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                      <div className="rounded-lg bg-muted/30 p-4 space-y-3">
                         <div className="flex items-start justify-between gap-3">
                           <p className="text-sm font-semibold text-foreground">Security verification</p>
                           <span
@@ -362,7 +366,10 @@ export default function ContactPage() {
                             setSubmitError('');
                           }}
                           onExpire={() => setCaptchaToken('')}
-                          onError={() => setCaptchaToken('')}
+                          onError={() => {
+                            setCaptchaToken('');
+                            setSubmitError('Captcha failed to load. Verify Turnstile site key domain settings and disable ad blockers for this site.');
+                          }}
                         />
                         <p className="text-xs text-muted-foreground" aria-live="polite">
                           {isCaptchaReady
@@ -372,7 +379,9 @@ export default function ContactPage() {
                       </div>
                     ) : (
                       <p className="text-sm text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
-                        Captcha is not configured in this environment. Submission remains available.
+                        {hasPlaceholderTurnstileKey
+                          ? 'Captcha key is a placeholder. Set a real `NEXT_PUBLIC_TURNSTILE_SITE_KEY` to show verification.'
+                          : 'Captcha is not configured in this environment. Submission remains available.'}
                       </p>
                     )}
 
