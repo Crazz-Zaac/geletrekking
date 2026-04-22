@@ -8,19 +8,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   AdminAbout,
+  AdminAboutAssociation,
   AdminAboutHighlight,
   AdminAboutTeamMember,
   getAdminAbout,
   updateAdminAbout,
 } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
-import { Bold, Italic, Heading2, List, Trash2, Plus, AlertCircle, CheckCircle, BookOpen, Heart, Users, Zap, Users2, Link as LinkIcon, Building2 } from 'lucide-react'
-
-// ── Association type ─────────────────────────────────────────────────────────
-type AdminAboutAssociation = {
-  name: string
-  logoUrl: string
-}
+import { Bold, Italic, Heading2, List, ListOrdered, Quote, Trash2, Plus, AlertCircle, CheckCircle, BookOpen, Heart, Users, Zap, Users2, Link as LinkIcon, Building2, BarChart3, ExternalLink } from 'lucide-react'
 
 const defaultAbout: AdminAbout & { associations: AdminAboutAssociation[] } = {
   heroTitle: 'About Us',
@@ -53,20 +48,41 @@ const defaultAbout: AdminAbout & { associations: AdminAboutAssociation[] } = {
   ],
 }
 
-const TextFormattingTools = ({ onInsert }: { onInsert: (text: string) => void }) => (
-  <div className="flex items-center gap-1 p-2 bg-muted rounded-md border border-border mb-2">
-    <Button variant="ghost" size="sm" onClick={() => onInsert('**bold text**')} className="h-8 w-8 p-0" title="Bold">
-      <Bold className="w-4 h-4" />
-    </Button>
-    <Button variant="ghost" size="sm" onClick={() => onInsert('*italic text*')} className="h-8 w-8 p-0" title="Italic">
-      <Italic className="w-4 h-4" />
-    </Button>
-    <Button variant="ghost" size="sm" onClick={() => onInsert('## Heading\n')} className="h-8 w-8 p-0" title="Heading">
-      <Heading2 className="w-4 h-4" />
-    </Button>
-    <Button variant="ghost" size="sm" onClick={() => onInsert('- List item\n')} className="h-8 w-8 p-0" title="Bullet List">
-      <List className="w-4 h-4" />
-    </Button>
+const TextFormattingTools = ({
+  onFormat,
+}: {
+  onFormat: (before: string, after?: string, placeholder?: string) => void
+}) => (
+  <div className="rounded-md border border-border bg-muted/50 p-2 mb-2">
+    <div className="flex flex-wrap items-center gap-1.5">
+      <Button variant="ghost" size="sm" onClick={() => onFormat('**', '**', 'bold text')} className="h-8 px-2" title="Bold">
+        <Bold className="w-4 h-4 mr-1" />
+        <span className="text-xs">Bold</span>
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => onFormat('*', '*', 'italic text')} className="h-8 px-2" title="Italic">
+        <Italic className="w-4 h-4 mr-1" />
+        <span className="text-xs">Italic</span>
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => onFormat('## ', '', 'Heading')} className="h-8 px-2" title="Heading">
+        <Heading2 className="w-4 h-4 mr-1" />
+        <span className="text-xs">Heading</span>
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => onFormat('- ', '', 'List item')} className="h-8 px-2" title="Bullet List">
+        <List className="w-4 h-4 mr-1" />
+        <span className="text-xs">Bullet</span>
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => onFormat('1. ', '', 'List item')} className="h-8 px-2" title="Numbered List">
+        <ListOrdered className="w-4 h-4 mr-1" />
+        <span className="text-xs">Numbered</span>
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => onFormat('> ', '', 'Quote')} className="h-8 px-2" title="Quote">
+        <Quote className="w-4 h-4 mr-1" />
+        <span className="text-xs">Quote</span>
+      </Button>
+    </div>
+    <p className="mt-2 text-[11px] text-muted-foreground">
+      Tip: highlight text first, then click a format option.
+    </p>
   </div>
 )
 
@@ -76,6 +92,7 @@ export default function AdminAboutPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [lastUpdatedAt, setLastUpdatedAt] = useState('')
 
   const token = getAdminToken()
 
@@ -112,6 +129,7 @@ export default function AdminAboutPage() {
         teamMembers: (data.teamMembers || []).filter((member) => member.name?.trim() || member.role?.trim()),
         associations: incomingAssociations.length > 0 ? incomingAssociations : defaultAbout.associations,
       })
+      setLastUpdatedAt(data.updatedAt || '')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load about content')
     } finally {
@@ -167,13 +185,21 @@ export default function AdminAboutPage() {
     }
   }
 
-  const handleTextAreaInsert = (textareaId: string, text: string) => {
+  const handleTextAreaInsert = (
+    textareaId: string,
+    beforeText: string,
+    afterText = '',
+    placeholder = 'text'
+  ) => {
     const textarea = document.getElementById(textareaId) as HTMLTextAreaElement
     if (textarea) {
       const start = textarea.selectionStart || 0
       const end = textarea.selectionEnd || 0
       const value = textarea.value
-      const newValue = value.substring(0, start) + text + value.substring(end)
+      const selectedText = value.substring(start, end)
+      const content = selectedText || placeholder
+      const insertion = `${beforeText}${content}${afterText}`
+      const newValue = value.substring(0, start) + insertion + value.substring(end)
 
       if (textareaId === 'heroSubtitle') {
         setForm((prev) => ({ ...prev, heroSubtitle: newValue }))
@@ -185,7 +211,8 @@ export default function AdminAboutPage() {
 
       setTimeout(() => {
         textarea.focus()
-        textarea.setSelectionRange(start + text.length, start + text.length)
+        const cursor = start + insertion.length
+        textarea.setSelectionRange(cursor, cursor)
       }, 0)
     }
   }
@@ -233,7 +260,7 @@ export default function AdminAboutPage() {
               </div>
             ) : (
               <Tabs defaultValue="hero" className="w-full">
-                <TabsList className="grid w-full grid-cols-6 lg:w-auto mb-6 overflow-x-auto">
+                <TabsList className="grid w-full grid-cols-7 lg:w-auto mb-6 overflow-x-auto">
                   <TabsTrigger value="hero" className="gap-2">
                     <BookOpen className="w-4 h-4" />
                     <span className="hidden sm:inline">Hero</span>
@@ -253,6 +280,10 @@ export default function AdminAboutPage() {
                   <TabsTrigger value="team" className="gap-2">
                     <Users2 className="w-4 h-4" />
                     <span className="hidden sm:inline">Team</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="stats" className="gap-2">
+                    <BarChart3 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Stats</span>
                   </TabsTrigger>
                   <TabsTrigger value="associations" className="gap-2">
                     <Building2 className="w-4 h-4" />
@@ -279,7 +310,11 @@ export default function AdminAboutPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">Subtitle / Introduction</label>
-                        <TextFormattingTools onInsert={(text) => handleTextAreaInsert('heroSubtitle', text)} />
+                        <TextFormattingTools
+                          onFormat={(before, after, placeholder) =>
+                            handleTextAreaInsert('heroSubtitle', before, after, placeholder)
+                          }
+                        />
                         <Textarea
                           id="heroSubtitle"
                           rows={4}
@@ -290,6 +325,81 @@ export default function AdminAboutPage() {
                         />
                         <p className="text-xs text-muted-foreground mt-2">{form.heroSubtitle?.length || 0} characters</p>
                       </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* ── Stats Tab ── */}
+                <TabsContent value="stats" className="space-y-6">
+                  <div className="bg-gradient-to-br from-cyan-50/50 to-sky-50/50 dark:from-cyan-950/20 dark:to-sky-950/20 p-6 rounded-lg border border-cyan-200/50 dark:border-cyan-800/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                        About Page Stats
+                      </h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setForm((prev) => ({ ...prev, stats: [...(prev.stats || []), { label: '', value: '' }] }))}
+                        className="gap-1.5"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Stat
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-5">
+                      These cards appear near the top of the public About page.
+                    </p>
+
+                    <div className="space-y-3">
+                      {(form.stats || []).map((stat, index) => (
+                        <div key={index} className="bg-white dark:bg-slate-950 border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_auto] gap-3 items-end">
+                            <div>
+                              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Label</label>
+                              <Input
+                                value={stat.label}
+                                onChange={(e) => {
+                                  const next = [...(form.stats || [])]
+                                  next[index] = { ...next[index], label: e.target.value }
+                                  setForm((prev) => ({ ...prev, stats: next }))
+                                }}
+                                placeholder="e.g., Years Of Local Expertise"
+                                className="h-9"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Value</label>
+                              <Input
+                                value={stat.value}
+                                onChange={(e) => {
+                                  const next = [...(form.stats || [])]
+                                  next[index] = { ...next[index], value: e.target.value }
+                                  setForm((prev) => ({ ...prev, stats: next }))
+                                }}
+                                placeholder="e.g., 15+"
+                                className="h-9"
+                              />
+                            </div>
+                            <div>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setForm((prev) => ({ ...prev, stats: (prev.stats || []).filter((_, idx) => idx !== index) }))}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {(!form.stats || form.stats.length === 0) && (
+                        <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-lg">
+                          <BarChart3 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No stats added yet. Add cards to highlight credibility.</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </TabsContent>
@@ -324,7 +434,11 @@ export default function AdminAboutPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">Story Content</label>
-                        <TextFormattingTools onInsert={(text) => handleTextAreaInsert('storyBody', text)} />
+                        <TextFormattingTools
+                          onFormat={(before, after, placeholder) =>
+                            handleTextAreaInsert('storyBody', before, after, placeholder)
+                          }
+                        />
                         <Textarea
                           id="storyBody"
                           rows={6}
@@ -337,7 +451,11 @@ export default function AdminAboutPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">Mission Content</label>
-                        <TextFormattingTools onInsert={(text) => handleTextAreaInsert('missionBody', text)} />
+                        <TextFormattingTools
+                          onFormat={(before, after, placeholder) =>
+                            handleTextAreaInsert('missionBody', before, after, placeholder)
+                          }
+                        />
                         <Textarea
                           id="missionBody"
                           rows={6}
@@ -373,19 +491,26 @@ export default function AdminAboutPage() {
                     <div className="space-y-3">
                       {(form.highlights || []).map((highlight, index) => (
                         <div key={index} className="bg-white dark:bg-slate-950 border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-3">
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Value {index + 1}</p>
+                            <Button variant="destructive" size="sm" onClick={() => setForm((prev) => ({ ...prev, highlights: (prev.highlights || []).filter((_, idx) => idx !== index) }))}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-1 gap-3">
                             <div>
                               <label className="block text-xs font-medium text-muted-foreground mb-1.5">Title</label>
                               <Input value={highlight.title} onChange={(e) => updateHighlight(index, { title: e.target.value })} placeholder="e.g., Excellence" className="h-9" />
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-muted-foreground mb-1.5">Description</label>
-                              <Input value={highlight.description} onChange={(e) => updateHighlight(index, { description: e.target.value })} placeholder="Describe this value..." className="h-9" />
-                            </div>
-                            <div className="flex items-end">
-                              <Button variant="destructive" size="sm" onClick={() => setForm((prev) => ({ ...prev, highlights: (prev.highlights || []).filter((_, idx) => idx !== index) }))}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                              <Textarea
+                                value={highlight.description}
+                                onChange={(e) => updateHighlight(index, { description: e.target.value })}
+                                placeholder="Describe this value..."
+                                rows={3}
+                                className="text-sm"
+                              />
                             </div>
                           </div>
                         </div>
@@ -415,10 +540,16 @@ export default function AdminAboutPage() {
                     <div className="space-y-3">
                       {(form.whyChooseUs || []).map((point, index) => (
                         <div key={index} className="bg-white dark:bg-slate-950 border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-start">
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Point {index + 1}</p>
+                            <Button variant="destructive" size="sm" onClick={() => setForm((prev) => ({ ...prev, whyChooseUs: (prev.whyChooseUs || []).filter((_, idx) => idx !== index) }))}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-1 gap-3 items-start">
                             <div>
-                              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Point {index + 1}</label>
-                              <Input
+                              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Reason</label>
+                              <Textarea
                                 value={point}
                                 onChange={(e) => {
                                   const next = [...(form.whyChooseUs || [])]
@@ -426,13 +557,9 @@ export default function AdminAboutPage() {
                                   setForm((prev) => ({ ...prev, whyChooseUs: next }))
                                 }}
                                 placeholder="Enter a reason to choose us..."
-                                className="h-9"
+                                rows={2}
+                                className="text-sm"
                               />
-                            </div>
-                            <div className="flex items-end">
-                              <Button variant="destructive" size="sm" onClick={() => setForm((prev) => ({ ...prev, whyChooseUs: (prev.whyChooseUs || []).filter((_, idx) => idx !== index) }))}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
                             </div>
                           </div>
                         </div>
@@ -554,7 +681,7 @@ export default function AdminAboutPage() {
                     <div className="space-y-3">
                       {(form.associations || []).map((assoc, index) => (
                         <div key={index} className="bg-white dark:bg-slate-950 border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-3 items-end">
+                          <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-3 items-start">
                             {/* Name */}
                             <div>
                               <label className="block text-xs font-medium text-muted-foreground mb-1.5">Organisation Name</label>
@@ -566,7 +693,7 @@ export default function AdminAboutPage() {
                               />
                             </div>
 
-                            {/* Logo URL + preview */}
+                            {/* Logo URL */}
                             <div>
                               <label className="block text-xs font-medium text-muted-foreground mb-1.5">Logo Image URL</label>
                               <div className="flex gap-2">
@@ -584,19 +711,6 @@ export default function AdminAboutPage() {
                                   </Button>
                                 )}
                               </div>
-                              {/* Inline logo preview */}
-                              {assoc.logoUrl && (
-                                <div className="mt-2 inline-flex items-center justify-center rounded-md border border-border bg-muted/30 px-3 py-2 max-w-[140px]">
-                                  <img
-                                    src={assoc.logoUrl}
-                                    alt={assoc.name || 'logo preview'}
-                                    className="h-10 w-auto max-w-[120px] object-contain"
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).style.display = 'none'
-                                    }}
-                                  />
-                                </div>
-                              )}
                             </div>
 
                             {/* Delete */}
@@ -615,6 +729,20 @@ export default function AdminAboutPage() {
                               </Button>
                             </div>
                           </div>
+
+                          {/* Inline logo preview */}
+                          {assoc.logoUrl && (
+                            <div className="mt-3 inline-flex items-center justify-center rounded-md border border-border bg-muted/30 px-3 py-2 max-w-[140px]">
+                              <img
+                                src={assoc.logoUrl}
+                                alt={assoc.name || 'logo preview'}
+                                className="h-10 w-auto max-w-[120px] object-contain"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none'
+                                }}
+                              />
+                            </div>
+                          )}
                         </div>
                       ))}
 
@@ -633,18 +761,29 @@ export default function AdminAboutPage() {
             {!loading && (
               <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
                 <p className="text-sm text-muted-foreground">
-                  Last updated: <span className="font-medium text-foreground">Just now</span>
+                  Last updated:{' '}
+                  <span className="font-medium text-foreground">
+                    {lastUpdatedAt ? new Date(lastUpdatedAt).toLocaleString() : 'Not saved yet'}
+                  </span>
                 </p>
-                <Button onClick={onSave} disabled={saving} size="lg" className="gap-2">
-                  {saving ? (
-                    <>
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                      Saving...
-                    </>
-                  ) : (
-                    'Save Changes'
-                  )}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" asChild className="gap-2">
+                    <a href="/about" target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="w-4 h-4" />
+                      Preview Page
+                    </a>
+                  </Button>
+                  <Button onClick={onSave} disabled={saving} size="lg" className="gap-2">
+                    {saving ? (
+                      <>
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>

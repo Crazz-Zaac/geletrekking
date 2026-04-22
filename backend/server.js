@@ -2,17 +2,31 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const helmet = require("helmet");
 const path = require("path");
+const { apiLimiter } = require("./middleware/rateLimitMiddleware");
+const requestRiskMiddleware = require("./middleware/requestRiskMiddleware");
 
 const app = express();
+
+app.set("trust proxy", process.env.TRUST_PROXY === "false" ? false : 1);
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  })
+);
 
 /* =========================================================
    1. UNIVERSAL CORS CONFIG (LOCAL + DOCKER)
 ========================================================= */
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(",")
+  ? process.env.ALLOWED_ORIGINS.split(",").map((item) => item.trim()).filter(Boolean)
   : [];
+
+const isLocalDevOrigin = (origin) =>
+  /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
 app.use(
   cors({
@@ -20,7 +34,11 @@ app.use(
       // Allow requests with no origin (Postman, curl, server-to-server)
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
+      const isAllowedByList = allowedOrigins.includes(origin);
+      const isDevLocalOrigin =
+        process.env.NODE_ENV !== "production" && isLocalDevOrigin(origin);
+
+      if (isAllowedByList || isDevLocalOrigin) {
         callback(null, true);
       } else {
         console.log("CORS BLOCKED:", origin);
@@ -55,7 +73,10 @@ app.use((req, res, next) => {
 /* =========================================================
    3. MIDDLEWARE
 ========================================================= */
-app.use(express.json());
+app.use(express.urlencoded({ extended: true, limit: "20kb" }));
+app.use(express.json({ limit: "20kb" }));
+app.use("/api", requestRiskMiddleware);
+app.use("/api", apiLimiter);
 
 /* =========================================================
    4. ROUTES IMPORT
@@ -78,6 +99,8 @@ const contactRoutes = require("./routes/contactRoutes");
 const travelGuideRoutes = require("./routes/travelGuideRoutes");
 const faqRoutes = require("./routes/faqRoutes");
 const alertRoutes = require("./routes/alertRoutes");
+const adminAnalyticsRoutes = require("./routes/adminAnalyticsRoutes");
+const securityRoutes = require("./routes/securityRoutes");
 
 // Settings / Hero / Uploads
 const settingsRoutes = require("./routes/settingsRoutes");
@@ -88,6 +111,7 @@ const heroRoutes = require("./routes/heroRoutes");
    5. ROUTES MOUNTING
 ========================================================= */
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin/analytics", adminAnalyticsRoutes);
 app.use("/api/protected", protectedRoutes);
 app.use("/api/superadmin/auth", superadminAuthRoutes);
 app.use("/api/superadmin", superadminRoutes);
@@ -105,6 +129,7 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/guides", travelGuideRoutes);
 app.use("/api/faq", faqRoutes);
 app.use("/api/alerts", alertRoutes);
+app.use("/api/security", securityRoutes);
 
 // Settings/Hero/Uploads
 app.use("/api/settings", settingsRoutes);

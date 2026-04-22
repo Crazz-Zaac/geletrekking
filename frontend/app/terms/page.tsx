@@ -15,7 +15,11 @@ import {
   AlertCircle, 
   Camera, 
   CheckCircle,
-  ArrowRight 
+  ArrowRight,
+  CalendarDays,
+  Scale,
+  ChevronRight,
+  Mail,
 } from 'lucide-react';
 
 const containerVariants = {
@@ -38,8 +42,14 @@ const termsSections = [
     title: 'Booking and Payment',
     content:
       'A booking is confirmed once we receive your deposit and written confirmation. The remaining balance is typically due before trek departure. Payment methods and due dates are shared clearly at the time of confirmation.',
-    color: 'from-blue-500/20 to-cyan-500/20',
-    iconColor: 'text-blue-600',
+    accent: {
+      bg: 'bg-blue-50',
+      icon: 'text-blue-600',
+      border: 'border-blue-200',
+      title: 'text-blue-900',
+      body: 'text-blue-800/90',
+      number: 'text-blue-700',
+    },
   },
   {
     id: 2,
@@ -47,8 +57,14 @@ const termsSections = [
     title: 'Cancellation and Refunds',
     content:
       'Cancellation charges may apply depending on timing and third-party commitments such as flights, permits, and accommodation. Some fees are non-refundable once issued by local authorities or suppliers.',
-    color: 'from-amber-500/20 to-orange-500/20',
-    iconColor: 'text-amber-600',
+    accent: {
+      bg: 'bg-amber-50',
+      icon: 'text-amber-600',
+      border: 'border-amber-200',
+      title: 'text-amber-900',
+      body: 'text-amber-800/90',
+      number: 'text-amber-700',
+    },
   },
   {
     id: 3,
@@ -56,8 +72,14 @@ const termsSections = [
     title: 'Itinerary Changes',
     content:
       'Mountain travel is weather-dependent and operationally dynamic. We reserve the right to adjust routes, schedules, and logistics for safety, regulatory, or operational reasons without prior notice when necessary.',
-    color: 'from-green-500/20 to-emerald-500/20',
-    iconColor: 'text-green-600',
+    accent: {
+      bg: 'bg-green-50',
+      icon: 'text-green-600',
+      border: 'border-green-200',
+      title: 'text-green-900',
+      body: 'text-green-800/90',
+      number: 'text-green-700',
+    },
   },
   {
     id: 4,
@@ -65,8 +87,14 @@ const termsSections = [
     title: 'Client Responsibilities',
     content:
       'Participants are responsible for maintaining valid travel documents, obtaining required insurance, disclosing relevant medical conditions, and following guide instructions at all times during the trek.',
-    color: 'from-purple-500/20 to-pink-500/20',
-    iconColor: 'text-purple-600',
+    accent: {
+      bg: 'bg-purple-50',
+      icon: 'text-purple-600',
+      border: 'border-purple-200',
+      title: 'text-purple-900',
+      body: 'text-purple-800/90',
+      number: 'text-purple-700',
+    },
   },
   {
     id: 5,
@@ -74,8 +102,14 @@ const termsSections = [
     title: 'Insurance Requirement',
     content:
       'Comprehensive travel insurance with high-altitude trekking and emergency evacuation coverage is mandatory. Clients must carry policy details and emergency contact information during the trip.',
-    color: 'from-red-500/20 to-rose-500/20',
-    iconColor: 'text-red-600',
+    accent: {
+      bg: 'bg-red-50',
+      icon: 'text-red-600',
+      border: 'border-red-200',
+      title: 'text-red-900',
+      body: 'text-red-800/90',
+      number: 'text-red-700',
+    },
   },
   {
     id: 6,
@@ -83,8 +117,14 @@ const termsSections = [
     title: 'Limitation of Liability',
     content:
       'While we prioritize safety and quality, we are not liable for delays, losses, injuries, or disruptions caused by weather, natural events, political conditions, airline changes, or other circumstances beyond our control.',
-    color: 'from-indigo-500/20 to-violet-500/20',
-    iconColor: 'text-indigo-600',
+    accent: {
+      bg: 'bg-indigo-50',
+      icon: 'text-indigo-600',
+      border: 'border-indigo-200',
+      title: 'text-indigo-900',
+      body: 'text-indigo-800/90',
+      number: 'text-indigo-700',
+    },
   },
   {
     id: 7,
@@ -92,8 +132,14 @@ const termsSections = [
     title: 'Media and Photos',
     content:
       'With your consent, non-sensitive photos from your trek may be used for promotional purposes. You may opt out by informing us in writing before or during your trip.',
-    color: 'from-cyan-500/20 to-blue-500/20',
-    iconColor: 'text-cyan-600',
+    accent: {
+      bg: 'bg-cyan-50',
+      icon: 'text-cyan-600',
+      border: 'border-cyan-200',
+      title: 'text-cyan-900',
+      body: 'text-cyan-800/90',
+      number: 'text-cyan-700',
+    },
   },
   {
     id: 8,
@@ -101,8 +147,14 @@ const termsSections = [
     title: 'Acceptance of Terms',
     content:
       'By booking with us, you confirm that you have read, understood, and accepted these terms and conditions in full.',
-    color: 'from-teal-500/20 to-green-500/20',
-    iconColor: 'text-teal-600',
+    accent: {
+      bg: 'bg-emerald-50',
+      icon: 'text-emerald-600',
+      border: 'border-emerald-200',
+      title: 'text-emerald-900',
+      body: 'text-emerald-800/90',
+      number: 'text-emerald-700',
+    },
   },
 ];
 
@@ -144,94 +196,96 @@ export default function TermsPage() {
               >
                 We believe in transparency and clear communication. These terms ensure both you and our team are aligned for an exceptional trekking experience.
               </motion.p>
-            </motion.div>
-          </div>
-        </section>
 
-        {/* Table of Contents */}
-        <section className="border-b border-slate-200 bg-white">
-          <div className="container mx-auto px-4 md:px-6 max-w-5xl">
-            <div className="py-12 md:py-16">
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">In This Document</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-                {termsSections.map((section) => (
-                  <a
-                    key={section.id}
-                    href={`#section-${section.id}`}
-                    className="group flex items-center gap-4 p-4 rounded-lg hover:bg-slate-50 transition-colors duration-200 border border-slate-100 hover:border-blue-200"
-                  >
-                    <div className="flex-shrink-0">
-                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-bold text-sm">
-                        {section.id}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
-                        {section.title}
-                      </p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors flex-shrink-0" />
-                  </a>
-                ))}
-              </div>
-            </div>
+              <motion.div
+                variants={itemVariants}
+                className="mt-7 flex flex-wrap items-center gap-3 text-sm"
+              >
+                <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
+                  <CalendarDays className="h-4 w-4 text-slate-500" />
+                  Effective: April 2026
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
+                  <Scale className="h-4 w-4 text-slate-500" />
+                  Version 1.0
+                </span>
+              </motion.div>
+            </motion.div>
           </div>
         </section>
 
         {/* Terms Content */}
         <section className="py-16 md:py-24 bg-white">
-          <div className="container mx-auto px-4 md:px-6">
+          <div className="container mx-auto px-4 md:px-6 max-w-6xl">
             <motion.div
               initial="hidden"
               animate="visible"
               variants={containerVariants}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 lg:gap-10"
             >
-              {termsSections.map((section) => {
-                const Icon = section.icon;
-                const colorMap: Record<number, { bg: string; icon: string; text: string }> = {
-                  1: { bg: 'bg-blue-100', icon: 'text-blue-600', text: 'text-blue-900' },
-                  2: { bg: 'bg-amber-100', icon: 'text-amber-600', text: 'text-amber-900' },
-                  3: { bg: 'bg-green-100', icon: 'text-green-600', text: 'text-green-900' },
-                  4: { bg: 'bg-purple-100', icon: 'text-purple-600', text: 'text-purple-900' },
-                  5: { bg: 'bg-red-100', icon: 'text-red-600', text: 'text-red-900' },
-                  6: { bg: 'bg-indigo-100', icon: 'text-indigo-600', text: 'text-indigo-900' },
-                  7: { bg: 'bg-cyan-100', icon: 'text-cyan-600', text: 'text-cyan-900' },
-                  8: { bg: 'bg-emerald-100', icon: 'text-emerald-600', text: 'text-emerald-900' },
-                };
-                
-                const colors = colorMap[section.id] || colorMap[1];
-                
-                return (
-                  <motion.div
-                    key={section.id}
-                    id={`section-${section.id}`}
-                    variants={itemVariants}
-                  >
-                    <div className={`${colors.bg} rounded-2xl p-6 md:p-8 h-full flex flex-col`}>
-                      {/* Icon */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div className={`w-12 h-12 rounded-lg ${colors.icon} bg-white/40 flex items-center justify-center`}>
-                          <Icon className={`w-6 h-6 ${colors.icon}`} />
-                        </div>
-                        <span className="text-sm font-bold text-slate-600">
+              <motion.aside variants={itemVariants} className="hidden lg:block">
+                <div className="sticky top-24 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <h3 className="text-sm font-semibold text-slate-900 mb-3">Quick Navigation</h3>
+                  <nav className="space-y-1.5">
+                    {termsSections.map((section) => (
+                      <a
+                        key={`quick-${section.id}`}
+                        href={`#section-${section.id}`}
+                        className="group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-white hover:text-blue-700 transition-colors"
+                      >
+                        <span className="text-xs font-semibold text-slate-500 group-hover:text-blue-600 min-w-6">
                           {String(section.id).padStart(2, '0')}
                         </span>
-                      </div>
+                        <span className="line-clamp-1">{section.title}</span>
+                      </a>
+                    ))}
+                  </nav>
+                  <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-3.5">
+                    <p className="text-xs font-medium text-blue-800">Need legal clarification?</p>
+                    <a
+                      href="mailto:info@geletrekking.com"
+                      className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-800"
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                      info@geletrekking.com
+                    </a>
+                  </div>
+                </div>
+              </motion.aside>
 
-                      {/* Title */}
-                      <h3 className={`text-xl md:text-2xl font-bold ${colors.text} mb-3`}>
-                        {section.title}
-                      </h3>
+              <div className="space-y-5 md:space-y-6">
+                {termsSections.map((section) => {
+                  const Icon = section.icon;
 
-                      {/* Content */}
-                      <p className={`text-sm md:text-base ${colors.text} leading-relaxed opacity-85`}>
-                        {section.content}
-                      </p>
-                    </div>
-                  </motion.div>
-                );
-              })}
+                  return (
+                    <motion.div
+                      key={section.id}
+                      id={`section-${section.id}`}
+                      variants={itemVariants}
+                    >
+                      <Card className={`${section.accent.bg} ${section.accent.border} rounded-2xl p-6 md:p-8 border shadow-sm`}>
+                        <div className="flex items-center justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={`w-10 h-10 rounded-lg ${section.accent.icon} bg-white/75 flex items-center justify-center flex-shrink-0`}>
+                              <Icon className={`w-5 h-5 ${section.accent.icon}`} />
+                            </div>
+                            <h3 className={`text-lg md:text-xl font-bold ${section.accent.title} leading-tight`}>
+                              {section.title}
+                            </h3>
+                          </div>
+                          <span className={`text-sm font-bold ${section.accent.number} flex-shrink-0`}>
+                            {String(section.id).padStart(2, '0')}
+                          </span>
+                        </div>
+
+                        <p className={`text-sm md:text-base leading-relaxed ${section.accent.body}`}>
+                          {section.content}
+                        </p>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </motion.div>
           </div>
         </section>
@@ -243,7 +297,7 @@ export default function TermsPage() {
               initial="hidden"
               animate="visible"
               variants={containerVariants}
-              className="max-w-5xl"
+              className="max-w-6xl mx-auto"
             >
               <motion.div
                 variants={itemVariants}

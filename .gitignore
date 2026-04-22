@@ -33,6 +33,8 @@ logs/
 # Docker
 docker/volumes/
 *.log
+docker/ssl/
+docker/certbot-www/
 
 # Testing
 coverage/

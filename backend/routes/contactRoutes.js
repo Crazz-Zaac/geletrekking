@@ -3,6 +3,7 @@ const router  = express.Router();
 
 const authMiddleware  = require("../middleware/authMiddleware");
 const restrictToRoles = require("../middleware/roleMiddleware");
+const { contactLimiter, contactSlowDown } = require("../middleware/rateLimitMiddleware");
 
 const {
   submitMessage,
@@ -16,7 +17,7 @@ const {
    PUBLIC
 ───────────────────────────────────────────── */
 // POST /api/contact          – submit a contact message
-router.post("/", submitMessage);
+router.post("/", contactSlowDown, contactLimiter, submitMessage);
 
 /* ─────────────────────────────────────────────
    ADMIN / SUPERADMIN  (auth + role guard on every route)

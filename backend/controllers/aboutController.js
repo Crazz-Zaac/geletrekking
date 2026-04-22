@@ -37,6 +37,8 @@ exports.updateAboutPage = async (req, res) => {
       "highlights",
       "whyChooseUs",
       "stats",
+      "teamTitle",
+      "teamMembers",
       "associations",
     ];
 

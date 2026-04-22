@@ -21,6 +21,7 @@ export interface Trek {
   faqs: FAQ[]
   gallery: string[]
   mapEmbed?: string
+  itineraryPdfUrl?: string
   hasOffer?: boolean
   offerType?: string
   offerDescription?: string

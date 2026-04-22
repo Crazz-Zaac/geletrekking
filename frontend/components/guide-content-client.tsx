@@ -44,8 +44,8 @@ export function GuideContentClient({ content, guide }: GuideContentClientProps) 
   }, [content])
 
   return (
-    <div className="xl:col-span-1">
-      <div className="xl:sticky xl:top-28 space-y-6">
+    <div className="lg:col-span-1">
+      <div className="lg:sticky lg:top-24 space-y-6">
         {/* CTA Card */}
         <Card className="border-border/70 shadow-sm p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/40 dark:to-emerald-950/40 dark:border-green-800">
           <h3 className="font-semibold text-lg text-green-900 dark:text-green-100 mb-2">
@@ -63,7 +63,7 @@ export function GuideContentClient({ content, guide }: GuideContentClientProps) 
 
         {/* Table of Contents */}
         {headings.length > 0 && (
-          <Card className="border-border/70 shadow-sm p-6">
+          <Card className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-none">
             <TableOfContents headings={headings} />
           </Card>
         )}

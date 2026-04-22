@@ -8,7 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { UiBlogPost } from '@/lib/api';
 import { marked } from 'marked';
 
@@ -31,6 +31,22 @@ interface BlogPostClientProps {
 }
 
 export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) {
+  const [renderedContent, setRenderedContent] = useState('');
+
+  useEffect(() => {
+    let isActive = true;
+
+    Promise.resolve(marked.parse(post.content || '')).then((html) => {
+      if (isActive) {
+        setRenderedContent(html);
+      }
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [post.content]);
+
   const relatedPosts = useMemo(() => {
     return allPosts
       .filter((item) => item.category === post.category && item.slug !== post.slug)
@@ -94,7 +110,7 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
               <div className="prose prose-invert max-w-none mb-12">
                 <div 
                   className="space-y-4 text-lg text-muted-foreground leading-relaxed prose-headings:text-foreground prose-headings:font-bold prose-headings:mt-6 prose-headings:mb-4 prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-strong:text-foreground prose-strong:font-semibold prose-em:text-foreground prose-em:italic prose-code:bg-muted prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-sm prose-pre:bg-muted prose-pre:p-4 prose-pre:rounded prose-a:text-primary prose-a:hover:underline prose-ul:list-disc prose-ul:pl-6 prose-ol:list-decimal prose-ol:pl-6 prose-li:my-2"
-                  dangerouslySetInnerHTML={{ __html: marked(post.content) }} 
+                  dangerouslySetInnerHTML={{ __html: renderedContent }} 
                 />
               </div>
 

@@ -198,6 +198,10 @@ export interface AdminAboutTeamMember {
   description: string
   imageUrl: string
 }
+export interface AdminAboutAssociation {
+  name: string
+  logoUrl: string
+}
 export interface AdminAbout {
   heroTitle?: string
   heroSubtitle?: string
@@ -211,6 +215,8 @@ export interface AdminAbout {
   stats?: AdminAboutStat[]
   teamTitle?: string
   teamMembers?: AdminAboutTeamMember[]
+  associations?: AdminAboutAssociation[]
+  updatedAt?: string
 }
 export interface AdminAlert {
   _id?: string
@@ -310,6 +316,71 @@ export interface AdminTestimonial {
   image?: string | null
   isApproved: boolean
 }
+export interface AdminAnalyticsMetricSummary {
+  totalInquiries: number
+  inquiriesChangePct: string
+  contentItems: number
+  contentChangePct: string
+  avgGuideViews: number
+  totalGuideViews: number
+  unreadRate: number
+  unreadMessages: number
+}
+export interface AdminAnalyticsTrendPoint {
+  date: string
+  inquiries: number
+  contentUpdates: number
+}
+export interface AdminAnalyticsRegion {
+  name: string
+  count: number
+}
+export interface AdminAnalyticsContentMixItem {
+  name: string
+  value: number
+}
+export interface AdminAnalyticsResponse {
+  generatedAt: string
+  metrics: AdminAnalyticsMetricSummary
+  trends: AdminAnalyticsTrendPoint[]
+  regions: AdminAnalyticsRegion[]
+  contentMix: AdminAnalyticsContentMixItem[]
+}
+export interface AdminRiskHealthRedis {
+  enabled: boolean
+  connected: boolean
+  reachable: boolean
+  urlConfigured: boolean
+  host: string
+  port: number
+  lastError: string | null
+  lastErrorAt: string | null
+  lastConnectedAt: string | null
+}
+export interface AdminRiskHealthResponse {
+  message: string
+  mode: 'redis' | 'memory-fallback'
+  redis: AdminRiskHealthRedis
+  memoryProfiles: {
+    ip: number
+    device: number
+  }
+}
+export interface AdminSslHealthResponse {
+  message: string
+  status: 'valid' | 'expiring-soon' | 'expired' | 'missing' | 'invalid'
+  certPath: string
+  warningThresholdDays: number
+  validNow: boolean
+  validFrom: string | null
+  validTo: string | null
+  daysRemaining: number | null
+  issuer: string | null
+  subject: string | null
+  serialNumber: string | null
+  fingerprint256: string | null
+  checkedAt: string
+}
 interface BackendTrek {
   _id: string
   name: string
@@ -356,6 +427,7 @@ interface BackendTrek {
   is_optional?: boolean
   tour_type?: string
   transportation?: string
+  itinerary_pdf_url?: string
   season_tag?: string
   is_featured?: boolean
   latitude?: number
@@ -389,8 +461,8 @@ const getApiBaseUrl = () => {
     const url = (globalThis as any).process?.env?.INTERNAL_API_URL || 'http://backend:5000'
     return url.replace(/\/+$/, '')
   } else {
-    // Client-side: use NEXT_PUBLIC_API_URL for browser access
-    const publicApiUrl = (globalThis as any).process?.env?.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+    // Client-side: prefer same-origin to avoid mixed-content on HTTPS
+    const publicApiUrl = (globalThis as any).process?.env?.NEXT_PUBLIC_API_URL || ''
     return publicApiUrl.replace(/\/+$/, '')
   }
 }
@@ -398,7 +470,7 @@ const getApiBaseUrl = () => {
 const API_BASE_URL = getApiBaseUrl()
 const getApiUrl = (path: string) => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
-  return `${API_BASE_URL}${normalizedPath}`
+  return API_BASE_URL ? `${API_BASE_URL}${normalizedPath}` : normalizedPath
 }
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(getApiUrl(path), {
@@ -410,7 +482,14 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
     cache: 'no-store',
   })
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status} ${response.statusText}`)
+    let message = `Request failed: ${response.status} ${response.statusText}`
+    try {
+      const data = (await response.json()) as { message?: string; error?: string }
+      message = data?.message || data?.error || message
+    } catch {
+      // Ignore JSON parsing errors and keep default message
+    }
+    throw new Error(message)
   }
   return response.json() as Promise<T>
 }
@@ -536,6 +615,7 @@ function mapTrek(trek: BackendTrek): Trek {
         ? trek.gallery_images
         : [trek.image_url || '/images/hero-himalaya.jpg'],
     mapEmbed: trek.trek_map_embed_url,
+    itineraryPdfUrl: trek.itinerary_pdf_url,
     hasOffer,
     offerType: trek.offer_type || trek.offer_title,
     offerDescription: trek.offer_description,
@@ -568,7 +648,7 @@ function mapTestimonial(item: BackendTestimonial): UiTestimonial {
     id: item._id,
     name: item.name,
     country: item.country || 'Nepal',
-    trek: 'Himalayan Trek',
+    trek: 'Gele Trekking',
     rating: item.rating,
     text: item.message,
     date: formatDate(item.createdAt),
@@ -616,7 +696,14 @@ export async function getGoogleReviews(): Promise<UiGoogleReview[]> {
     return []
   }
 }
-export async function submitContactMessage(payload: { name: string; email: string; message: string }): Promise<{ success: boolean; message: string }> {
+export async function submitContactMessage(payload: {
+  name: string
+  email: string
+  message: string
+  website?: string
+  formStartedAt?: number
+  captchaToken?: string
+}): Promise<{ success: boolean; message: string }> {
   try {
     const response = await fetchJson<{ message?: string }>('/api/contact', {
       method: 'POST',
@@ -626,10 +713,11 @@ export async function submitContactMessage(payload: { name: string; email: strin
       success: true,
       message: response.message || 'Thank you for contacting us!',
     }
-  } catch {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unable to send message right now. Please try again shortly.'
     return {
       success: false,
-      message: 'Unable to send message right now. Please try again shortly.',
+      message,
     }
   }
 }
@@ -766,6 +854,15 @@ export async function deleteAdminMessage(token: string, id: string): Promise<voi
   await fetchAdminJson<{ message: string }>(`/api/contact/admin/${id}`, token, {
     method: 'DELETE',
   })
+}
+export async function getAdminAnalytics(token: string): Promise<AdminAnalyticsResponse> {
+  return fetchAdminJson<AdminAnalyticsResponse>('/api/admin/analytics', token)
+}
+export async function getAdminRiskHealth(token: string): Promise<AdminRiskHealthResponse> {
+  return fetchAdminJson<AdminRiskHealthResponse>('/api/security/risk-health', token)
+}
+export async function getAdminSslHealth(token: string): Promise<AdminSslHealthResponse> {
+  return fetchAdminJson<AdminSslHealthResponse>('/api/security/ssl-health', token)
 }
 export async function getAdminSettings(): Promise<AdminSiteSettings> {
   return fetchJson<AdminSiteSettings>('/api/settings')

@@ -16,9 +16,9 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
-  title: 'Himalayan Treks — Premium Nepal Trekking & Himalaya Tours',                                                                                                                                           
+  title: 'Gele Trekking — Premium Nepal Trekking & Himalaya Tours',
   description:
-    'Discover the Himalayas with Himalayan Treks. Expert-guided trekking packages in Nepal — Everest Base Camp, Annapurna Circuit, Langtang Valley and more. Book your dream adventure today.',
+    'Discover the Himalayas with Gele Trekking. Expert-guided trekking packages in Nepal — Everest Base Camp, Annapurna Circuit, Langtang Valley and more. Book your dream adventure today.',
   keywords: [
     'Nepal trekking',
     'Everest Base Camp trek',
