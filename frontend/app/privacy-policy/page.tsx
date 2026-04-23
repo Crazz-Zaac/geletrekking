@@ -5,6 +5,7 @@ import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { useSiteSettings } from '@/hooks/use-site-settings';
 import {
   CalendarDays,
   Scale,
@@ -30,12 +31,12 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.35 } },
 };
 
-const policySections = [
+const getPolicySections = (contactEmail: string) => [
   {
     id: 'who-we-are',
     title: '1) Who We Are (Data Controller)',
     content:
-      'Gele Trekking is the data controller for personal data submitted through our website inquiry forms. If you have privacy questions, contact us at info@geletrekking.com.',
+      `Gele Trekking is the data controller for personal data submitted through our website inquiry forms. If you have privacy questions, contact us at ${contactEmail}.`,
     icon: ShieldCheck,
   },
   {
@@ -98,12 +99,16 @@ const policySections = [
     id: 'contact-us',
     title: '10) Contact and Updates',
     content:
-      'To exercise privacy rights or ask questions, email info@geletrekking.com with the subject “Privacy Request”. We may update this policy from time to time; updated versions will be posted on this page with a revised effective date.',
+      `To exercise privacy rights or ask questions, email ${contactEmail} with the subject “Privacy Request”. We may update this policy from time to time; updated versions will be posted on this page with a revised effective date.`,
     icon: Mail,
   },
 ];
 
 export default function PrivacyPolicyPage() {
+  const { settings } = useSiteSettings();
+  const contactEmail = settings.email.trim();
+  const policySections = getPolicySections(contactEmail);
+
   return (
     <>
       <Navbar />
@@ -159,13 +164,20 @@ export default function PrivacyPolicyPage() {
                   </nav>
                   <div className="mt-5 rounded-xl border border-primary/25 bg-primary/10 p-3.5">
                     <p className="text-xs font-medium text-foreground">Privacy contact</p>
-                    <a
-                      href="mailto:info@geletrekking.com"
-                      className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:opacity-90"
-                    >
-                      <Mail className="h-3.5 w-3.5" />
-                      info@geletrekking.com
-                    </a>
+                    {contactEmail ? (
+                      <a
+                        href={`mailto:${contactEmail}`}
+                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:opacity-90"
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                        {contactEmail}
+                      </a>
+                    ) : (
+                      <span className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                        <Mail className="h-3.5 w-3.5" />
+                        Contact email not configured
+                      </span>
+                    )}
                   </div>
                 </div>
               </motion.aside>
@@ -207,13 +219,15 @@ export default function PrivacyPolicyPage() {
                         Contact Us
                         <ArrowRight className="h-4 w-4" />
                       </a>
-                      <a
-                        href="mailto:info@geletrekking.com"
-                        className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted transition"
-                      >
-                        <Mail className="h-4 w-4" />
-                        info@geletrekking.com
-                      </a>
+                      {contactEmail ? (
+                        <a
+                          href={`mailto:${contactEmail}`}
+                          className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted transition"
+                        >
+                          <Mail className="h-4 w-4" />
+                          {contactEmail}
+                        </a>
+                      ) : null}
                     </div>
                   </Card>
                 </motion.div>

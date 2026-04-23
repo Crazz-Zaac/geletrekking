@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
@@ -29,13 +30,14 @@ const itemVariants = {
 
 export default function ContactPage() {
   const { settings, social } = useSiteSettings();
+  const contactEmail = settings.email.trim();
 
   const contactInfo = [
     {
       icon: Mail,
       label: 'Email',
-      value: settings.email || 'info@geletrekking.com',
-      href: `mailto:${settings.email || 'info@geletrekking.com'}`,
+      value: contactEmail,
+      href: contactEmail ? `mailto:${contactEmail}` : '#',
       description: 'Best for itinerary planning and custom quotes',
     },
     {
@@ -402,6 +404,13 @@ export default function ContactPage() {
                     {!isFormReady && (
                       <p className="text-xs text-muted-foreground">Fill all required fields to enable submission.</p>
                     )}
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      We use your data only to respond to your trekking inquiry and won’t share it without your consent.{' '}
+                      <Link href="/privacy-policy" className="text-primary underline underline-offset-2">
+                        Privacy Policy
+                      </Link>
+                      .
+                    </p>
                   </form>
                 </Card>
 

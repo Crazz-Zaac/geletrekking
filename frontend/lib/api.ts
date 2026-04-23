@@ -37,13 +37,20 @@ export interface AdminUser {
   email: string
   role: 'admin' | 'superadmin'
 }
+export interface AdminTwoFactorSetupResponse {
+  message: string
+  secret: string
+  otpauthUrl: string
+  qrUrl: string
+}
 interface AdminLoginResponse {
-  token: string
+  token?: string
   role: 'admin' | 'superadmin'
   user?: {
     email: string
     role: 'admin' | 'superadmin'
   }
+  need2FA?: boolean
   message?: string
 }
 interface AuthMeResponse {
@@ -721,12 +728,19 @@ export async function submitContactMessage(payload: {
     }
   }
 }
-export async function adminLogin(payload: { email: string; password: string }): Promise<{ success: boolean; token?: string; user?: AdminUser; message?: string }> {
+export async function adminLogin(payload: { email: string; password: string; twoFactorCode?: string }): Promise<{ success: boolean; token?: string; user?: AdminUser; message?: string; need2FA?: boolean }> {
   try {
     const response = await fetchJson<AdminLoginResponse>('/api/admin/login', {
       method: 'POST',
       body: JSON.stringify(payload),
     })
+    if (response.need2FA) {
+      return {
+        success: false,
+        need2FA: true,
+        message: response.message || 'Enter your 2FA code to continue.',
+      }
+    }
     if (!response.token) {
       return { success: false, message: 'Invalid login response' }
     }
@@ -866,6 +880,23 @@ export async function getAdminSslHealth(token: string): Promise<AdminSslHealthRe
 }
 export async function getAdminSettings(): Promise<AdminSiteSettings> {
   return fetchJson<AdminSiteSettings>('/api/settings')
+}
+export async function beginAdminTwoFactorSetup(token: string): Promise<AdminTwoFactorSetupResponse> {
+  return fetchAdminJson<AdminTwoFactorSetupResponse>('/api/admin/2fa/setup', token, {
+    method: 'POST',
+  })
+}
+export async function verifyAdminTwoFactorSetup(token: string, code: string): Promise<{ message: string }> {
+  return fetchAdminJson<{ message: string }>('/api/admin/2fa/verify', token, {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  })
+}
+export async function disableAdminTwoFactor(token: string, code: string): Promise<{ message: string }> {
+  return fetchAdminJson<{ message: string }>('/api/admin/2fa/disable', token, {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  })
 }
 export async function updateAdminSettings(token: string, payload: AdminSiteSettings): Promise<AdminSiteSettings> {
   return fetchAdminJson<AdminSiteSettings>('/api/settings', token, {

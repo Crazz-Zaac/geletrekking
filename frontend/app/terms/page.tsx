@@ -6,6 +6,7 @@ import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useSiteSettings } from '@/hooks/use-site-settings';
 import { 
   CreditCard, 
   RotateCcw, 
@@ -159,6 +160,9 @@ const termsSections = [
 ];
 
 export default function TermsPage() {
+  const { settings } = useSiteSettings();
+  const contactEmail = settings.email.trim();
+
   return (
     <>
       <Navbar />
@@ -242,13 +246,20 @@ export default function TermsPage() {
                   </nav>
                   <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-3.5">
                     <p className="text-xs font-medium text-blue-800">Need legal clarification?</p>
-                    <a
-                      href="mailto:info@geletrekking.com"
-                      className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-800"
-                    >
-                      <Mail className="h-3.5 w-3.5" />
-                      info@geletrekking.com
-                    </a>
+                    {contactEmail ? (
+                      <a
+                        href={`mailto:${contactEmail}`}
+                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-800"
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                        {contactEmail}
+                      </a>
+                    ) : (
+                      <span className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700">
+                        <Mail className="h-3.5 w-3.5" />
+                        Contact email not configured
+                      </span>
+                    )}
                   </div>
                 </div>
               </motion.aside>
@@ -316,9 +327,13 @@ export default function TermsPage() {
                     </p>
                     <p className="text-orange-800 text-sm">
                       If you have any questions or concerns about these terms, please contact us at{' '}
-                      <a href="mailto:info@geletrekking.com" className="font-semibold text-orange-600 hover:text-orange-700">
-                        info@geletrekking.com
-                      </a>
+                      {contactEmail ? (
+                        <a href={`mailto:${contactEmail}`} className="font-semibold text-orange-600 hover:text-orange-700">
+                          {contactEmail}
+                        </a>
+                      ) : (
+                        <span className="font-semibold text-orange-600">Contact email not configured</span>
+                      )}
                       {' '}before proceeding with your booking.
                     </p>
                   </div>

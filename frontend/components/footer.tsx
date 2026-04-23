@@ -35,6 +35,7 @@ const footerLinks = {
 
 export function Footer() {
   const { settings, social } = useSiteSettings()
+  const contactEmail = settings.email.trim()
 
   const socialLinks = [
     { Icon: FacebookIcon, href: social.facebook, label: 'Facebook' },
@@ -68,10 +69,12 @@ export function Footer() {
               Your trusted local trekking partner in Nepal since 2008. Licensed, insured and passionate about sharing the Himalayas with the world.
             </p>
             <div className="space-y-2 text-sm text-white/60">
-              <a href={`mailto:${settings.email || 'info@geletrekking.com'}`} className="flex items-center gap-2 hover:text-white transition-colors">
-                <Mail className="w-4 h-4 text-accent" />
-                {settings.email || 'info@geletrekking.com'}
-              </a>
+              {contactEmail ? (
+                <a href={`mailto:${contactEmail}`} className="flex items-center gap-2 hover:text-white transition-colors">
+                  <Mail className="w-4 h-4 text-accent" />
+                  {contactEmail}
+                </a>
+              ) : null}
               <a href={`tel:${(settings.phone || '+9779851234567').replace(/\s+/g, '')}`} className="flex items-center gap-2 hover:text-white transition-colors">
                 <Phone className="w-4 h-4 text-accent" />
                 {settings.phone || '+977 985 123 4567'}
