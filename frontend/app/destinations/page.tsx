@@ -13,6 +13,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { getTreks } from '@/lib/api';
 import { SlidersHorizontal, X, Scale } from 'lucide-react';
+import { TrustpilotWidget } from '@/components/trustpilot-widget';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -289,6 +290,12 @@ function DestinationsPageContent() {
                 Choose from our complete collection of incredible trekking adventures across Nepal
               </motion.p>
             </motion.div>
+          </div>
+        </section>
+
+        <section className="py-6 md:py-8 bg-background">
+          <div className="container mx-auto px-4 md:px-6">
+            <TrustpilotWidget className="rounded-xl border border-border bg-card p-4" />
           </div>
         </section>
 

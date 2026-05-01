@@ -512,7 +512,7 @@ export function Navbar() {
             ))}
           </div>
           <Link
-            href="/contact"
+            href="/book"
             className="hidden md:inline-flex items-center gap-1 bg-accent text-accent-foreground text-sm font-semibold px-4 py-2 rounded-lg hover:bg-accent/90 transition-colors whitespace-nowrap"
           >
             Book Now
@@ -726,7 +726,7 @@ export function Navbar() {
                 ))}
               </div>
               <Link
-                href="/contact"
+                href="/book"
                 className="flex justify-center bg-accent text-accent-foreground font-semibold px-4 py-3 rounded-lg hover:bg-accent/90 transition-colors"
                 onClick={() => setMobileOpen(false)}
               >

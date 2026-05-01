@@ -13,6 +13,7 @@ import { RegionsSection } from './home/regions-section'
 import { BlogHighlights } from './home/blog-highlights'
 import { BookingCTA } from './home/booking-cta'
 import { StatsBar } from './home/stats-bar'
+import { TrustpilotWidget } from '@/components/trustpilot-widget'
 
 export default async function HomePage() {
   const [apiTreks, apiBlogs, apiTestimonials] = await Promise.all([
@@ -90,6 +91,11 @@ export default async function HomePage() {
 
         <WhyUsSection />
         <TestimonialsCarousel testimonials={apiTestimonials} />
+        <section className="py-6 md:py-8 bg-background">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <TrustpilotWidget variant="plain" />
+          </div>
+        </section>
         <RegionsSection regions={regions} />
         <BlogHighlights posts={activeBlogs} />
           <BookingCTA />

@@ -12,6 +12,7 @@ import { Mail, Phone, MapPin, Clock3, MessageCircle, ShieldCheck, Loader2 } from
 import { WhatsAppIcon } from '@/components/whatsapp-icon';
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons';
 import { TurnstileWidget } from '@/components/turnstile-widget';
+import { TrustpilotWidget } from '@/components/trustpilot-widget';
 import { submitContactMessage } from '@/lib/api';
 import { useSiteSettings } from '@/hooks/use-site-settings';
 
@@ -201,6 +202,12 @@ export default function ContactPage() {
                 Get route recommendations, difficulty guidance, and transparent pricing. We usually respond within 24 hours.
               </motion.p>
             </motion.div>
+          </div>
+        </section>
+
+        <section className="py-6 md:py-8 bg-background">
+          <div className="container mx-auto px-4 md:px-6">
+            <TrustpilotWidget className="rounded-xl border border-border bg-card p-4" />
           </div>
         </section>
 

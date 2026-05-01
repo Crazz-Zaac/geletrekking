@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import { Inter, Playfair_Display } from 'next/font/google'
 import { ScrollToTop } from '@/components/scroll-to-top'
 import './globals.css'
@@ -47,6 +48,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+      <head>
+        <Script
+          src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js"
+          strategy="afterInteractive"
+        />
+        <Script src="https://tally.so/widgets/embed.js" strategy="afterInteractive" />
+      </head>
       <body className="font-sans antialiased">
         {children}
         <ScrollToTop />

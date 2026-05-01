@@ -66,7 +66,7 @@ export function Footer() {
               </div>
             </Link>
             <p className="text-white/60 text-sm leading-relaxed mb-6 max-w-xs">
-              Your trusted local trekking partner in Nepal since 2008. Licensed, insured and passionate about sharing the Himalayas with the world.
+              Your trusted local trekking partner in Nepal since 2024. Licensed, insured and passionate about sharing the Himalayas with the world.
             </p>
             <div className="space-y-2 text-sm text-white/60">
               {contactEmail ? (

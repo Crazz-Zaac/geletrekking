@@ -68,7 +68,7 @@ export async function HeroSection() {
             <ArrowRight className="w-4 h-4" />
           </Link>
           <Link
-            href="/contact"
+            href="/book"
             className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/30 text-white font-semibold px-7 py-3.5 rounded-xl hover:bg-white/20 transition-colors text-base"
           >
             Plan My Trek
