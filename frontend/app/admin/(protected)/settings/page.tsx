@@ -209,33 +209,6 @@ export default function AdminSettingsPage() {
 
             <section className="rounded-md border border-border p-4 space-y-4">
               <div>
-                <h3 className="text-sm font-semibold text-foreground">Navigation</h3>
-                <p className="text-xs text-muted-foreground mt-1">Toggle which sections appear on the public website navbar.</p>
-              </div>
-
-              <label className="flex items-center gap-3 text-sm rounded-md border border-input px-3 py-2.5 bg-muted/20">
-                <input
-                  type="checkbox"
-                  checked={form.navigation?.activitiesEnabled ?? true}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      navigation: {
-                        ...(prev.navigation || {}),
-                        activitiesEnabled: e.target.checked,
-                      },
-                    }))
-                  }
-                />
-                <div>
-                  <p className="font-medium text-foreground">Show Activities tab</p>
-                  <p className="text-xs text-muted-foreground">Enable/disable Activities in the website main menu.</p>
-                </div>
-              </label>
-            </section>
-
-            <section className="rounded-md border border-border p-4 space-y-4">
-              <div>
                 <h3 className="text-sm font-semibold text-foreground">Social Links</h3>
                 <p className="text-xs text-muted-foreground mt-1">Use full URLs or handles based on your preference.</p>
               </div>

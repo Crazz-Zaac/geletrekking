@@ -1,22 +1,46 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Search } from 'lucide-react'
+import { getAdminHero } from '@/lib/api'
 
-export function HeroSection() {
+const defaultHero = {
+  title: "Trek the World's\nGreatest Mountains",
+  subtitle:
+    'Expert-guided trekking adventures in Nepal. Everest, Annapurna, Langtang and beyond — crafted for unforgettable Himalayan experiences.',
+  backgroundImage: '/images/hero-himalaya.jpg',
+  overlay: 'linear-gradient(to bottom, oklch(0.1 0.02 240 / 0.6), oklch(0.1 0.02 240 / 0.4), oklch(0.1 0.02 240 / 0.75))',
+  ctaText: 'Explore Treks',
+  ctaLink: '/destinations',
+}
+
+export async function HeroSection() {
+  let hero = defaultHero
+
+  try {
+    const remote = await getAdminHero()
+    hero = {
+      title: remote.title?.trim() || defaultHero.title,
+      subtitle: remote.subtitle?.trim() || defaultHero.subtitle,
+      backgroundImage: remote.backgroundImage?.trim() || defaultHero.backgroundImage,
+      overlay: remote.overlay?.trim() || defaultHero.overlay,
+      ctaText: remote.ctaText?.trim() || defaultHero.ctaText,
+      ctaLink: remote.ctaLink?.trim() || defaultHero.ctaLink,
+    }
+  } catch {
+    hero = defaultHero
+  }
+
+  const heroTitleLines = hero.title.split('\n')
   return (
     <section className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
       {/* Background Image */}
-      <Image
-        src="/images/hero-himalaya.jpg"
-        alt="Himalayan mountains at golden hour"
-        fill
-        priority
-        className="object-cover object-center"
-        sizes="100vw"
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url('${hero.backgroundImage}')` }}
+        aria-hidden="true"
       />
 
       {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[oklch(0.1_0.02_240/0.6)] via-[oklch(0.1_0.02_240/0.4)] to-[oklch(0.1_0.02_240/0.75)]" />
+      <div className="absolute inset-0" style={{ background: hero.overlay }} />
 
       {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -24,20 +48,23 @@ export function HeroSection() {
           Nepal&apos;s Premier Trekking Company
         </p>
         <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight text-balance mb-6">
-          Trek the World&apos;s
-          <br />
-          <span className="text-accent">Greatest</span> Mountains
+          {heroTitleLines.map((line, index) => (
+            <span key={line}>
+              {index === 1 ? <span className="text-accent">{line}</span> : line}
+              {index < heroTitleLines.length - 1 ? <br /> : null}
+            </span>
+          ))}
         </h1>
         <p className="text-white/80 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed mb-10 text-pretty">
-          Expert-guided trekking adventures in Nepal. Everest, Annapurna, Langtang and beyond — crafted for unforgettable Himalayan experiences.
+          {hero.subtitle}
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            href="/destinations"
+            href={hero.ctaLink}
             className="flex items-center gap-2 bg-accent text-accent-foreground font-semibold px-7 py-3.5 rounded-xl hover:bg-accent/90 transition-colors text-base"
           >
-            Explore Treks
+            {hero.ctaText}
             <ArrowRight className="w-4 h-4" />
           </Link>
           <Link
@@ -48,21 +75,6 @@ export function HeroSection() {
           </Link>
         </div>
 
-        {/* Quick stats */}
-        <div className="flex flex-wrap items-center justify-center gap-8 mt-16 text-white/70 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-            500+ Treks Completed
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-            15+ Years Experience
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-            Licensed & Insured
-          </div>
-        </div>
       </div>
 
       {/* Scroll indicator */}

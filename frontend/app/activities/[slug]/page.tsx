@@ -121,6 +121,8 @@ export default function ActivityDetailPage({ params }: ActivityDetailPageProps) 
                   <img
                     src={activity.mainImage}
                     alt={getActivityMenuLabel(activity)}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000"
                   />
                 )}
