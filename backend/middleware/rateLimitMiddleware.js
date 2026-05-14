@@ -1,4 +1,5 @@
 const rateLimit = require("express-rate-limit");
+const { ipKeyGenerator } = require("express-rate-limit");
 const slowDown = require("express-slow-down");
 
 const apiLimiter = rateLimit({
@@ -31,7 +32,8 @@ const authLoginLimiter = rateLimit({
   skipSuccessfulRequests: true,
   keyGenerator: (req) => {
     const email = (req.body?.email || '').toString().trim().toLowerCase()
-    return `${req.ip}:${email}`
+    const ip = ipKeyGenerator(req)
+    return `${ip}:${email}`
   },
   message: { message: 'Too many login attempts. Please wait and try again.' },
 });

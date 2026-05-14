@@ -5,6 +5,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.frontend
     container_name: geletrekking-frontend
+    ports:
+      - "3000:3000"
     expose:
       - "3000"
     env_file:

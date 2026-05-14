@@ -34,6 +34,7 @@ type TrekForm = {
   slug: string
   description: string
   region: string
+  region_description: string
   best_season: string
   season_tag: string
   image_url: string
@@ -87,6 +88,7 @@ const initialForm: TrekForm = {
   slug: '',
   description: '',
   region: '',
+  region_description: '',
   best_season: '',
   season_tag: '',
   image_url: '',
@@ -129,6 +131,7 @@ function formToPayload(form: TrekForm): Partial<AdminTrek> {
     slug: form.slug.trim() || undefined,
     description: form.description.trim(),
     region: form.region.trim() || undefined,
+    region_description: form.region_description.trim() || undefined,
     best_season: form.best_season.trim() || undefined,
     season_tag: form.season_tag.trim() || undefined,
     image_url: form.image_url.trim() || undefined,
@@ -182,6 +185,7 @@ function trekToForm(item: AdminTrek): TrekForm {
     slug: item.slug || '',
     description: item.description || '',
     region: item.region || '',
+    region_description: item.region_description || '',
     best_season: item.best_season || '',
     season_tag: item.season_tag || '',
     image_url: item.image_url || '',
@@ -577,6 +581,12 @@ export default function AdminTreksPage() {
                     />
                   ))}
                 </div>
+                {field('Region description (used on homepage region cards)', textarea(
+                  'Short summary for this trekking region',
+                  form.region_description,
+                  (v) => setForm((p) => ({ ...p, region_description: v })),
+                  3
+                ))}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm pt-1">
                   <label className="flex items-center gap-2">
                     <input type="checkbox" checked={form.is_active} onChange={(e) => setForm((p) => ({ ...p, is_active: e.target.checked }))} />

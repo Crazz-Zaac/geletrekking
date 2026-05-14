@@ -3,6 +3,7 @@ export interface Trek {
   slug: string
   title: string
   region: 'Everest' | 'Annapurna' | 'Langtang' | 'Mustang' | 'Manaslu' | 'Other'
+  regionDescription?: string
   duration: number
   difficulty: 'Easy' | 'Moderate' | 'Strenuous' | 'Challenging'
   maxAltitude: number

@@ -65,6 +65,7 @@ export interface AdminTrek {
   slug?: string
   description: string
   region?: string
+  region_description?: string
   image_url?: string
   gallery_images?: string[]
   map_image_url?: string
@@ -395,6 +396,7 @@ interface BackendTrek {
   description?: string
   overview?: string
   region?: string
+  region_description?: string
   image_url?: string
   gallery_images?: string[]
   highlights?: string[]
@@ -594,6 +596,7 @@ function mapTrek(trek: BackendTrek): Trek {
     slug,
     title,
     region,
+    regionDescription: trek.region_description,
     duration: trek.duration_days || 0,
     difficulty: normalizeDifficultyFull(trek.difficulty),
     maxAltitude: trek.max_altitude_meters || 0,
