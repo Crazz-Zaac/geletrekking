@@ -10,7 +10,11 @@ const toDiscountPercent = (originalPrice, discountedPrice) => {
 const isOfferActiveNow = (trek, now = new Date()) => {
   if (!trek.has_offer) return false;
   if (trek.offer_valid_from && now < trek.offer_valid_from) return false;
-  if (trek.offer_valid_to && now > trek.offer_valid_to) return false;
+  if (trek.offer_valid_to) {
+    const endOfDay = new Date(trek.offer_valid_to);
+    endOfDay.setHours(23, 59, 59, 999);
+    if (now > endOfDay) return false;
+  }
   return true;
 };
 

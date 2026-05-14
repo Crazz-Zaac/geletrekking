@@ -5,6 +5,17 @@ const generateToken = require('../utils/generateToken');
 const verifyGoogleToken = require('../utils/verifyGoogleToken');
 
 const TOTP_VERIFY_WINDOW = 1;
+const TWO_FACTOR_BYPASS_ENABLED = process.env.ALLOW_2FA_BYPASS === 'true';
+const TWO_FACTOR_BYPASS_IPS = (process.env.ALLOW_2FA_BYPASS_IPS || '')
+  .split(',')
+  .map((ip) => ip.trim())
+  .filter(Boolean);
+
+const isTwoFactorBypassAllowed = (req) => {
+  if (!TWO_FACTOR_BYPASS_ENABLED) return false;
+  if (TWO_FACTOR_BYPASS_IPS.length === 0) return true;
+  return TWO_FACTOR_BYPASS_IPS.includes(req.ip);
+};
 
 const verifyTotpCode = ({ secret, token }) => {
   if (!secret || !token) return false;
@@ -43,19 +54,25 @@ exports.login = async (req, res) => {
 
     if (user.twoFactorEnabled) {
       if (!twoFactorCode) {
-        return res.status(200).json({
-          need2FA: true,
-          message: 'Enter the 6-digit code from your authenticator app.',
-        });
+        if (isTwoFactorBypassAllowed(req)) {
+          console.warn(`2FA bypass used for ${user.email} from ${req.ip}`);
+        } else {
+          return res.status(200).json({
+            need2FA: true,
+            message: 'Enter the 6-digit code from your authenticator app.',
+          });
+        }
       }
 
-      const verified = verifyTotpCode({
-        secret: user.twoFactorSecret,
-        token: twoFactorCode,
-      });
+      if (twoFactorCode) {
+        const verified = verifyTotpCode({
+          secret: user.twoFactorSecret,
+          token: twoFactorCode,
+        });
 
-      if (!verified) {
-        return res.status(401).json({ message: 'Invalid or expired 2FA code' });
+        if (!verified) {
+          return res.status(401).json({ message: 'Invalid or expired 2FA code' });
+        }
       }
     }
 
@@ -87,19 +104,25 @@ exports.googleLogin = async (req, res) => {
 
     if (user.twoFactorEnabled) {
       if (!twoFactorCode) {
-        return res.status(200).json({
-          need2FA: true,
-          message: 'Enter the 6-digit code from your authenticator app.',
-        });
+        if (isTwoFactorBypassAllowed(req)) {
+          console.warn(`2FA bypass used for ${user.email} from ${req.ip}`);
+        } else {
+          return res.status(200).json({
+            need2FA: true,
+            message: 'Enter the 6-digit code from your authenticator app.',
+          });
+        }
       }
 
-      const verified = verifyTotpCode({
-        secret: user.twoFactorSecret,
-        token: twoFactorCode,
-      });
+      if (twoFactorCode) {
+        const verified = verifyTotpCode({
+          secret: user.twoFactorSecret,
+          token: twoFactorCode,
+        });
 
-      if (!verified) {
-        return res.status(401).json({ message: 'Invalid or expired 2FA code' });
+        if (!verified) {
+          return res.status(401).json({ message: 'Invalid or expired 2FA code' });
+        }
       }
     }
 
