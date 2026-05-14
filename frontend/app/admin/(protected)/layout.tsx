@@ -21,6 +21,7 @@ import {
   BookOpen,
   HelpCircle,
   Building2, 
+  ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -60,7 +61,8 @@ const navItems: NavItem[] = [
   
   // Settings
   { label: 'Company', href: '/admin/company', icon: Building2, available: true },
-  { label: 'Settings', href: '/admin/settings', icon: Settings, available: true },
+  { label: 'Account Security', href: '/admin/account-security', icon: ShieldCheck, available: true },
+  { label: 'Site Settings', href: '/admin/settings', icon: Settings, available: true },
 ]
 
 export default function ProtectedAdminLayout({ children }: ProtectedAdminLayoutProps) {

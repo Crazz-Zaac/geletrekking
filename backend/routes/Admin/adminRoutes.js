@@ -2,46 +2,45 @@ const express = require("express");
 const router = express.Router();
 const User = require("../../models/user");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const {
+  login,
+  beginTwoFactorSetup,
+  verifyTwoFactorSetup,
+  disableTwoFactor,
+} = require("../../controllers/authController");
 
 // ✅ Middleware
 const authMiddleware = require("../../middleware/authMiddleware");
 const restrictToRoles = require("../../middleware/roleMiddleware");
+const { authLoginLimiter } = require("../../middleware/rateLimitMiddleware");
 
 
 /* -----------------------------
  ✅ ADMIN LOGIN
   POST /api/admin/login
 --------------------------------*/
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+router.post("/login", authLoginLimiter, login);
 
-  try {
-    const admin = await User.findOne({ email });
+router.post(
+  "/2fa/setup",
+  authMiddleware,
+  restrictToRoles("admin", "superadmin"),
+  beginTwoFactorSetup
+);
 
-    if (!admin || !["admin", "superadmin"].includes(admin.role)) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+router.post(
+  "/2fa/verify",
+  authMiddleware,
+  restrictToRoles("admin", "superadmin"),
+  verifyTwoFactorSetup
+);
 
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
-
-    const token = jwt.sign(
-      { id: admin._id, role: admin.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res.json({
-      message: "✅ Login successful",
-      token,
-      role: admin.role,
-      user: { email: admin.email, role: admin.role }
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-});
+router.post(
+  "/2fa/disable",
+  authMiddleware,
+  restrictToRoles("admin", "superadmin"),
+  disableTwoFactor
+);
 
 /* -----------------------------
  ✅ GET ALL ADMINS (SUPERADMIN)

@@ -68,7 +68,7 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
             alt={post.title}
             fill
             className="object-cover"
-            priority
+            loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 

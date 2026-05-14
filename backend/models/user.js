@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema(
     // 🔐 Two-Factor Authentication fields
     twoFactorEnabled: { type: Boolean, default: false },
     twoFactorSecret: { type: String, default: null },
+    twoFactorTempSecret: { type: String, default: null },
   },
   { timestamps: true }
 );

@@ -267,16 +267,6 @@ export default function TrekDetailClient({
               <motion.div id="trek-itinerary" variants={itemVariants} className="space-y-5 scroll-mt-24">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <h2 className="text-3xl font-bold text-foreground">Itinerary Timeline</h2>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleDownloadItinerary}
-                    disabled={downloadingItinerary}
-                    className="border-primary/30 text-primary hover:bg-primary/10 w-full sm:w-auto"
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    {downloadingItinerary ? 'Preparing PDF...' : 'Download Itinerary (PDF)'}
-                  </Button>
                 </div>
                 <div className="relative border-l border-border ml-3 space-y-5">
                   {trek.itinerary.map((day) => (

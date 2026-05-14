@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { Badge } from '@/components/ui/badge';
+import { useSiteSettings } from '@/hooks/use-site-settings';
 import { ArrowRight, AlertCircle, CalendarDays, Scale, Mail, ShieldAlert } from 'lucide-react';
 
 const containerVariants = {
@@ -20,6 +21,9 @@ const itemVariants = {
 };
 
 export default function DisclaimerPage() {
+  const { settings } = useSiteSettings();
+  const contactEmail = settings.email.trim();
+
   const sections = [
     {
       id: 'altitude-and-acclimatization',
@@ -152,13 +156,20 @@ export default function DisclaimerPage() {
 
                   <div className="mt-5 rounded-xl border border-primary/25 bg-primary/10 p-3.5">
                     <p className="text-xs font-medium text-foreground">Need risk clarification?</p>
-                    <a
-                      href="mailto:info@geletrekking.com"
-                      className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:opacity-90"
-                    >
-                      <Mail className="h-3.5 w-3.5" />
-                      info@geletrekking.com
-                    </a>
+                    {contactEmail ? (
+                      <a
+                        href={`mailto:${contactEmail}`}
+                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:opacity-90"
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                        {contactEmail}
+                      </a>
+                    ) : (
+                      <span className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                        <Mail className="h-3.5 w-3.5" />
+                        Contact email not configured
+                      </span>
+                    )}
                   </div>
                 </div>
               </motion.aside>
@@ -221,13 +232,15 @@ export default function DisclaimerPage() {
                       Contact Support
                       <ArrowRight className="h-4 w-4" />
                     </a>
-                    <a
-                      href="mailto:info@geletrekking.com"
-                      className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted transition"
-                    >
-                      <Mail className="h-4 w-4" />
-                      info@geletrekking.com
-                    </a>
+                    {contactEmail ? (
+                      <a
+                        href={`mailto:${contactEmail}`}
+                        className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted transition"
+                      >
+                        <Mail className="h-4 w-4" />
+                        {contactEmail}
+                      </a>
+                    ) : null}
                   </div>
                 </motion.div>
               </div>

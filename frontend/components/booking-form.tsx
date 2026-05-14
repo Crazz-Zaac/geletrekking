@@ -249,6 +249,13 @@ export function BookingForm({ trek }: BookingFormProps) {
         {submitting ? 'Sending...' : 'Send Inquiry'}
       </button>
       {!isFormReady ? <p className="text-xs text-muted-foreground">Fill required fields to enable submission.</p> : null}
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        We use your data only to respond to your trekking inquiry and won’t share it without your consent.{' '}
+        <Link href="/privacy-policy" className="text-primary underline underline-offset-2">
+          Privacy Policy
+        </Link>
+        .
+      </p>
       <p className="text-xs text-muted-foreground text-center">
         We typically reply within 24 hours. Or{' '}
         <a href="https://wa.me/9779851234567" target="_blank" rel="noopener noreferrer" className="text-primary underline">

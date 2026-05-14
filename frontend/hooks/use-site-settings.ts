@@ -7,7 +7,7 @@ const defaultSettings: Required<AdminSiteSettings> = {
   siteName: 'GELE TREKKING',
   logoUrl: '/geletrekking.png',
   phone: '+977 985 123 4567',
-  email: 'info@geletrekking.com',
+  email: '',
   address: 'Thamel, Kathmandu 44600, Nepal',
   officeHoursWeekdays: 'Sunday – Friday: 9:00 AM – 6:00 PM',
   officeHoursWeekend: 'Saturday: By appointment only',

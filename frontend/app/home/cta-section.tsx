@@ -47,7 +47,7 @@ export default function CTASection() {
                 Explore Destinations
               </Button>
             </Link>
-            <Link href="/contact">
+            <Link href="/book">
               <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary/5">
                 Contact Us Today
               </Button>

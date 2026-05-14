@@ -62,7 +62,7 @@ const alertSchema = new mongoose.Schema(
     },
     ctaLabel: {
       type: String,
-      default: 'View full details on our Updates page →',
+      default: 'View full details here →',
       trim: true,
       maxlength: 200,
     },

@@ -21,7 +21,7 @@ interface TrekCardProps {
 
 export function TrekCard({ trek, className, isCompared = false, compareDisabled = false, onToggleCompare }: TrekCardProps) {
   const hasActiveOffer = Boolean(trek.hasOffer)
-  const discountPercent = trek.offerDiscountPercent || 10
+  const discountPercent = trek.offerDiscountPercent
 
   return (
     <Link
@@ -47,14 +47,16 @@ export function TrekCard({ trek, className, isCompared = false, compareDisabled 
           </div>
 
           {/* Discount badge */}
-          <div className="absolute top-3 right-3 z-40 bg-red-600 text-white px-2 py-1 rounded-md shadow-md text-center">
-            <p className="text-lg font-extrabold leading-none">
-              {discountPercent}%
-            </p>
-            <p className="text-[10px] font-bold uppercase tracking-wide">
-              OFF
-            </p>
-          </div>
+          {discountPercent ? (
+            <div className="absolute top-3 right-3 z-40 bg-red-600 text-white px-2 py-1 rounded-md shadow-md text-center">
+              <p className="text-lg font-extrabold leading-none">
+                {discountPercent}%
+              </p>
+              <p className="text-[10px] font-bold uppercase tracking-wide">
+                OFF
+              </p>
+            </div>
+          ) : null}
         </>
       )}
 
@@ -64,6 +66,7 @@ export function TrekCard({ trek, className, isCompared = false, compareDisabled 
           src={trek.image}
           alt={trek.title}
           fill
+          loading="lazy"
           className="object-cover group-hover:scale-105 transition-transform duration-500"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />

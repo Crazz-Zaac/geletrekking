@@ -6,10 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import {
   AdminActivity,
+  AdminSiteSettings,
   createAdminActivity,
   deleteAdminActivity,
   getAdminActivities,
+  getAdminSettings,
   updateAdminActivity,
+  updateAdminSettings,
 } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
 import { AlertCircle, CalendarDays, Plus, X, Trash2 } from 'lucide-react'
@@ -95,6 +98,8 @@ export default function AdminActivitiesPage() {
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<ActivityForm>(initialForm)
+  const [siteSettings, setSiteSettings] = useState<AdminSiteSettings | null>(null)
+  const [navSaving, setNavSaving] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [editorSection, setEditorSection] = useState<EditorSection>('basic')
@@ -118,8 +123,9 @@ export default function AdminActivitiesPage() {
     setLoading(true)
     setError('')
     try {
-      const data = await getAdminActivities(token)
+      const [data, settings] = await Promise.all([getAdminActivities(token), getAdminSettings()])
       setItems(data)
+      setSiteSettings(settings)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load activities')
     } finally {
@@ -266,6 +272,35 @@ export default function AdminActivitiesPage() {
     }
   }
 
+  const onToggleActivitiesNav = async (nextValue: boolean) => {
+    if (!token) {
+      setError('Missing admin token. Please login again.')
+      return
+    }
+
+    setNavSaving(true)
+    setError('')
+    setMessage('')
+
+    try {
+      const base = siteSettings || {}
+      const payload: AdminSiteSettings = {
+        ...base,
+        navigation: {
+          ...(base.navigation || {}),
+          activitiesEnabled: nextValue,
+        },
+      }
+      const updated = await updateAdminSettings(token, payload)
+      setSiteSettings(updated)
+      setMessage('Navigation updated successfully.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update navigation setting')
+    } finally {
+      setNavSaving(false)
+    }
+  }
+
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       const query = search.toLowerCase().trim()
@@ -398,15 +433,32 @@ export default function AdminActivitiesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Activities</h1>
           <p className="text-muted-foreground mt-1">Manage and organize all activity offerings</p>
         </div>
-        <Button onClick={startCreate} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Add Activity
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-3 text-sm rounded-md border border-input px-3 py-2.5 bg-muted/20">
+            <input
+              type="checkbox"
+              checked={siteSettings?.navigation?.activitiesEnabled ?? true}
+              onChange={(e) => onToggleActivitiesNav(e.target.checked)}
+              disabled={navSaving}
+            />
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="font-medium text-foreground">Show Activities tab</p>
+                {navSaving ? <span className="text-xs text-muted-foreground">Saving...</span> : null}
+              </div>
+              <p className="text-xs text-muted-foreground">Toggle visibility in the website navbar.</p>
+            </div>
+          </label>
+          <Button onClick={startCreate} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Add Activity
+          </Button>
+        </div>
       </div>
 
       {error ? (

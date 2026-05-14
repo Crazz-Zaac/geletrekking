@@ -5,7 +5,7 @@ import { Footer } from '@/components/footer'
 import { HomepageAlertBanner } from '@/components/homepage-alert-banner'
 import { TrekCard } from '@/components/trek-card'
 import { TestimonialsCarousel } from '@/components/testimonials-carousel'
-import { treks, regions, blogPosts } from '@/lib/data'
+import { treks, blogPosts } from '@/lib/data'
 import { getBlogs, getTestimonials, getTreks } from '@/lib/api'
 import { HeroSection } from './home/hero-section'
 import { WhyUsSection } from './home/why-us-section'
@@ -13,6 +13,7 @@ import { RegionsSection } from './home/regions-section'
 import { BlogHighlights } from './home/blog-highlights'
 import { BookingCTA } from './home/booking-cta'
 import { StatsBar } from './home/stats-bar'
+import { TrustpilotWidget } from '@/components/trustpilot-widget'
 
 export default async function HomePage() {
   const [apiTreks, apiBlogs, apiTestimonials] = await Promise.all([
@@ -27,6 +28,25 @@ export default async function HomePage() {
   const featuredTreks = activeTreks.filter((trek) => trek.isFeatured).slice(0, 4).length > 0 
     ? activeTreks.filter((trek) => trek.isFeatured).slice(0, 4)
     : activeTreks.slice(0, 4)
+  const regionMap = activeTreks.reduce((acc, trek) => {
+    const key = trek.region || 'Other'
+    if (!acc.has(key)) {
+      acc.set(key, {
+        id: key.toLowerCase().replace(/\s+/g, '-'),
+        name: `${key} Region`,
+        description: trek.regionDescription || trek.shortDescription,
+        image: trek.image,
+        treksCount: 1,
+      })
+    } else {
+      const entry = acc.get(key)
+      if (entry) {
+        entry.treksCount += 1
+      }
+    }
+    return acc
+  }, new Map<string, { id: string; name: string; description: string; image: string; treksCount: number }>())
+  const regions = Array.from(regionMap.values())
 
   return (
     <>
@@ -90,6 +110,11 @@ export default async function HomePage() {
 
         <WhyUsSection />
         <TestimonialsCarousel testimonials={apiTestimonials} />
+        <section className="py-6 md:py-8 bg-background">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <TrustpilotWidget variant="plain" />
+          </div>
+        </section>
         <RegionsSection regions={regions} />
         <BlogHighlights posts={activeBlogs} />
           <BookingCTA />

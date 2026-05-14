@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
@@ -11,6 +12,7 @@ import { Mail, Phone, MapPin, Clock3, MessageCircle, ShieldCheck, Loader2 } from
 import { WhatsAppIcon } from '@/components/whatsapp-icon';
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons';
 import { TurnstileWidget } from '@/components/turnstile-widget';
+import { TrustpilotWidget } from '@/components/trustpilot-widget';
 import { submitContactMessage } from '@/lib/api';
 import { useSiteSettings } from '@/hooks/use-site-settings';
 
@@ -29,13 +31,14 @@ const itemVariants = {
 
 export default function ContactPage() {
   const { settings, social } = useSiteSettings();
+  const contactEmail = settings.email.trim();
 
   const contactInfo = [
     {
       icon: Mail,
       label: 'Email',
-      value: settings.email || 'info@geletrekking.com',
-      href: `mailto:${settings.email || 'info@geletrekking.com'}`,
+      value: contactEmail,
+      href: contactEmail ? `mailto:${contactEmail}` : '#',
       description: 'Best for itinerary planning and custom quotes',
     },
     {
@@ -199,6 +202,12 @@ export default function ContactPage() {
                 Get route recommendations, difficulty guidance, and transparent pricing. We usually respond within 24 hours.
               </motion.p>
             </motion.div>
+          </div>
+        </section>
+
+        <section className="py-6 md:py-8 bg-background">
+          <div className="container mx-auto px-4 md:px-6">
+            <TrustpilotWidget className="rounded-xl border border-border bg-card p-4" />
           </div>
         </section>
 
@@ -402,6 +411,13 @@ export default function ContactPage() {
                     {!isFormReady && (
                       <p className="text-xs text-muted-foreground">Fill all required fields to enable submission.</p>
                     )}
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      We use your data only to respond to your trekking inquiry and won’t share it without your consent.{' '}
+                      <Link href="/privacy-policy" className="text-primary underline underline-offset-2">
+                        Privacy Policy
+                      </Link>
+                      .
+                    </p>
                   </form>
                 </Card>
 

@@ -34,6 +34,7 @@ type TrekForm = {
   slug: string
   description: string
   region: string
+  region_description: string
   best_season: string
   season_tag: string
   image_url: string
@@ -62,6 +63,7 @@ type TrekForm = {
   has_offer: boolean
   offer_type: string
   offer_description: string
+  offer_discount_percent: number
   discounted_price_usd: number
   discounted_price_gbp: number
   offer_valid_from: string
@@ -87,6 +89,7 @@ const initialForm: TrekForm = {
   slug: '',
   description: '',
   region: '',
+  region_description: '',
   best_season: '',
   season_tag: '',
   image_url: '',
@@ -114,6 +117,7 @@ const initialForm: TrekForm = {
   has_offer: false,
   offer_type: '',
   offer_description: '',
+  offer_discount_percent: 0,
   discounted_price_usd: 0,
   discounted_price_gbp: 0,
   offer_valid_from: '',
@@ -129,6 +133,7 @@ function formToPayload(form: TrekForm): Partial<AdminTrek> {
     slug: form.slug.trim() || undefined,
     description: form.description.trim(),
     region: form.region.trim() || undefined,
+    region_description: form.region_description.trim() || undefined,
     best_season: form.best_season.trim() || undefined,
     season_tag: form.season_tag.trim() || undefined,
     image_url: form.image_url.trim() || undefined,
@@ -166,6 +171,7 @@ function formToPayload(form: TrekForm): Partial<AdminTrek> {
     offer_type: form.offer_type.trim() || undefined,
     offer_title: form.offer_type.trim() || undefined,
     offer_description: form.offer_description.trim() || undefined,
+    offer_discount_percent: form.offer_discount_percent || undefined,
     discounted_price_usd: form.discounted_price_usd || undefined,
     discounted_price_gbp: form.discounted_price_gbp || undefined,
     offer_valid_from: form.offer_valid_from || undefined,
@@ -182,6 +188,7 @@ function trekToForm(item: AdminTrek): TrekForm {
     slug: item.slug || '',
     description: item.description || '',
     region: item.region || '',
+    region_description: item.region_description || '',
     best_season: item.best_season || '',
     season_tag: item.season_tag || '',
     image_url: item.image_url || '',
@@ -222,6 +229,7 @@ function trekToForm(item: AdminTrek): TrekForm {
     has_offer: item.has_offer || false,
     offer_type: item.offer_type || item.offer_title || '',
     offer_description: item.offer_description || '',
+    offer_discount_percent: item.offer_discount_percent || 0,
     discounted_price_usd: item.discounted_price_usd || 0,
     discounted_price_gbp: item.discounted_price_gbp || 0,
     offer_valid_from: item.offer_valid_from ? item.offer_valid_from.slice(0, 10) : '',
@@ -577,6 +585,12 @@ export default function AdminTreksPage() {
                     />
                   ))}
                 </div>
+                {field('Region description (used on homepage region cards)', textarea(
+                  'Short summary for this trekking region',
+                  form.region_description,
+                  (v) => setForm((p) => ({ ...p, region_description: v })),
+                  3
+                ))}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm pt-1">
                   <label className="flex items-center gap-2">
                     <input type="checkbox" checked={form.is_active} onChange={(e) => setForm((p) => ({ ...p, is_active: e.target.checked }))} />
@@ -889,6 +903,15 @@ export default function AdminTreksPage() {
                     ))}
                     {field('Offer description', textarea('Describe the offer', form.offer_description, (v) => setForm((p) => ({ ...p, offer_description: v })), 3))}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {field('Offer discount percent', (
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={form.offer_discount_percent}
+                          onChange={(e) => setForm((p) => ({ ...p, offer_discount_percent: Number(e.target.value) || 0 }))}
+                        />
+                      ))}
                       {field('Discounted price USD', (
                         <Input
                           type="number"

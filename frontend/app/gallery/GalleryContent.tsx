@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Search, X } from 'lucide-react';
 
@@ -52,20 +52,18 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
   const [sortBy, setSortBy] = useState<SortOption>('featured');
   const [featuredOnly, setFeaturedOnly] = useState(false);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const categoryParam = searchParams?.get('category') || '';
     const qParam = searchParams?.get('q') || '';
     const sortParam = searchParams?.get('sort');
     const featuredParam = searchParams?.get('featured') === '1';
-    const pageParam = Number.parseInt(searchParams?.get('page') || '1', 10);
-
     setSelectedCategory(categoryParam);
     setSearchQuery(qParam);
     setSortBy(isSortOption(sortParam) ? sortParam : 'featured');
     setFeaturedOnly(featuredParam);
-    setCurrentPage(Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam);
   }, [searchParams]);
 
   const updateUrl = (next: {
@@ -89,22 +87,21 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
     if (next.featured) params.set('featured', '1');
     else params.delete('featured');
 
-    if (next.page > 1) params.set('page', String(next.page));
-    else params.delete('page');
+    params.delete('page');
 
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
-  const setPageAndUrl = (nextPage: number) => {
-    setCurrentPage(nextPage);
+  const updateFilters = (next: { category: string; q: string; sort: SortOption; featured: boolean }) => {
     updateUrl({
-      category: selectedCategory,
-      q: searchQuery,
-      sort: sortBy,
-      featured: featuredOnly,
-      page: nextPage,
+      category: next.category,
+      q: next.q,
+      sort: next.sort,
+      featured: next.featured,
+      page: 1,
     });
+    setVisibleCount(ITEMS_PER_PAGE);
   };
 
   const categoryOptions = useMemo(() => {
@@ -144,19 +141,29 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
     return result;
   }, [items, selectedCategory, searchQuery, featuredOnly, sortBy]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredItems.length / ITEMS_PER_PAGE));
-
-  const paginatedItems = useMemo(() => {
-    const safePage = Math.min(currentPage, totalPages);
-    const start = (safePage - 1) * ITEMS_PER_PAGE;
-    return filteredItems.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredItems, currentPage, totalPages]);
+  const visibleItems = useMemo(() => {
+    return filteredItems.slice(0, visibleCount);
+  }, [filteredItems, visibleCount]);
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      setPageAndUrl(totalPages);
-    }
-  }, [currentPage, totalPages]);
+    setVisibleCount(ITEMS_PER_PAGE);
+  }, [selectedCategory, searchQuery, sortBy, featuredOnly]);
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return;
+        setVisibleCount((prev) => Math.min(prev + ITEMS_PER_PAGE, filteredItems.length));
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [filteredItems.length]);
 
   const selectedImage =
     selectedImageId !== null
@@ -198,22 +205,10 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
     setSearchQuery('');
     setSortBy('featured');
     setFeaturedOnly(false);
-    setPageAndUrl(1);
+    updateFilters({ category: '', q: '', sort: 'featured', featured: false });
     router.replace(pathname, { scroll: false });
   };
-
-  const visiblePage = Math.min(currentPage, totalPages);
-
-  const pageNumbers = useMemo(() => {
-    const max = 5;
-    if (totalPages <= max) return Array.from({ length: totalPages }, (_, index) => index + 1);
-
-    const start = Math.max(1, visiblePage - 2);
-    const end = Math.min(totalPages, start + max - 1);
-    const adjustedStart = Math.max(1, end - max + 1);
-
-    return Array.from({ length: end - adjustedStart + 1 }, (_, index) => adjustedStart + index);
-  }, [totalPages, visiblePage]);
+  const hasMoreItems = visibleCount < filteredItems.length;
 
   return (
     <>
@@ -269,13 +264,11 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
                 onChange={(event) => {
                   const next = event.target.value;
                   setSearchQuery(next);
-                  setPageAndUrl(1);
-                  updateUrl({
+                  updateFilters({
                     category: selectedCategory,
                     q: next,
                     sort: sortBy,
                     featured: featuredOnly,
-                    page: 1,
                   });
                 }}
                 className="w-full h-10 rounded-md border border-border bg-background pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
@@ -287,13 +280,11 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
               onChange={(event) => {
                 const nextSort = event.target.value as SortOption;
                 setSortBy(nextSort);
-                setPageAndUrl(1);
-                updateUrl({
+                updateFilters({
                   category: selectedCategory,
                   q: searchQuery,
                   sort: nextSort,
                   featured: featuredOnly,
-                  page: 1,
                 });
               }}
               className="h-10 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
@@ -314,13 +305,11 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
               className={selectedCategory === '' ? 'bg-primary text-white' : ''}
               onClick={() => {
                 setSelectedCategory('');
-                setPageAndUrl(1);
-                updateUrl({
+                updateFilters({
                   category: '',
                   q: searchQuery,
                   sort: sortBy,
                   featured: featuredOnly,
-                  page: 1,
                 });
               }}
             >
@@ -334,13 +323,11 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
                 className={selectedCategory === category ? 'bg-primary text-white' : ''}
                 onClick={() => {
                   setSelectedCategory(category);
-                  setPageAndUrl(1);
-                  updateUrl({
+                  updateFilters({
                     category,
                     q: searchQuery,
                     sort: sortBy,
                     featured: featuredOnly,
-                    page: 1,
                   });
                 }}
               >
@@ -354,13 +341,11 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
               onClick={() => {
                 const nextFeatured = !featuredOnly;
                 setFeaturedOnly(nextFeatured);
-                setPageAndUrl(1);
-                updateUrl({
+                updateFilters({
                   category: selectedCategory,
                   q: searchQuery,
                   sort: sortBy,
                   featured: nextFeatured,
-                  page: 1,
                 });
               }}
             >
@@ -376,38 +361,32 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
                   onClick={() => {
                     if (filter.key === 'category') {
                       setSelectedCategory('');
-                      updateUrl({
+                      updateFilters({
                         category: '',
                         q: searchQuery,
                         sort: sortBy,
                         featured: featuredOnly,
-                        page: 1,
                       });
-                      setPageAndUrl(1);
                     }
 
                     if (filter.key === 'q') {
                       setSearchQuery('');
-                      updateUrl({
+                      updateFilters({
                         category: selectedCategory,
                         q: '',
                         sort: sortBy,
                         featured: featuredOnly,
-                        page: 1,
                       });
-                      setPageAndUrl(1);
                     }
 
                     if (filter.key === 'featured') {
                       setFeaturedOnly(false);
-                      updateUrl({
+                      updateFilters({
                         category: selectedCategory,
                         q: searchQuery,
                         sort: sortBy,
                         featured: false,
-                        page: 1,
                       });
-                      setPageAndUrl(1);
                     }
                   }}
                   className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium"
@@ -420,7 +399,7 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
           ) : null}
 
           <p className="text-sm text-muted-foreground">
-            Showing {paginatedItems.length} of {filteredItems.length} image
+            Showing {visibleItems.length} of {filteredItems.length} image
             {filteredItems.length === 1 ? '' : 's'}
             {selectedCategory ? ` from ${selectedCategory}` : ' from all categories'}.
           </p>
@@ -429,7 +408,7 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
 
       <section className="py-10 md:py-14">
         <div className="container mx-auto px-4 md:px-6">
-          {paginatedItems.length === 0 ? (
+          {visibleItems.length === 0 ? (
             <div className="py-16 text-center text-muted-foreground">
               No gallery items found.
             </div>
@@ -441,7 +420,7 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
                 variants={containerVariants}
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
               >
-                {paginatedItems.map((item, index) => (
+                {visibleItems.map((item, index) => (
                   <motion.div key={item.id} variants={itemVariants}>
                     <article
                       className="overflow-hidden rounded-xl border border-border bg-card hover:shadow-lg transition-shadow cursor-pointer"
@@ -452,7 +431,9 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
                           src={item.image}
                           alt={`${item.trekTitle} - ${item.region}`}
                           fill
+                          loading="lazy"
                           className="object-cover hover:scale-105 transition-transform duration-500"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
                         {item.isFeatured && (
                           <div className="absolute top-3 right-3 rounded-full bg-yellow-400 px-2.5 py-1 text-xs font-bold text-yellow-900">
@@ -474,40 +455,14 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
                 ))}
               </motion.div>
 
-              {totalPages > 1 && (
-                <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
-                  <Button
-                    variant="outline"
-                    onClick={() => setPageAndUrl(Math.max(1, visiblePage - 1))}
-                    disabled={visiblePage === 1}
-                  >
-                    Previous
-                  </Button>
-
-                  {pageNumbers.map((page) => (
-                    <Button
-                      key={page}
-                      variant={page === visiblePage ? 'default' : 'outline'}
-                      onClick={() => setPageAndUrl(page)}
-                      className="min-w-10"
-                    >
-                      {page}
-                    </Button>
-                  ))}
-
-                  <span className="text-sm text-muted-foreground px-2">
-                    Page {visiblePage} of {totalPages}
-                  </span>
-
-                  <Button
-                    variant="outline"
-                    onClick={() => setPageAndUrl(Math.min(totalPages, visiblePage + 1))}
-                    disabled={visiblePage === totalPages}
-                  >
-                    Next
-                  </Button>
-                </div>
-              )}
+              <div className="flex flex-col items-center gap-2 mt-8">
+                <div ref={loadMoreRef} />
+                {hasMoreItems ? (
+                  <p className="text-xs text-muted-foreground">Loading more images...</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">You&apos;ve reached the end.</p>
+                )}
+              </div>
             </>
           )}
         </div>

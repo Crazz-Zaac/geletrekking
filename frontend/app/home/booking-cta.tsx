@@ -62,7 +62,7 @@ export function BookingCTA() {
                 Browse All Treks
               </Button>
             </Link>
-            <Link href="/contact">
+            <Link href="/book">
               <Button
                 size="lg"
                 variant="ghost"

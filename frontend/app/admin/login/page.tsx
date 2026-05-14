@@ -12,6 +12,8 @@ export default function AdminLoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [twoFactorCode, setTwoFactorCode] = useState('')
+  const [needsTwoFactor, setNeedsTwoFactor] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -34,7 +36,18 @@ export default function AdminLoginPage() {
     setError('')
     setLoading(true)
 
-    const result = await adminLogin({ email, password })
+    const result = await adminLogin({
+      email,
+      password,
+      twoFactorCode: needsTwoFactor ? twoFactorCode : undefined,
+    })
+
+    if (result.need2FA) {
+      setNeedsTwoFactor(true)
+      setLoading(false)
+      setError(result.message || 'Enter your 2FA code to continue.')
+      return
+    }
 
     if (!result.success || !result.token || !result.user) {
       setLoading(false)
@@ -71,6 +84,7 @@ export default function AdminLoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@example.com"
+              disabled={needsTwoFactor || loading}
             />
           </div>
 
@@ -83,12 +97,46 @@ export default function AdminLoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              disabled={needsTwoFactor || loading}
             />
           </div>
 
+          {needsTwoFactor ? (
+            <div className="space-y-1.5">
+              <label htmlFor="twoFactorCode" className="text-sm font-medium text-foreground">Authenticator Code</label>
+              <Input
+                id="twoFactorCode"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                required
+                value={twoFactorCode}
+                onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="123456"
+              />
+              <p className="text-xs text-muted-foreground">Enter the 6-digit code from your authenticator app.</p>
+            </div>
+          ) : null}
+
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Signing in...' : needsTwoFactor ? 'Verify 2FA' : 'Sign In'}
           </Button>
+
+          {needsTwoFactor ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={loading}
+              onClick={() => {
+                setNeedsTwoFactor(false)
+                setTwoFactorCode('')
+                setError('')
+              }}
+            >
+              Use different credentials
+            </Button>
+          ) : null}
         </form>
       </Card>
     </main>

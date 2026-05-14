@@ -10,7 +10,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { blogPosts } from '@/lib/data';
 import { Clock3, Search, X } from 'lucide-react';
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { getBlogs, type UiBlogPost } from '@/lib/api';
 
@@ -28,6 +28,8 @@ const itemVariants = {
 };
 
 type BlogSortOption = 'latest' | 'oldest' | 'readTime' | 'az';
+
+const BLOG_BATCH_SIZE = 9;
 
 function isSortOption(value: string | null): value is BlogSortOption {
   return value === 'latest' || value === 'oldest' || value === 'readTime' || value === 'az';
@@ -53,6 +55,8 @@ function BlogContent() {
   const [selectedHashtag, setSelectedHashtag] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<BlogSortOption>('latest');
+  const [visibleCount, setVisibleCount] = useState(BLOG_BATCH_SIZE);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const hashtags = useMemo(
     () => ['All', ...Array.from(new Set(posts.flatMap((post) => post.hashtags || [])))],
@@ -159,12 +163,34 @@ function BlogContent() {
     return sorted;
   }, [selectedHashtag, searchQuery, sortBy, posts]);
 
+  useEffect(() => {
+    setVisibleCount(BLOG_BATCH_SIZE);
+  }, [selectedHashtag, searchQuery, sortBy, posts]);
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return;
+        setVisibleCount((prev) => Math.min(prev + BLOG_BATCH_SIZE, filteredPosts.length));
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [filteredPosts.length]);
+
   const activeFilters = [
     selectedHashtag !== 'All' ? { key: 'tag', label: 'Tag', value: selectedHashtag } : null,
     searchQuery.trim() ? { key: 'q', label: 'Search', value: searchQuery.trim() } : null,
   ].filter(Boolean) as Array<{ key: string; label: string; value: string }>;
 
   const suggestedPosts = posts.slice(0, 3);
+  const visiblePosts = filteredPosts.slice(0, visibleCount);
+  const hasMorePosts = visibleCount < filteredPosts.length;
 
   return (
     <>
@@ -178,12 +204,12 @@ function BlogContent() {
               variants={containerVariants}
               className="space-y-6"
             >
-              <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
                 <div>
                   <p className="text-xs md:text-sm font-semibold tracking-widest uppercase text-primary mb-2">Latest Updates</p>
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground">Recent Articles</h2>
                 </div>
-                <p className="text-sm text-muted-foreground">{filteredPosts.length} articles</p>
+                  <p className="text-sm text-muted-foreground">Showing {Math.min(visibleCount, filteredPosts.length)} of {filteredPosts.length}</p>
               </motion.div>
 
               <motion.div variants={itemVariants} className="sticky top-16 z-20 rounded-xl border border-border bg-background/95 backdrop-blur p-3 md:p-4 space-y-3">
@@ -293,13 +319,24 @@ function BlogContent() {
                   variants={containerVariants}
                   className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
                 >
-                  {filteredPosts.map((post) => (
+                  {visiblePosts.map((post) => (
                     <motion.div key={post.slug} variants={itemVariants}>
                       <BlogCard post={post} />
                     </motion.div>
                   ))}
                 </motion.div>
               )}
+
+              {!loading && filteredPosts.length > 0 ? (
+                <div className="flex flex-col items-center gap-2 pt-6">
+                  <div ref={loadMoreRef} />
+                  {hasMorePosts ? (
+                    <p className="text-xs text-muted-foreground">Loading more articles...</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">You&apos;ve reached the end.</p>
+                  )}
+                </div>
+              ) : null}
             </motion.div>
           </div>
         </section>
@@ -326,7 +363,9 @@ function BlogCard({ post, compact = false }: { post: UiBlogPost; compact?: boole
             src={post.image}
             alt={post.title}
             fill
+            loading="lazy"
             className="object-cover group-hover:scale-105 transition-transform duration-500"
+            sizes={compact ? '(max-width: 768px) 100vw, 50vw' : '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'}
           />
         </div>
 

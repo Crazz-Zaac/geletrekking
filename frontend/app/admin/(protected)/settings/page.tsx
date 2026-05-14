@@ -4,7 +4,11 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { AdminSiteSettings, getAdminSettings, updateAdminSettings } from '@/lib/api'
+import {
+  AdminSiteSettings,
+  getAdminSettings,
+  updateAdminSettings,
+} from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
 
 const defaultSettings: AdminSiteSettings = {
@@ -83,13 +87,23 @@ export default function AdminSettingsPage() {
     }
   }
 
+  const updateSocial = (key: keyof NonNullable<AdminSiteSettings['social']>, value: string) => {
+    setForm((prev) => ({
+      ...prev,
+      social: {
+        ...(prev.social || {}),
+        [key]: value,
+      },
+    }))
+  }
+
   return (
     <Card className="border-border">
       <CardHeader>
         <CardTitle>Site Settings</CardTitle>
-        <CardDescription>Equivalent to `frontend_old` settings management with editable global site fields.</CardDescription>
+        <CardDescription>Manage your website branding, contact details, social links, and navigation behavior.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
 
@@ -97,43 +111,141 @@ export default function AdminSettingsPage() {
           <p className="text-sm text-muted-foreground">Loading settings...</p>
         ) : (
           <>
-            <Input placeholder="Site name" value={form.siteName || ''} onChange={(e) => setForm((prev) => ({ ...prev, siteName: e.target.value }))} />
-            <Input placeholder="Logo URL" value={form.logoUrl || ''} onChange={(e) => setForm((prev) => ({ ...prev, logoUrl: e.target.value }))} />
-            {form.logoUrl ? <img src={form.logoUrl} alt="Logo preview" className="h-16 w-16 rounded-md border border-border object-cover" /> : null}
-            <Input placeholder="Phone" value={form.phone || ''} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} />
-            <Input placeholder="Email" value={form.email || ''} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} />
-            <Input placeholder="Address" value={form.address || ''} onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))} />
-            <Input placeholder="Office hours (weekdays)" value={form.officeHoursWeekdays || ''} onChange={(e) => setForm((prev) => ({ ...prev, officeHoursWeekdays: e.target.value }))} />
-            <Input placeholder="Office hours (weekend)" value={form.officeHoursWeekend || ''} onChange={(e) => setForm((prev) => ({ ...prev, officeHoursWeekend: e.target.value }))} />
-            <Input placeholder="Map embed URL (Google Maps embed link)" value={form.mapEmbedUrl || ''} onChange={(e) => setForm((prev) => ({ ...prev, mapEmbedUrl: e.target.value }))} />
+            <section className="rounded-md border border-border p-4 space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Branding</h3>
+                <p className="text-xs text-muted-foreground mt-1">Control your site identity and primary logo.</p>
+              </div>
 
-            <label className="flex items-center gap-2 text-sm rounded-md border border-input px-3 py-2">
-              <input
-                type="checkbox"
-                checked={form.navigation?.activitiesEnabled ?? true}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    navigation: {
-                      ...(prev.navigation || {}),
-                      activitiesEnabled: e.target.checked,
-                    },
-                  }))
-                }
-              />
-              Show Activities tab in website navbar
-            </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Site name</label>
+                  <Input
+                    placeholder="Gele Trekking"
+                    value={form.siteName || ''}
+                    onChange={(e) => setForm((prev) => ({ ...prev, siteName: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Logo URL</label>
+                  <Input
+                    placeholder="https://..."
+                    value={form.logoUrl || ''}
+                    onChange={(e) => setForm((prev) => ({ ...prev, logoUrl: e.target.value }))}
+                  />
+                </div>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <Input placeholder="Facebook" value={form.social?.facebook || ''} onChange={(e) => setForm((prev) => ({ ...prev, social: { ...(prev.social || {}), facebook: e.target.value } }))} />
-              <Input placeholder="Instagram" value={form.social?.instagram || ''} onChange={(e) => setForm((prev) => ({ ...prev, social: { ...(prev.social || {}), instagram: e.target.value } }))} />
-              <Input placeholder="Twitter" value={form.social?.twitter || ''} onChange={(e) => setForm((prev) => ({ ...prev, social: { ...(prev.social || {}), twitter: e.target.value } }))} />
-              <Input placeholder="LinkedIn" value={form.social?.linkedin || ''} onChange={(e) => setForm((prev) => ({ ...prev, social: { ...(prev.social || {}), linkedin: e.target.value } }))} />
-              <Input placeholder="YouTube" value={form.social?.youtube || ''} onChange={(e) => setForm((prev) => ({ ...prev, social: { ...(prev.social || {}), youtube: e.target.value } }))} />
-              <Input placeholder="WhatsApp" value={form.social?.whatsapp || ''} onChange={(e) => setForm((prev) => ({ ...prev, social: { ...(prev.social || {}), whatsapp: e.target.value } }))} />
+              {form.logoUrl ? (
+                <div className="rounded-md border border-border bg-muted/30 p-3 w-fit">
+                  <p className="text-xs text-muted-foreground mb-2">Logo preview</p>
+                  <img src={form.logoUrl} alt="Logo preview" className="h-16 w-16 rounded-md border border-border object-cover" />
+                </div>
+              ) : null}
+            </section>
+
+            <section className="rounded-md border border-border p-4 space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Contact & Location</h3>
+                <p className="text-xs text-muted-foreground mt-1">This data is used across contact pages, footer, and legal pages.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Phone</label>
+                  <Input
+                    placeholder="+977..."
+                    value={form.phone || ''}
+                    onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Email</label>
+                  <Input
+                    placeholder="contact@..."
+                    value={form.email || ''}
+                    onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">Address</label>
+                <Input
+                  placeholder="Office address"
+                  value={form.address || ''}
+                  onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Office hours (weekdays)</label>
+                  <Input
+                    placeholder="Sunday – Friday: 9:00 AM – 6:00 PM"
+                    value={form.officeHoursWeekdays || ''}
+                    onChange={(e) => setForm((prev) => ({ ...prev, officeHoursWeekdays: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Office hours (weekend)</label>
+                  <Input
+                    placeholder="Saturday: By appointment only"
+                    value={form.officeHoursWeekend || ''}
+                    onChange={(e) => setForm((prev) => ({ ...prev, officeHoursWeekend: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">Map embed URL</label>
+                <Input
+                  placeholder="Google Maps embed URL"
+                  value={form.mapEmbedUrl || ''}
+                  onChange={(e) => setForm((prev) => ({ ...prev, mapEmbedUrl: e.target.value }))}
+                />
+              </div>
+            </section>
+
+            <section className="rounded-md border border-border p-4 space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Social Links</h3>
+                <p className="text-xs text-muted-foreground mt-1">Use full URLs or handles based on your preference.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Facebook</label>
+                  <Input placeholder="facebook.com/yourpage" value={form.social?.facebook || ''} onChange={(e) => updateSocial('facebook', e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Instagram</label>
+                  <Input placeholder="instagram.com/yourhandle" value={form.social?.instagram || ''} onChange={(e) => updateSocial('instagram', e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Twitter / X</label>
+                  <Input placeholder="x.com/yourhandle" value={form.social?.twitter || ''} onChange={(e) => updateSocial('twitter', e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">LinkedIn</label>
+                  <Input placeholder="linkedin.com/company/..." value={form.social?.linkedin || ''} onChange={(e) => updateSocial('linkedin', e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">YouTube</label>
+                  <Input placeholder="youtube.com/@yourchannel" value={form.social?.youtube || ''} onChange={(e) => updateSocial('youtube', e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">WhatsApp</label>
+                  <Input placeholder="wa.me/number or number" value={form.social?.whatsapp || ''} onChange={(e) => updateSocial('whatsapp', e.target.value)} />
+                </div>
+              </div>
+            </section>
+
+            <div className="flex justify-end pt-1">
+              <Button onClick={onSave} disabled={saving} className="min-w-36">
+                {saving ? 'Saving...' : 'Save Site Settings'}
+              </Button>
             </div>
-
-            <Button onClick={onSave} disabled={saving}>{saving ? 'Saving...' : 'Save Settings'}</Button>
           </>
         )}
       </CardContent>

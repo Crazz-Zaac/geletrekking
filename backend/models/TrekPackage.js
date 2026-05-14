@@ -49,6 +49,9 @@ const trekPackageSchema = new mongoose.Schema(
     // which mountain region this trek belongs to, for example Everest or Annapurna
     region: { type: String, trim: true },
 
+    // short description shown in the homepage region cards
+    region_description: { type: String, trim: true },
+
     // where the trek starts and ends
     start_point: { type: String },
     end_point: { type: String },
@@ -124,6 +127,7 @@ const trekPackageSchema = new mongoose.Schema(
     offer_type: { type: String },
     offer_title: { type: String },
     offer_description: { type: String },
+    offer_discount_percent: { type: Number },
 
     // discounted prices shown when an offer is active
     discounted_price_gbp: { type: Number },
@@ -166,7 +170,6 @@ const trekPackageSchema = new mongoose.Schema(
 );
 
 trekPackageSchema.index({ name: 1 });
-trekPackageSchema.index({ slug: 1 });
 trekPackageSchema.index({ region: 1 });
 trekPackageSchema.index({ difficulty: 1 });
 trekPackageSchema.index({ price_usd: 1 });
