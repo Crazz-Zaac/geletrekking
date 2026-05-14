@@ -19,6 +19,7 @@ const getInitialFormData = (): Partial<AdminAlert> => {
     icon: 'info',
     type: 'global',
     isActive: true,
+    ctaUrl: '',
     backgroundColor: preset.backgroundColor,
     textColor: preset.titleColor,
     borderColor: preset.borderColor,
@@ -287,6 +288,21 @@ export function AlertsTab() {
                   </select>
                 </div>
               </div>
+
+              {formData.type === 'global' && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Global CTA URL</label>
+                  <Input
+                    type="url"
+                    placeholder="https://example.com/updates"
+                    value={formData.ctaUrl || ''}
+                    onChange={(e) => setFormData({ ...formData, ctaUrl: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    This link appears as “View full details here →” on the global alert.
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">Auto-applied color theme</label>

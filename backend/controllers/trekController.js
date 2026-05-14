@@ -60,7 +60,8 @@ const getAllTreks = async (req, res) => {
       const offerActiveNow = isOfferActiveNow(trek, today);
 
       t.offer_type = trek.offer_type || trek.offer_title || null;
-      t.offer_discount_percent = toDiscountPercent(trek.price_usd, trek.discounted_price_usd);
+      t.offer_discount_percent =
+        trek.offer_discount_percent ?? toDiscountPercent(trek.price_usd, trek.discounted_price_usd);
       t.offer_active_now = offerActiveNow;
 
       if (offerActiveNow) {
@@ -104,7 +105,8 @@ const getTrekById = async (req, res) => {
     const offerActiveNow = isOfferActiveNow(trek, today);
 
     finalTrek.offer_type = trek.offer_type || trek.offer_title || null;
-    finalTrek.offer_discount_percent = toDiscountPercent(trek.price_usd, trek.discounted_price_usd);
+    finalTrek.offer_discount_percent =
+      trek.offer_discount_percent ?? toDiscountPercent(trek.price_usd, trek.discounted_price_usd);
     finalTrek.offer_active_now = offerActiveNow;
 
     if (offerActiveNow) {

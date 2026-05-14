@@ -127,6 +127,7 @@ const trekPackageSchema = new mongoose.Schema(
     offer_type: { type: String },
     offer_title: { type: String },
     offer_description: { type: String },
+    offer_discount_percent: { type: Number },
 
     // discounted prices shown when an offer is active
     discounted_price_gbp: { type: Number },

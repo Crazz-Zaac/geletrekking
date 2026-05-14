@@ -578,10 +578,11 @@ function mapTrek(trek: BackendTrek): Trek {
     trek.transportation?.trim() ||
     [trek.start_point, trek.end_point].filter(Boolean).join(' → ') ||
     'On request'
-  const hasOffer = Boolean(trek.has_offer)
+  const offerActiveNow = trek.offer_active_now ?? true
+  const hasOffer = Boolean(trek.has_offer && offerActiveNow)
   const offerDiscountPercent =
-    trek.offer_discount_percent ||
-    (trek.price_usd && trek.discounted_price_usd && trek.discounted_price_usd < trek.price_usd
+    (hasOffer && trek.offer_discount_percent) ||
+    (hasOffer && trek.price_usd && trek.discounted_price_usd && trek.discounted_price_usd < trek.price_usd
       ? Math.round(((trek.price_usd - trek.discounted_price_usd) / trek.price_usd) * 100)
       : undefined)
   const originalPrice =

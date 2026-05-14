@@ -89,8 +89,8 @@ export function HomepageAlertBanner() {
 
   // Treat message as body text; ctaUrl as the link target
   const bodyText = firstAlert.message ?? null
-  const ctaUrl = firstAlert.ctaUrl || '/updates'
-  const ctaLabel = firstAlert.ctaLabel || 'View full details on our Updates page →'
+  const ctaUrl = firstAlert.ctaUrl?.trim()
+  const ctaLabel = 'View full details here →'
 
   return (
     <div
@@ -144,19 +144,21 @@ export function HomepageAlertBanner() {
         )}
 
         {/* Line 3: CTA link */}
-        <a
-          href={ctaUrl}
-          style={{
-            fontSize: '12px',
-            fontWeight: 500,
-            color: accentColor,
-            textDecoration: 'underline',
-            marginTop: '2px',
-            display: 'inline-block',
-          }}
-        >
-          {ctaLabel}
-        </a>
+        {ctaUrl ? (
+          <a
+            href={ctaUrl}
+            style={{
+              fontSize: '12px',
+              fontWeight: 500,
+              color: accentColor,
+              textDecoration: 'underline',
+              marginTop: '2px',
+              display: 'inline-block',
+            }}
+          >
+            {ctaLabel}
+          </a>
+        ) : null}
       </div>
 
       {/* Dismiss button — top-aligned */}
