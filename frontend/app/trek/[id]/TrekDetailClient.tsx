@@ -81,11 +81,11 @@ function SectionHeader({ index, title, icon: Icon }: SectionHeaderProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
-        <div className="h-12 w-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-700">
+        <div className="h-12 w-12 rounded-2xl flex items-center justify-center bg-[#E6F1F5] text-[#004D67]">
           <Icon className="h-6 w-6" />
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">Section {index}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#004D67]">Section {index}</p>
           <h2 className="text-3xl font-bold text-foreground">{title}</h2>
         </div>
       </div>
@@ -347,8 +347,8 @@ export default function TrekDetailClient({
             {primaryKpis.map((info) => {
               const InfoIcon = info.icon
               return (
-                <div key={info.label} className="rounded-2xl bg-emerald-900 px-6 py-5 text-white shadow-sm">
-                  <div className="flex items-center gap-2 text-emerald-100 text-xs font-semibold uppercase tracking-widest">
+                <div key={info.label} className="rounded-2xl bg-[#004D67] px-6 py-5 text-white shadow-sm">
+                  <div className="flex items-center gap-2 text-white/80 text-xs font-semibold uppercase tracking-widest">
                     <InfoIcon className="h-4 w-4" />
                     {info.label}
                   </div>
@@ -362,7 +362,7 @@ export default function TrekDetailClient({
               const InfoIcon = info.icon
               return (
                 <Card key={info.label} className="p-4 border-border">
-                  <div className="flex items-center gap-2 text-primary mb-1">
+                  <div className="flex items-center gap-2 text-[#004D67] mb-1">
                     <InfoIcon className="w-4 h-4" />
                     <p className="text-xs text-muted-foreground font-semibold">{info.label}</p>
                   </div>
@@ -376,7 +376,7 @@ export default function TrekDetailClient({
               const InfoIcon = info.icon
               return (
                 <Card key={info.label} className="p-4 border-border">
-                  <div className="flex items-center gap-2 text-primary mb-1">
+                  <div className="flex items-center gap-2 text-[#004D67] mb-1">
                     <InfoIcon className="w-4 h-4" />
                     <p className="text-xs text-muted-foreground font-semibold">{info.label}</p>
                   </div>
