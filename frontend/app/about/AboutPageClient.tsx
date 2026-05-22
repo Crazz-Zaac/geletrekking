@@ -18,12 +18,11 @@ import {
   Mountain,
   Clock3,
   Globe,
-  UserRound,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/whatsapp-icon';
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons';
 import { useEffect, useMemo, useState } from 'react';
-import { getAdminAbout, getGoogleReviews, getTestimonials, type AdminAbout, type UiGoogleReview, type UiTestimonial } from '@/lib/api';
+import { getAdminAbout, getGoogleReviews, type AdminAbout, type UiGoogleReview } from '@/lib/api';
 import { useSiteSettings } from '@/hooks/use-site-settings';
 
 const values = [
@@ -95,18 +94,8 @@ type CombinedReview = {
   rating: number
   text: string
   badge: string
-  source: 'admin' | 'google'
+  source: 'google'
 };
-
-const mapAdminReview = (review: UiTestimonial): CombinedReview => ({
-  id: `admin-${review.id}`,
-  name: review.name,
-  subtitle: `${review.country} • ${review.trek}`,
-  rating: Math.max(1, Math.min(5, Math.round(review.rating || 5))),
-  text: review.text,
-  badge: review.date,
-  source: 'admin',
-});
 
 const mapGoogleReview = (review: UiGoogleReview): CombinedReview => ({
   id: review.id,
@@ -214,9 +203,8 @@ export function AboutPageClient() {
   useEffect(() => {
     const loadPageData = async () => {
       setIsLoading(true);
-      const [aboutResult, adminReviews, googleReviews] = await Promise.allSettled([
+      const [aboutResult, googleReviews] = await Promise.allSettled([
         getAdminAbout(),
-        getTestimonials(),
         getGoogleReviews(),
       ]);
 
@@ -228,15 +216,13 @@ export function AboutPageClient() {
         setAboutFetchFailed(true);
       }
 
-      const normalizedAdmin =
-        adminReviews.status === 'fulfilled' ? adminReviews.value.map(mapAdminReview) : [];
       const normalizedGoogle =
         googleReviews.status === 'fulfilled'
           ? googleReviews.value.map(mapGoogleReview).filter((item) => item.text.trim().length > 0)
           : [];
 
-      setReviewsFetchFailed(adminReviews.status === 'rejected' && googleReviews.status === 'rejected');
-      setReviews([...normalizedGoogle, ...normalizedAdmin].slice(0, 6));
+      setReviewsFetchFailed(googleReviews.status === 'rejected');
+      setReviews(normalizedGoogle.slice(0, 6));
       setIsLoading(false);
     };
 
@@ -520,8 +506,8 @@ export function AboutPageClient() {
                               <p className="text-sm font-semibold text-foreground">{review.name}</p>
                               <p className="text-xs text-muted-foreground">{review.subtitle}</p>
                             </div>
-                            <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-full ${review.source === 'google' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' : 'bg-primary/10 text-primary'}`}>
-                              {review.source === 'google' ? <Globe className="w-3 h-3" /> : <UserRound className="w-3 h-3" />}
+                            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                              <Globe className="w-3 h-3" />
                               {review.badge}
                             </span>
                           </div>
@@ -531,7 +517,7 @@ export function AboutPageClient() {
                   ) : (
                     <Card className="border-border p-6 md:col-span-2">
                       <p className="text-sm text-muted-foreground mb-3">
-                        No reviews are available right now. Add testimonials from admin or connect Google reviews to display them here.
+                        No reviews are available right now. Connect Google reviews to display them here.
                       </p>
                       <Button asChild size="sm" variant="outline">
                         <Link href={whatsappLink} target="_blank" rel="noopener noreferrer">

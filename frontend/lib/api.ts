@@ -1,4 +1,4 @@
-import { blogPosts as fallbackBlogPosts, testimonials as fallbackTestimonials, treks as fallbackTreks } from '@/lib/data'
+import { blogPosts as fallbackBlogPosts, treks as fallbackTreks } from '@/lib/data'
 import type { Trek } from '@/lib/data'
 export interface UiBlogPost {
   id: string
@@ -12,16 +12,6 @@ export interface UiBlogPost {
   date: string
   readTime: string
   content: string
-}
-export interface UiTestimonial {
-  id: string
-  name: string
-  country: string
-  trek: string
-  rating: number
-  text: string
-  date: string
-  avatar: string
 }
 export interface UiGoogleReview {
   id: string
@@ -315,15 +305,6 @@ export interface PublicActivity {
   date?: string
   image?: string | null
 }
-export interface AdminTestimonial {
-  _id: string
-  name: string
-  country?: string
-  rating: number
-  message: string
-  image?: string | null
-  isApproved: boolean
-}
 export interface AdminAnalyticsMetricSummary {
   totalInquiries: number
   inquiriesChangePct: string
@@ -452,14 +433,6 @@ interface BackendBlogPost {
   coverImage?: string
   author?: string
   hashtags?: string[]
-  createdAt?: string
-}
-interface BackendTestimonial {
-  _id: string
-  name: string
-  country?: string
-  rating: number
-  message: string
   createdAt?: string
 }
 const getApiBaseUrl = () => {
@@ -654,18 +627,6 @@ function mapBlog(post: BackendBlogPost): UiBlogPost {
     content: post.content || '',
   }
 }
-function mapTestimonial(item: BackendTestimonial): UiTestimonial {
-  return {
-    id: item._id,
-    name: item.name,
-    country: item.country || 'Nepal',
-    trek: 'Gele Trekking',
-    rating: item.rating,
-    text: item.message,
-    date: formatDate(item.createdAt),
-    avatar: toAvatar(item.name),
-  }
-}
 export async function getTreks(): Promise<Trek[]> {
   try {
     const data = await fetchJson<BackendTrek[]>('/api/treks')
@@ -689,14 +650,6 @@ export async function getBlogBySlug(slug: string): Promise<UiBlogPost | null> {
   } catch {
     const fallback = fallbackBlogPosts.find((post) => post.slug === slug)
     return fallback || null
-  }
-}
-export async function getTestimonials(): Promise<UiTestimonial[]> {
-  try {
-    const data = await fetchJson<BackendTestimonial[]>('/api/testimonials')
-    return data.map(mapTestimonial)
-  } catch {
-    return fallbackTestimonials
   }
 }
 export async function getGoogleReviews(): Promise<UiGoogleReview[]> {
@@ -979,26 +932,6 @@ export async function updateAdminActivity(token: string, id: string, payload: Pa
 }
 export async function deleteAdminActivity(token: string, id: string): Promise<void> {
   await fetchAdminJson<{ message: string }>(`/api/activities/${id}`, token, {
-    method: 'DELETE',
-  })
-}
-export async function getAdminTestimonials(token: string): Promise<AdminTestimonial[]> {
-  return fetchAdminJson<AdminTestimonial[]>('/api/testimonials/admin', token)
-}
-export async function createAdminTestimonial(token: string, payload: Partial<AdminTestimonial>): Promise<void> {
-  await fetchAdminJson<{ testimonialId: string }>('/api/testimonials', token, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-export async function updateAdminTestimonial(token: string, id: string, payload: Partial<AdminTestimonial>): Promise<AdminTestimonial> {
-  return fetchAdminJson<AdminTestimonial>(`/api/testimonials/admin/${id}`, token, {
-    method: 'PUT',
-    body: JSON.stringify(payload),
-  })
-}
-export async function deleteAdminTestimonial(token: string, id: string): Promise<void> {
-  await fetchAdminJson<{ message: string }>(`/api/testimonials/admin/${id}`, token, {
     method: 'DELETE',
   })
 }

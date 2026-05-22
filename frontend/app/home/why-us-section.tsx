@@ -3,34 +3,40 @@ import { Shield, Users, Leaf, Award, Clock, MapPin } from 'lucide-react'
 const reasons = [
   {
     Icon: Shield,
-    title: 'Safety First',
-    description: 'NMA-certified guides trained in wilderness first aid and altitude sickness management. We carry emergency oxygen on every high-altitude trek.',
+    title: 'Safety Comes First',
+    description:
+      'Our licensed guides are trained in wilderness first aid and high-altitude safety. We carry emergency oxygen and prioritize your well-being on every trek.',
   },
   {
     Icon: Users,
-    title: 'Expert Local Guides',
-    description: 'Our experienced Sherpa and Nepali guides are born in the mountains — their knowledge, warmth, and passion make all the difference.',
+    title: 'Local Expert Guides',
+    description:
+      'Led by experienced Sherpa and Nepali guides who know the mountains, culture, and trails deeply — making your journey safer and more meaningful.',
   },
   {
     Icon: Leaf,
-    title: 'Responsible Tourism',
-    description: 'We follow Leave No Trace principles, support porter welfare standards, and reinvest in local community development projects.',
+    title: 'Responsible Trekking',
+    description:
+      'We follow responsible tourism practices, support fair porter treatment, and work closely with local communities across the Himalayas.',
   },
   {
     Icon: Award,
-    title: 'Licensed & Trusted',
-    description: 'Registered with the Nepal Tourism Board, TAAN member, and fully insured. Over 500+ five-star reviews from trekkers worldwide.',
+    title: 'Licensed & Reliable',
+    description:
+      'Officially registered with the Nepal Tourism Board and affiliated with TAAN, offering professional and dependable trekking experiences.',
   },
   {
     Icon: Clock,
-    title: 'Flexible Itineraries',
-    description: 'Every trek can be customized to your schedule, fitness level, and interests. Private departures available on any date.',
+    title: 'Flexible Adventures',
+    description:
+      'Choose from private or group treks with itineraries that can be adjusted to your pace, schedule, and experience level.',
   },
   {
     Icon: MapPin,
-    title: 'All-Inclusive Service',
-    description: 'From airport pickup to permits, accommodation, and guides — we handle every detail so you can focus on the mountains.',
-  },
+    title: 'Hassle-Free Experience',
+    description:                                                                      
+      'From permits and transport to accommodation and guides, we take care of the logistics so you can enjoy the journey.',
+  },                                                                    
 ]
 
 export function WhyUsSection() {

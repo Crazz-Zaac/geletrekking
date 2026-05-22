@@ -13,7 +13,6 @@ import {
   LayoutDashboard,
   LogOut,
   Mail,
-  MessageSquare,
   Mountain,
   Newspaper,
   Image as ImageIcon,
@@ -56,7 +55,6 @@ const navItems: NavItem[] = [
   { label: 'Trip Plan', href: '/admin/trip-plan', icon: BookOpen, available: true },
   
   // Community & Feedback
-  { label: 'Testimonials', href: '/admin/testimonials', icon: MessageSquare, available: true },
   { label: 'Messages', href: '/admin/messages', icon: Mail, available: true },
   
   // Settings
