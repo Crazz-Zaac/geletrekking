@@ -104,6 +104,18 @@ const trekPackageSchema = new mongoose.Schema(
     // the highest point reached during the trek in meters
     max_altitude_meters: { type: Number },
 
+    // total distance covered in kilometers
+    trip_length_km: { type: Number },
+
+    // number of acclimatization/rest days recommended
+    acclimatization_days: { type: Number },
+
+    // typical hours of activity per day, e.g. "5-7 hrs"
+    daily_activity_hours: { type: String },
+
+    // WiFi availability notes, e.g. "Available" or "Limited"
+    wifi_availability: { type: String },
+
     // whether this is a private tour, group tour, or something else
     tour_type: { type: String },
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -18,18 +18,32 @@ import {
   ChevronDown,
   ChevronLeft,
   CircleDollarSign,
+  CheckCircle2,
+  ClipboardList,
   CloudSun,
   Compass,
+  Droplet,
+  Eye,
+  FileText,
+  HelpCircle,
+  Image as ImageIcon,
+  Info,
   MapPin,
   Mountain,
   Download,
-  FileText,
+  Route,
   Sparkles,
+  Star,
+  Sun,
+  Thermometer,
   Timer,
   ArrowRight,
   ShieldCheck,
   TrendingUp,
+  X,
+  Activity,
   Users,
+  Wifi,
   Wind,
 } from 'lucide-react';
 
@@ -57,6 +71,29 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
+type SectionHeaderProps = {
+  index: string
+  title: string
+  icon: typeof Sparkles
+}
+
+function SectionHeader({ index, title, icon: Icon }: SectionHeaderProps) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
+        <div className="h-12 w-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-700">
+          <Icon className="h-6 w-6" />
+        </div>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">Section {index}</p>
+          <h2 className="text-3xl font-bold text-foreground">{title}</h2>
+        </div>
+      </div>
+      <div className="h-px bg-border" />
+    </div>
+  )
+}
+
 export default function TrekDetailClient({
   trek,
 }: TrekDetailClientProps) {
@@ -66,16 +103,55 @@ export default function TrekDetailClient({
   const fallbackFaqs = getTrekFAQBySlug(trek.slug)?.faqs || []
   const trekFaqs = trek.faqs && trek.faqs.length > 0 ? trek.faqs : fallbackFaqs
 
-  const keyTrekInformation = [
-    { label: 'Duration', value: `${trek.duration} days`, icon: CalendarRange },
-    { label: 'Difficulty', value: trek.difficulty, icon: ShieldCheck },
-    { label: 'Max Altitude', value: `${trek.maxAltitude}m`, icon: Mountain },
-    { label: 'Best Season', value: trek.bestSeason, icon: CalendarRange },
-    { label: 'Altitude Level', value: getAltitudeLabel(trek.maxAltitude), icon: Mountain },
-    { label: 'Transportation', value: trek.transportation, icon: Bus },
-    { label: 'Tour Type', value: trek.tourType, icon: Compass },
-    { label: 'Group Size', value: trek.groupSize, icon: Users },
-  ];
+  const formatMetric = (value?: number, unit?: string) =>
+    typeof value === 'number' && value > 0
+      ? `${value.toLocaleString()}${unit ? ` ${unit}` : ''}`
+      : 'On request'
+
+  const primaryKpis = [
+    { label: 'Duration', value: formatMetric(trek.duration, 'days'), icon: CalendarRange },
+    { label: 'Max Altitude', value: formatMetric(trek.maxAltitude, 'm'), icon: Mountain },
+    { label: 'Trip Length', value: formatMetric(trek.tripLengthKm, 'km'), icon: Route },
+  ]
+
+  const secondaryKpis = [
+    { label: 'Difficulty', value: trek.difficulty || 'Moderate', icon: ShieldCheck },
+    { label: 'Best months', value: trek.bestSeason || 'All year', icon: Sun },
+    {
+      label: 'Acclimatization',
+      value:
+        typeof trek.acclimatizationDays === 'number' && trek.acclimatizationDays > 0
+          ? `${trek.acclimatizationDays} rest day${trek.acclimatizationDays > 1 ? 's' : ''}`
+          : 'On request',
+      icon: BedDouble,
+    },
+    { label: 'Per day activity', value: trek.dailyActivityHours || 'On request', icon: Activity },
+    { label: 'WiFi', value: trek.wifiAvailability || 'Available', icon: Wifi },
+  ]
+
+  const tertiaryKpis = [
+    { label: 'Transport', value: trek.transportation || 'On request', icon: Bus },
+    { label: 'Group size', value: trek.groupSize || 'Flexible', icon: Users },
+    { label: 'Tour type', value: trek.tourType || 'Group / Private', icon: Compass },
+    { label: 'Altitude level', value: getAltitudeLabel(trek.maxAltitude), icon: TrendingUp },
+  ]
+
+  const navItems = useMemo(
+    () => [
+      { id: 'trek-overview', label: 'Overview' },
+      { id: 'trek-highlights', label: 'Highlights' },
+      { id: 'trek-itinerary', label: 'Itinerary' },
+      { id: 'trek-includes', label: 'Included' },
+      { id: 'trek-excludes', label: 'Excluded' },
+      { id: 'trek-map', label: 'Map' },
+      { id: 'trek-gallery', label: 'Gallery' },
+      { id: 'trek-faq', label: 'FAQ' },
+      { id: 'booking-inquiry-section', label: 'Inquiry Form' },
+    ],
+    []
+  )
+
+  const [activeSection, setActiveSection] = useState<string>('trek-overview')
 
   const scrollToBooking = () => {
     const node = document.getElementById('booking-inquiry-section')
@@ -88,6 +164,35 @@ export default function TrekDetailClient({
     if (!node) return
     node.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
+
+  useEffect(() => {
+    const getSectionTop = (id: string) => document.getElementById(id)?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY
+
+    const updateActiveSection = () => {
+      const offset = 140
+      let current = navItems[0]?.id
+
+      navItems.forEach((item) => {
+        const top = getSectionTop(item.id)
+        if (top - offset <= 0) {
+          current = item.id
+        }
+      })
+
+      if (current && current !== activeSection) {
+        setActiveSection(current)
+      }
+    }
+
+    updateActiveSection()
+    window.addEventListener('scroll', updateActiveSection, { passive: true })
+    window.addEventListener('resize', updateActiveSection)
+
+    return () => {
+      window.removeEventListener('scroll', updateActiveSection)
+      window.removeEventListener('resize', updateActiveSection)
+    }
+  }, [navItems, activeSection])
 
   const handleDownloadItinerary = async () => {
     if (downloadingItinerary) return
@@ -212,27 +317,72 @@ export default function TrekDetailClient({
         </div>
       </section>
 
+      <section className="sticky top-16 z-40 border-b border-border bg-background/95 backdrop-blur shadow-sm">
+        <div className="container mx-auto px-4 md:px-6 py-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {navItems.map((item) => {
+              const isActive = activeSection === item.id
+              return (
+                <Button
+                  key={item.id}
+                  variant={isActive ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => scrollToSection(item.id)}
+                  className={isActive ? 'bg-primary text-white hover:bg-primary/90' : 'text-muted-foreground'}
+                >
+                  {item.label}
+                </Button>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
       <section className="relative z-10 border-b border-border bg-muted/30">
         <div className="container mx-auto px-4 md:px-6 py-8">
-          <div className="flex flex-wrap gap-2 mb-5">
-            <Button variant="outline" size="sm" onClick={() => scrollToSection('trek-overview')}>Overview</Button>
-            <Button variant="outline" size="sm" onClick={() => scrollToSection('trek-itinerary')}>Itinerary</Button>
-            <Button variant="outline" size="sm" onClick={() => scrollToSection('trek-faq')}>FAQ</Button>
-            <Button variant="outline" size="sm" onClick={scrollToBooking} className="text-primary border-primary/30">Book This Trek</Button>
+          <div className="mb-6">
+            <SectionHeader index="01" title="Key Information" icon={Sparkles} />
           </div>
-          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">Key Trek Information</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-            {keyTrekInformation.map((info) => {
-              const InfoIcon = info.icon;
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {primaryKpis.map((info) => {
+              const InfoIcon = info.icon
+              return (
+                <div key={info.label} className="rounded-2xl bg-emerald-900 px-6 py-5 text-white shadow-sm">
+                  <div className="flex items-center gap-2 text-emerald-100 text-xs font-semibold uppercase tracking-widest">
+                    <InfoIcon className="h-4 w-4" />
+                    {info.label}
+                  </div>
+                  <p className="mt-3 text-3xl font-semibold tracking-tight">{info.value}</p>
+                </div>
+              )
+            })}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-3">
+            {secondaryKpis.map((info) => {
+              const InfoIcon = info.icon
               return (
                 <Card key={info.label} className="p-4 border-border">
-                  <div className="flex items-center gap-2 text-primary mb-2">
+                  <div className="flex items-center gap-2 text-primary mb-1">
                     <InfoIcon className="w-4 h-4" />
                     <p className="text-xs text-muted-foreground font-semibold">{info.label}</p>
                   </div>
                   <p className="font-semibold text-foreground mt-1">{info.value}</p>
                 </Card>
-              );
+              )
+            })}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {tertiaryKpis.map((info) => {
+              const InfoIcon = info.icon
+              return (
+                <Card key={info.label} className="p-4 border-border">
+                  <div className="flex items-center gap-2 text-primary mb-1">
+                    <InfoIcon className="w-4 h-4" />
+                    <p className="text-xs text-muted-foreground font-semibold">{info.label}</p>
+                  </div>
+                  <p className="font-semibold text-foreground mt-1">{info.value}</p>
+                </Card>
+              )
             })}
           </div>
         </div>
@@ -247,27 +397,27 @@ export default function TrekDetailClient({
             className="grid grid-cols-1 lg:grid-cols-3 gap-8"
           >
             <motion.div variants={itemVariants} className="lg:col-span-2 space-y-8">
-              <motion.div id="trek-overview" variants={itemVariants} className="space-y-4 scroll-mt-24">
-                <h2 className="text-3xl font-bold text-foreground">About this trek</h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">{trek.fullDescription}</p>
-              </motion.div>
-
-              <motion.div variants={itemVariants} className="space-y-4">
-                <h2 className="text-3xl font-bold text-foreground">Trek Highlights</h2>
+              <motion.div id="trek-highlights" variants={itemVariants} className="space-y-4 scroll-mt-36">
+                <SectionHeader index="02" title="Trek Highlights" icon={Star} />
                 <ul className="space-y-3">
                   {trek.highlights.map((highlight, idx) => (
                     <li key={idx} className="flex gap-3 text-muted-foreground">
-                      <span className="text-primary font-bold mt-1">✓</span>
+                      <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                        <CheckCircle2 className="h-4 w-4" />
+                      </span>
                       <span>{highlight}</span>
                     </li>
                   ))}
                 </ul>
               </motion.div>
 
-              <motion.div id="trek-itinerary" variants={itemVariants} className="space-y-5 scroll-mt-24">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <h2 className="text-3xl font-bold text-foreground">Itinerary Timeline</h2>
-                </div>
+              <motion.div id="trek-overview" variants={itemVariants} className="space-y-4 scroll-mt-36">
+                <SectionHeader index="03" title="About The Trek" icon={Info} />
+                <p className="text-lg text-muted-foreground leading-relaxed">{trek.fullDescription}</p>
+              </motion.div>
+
+              <motion.div id="trek-itinerary" variants={itemVariants} className="space-y-5 scroll-mt-36">
+                <SectionHeader index="04" title="Itinerary Timeline" icon={Route} />
                 <div className="relative border-l border-border ml-3 space-y-5">
                   {trek.itinerary.map((day) => (
                     <div key={day.day} className="relative pl-8">
@@ -318,33 +468,54 @@ export default function TrekDetailClient({
                 </div>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-border p-6">
-                  <h3 className="text-xl font-bold text-foreground mb-4">Cost Includes</h3>
-                  <ul className="space-y-2 text-muted-foreground">
-                    {trek.includes.map((item) => (
-                      <li key={item} className="flex gap-2">
-                        <span className="text-green-600">✓</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-                <Card className="border-border p-6">
-                  <h3 className="text-xl font-bold text-foreground mb-4">Cost Excludes</h3>
-                  <ul className="space-y-2 text-muted-foreground">
-                    {trek.excludes.map((item) => (
-                      <li key={item} className="flex gap-2">
-                        <span className="text-red-600">✕</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
+              <motion.div variants={itemVariants} className="space-y-4">
+                <SectionHeader index="05" title="What’s Covered & What’s Not" icon={ClipboardList} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card id="trek-includes" className="overflow-hidden border-emerald-200/70 scroll-mt-36">
+                    <div className="flex items-center gap-3 bg-emerald-50 px-5 py-4">
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                        <CheckCircle2 className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-emerald-900">Cost includes</p>
+                      </div>
+                    </div>
+                    <ul className="divide-y divide-border text-sm">
+                      {trek.includes.map((item) => (
+                        <li key={item} className="flex items-center gap-3 px-5 py-3">
+                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                            <CheckCircle2 className="h-4 w-4" />
+                          </span>
+                          <span className="text-foreground">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                  <Card id="trek-excludes" className="overflow-hidden border-rose-200/70 scroll-mt-36">
+                    <div className="flex items-center gap-3 bg-rose-50 px-5 py-4">
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
+                        <X className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-rose-900">Cost excludes</p>
+                      </div>
+                    </div>
+                    <ul className="divide-y divide-border text-sm">
+                      {trek.excludes.map((item) => (
+                        <li key={item} className="flex items-center gap-3 px-5 py-3">
+                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-100 text-rose-700">
+                            <X className="h-4 w-4" />
+                          </span>
+                          <span className="text-foreground">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                </div>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="space-y-4">
-                <h2 className="text-3xl font-bold text-foreground">Map</h2>
+              <motion.div id="trek-map" variants={itemVariants} className="space-y-4 scroll-mt-36">
+                <SectionHeader index="06" title="Map" icon={MapPin} />
                 <Card className="border-border overflow-hidden">
                   <iframe
                     title={`${trek.title} map`}
@@ -359,9 +530,9 @@ export default function TrekDetailClient({
                 </Card>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="space-y-4">
+              <motion.div id="trek-gallery" variants={itemVariants} className="space-y-4 scroll-mt-36">
+                <SectionHeader index="07" title="Gallery" icon={ImageIcon} />
                 <div className="flex items-center justify-between gap-4">
-                  <h2 className="text-3xl font-bold text-foreground">Gallery</h2>
                   <Link
                     href={`/gallery?trek=${trek.slug}`}
                     className="text-sm font-semibold text-primary hover:text-primary/80"
@@ -383,8 +554,8 @@ export default function TrekDetailClient({
                 </div>
               </motion.div>
 
-              <motion.div id="trek-faq" variants={itemVariants} className="space-y-4 scroll-mt-24">
-                <h2 className="text-3xl font-bold text-foreground">FAQ</h2>
+              <motion.div id="trek-faq" variants={itemVariants} className="space-y-4 scroll-mt-36">
+                <SectionHeader index="08" title="FAQ" icon={HelpCircle} />
                 {trekFaqs.length > 0 ? (
                   <FAQAccordion faqs={trekFaqs} />
                 ) : (
@@ -396,8 +567,8 @@ export default function TrekDetailClient({
                 )}
               </motion.div>
 
-              <motion.div id="booking-inquiry-section" variants={itemVariants} className="space-y-4 scroll-mt-24">
-                <h2 className="text-3xl font-bold text-foreground">Booking Inquiry Form</h2>
+              <motion.div id="booking-inquiry-section" variants={itemVariants} className="space-y-4 scroll-mt-36">
+                <SectionHeader index="09" title="Booking Inquiry Form" icon={FileText} />
                 <Card className="border-border p-6 md:p-8">
                   <BookingForm trek={trek} />
                 </Card>
@@ -413,80 +584,111 @@ export default function TrekDetailClient({
               </motion.div>
             </motion.div>
 
-            <motion.aside variants={itemVariants} className="space-y-6 h-fit sticky top-20">
-              <Card className="border-border p-5 md:p-6 bg-gradient-to-br from-primary/5 to-accent/5">
-                <div className="space-y-1.5">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Price of the Trek</p>
-                  {trek.originalPrice && trek.originalPrice > trek.price ? (
-                    <p className="text-xs text-muted-foreground line-through">${trek.originalPrice.toLocaleString()}</p>
-                  ) : null}
-                  <p className="text-3xl md:text-[32px] font-bold text-primary leading-none">${trek.price.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">Per person • Custom private departures available</p>
+            <motion.aside variants={itemVariants} className="space-y-6 h-fit sticky top-20 w-full lg:max-w-sm lg:ml-auto">
+              <Card className="border-border bg-white p-6 transition-all hover:shadow-md">
+                <div className="space-y-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Price of the Trek</p>
+                  <div className="flex flex-col gap-1">
+                    {trek.originalPrice && trek.originalPrice > trek.price ? (
+                      <p className="text-xs text-muted-foreground line-through">${trek.originalPrice.toLocaleString()}</p>
+                    ) : null}
+                    <p className="text-3xl md:text-4xl font-bold text-foreground leading-none">
+                      ${trek.price.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Per person • Custom private departures available</p>
+                  </div>
                   {trek.offerDiscountPercent ? (
-                    <Badge className="bg-emerald-600 text-white text-[11px] px-2 py-0.5">Save {trek.offerDiscountPercent}% today</Badge>
+                    <Badge className="bg-emerald-100 text-emerald-700 text-[11px] px-3 py-1">Save {trek.offerDiscountPercent}% today</Badge>
                   ) : null}
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2"><CalendarRange className="w-4 h-4 text-primary" /> {trek.duration} days</div>
-                  <div className="flex items-center gap-2"><Mountain className="w-4 h-4 text-primary" /> {trek.maxAltitude}m</div>
-                  <div className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> {trek.groupSize}</div>
-                  <div className="flex items-center gap-2"><CircleDollarSign className="w-4 h-4 text-primary" /> Flexible quote</div>
-                </div>
-                <div className="mt-4 space-y-2">
-                  <Button className="w-full" onClick={scrollToBooking}>
-                    Start Booking Inquiry
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                  <Button variant="outline" className="w-full" onClick={handleDownloadItinerary} disabled={downloadingItinerary}>
-                    <Download className="w-4 h-4 mr-2" />
-                    Download PDF Itinerary
-                  </Button>
+
+                <div className="my-5 h-px bg-border" />
+
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-center">
+                  <div className="grid grid-cols-2 gap-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2"><CalendarRange className="w-4 h-4 text-primary" /> {trek.duration} days</div>
+                    <div className="flex items-center gap-2"><Mountain className="w-4 h-4 text-primary" /> {trek.maxAltitude}m</div>
+                    <div className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> {trek.groupSize}</div>
+                    <div className="flex items-center gap-2"><CircleDollarSign className="w-4 h-4 text-primary" /> Flexible quote</div>
+                  </div>
+
+                  <div className="hidden md:block h-12 w-px bg-border" />
+
+                  <div className="space-y-2">
+                    <Button className="w-full" onClick={scrollToBooking}>
+                      <ArrowRight className="w-4 h-4 mr-2" />
+                      Start booking inquiry
+                    </Button>
+                    <Button variant="outline" className="w-full" onClick={handleDownloadItinerary} disabled={downloadingItinerary}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download PDF itinerary
+                    </Button>
+                  </div>
                 </div>
               </Card>
 
-              <Card className="border-sky-300/40 bg-gradient-to-br from-sky-500/10 via-cyan-500/5 to-indigo-500/10 p-6 md:p-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-foreground text-xl">Current Weather</h3>
-                  <CloudSun className="w-5 h-5 text-sky-500" />
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {trek.locationName || trek.region} • Live mountain conditions vary by altitude
-                </p>
-
-                {weather.status === 'loading' && (
-                  <p className="text-sm text-muted-foreground">Loading weather...</p>
-                )}
-
-                {weather.status === 'unavailable' && (
-                  <p className="text-sm text-muted-foreground">Weather data unavailable for this location.</p>
-                )}
-
-                {weather.status === 'ready' && (
-                  <div className="space-y-2 text-sm">
-                    <p className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Condition</span>
-                      <span className="font-medium">{weather.data.condition}</span>
+              <Card className="border-border bg-white p-6 transition-all hover:shadow-md">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{trek.locationName || trek.region}</p>
+                    <p className="text-xs text-muted-foreground">Live conditions vary by altitude</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-foreground">
+                      {weather.status === 'ready' ? weather.data.temp : '—'}
                     </p>
-                    <p className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Temperature</span>
-                      <span className="font-medium">{weather.data.temp}</span>
-                    </p>
-                    <p className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Humidity</span>
-                      <span className="font-medium">{weather.data.humidity}</span>
-                    </p>
-                    <p className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Wind</span>
-                      <span className="font-medium">{weather.data.wind}</span>
+                    <p className="text-xs text-muted-foreground">
+                      {weather.status === 'ready' ? weather.data.condition : '—'}
                     </p>
                   </div>
-                )}
+                </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                  <p className="flex items-center gap-1"><Compass className="w-3.5 h-3.5" /> {trek.region}</p>
-                  <p className="flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5" /> {getAltitudeLabel(trek.maxAltitude)}</p>
-                  <p className="flex items-center gap-1"><Bus className="w-3.5 h-3.5" /> {trek.transportation}</p>
-                  <p className="flex items-center gap-1"><Wind className="w-3.5 h-3.5" /> Seasonal shifts</p>
+                <div className="my-4 h-px bg-border" />
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="flex items-center gap-3">
+                    <Droplet className="h-4 w-4 text-emerald-600" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Humidity</p>
+                      <p className="font-semibold text-foreground">{weather.status === 'ready' ? weather.data.humidity : '—'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Wind className="h-4 w-4 text-emerald-600" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Wind</p>
+                      <p className="font-semibold text-foreground">{weather.status === 'ready' ? weather.data.wind : '—'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Eye className="h-4 w-4 text-emerald-600" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Visibility</p>
+                      <p className="font-semibold text-foreground">—</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Thermometer className="h-4 w-4 text-emerald-600" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Feels like</p>
+                      <p className="font-semibold text-foreground">{weather.status === 'ready' ? weather.data.temp : '—'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-muted-foreground hover:text-foreground transition">
+                    <MapPin className="h-3.5 w-3.5" /> {trek.region}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-muted-foreground hover:text-foreground transition">
+                    <Bus className="h-3.5 w-3.5" /> {trek.transportation || 'On request'}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-muted-foreground hover:text-foreground transition">
+                    <TrendingUp className="h-3.5 w-3.5" /> {getAltitudeLabel(trek.maxAltitude)}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-muted-foreground hover:text-foreground transition">
+                    <Wind className="h-3.5 w-3.5" /> Seasonal shifts
+                  </span>
                 </div>
               </Card>
             </motion.aside>

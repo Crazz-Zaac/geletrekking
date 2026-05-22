@@ -12,6 +12,10 @@ export interface Trek {
   bestSeason: string
   transportation: string
   tourType: string
+  tripLengthKm?: number
+  acclimatizationDays?: number
+  dailyActivityHours?: string
+  wifiAvailability?: string
   shortDescription: string
   fullDescription: string
   image: string

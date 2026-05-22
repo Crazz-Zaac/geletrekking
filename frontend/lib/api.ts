@@ -82,6 +82,10 @@ export interface AdminTrek {
   group_size_min?: number
   group_size_max?: number
   max_altitude_meters?: number
+  trip_length_km?: number
+  acclimatization_days?: number
+  daily_activity_hours?: string
+  wifi_availability?: string
   tour_type?: string
   transportation?: string
   itinerary_pdf_url?: string
@@ -400,6 +404,10 @@ interface BackendTrek {
   group_size_min?: number
   group_size_max?: number
   max_altitude_meters?: number
+  trip_length_km?: number
+  acclimatization_days?: number
+  daily_activity_hours?: string
+  wifi_availability?: string
   trek_map_embed_url?: string
   has_offer?: boolean
   offer_type?: string
@@ -574,6 +582,10 @@ function mapTrek(trek: BackendTrek): Trek {
     duration: trek.duration_days || 0,
     difficulty: normalizeDifficultyFull(trek.difficulty),
     maxAltitude: trek.max_altitude_meters || 0,
+    tripLengthKm: trek.trip_length_km,
+    acclimatizationDays: trek.acclimatization_days,
+    dailyActivityHours: trek.daily_activity_hours,
+    wifiAvailability: trek.wifi_availability,
     price: currentPrice,
     groupSize,
     bestSeason: trek.best_season || 'All year',

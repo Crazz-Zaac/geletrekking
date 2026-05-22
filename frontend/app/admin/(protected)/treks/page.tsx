@@ -43,6 +43,10 @@ type TrekForm = {
   duration_days: number
   difficulty: 'Easy' | 'Moderate' | 'Hard'
   max_altitude_meters: number
+  trip_length_km: number
+  acclimatization_days: number
+  daily_activity_hours: string
+  wifi_availability: string
   group_size_min: number
   group_size_max: number
   tour_type: string
@@ -98,6 +102,10 @@ const initialForm: TrekForm = {
   duration_days: 10,
   difficulty: 'Moderate',
   max_altitude_meters: 0,
+  trip_length_km: 0,
+  acclimatization_days: 0,
+  daily_activity_hours: '',
+  wifi_availability: '',
   group_size_min: 1,
   group_size_max: 15,
   tour_type: '',
@@ -144,6 +152,10 @@ function formToPayload(form: TrekForm): Partial<AdminTrek> {
     duration_days: form.duration_days,
     difficulty: form.difficulty,
     max_altitude_meters: form.max_altitude_meters || undefined,
+    trip_length_km: form.trip_length_km || undefined,
+    acclimatization_days: form.acclimatization_days || undefined,
+    daily_activity_hours: form.daily_activity_hours.trim() || undefined,
+    wifi_availability: form.wifi_availability.trim() || undefined,
     group_size_min: form.group_size_min,
     group_size_max: form.group_size_max,
     tour_type: form.tour_type.trim() || undefined,
@@ -197,6 +209,10 @@ function trekToForm(item: AdminTrek): TrekForm {
     duration_days: item.duration_days || 10,
     difficulty: item.difficulty || 'Moderate',
     max_altitude_meters: item.max_altitude_meters || 0,
+    trip_length_km: item.trip_length_km || 0,
+    acclimatization_days: item.acclimatization_days || 0,
+    daily_activity_hours: item.daily_activity_hours || '',
+    wifi_availability: item.wifi_availability || '',
     group_size_min: item.group_size_min || 1,
     group_size_max: item.group_size_max || 15,
     tour_type: item.tour_type || '',
@@ -570,9 +586,9 @@ export default function AdminTreksPage() {
                       onChange={(e) => setForm((p) => ({ ...p, region: e.target.value }))}
                     />
                   ))}
-                  {field('Best season', (
+                  {field('Best months', (
                     <Input
-                      placeholder="e.g. Oct–Nov, Mar–May"
+                      placeholder="e.g. Mar–Apr, Oct–Nov"
                       value={form.best_season}
                       onChange={(e) => setForm((p) => ({ ...p, best_season: e.target.value }))}
                     />
@@ -605,6 +621,96 @@ export default function AdminTreksPage() {
                     Featured on homepage
                   </label>
                 </div>
+
+                <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Key Information</h3>
+                    <p className="text-xs text-muted-foreground">These fields power the trek detail KPIs.</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {field('Duration (days)', (
+                      <Input
+                        type="number"
+                        value={form.duration_days}
+                        onChange={(e) => setForm((p) => ({ ...p, duration_days: Number(e.target.value) || 0 }))}
+                      />
+                    ))}
+                    {field('Max altitude (meters)', (
+                      <Input
+                        type="number"
+                        value={form.max_altitude_meters}
+                        onChange={(e) => setForm((p) => ({ ...p, max_altitude_meters: Number(e.target.value) || 0 }))}
+                      />
+                    ))}
+                    {field('Trip length (km)', (
+                      <Input
+                        type="number"
+                        value={form.trip_length_km}
+                        onChange={(e) => setForm((p) => ({ ...p, trip_length_km: Number(e.target.value) || 0 }))}
+                      />
+                    ))}
+                    {field('Difficulty', (
+                      <select
+                        value={form.difficulty}
+                        onChange={(e) => setForm((p) => ({ ...p, difficulty: e.target.value as TrekForm['difficulty'] }))}
+                        className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                      >
+                        <option value="Easy">Easy</option>
+                        <option value="Moderate">Moderate</option>
+                        <option value="Hard">Hard</option>
+                      </select>
+                    ))}
+                    {field('Acclimatization days', (
+                      <Input
+                        type="number"
+                        value={form.acclimatization_days}
+                        onChange={(e) => setForm((p) => ({ ...p, acclimatization_days: Number(e.target.value) || 0 }))}
+                      />
+                    ))}
+                    {field('Daily activity hours', (
+                      <Input
+                        placeholder="e.g. 5-7 hrs"
+                        value={form.daily_activity_hours}
+                        onChange={(e) => setForm((p) => ({ ...p, daily_activity_hours: e.target.value }))}
+                      />
+                    ))}
+                    {field('WiFi availability', (
+                      <Input
+                        placeholder="e.g. Available, Limited"
+                        value={form.wifi_availability}
+                        onChange={(e) => setForm((p) => ({ ...p, wifi_availability: e.target.value }))}
+                      />
+                    ))}
+                    {field('Min group size', (
+                      <Input
+                        type="number"
+                        value={form.group_size_min}
+                        onChange={(e) => setForm((p) => ({ ...p, group_size_min: Number(e.target.value) || 1 }))}
+                      />
+                    ))}
+                    {field('Max group size', (
+                      <Input
+                        type="number"
+                        value={form.group_size_max}
+                        onChange={(e) => setForm((p) => ({ ...p, group_size_max: Number(e.target.value) || 15 }))}
+                      />
+                    ))}
+                    {field('Tour type', (
+                      <Input
+                        placeholder="e.g. Private, Group, Small Group"
+                        value={form.tour_type}
+                        onChange={(e) => setForm((p) => ({ ...p, tour_type: e.target.value }))}
+                      />
+                    ))}
+                    {field('Transportation', (
+                      <Input
+                        placeholder="e.g. Fly Kathmandu–Lukla"
+                        value={form.transportation}
+                        onChange={(e) => setForm((p) => ({ ...p, transportation: e.target.value }))}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -612,45 +718,6 @@ export default function AdminTreksPage() {
             {activeTab === 'details' && (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {field('Duration (days)', (
-                    <Input
-                      type="number"
-                      value={form.duration_days}
-                      onChange={(e) => setForm((p) => ({ ...p, duration_days: Number(e.target.value) || 0 }))}
-                    />
-                  ))}
-                  {field('Max altitude (meters)', (
-                    <Input
-                      type="number"
-                      value={form.max_altitude_meters}
-                      onChange={(e) => setForm((p) => ({ ...p, max_altitude_meters: Number(e.target.value) || 0 }))}
-                    />
-                  ))}
-                  {field('Difficulty', (
-                    <select
-                      value={form.difficulty}
-                      onChange={(e) => setForm((p) => ({ ...p, difficulty: e.target.value as TrekForm['difficulty'] }))}
-                      className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                    >
-                      <option value="Easy">Easy</option>
-                      <option value="Moderate">Moderate</option>
-                      <option value="Hard">Hard</option>
-                    </select>
-                  ))}
-                  {field('Min group size', (
-                    <Input
-                      type="number"
-                      value={form.group_size_min}
-                      onChange={(e) => setForm((p) => ({ ...p, group_size_min: Number(e.target.value) || 1 }))}
-                    />
-                  ))}
-                  {field('Max group size', (
-                    <Input
-                      type="number"
-                      value={form.group_size_max}
-                      onChange={(e) => setForm((p) => ({ ...p, group_size_max: Number(e.target.value) || 15 }))}
-                    />
-                  ))}
                   {field('Price USD', (
                     <Input
                       type="number"
@@ -663,20 +730,6 @@ export default function AdminTreksPage() {
                       type="number"
                       value={form.price_gbp}
                       onChange={(e) => setForm((p) => ({ ...p, price_gbp: Number(e.target.value) || 0 }))}
-                    />
-                  ))}
-                  {field('Tour type', (
-                    <Input
-                      placeholder="e.g. Private, Group, Small Group"
-                      value={form.tour_type}
-                      onChange={(e) => setForm((p) => ({ ...p, tour_type: e.target.value }))}
-                    />
-                  ))}
-                  {field('Transportation', (
-                    <Input
-                      placeholder="e.g. Fly Kathmandu–Lukla"
-                      value={form.transportation}
-                      onChange={(e) => setForm((p) => ({ ...p, transportation: e.target.value }))}
                     />
                   ))}
                   {field('Start point', (
@@ -725,7 +778,19 @@ export default function AdminTreksPage() {
                   ))}
                 </div>
 
-                {field('Highlights — one per line', textarea('e.g. Stand at Everest Base Camp', form.highlights, (v) => setForm((p) => ({ ...p, highlights: v })), 4))}
+                <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Highlights</h3>
+                    <p className="text-xs text-muted-foreground">Add one highlight per line. These appear as trek bullet points.</p>
+                  </div>
+                  <textarea
+                    placeholder="Stand at Everest Base Camp\nSunrise views from Kala Patthar\nVisit Tengboche Monastery"
+                    value={form.highlights}
+                    onChange={(e) => setForm((p) => ({ ...p, highlights: e.target.value }))}
+                    rows={6}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed"
+                  />
+                </div>
               </div>
             )}
 
