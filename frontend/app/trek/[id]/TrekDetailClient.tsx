@@ -79,14 +79,14 @@ type SectionHeaderProps = {
 
 function SectionHeader({ index, title, icon: Icon }: SectionHeaderProps) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <div className="h-12 w-12 rounded-2xl flex items-center justify-center bg-[#E6F1F5] text-[#004D67]">
-          <Icon className="h-6 w-6" />
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-[#E6F1F5] text-[#004D67]">
+          <Icon className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#004D67]">Section {index}</p>
-          <h2 className="text-3xl font-bold text-foreground">{title}</h2>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#004D67]">Section {index}</p>
+          <h2 className="text-2xl md:text-[28px] font-bold text-foreground leading-tight">{title}</h2>
         </div>
       </div>
       <div className="h-px bg-border" />
@@ -269,7 +269,7 @@ export default function TrekDetailClient({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
-        className="relative z-0 h-[42vh] min-h-[300px] max-h-[460px] overflow-hidden"
+        className="relative z-0 h-[34vh] min-h-[240px] max-h-[380px] overflow-hidden"
       >
         <Image
           src={trek.image}
@@ -280,7 +280,7 @@ export default function TrekDetailClient({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-white">
+        <div className="absolute bottom-0 left-0 right-0 p-5 md:p-7 text-white">
           <motion.div
             initial="hidden"
             animate="visible"
@@ -291,7 +291,7 @@ export default function TrekDetailClient({
               <Badge className="bg-primary text-white">{trek.region}</Badge>
               <Badge variant="outline" className="text-white border-white">{trek.difficulty}</Badge>
             </motion.div>
-            <motion.h1 variants={itemVariants} className="text-3xl md:text-5xl font-bold text-balance max-w-4xl leading-tight">
+            <motion.h1 variants={itemVariants} className="text-2xl md:text-4xl font-bold text-balance max-w-4xl leading-tight">
               {trek.title}
             </motion.h1>
           </motion.div>
@@ -340,47 +340,47 @@ export default function TrekDetailClient({
 
       <section className="relative z-10 border-b border-border bg-muted/30">
         <div className="container mx-auto px-4 md:px-6 py-8">
-          <div className="mb-6">
+          <div className="mb-5">
             <SectionHeader index="01" title="Key Information" icon={Sparkles} />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
             {primaryKpis.map((info) => {
               const InfoIcon = info.icon
               return (
-                <div key={info.label} className="rounded-2xl bg-[#004D67] px-6 py-5 text-white shadow-sm">
-                  <div className="flex items-center gap-2 text-white/80 text-xs font-semibold uppercase tracking-widest">
-                    <InfoIcon className="h-4 w-4" />
+                <div key={info.label} className="rounded-lg bg-[#004D67] px-4 py-3 text-white shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-2 text-white/75 text-[10px] font-semibold uppercase tracking-wider">
+                    <InfoIcon className="h-3.5 w-3.5" />
                     {info.label}
                   </div>
-                  <p className="mt-3 text-3xl font-semibold tracking-tight">{info.value}</p>
+                  <p className="mt-2 text-lg md:text-xl font-semibold tracking-tight">{info.value}</p>
                 </div>
               )
             })}
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
             {secondaryKpis.map((info) => {
               const InfoIcon = info.icon
               return (
-                <Card key={info.label} className="p-4 border-border">
-                  <div className="flex items-center gap-2 text-[#004D67] mb-1">
-                    <InfoIcon className="w-4 h-4" />
-                    <p className="text-xs text-muted-foreground font-semibold">{info.label}</p>
+                <Card key={info.label} className="p-3 border-border hover:border-primary/30 transition-colors">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <InfoIcon className="w-3.5 h-3.5 text-[#004D67]" />
+                    <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">{info.label}</p>
                   </div>
-                  <p className="font-semibold text-foreground mt-1">{info.value}</p>
+                  <p className="text-sm font-semibold text-foreground leading-tight">{info.value}</p>
                 </Card>
               )
             })}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mt-2.5">
             {tertiaryKpis.map((info) => {
               const InfoIcon = info.icon
               return (
-                <Card key={info.label} className="p-4 border-border">
-                  <div className="flex items-center gap-2 text-[#004D67] mb-1">
-                    <InfoIcon className="w-4 h-4" />
-                    <p className="text-xs text-muted-foreground font-semibold">{info.label}</p>
+                <Card key={info.label} className="p-3 border-border hover:border-primary/30 transition-colors">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <InfoIcon className="w-3.5 h-3.5 text-[#004D67]" />
+                    <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">{info.label}</p>
                   </div>
-                  <p className="font-semibold text-foreground mt-1">{info.value}</p>
+                  <p className="text-sm font-semibold text-foreground leading-tight">{info.value}</p>
                 </Card>
               )
             })}
@@ -413,7 +413,7 @@ export default function TrekDetailClient({
 
               <motion.div id="trek-overview" variants={itemVariants} className="space-y-4 scroll-mt-36">
                 <SectionHeader index="03" title="About The Trek" icon={Info} />
-                <p className="text-lg text-muted-foreground leading-relaxed">{trek.fullDescription}</p>
+                <p className="text-base md:text-[17px] text-muted-foreground leading-relaxed">{trek.fullDescription}</p>
               </motion.div>
 
               <motion.div id="trek-itinerary" variants={itemVariants} className="space-y-5 scroll-mt-36">
@@ -422,12 +422,12 @@ export default function TrekDetailClient({
                   {trek.itinerary.map((day) => (
                     <div key={day.day} className="relative pl-8">
                       <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-primary" />
-                      <div className="rounded-xl border border-border bg-card p-5 md:p-6">
+                      <div className="rounded-xl border border-border bg-card p-4 md:p-5">
                         <div className="flex items-start justify-between gap-4">
                           <div>
                             <div className="flex flex-wrap items-center gap-3 mb-2">
                               <Badge className="bg-primary text-white">Day {day.day}</Badge>
-                              <h3 className="font-bold text-foreground text-lg">{day.title}</h3>
+                              <h3 className="font-bold text-foreground text-base md:text-lg">{day.title}</h3>
                             </div>
                           </div>
                           <button
@@ -585,14 +585,14 @@ export default function TrekDetailClient({
             </motion.div>
 
             <motion.aside variants={itemVariants} className="space-y-6 h-fit sticky top-20 w-full lg:max-w-sm lg:ml-auto">
-              <Card className="border-border bg-white p-6 transition-all hover:shadow-md">
+              <Card className="border-border bg-white p-5 md:p-6 transition-all hover:shadow-md">
                 <div className="space-y-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Price of the Trek</p>
                   <div className="flex flex-col gap-1">
                     {trek.originalPrice && trek.originalPrice > trek.price ? (
                       <p className="text-xs text-muted-foreground line-through">${trek.originalPrice.toLocaleString()}</p>
                     ) : null}
-                    <p className="text-3xl md:text-4xl font-bold text-foreground leading-none">
+                    <p className="text-2xl md:text-[34px] font-bold text-foreground leading-none">
                       ${trek.price.toLocaleString()}
                     </p>
                     <p className="text-xs text-muted-foreground">Per person • Custom private departures available</p>

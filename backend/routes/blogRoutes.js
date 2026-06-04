@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
-const restrictToRoles = require("../middleware/roleMiddleware");
+const { restrictToRoles } = require("../middleware/roleMiddleware");
+const { auditContent } = require("../middleware/auditMiddleware");
 const {
   getAllBlogs,
   getBlogBySlug,
@@ -45,6 +46,7 @@ router.post(
   "/",
   authMiddleware,
   restrictToRoles("admin", "superadmin"),
+  auditContent('blog', (req) => ({ targetLabel: req.body?.title })),
   createBlog
 );
 
@@ -53,6 +55,7 @@ router.put(
   "/:id",
   authMiddleware,
   restrictToRoles("admin", "superadmin"),
+  auditContent('blog', (req) => ({ targetId: req.params.id })),
   updateBlog
 );
 
@@ -61,6 +64,7 @@ router.delete(
   "/:id",
   authMiddleware,
   restrictToRoles("superadmin"),
+  auditContent('blog', (req) => ({ targetId: req.params.id })),
   deleteBlog
 );
 

@@ -21,6 +21,8 @@ import {
   HelpCircle,
   Building2, 
   ShieldCheck,
+  Users,
+  BarChart3,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -37,6 +39,7 @@ type NavItem = {
   href?: string
   icon: React.ComponentType<{ className?: string }>
   available: boolean
+  roles?: Array<'editor' | 'superadmin'>
 }
 const navItems: NavItem[] = [
   // Primary Navigation
@@ -59,8 +62,12 @@ const navItems: NavItem[] = [
   
   // Settings
   { label: 'Company', href: '/admin/company', icon: Building2, available: true },
-  { label: 'Account Security', href: '/admin/account-security', icon: ShieldCheck, available: true },
-  { label: 'Site Settings', href: '/admin/settings', icon: Settings, available: true },
+  { label: 'Account Security', href: '/admin/account-security', icon: ShieldCheck, available: true, roles: ['editor', 'superadmin'] },
+  { label: 'Site Settings', href: '/admin/settings', icon: Settings, available: true, roles: ['superadmin'] },
+  
+  // Admin & Security
+  { label: 'Users', href: '/admin/users', icon: Users, available: true, roles: ['superadmin'] },
+  { label: 'Audit Logs', href: '/admin/audit-logs', icon: BarChart3, available: true, roles: ['superadmin'] },
 ]
 
 export default function ProtectedAdminLayout({ children }: ProtectedAdminLayoutProps) {
@@ -126,7 +133,7 @@ export default function ProtectedAdminLayout({ children }: ProtectedAdminLayoutP
             </div>
 
             <nav className="space-y-1 flex-1">
-              {navItems.map((item) => {
+              {navItems.filter((item) => !item.roles || item.roles.includes((user?.role || localUser?.role) as AdminUser['role'])).map((item) => {
                 const Icon = item.icon
                 const active = !!item.href && pathname === item.href
 

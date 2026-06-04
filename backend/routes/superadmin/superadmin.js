@@ -1,18 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../../middleware/authMiddleware');
-const roleMiddleware = require('../../middleware/roleMiddleware');
+const { restrictToRoles } = require('../../middleware/roleMiddleware');
 const Admin = require('../../models/user');
 const bcrypt = require('bcrypt');
 const speakeasy = require('speakeasy');
 
 // GET route — test if superadmin can access the admin creation form
-router.get('/addadmin', authMiddleware, roleMiddleware('superadmin'), (req, res) => {
+router.get('/addadmin', authMiddleware, restrictToRoles('superadmin'), (req, res) => {
   res.json({ message: "Superadmin can access registration form" });
 });
 
 // POST — Create new admin (superadmin only)
-router.post('/addadmin', authMiddleware, roleMiddleware('superadmin'), async (req, res) => {
+router.post('/addadmin', authMiddleware, restrictToRoles('superadmin'), async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -58,7 +58,7 @@ router.post('/addadmin', authMiddleware, roleMiddleware('superadmin'), async (re
 });
 
 // DELETE /deleteadmin/:email — delete admin by email, prevent deleting self
-router.delete('/deleteadmin/:email', authMiddleware, roleMiddleware('superadmin'), async (req, res) => {
+router.delete('/deleteadmin/:email', authMiddleware, restrictToRoles('superadmin'), async (req, res) => {
   try {
     const email = req.params.email;
 

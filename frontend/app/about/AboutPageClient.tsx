@@ -476,58 +476,7 @@ export function AboutPageClient() {
                 )}
               </motion.div>
 
-              <motion.div variants={itemVariants} className="space-y-4">
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground">Our Traveller&apos;s Reviews</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {reviews.length > 0 ? (
-                    reviews.map((review) => {
-                      const isExpanded = expandedReviews[review.id] || review.text.length <= 180;
-                      const previewText = isExpanded ? review.text : `${review.text.slice(0, 180).trim()}...`;
 
-                      return (
-                        <Card key={review.id} className="relative border-border p-5 bg-gradient-to-br from-background to-muted/30">
-                          <Quote className="absolute right-4 top-4 w-4 h-4 text-primary/35" />
-                          <div className="flex items-center gap-1 mb-2" aria-label={`${review.rating} out of 5 stars`}>
-                            {Array.from({ length: review.rating }).map((_, index) => (
-                              <Star key={index} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                            ))}
-                          </div>
-                          <p className="text-sm text-muted-foreground leading-relaxed mb-2">&ldquo;{previewText}&rdquo;</p>
-                          {review.text.length > 180 && (
-                            <button
-                              onClick={() => toggleReview(review.id)}
-                              className="text-xs font-medium text-primary hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-sm"
-                            >
-                              {isExpanded ? 'Show less' : 'Read more'}
-                            </button>
-                          )}
-                          <div className="flex items-center justify-between gap-3 mt-3">
-                            <div>
-                              <p className="text-sm font-semibold text-foreground">{review.name}</p>
-                              <p className="text-xs text-muted-foreground">{review.subtitle}</p>
-                            </div>
-                            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
-                              <Globe className="w-3 h-3" />
-                              {review.badge}
-                            </span>
-                          </div>
-                        </Card>
-                      );
-                    })
-                  ) : (
-                    <Card className="border-border p-6 md:col-span-2">
-                      <p className="text-sm text-muted-foreground mb-3">
-                        No reviews are available right now. Connect Google reviews to display them here.
-                      </p>
-                      <Button asChild size="sm" variant="outline">
-                        <Link href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                          Talk to us on WhatsApp
-                        </Link>
-                      </Button>
-                    </Card>
-                  )}
-                </div>
-              </motion.div>
             </motion.div>
 
             <motion.aside variants={containerVariants} className="lg:col-span-4 space-y-5 h-fit lg:sticky lg:top-24">
@@ -601,19 +550,30 @@ export function AboutPageClient() {
               </p>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="flex flex-wrap items-center justify-center gap-8 md:gap-14">
-              {associationList.map((association) => (
-                <div key={association.name} className="relative h-16 w-28 md:w-32">
-                  <Image
-                    src={association.logoUrl}
-                    alt={`${association.name} affiliation logo`}
-                    fill
-                    className="object-contain"
-                    sizes="128px"
-                    unoptimized
-                  />
-                </div>
-              ))}
+            <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-6">
+              {associationList.map((association) => {
+                const isLargeLogoAssociation = ['Nepal Mountaineering Association', "Trekking Agencies' Association of Nepal"].includes(association.name);
+                
+                return (
+                  <div key={association.name} className="flex h-full flex-col items-center gap-2 px-2 py-2">
+                    <div className="flex h-28 w-full items-center justify-center md:h-32">
+                      <div className={`relative ${isLargeLogoAssociation ? 'h-24 w-36 md:h-28 md:w-40' : 'h-20 w-24 md:h-24 md:w-28'}`}>
+                        <Image
+                          src={association.logoUrl}
+                          alt={`${association.name} affiliation logo`}
+                          fill
+                          className="object-contain"
+                          sizes={isLargeLogoAssociation ? "(max-width: 768px) 144px, 160px" : "(max-width: 768px) 96px, 112px"}
+                          unoptimized
+                        />
+                      </div>
+                    </div>
+                    <div className="flex min-h-[44px] items-start justify-center md:min-h-[48px]">
+                      <p className="text-center text-xs md:text-sm font-semibold text-foreground leading-snug">{association.name}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </motion.div>
 
             <motion.div variants={itemVariants}>

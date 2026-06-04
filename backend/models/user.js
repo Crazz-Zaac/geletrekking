@@ -8,14 +8,29 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ['user', 'admin', 'superadmin'],
-      default: 'user',
+      enum: ['superadmin', 'editor', 'admin'],
+      default: 'editor',
     },
+
+    status: {
+      type: String,
+      enum: ['active', 'suspended', 'disabled'],
+      default: 'active',
+    },
+    suspendedAt: { type: Date, default: null },
+    suspendedReason: { type: String, default: null },
+
+    failedLoginAttempts: { type: Number, default: 0 },
+    lockUntil: { type: Date, default: null },
+    lastLoginAt: { type: Date, default: null },
+    lastLoginIp: { type: String, default: null },
 
     // 🔐 Two-Factor Authentication fields
     twoFactorEnabled: { type: Boolean, default: false },
     twoFactorSecret: { type: String, default: null },
     twoFactorTempSecret: { type: String, default: null },
+    twoFactorSecretEnc: { type: String, default: null },
+    twoFactorTempSecretEnc: { type: String, default: null },
   },
   { timestamps: true }
 );

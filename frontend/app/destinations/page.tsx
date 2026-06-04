@@ -202,7 +202,7 @@ function DestinationsPageContent() {
     .filter((trek): trek is typeof trekList[number] => Boolean(trek));
 
   const renderFilterControls = (isMobile = false) => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2.5">
       <select
         value={selectedRegion}
         onChange={(e) => updateFilters({ region: e.target.value })}
@@ -272,20 +272,20 @@ function DestinationsPageContent() {
         <AnnouncementBanner />
         <main className="min-h-screen bg-background">
         {/* Hero Section */}
-        <section className="py-10 md:py-14 bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border">
+        <section className="py-8 md:py-10 bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border">
           <div className="container mx-auto px-4 md:px-6">
             <motion.div
               initial="hidden"
               animate="visible"
               variants={containerVariants}
-              className="space-y-3 text-center"
+              className="space-y-2 text-center"
             >
-              <motion.h1 variants={itemVariants} className="text-4xl md:text-5xl font-bold text-foreground text-balance">
+              <motion.h1 variants={itemVariants} className="text-3xl md:text-4xl font-bold text-foreground text-balance">
                 Explore Our Treks
               </motion.h1>
               <motion.p
                 variants={itemVariants}
-                className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto"
+                className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto"
               >
                 Choose from our complete collection of incredible trekking adventures across Nepal
               </motion.p>
@@ -293,23 +293,17 @@ function DestinationsPageContent() {
           </div>
         </section>
 
-        <section className="py-6 md:py-8 bg-background">
-          <div className="container mx-auto px-4 md:px-6">
-            <TrustpilotWidget className="rounded-xl border border-border bg-card p-4" />
-          </div>
-        </section>
-
         {/* Filters */}
-        <section className="sticky top-16 z-30 py-4 md:py-5 border-b border-border bg-background/95 backdrop-blur">
+        <section className="sticky top-16 z-30 py-3 md:py-4 border-b border-border bg-background/95 backdrop-blur">
           <div className="container mx-auto px-4 md:px-6">
             <motion.div
               initial="hidden"
               animate="visible"
               variants={containerVariants}
-              className="space-y-4"
+              className="space-y-3"
             >
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-xl md:text-2xl font-semibold text-foreground">Filter Treks</h2>
+                <h2 className="text-lg md:text-xl font-semibold text-foreground">Filter Treks</h2>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -373,9 +367,9 @@ function DestinationsPageContent() {
         </section>
 
         {/* Treks Grid */}
-        <section className="py-10 md:py-14">
+        <section className="py-8 md:py-10">
           <div className="container mx-auto px-4 md:px-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
               <p className="text-base text-muted-foreground">
                 Showing {sortedTreks.length} trek{sortedTreks.length !== 1 ? 's' : ''}
               </p>
@@ -397,9 +391,9 @@ function DestinationsPageContent() {
             </div>
 
             {comparedTreks.length > 0 ? (
-              <div className="mb-6 rounded-xl border border-border bg-card p-4">
-                <div className="flex items-center justify-between gap-3 mb-3">
-                  <div className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
+              <div className="mb-5 rounded-lg border border-border bg-card p-3.5">
+                <div className="flex items-center justify-between gap-3 mb-2.5">
+                  <div className="inline-flex items-center gap-2 text-xs font-semibold text-foreground">
                     <Scale className="h-4 w-4" />
                     Compare Treks ({comparedTreks.length}/3)
                   </div>
@@ -444,16 +438,16 @@ function DestinationsPageContent() {
                 ))}
               </div>
             ) : sortedTreks.length === 0 ? (
-              <div className="space-y-8">
-                <div className="rounded-2xl border border-border bg-card p-8 text-center">
-                  <h3 className="text-xl font-semibold text-foreground mb-2">No treks match your filters</h3>
-                  <p className="text-muted-foreground mb-4">Try removing some filters or explore these recommended treks.</p>
+              <div className="space-y-6">
+                <div className="rounded-lg border border-border bg-card p-6 text-center">
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No treks match your filters</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Try removing some filters or explore these recommended treks.</p>
                   <Button onClick={clearAllFilters}>Clear Filters</Button>
                 </div>
 
                 <div>
-                  <h4 className="text-lg font-semibold text-foreground mb-4">Suggested Treks</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <h4 className="text-base font-semibold text-foreground mb-4">Suggested Treks</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {suggestedTreks.map((trek) => (
                       <TrekCard
                         key={trek.id}
@@ -472,7 +466,7 @@ function DestinationsPageContent() {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
               >
                 {sortedTreks.map((trek) => (
                   <TrekCard

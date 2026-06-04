@@ -3,7 +3,8 @@ const router = express.Router();
 const Alert = require('../models/Alert');
 const { getAlertColorPreset } = require('../utils/alertColorPresets');
 const authMiddleware = require('../middleware/authMiddleware');
-const restrictToRoles = require('../middleware/roleMiddleware');
+const { restrictToRoles } = require('../middleware/roleMiddleware');
+const { auditContent } = require('../middleware/auditMiddleware');
 
 // ✅ GET ALL ACTIVE ALERTS (PUBLIC)
 // GET /api/alerts
@@ -50,7 +51,7 @@ router.get('/admin/all', authMiddleware, restrictToRoles('admin', 'superadmin'),
 
 // ✅ CREATE ALERT (ADMIN)
 // POST /api/alerts
-router.post('/', authMiddleware, restrictToRoles('admin', 'superadmin'), async (req, res) => {
+router.post('/', authMiddleware, restrictToRoles('admin', 'superadmin'), auditContent('alert', (req) => req.body.title), async (req, res) => {
   try {
     const { title, message, icon, type, isActive, priority, ctaUrl, ctaLabel } = req.body;
 
@@ -87,7 +88,7 @@ router.post('/', authMiddleware, restrictToRoles('admin', 'superadmin'), async (
 
 // ✅ UPDATE ALERT (ADMIN)
 // PUT /api/alerts/:id
-router.put('/:id', authMiddleware, restrictToRoles('admin', 'superadmin'), async (req, res) => {
+router.put('/:id', authMiddleware, restrictToRoles('admin', 'superadmin'), auditContent('alert', (req) => req.params.id), async (req, res) => {
   try {
     const { id } = req.params;
     const { title, message, icon, type, isActive, priority, ctaUrl, ctaLabel } = req.body;
@@ -129,7 +130,7 @@ router.put('/:id', authMiddleware, restrictToRoles('admin', 'superadmin'), async
 
 // ✅ DELETE ALERT (ADMIN)
 // DELETE /api/alerts/:id
-router.delete('/:id', authMiddleware, restrictToRoles('admin', 'superadmin'), async (req, res) => {
+router.delete('/:id', authMiddleware, restrictToRoles('admin', 'superadmin'), auditContent('alert', (req) => req.params.id), async (req, res) => {
   try {
     const { id } = req.params;
 

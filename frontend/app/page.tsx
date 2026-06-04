@@ -8,7 +8,6 @@ import { treks, blogPosts } from '@/lib/data'
 import { getBlogs, getTreks } from '@/lib/api'
 import { HeroSection } from './home/hero-section'
 import { WhyUsSection } from './home/why-us-section'
-import { RegionsSection } from './home/regions-section'
 import { BlogHighlights } from './home/blog-highlights'
 import { BookingCTA } from './home/booking-cta'
 import { StatsBar } from './home/stats-bar'
@@ -27,25 +26,6 @@ export default async function HomePage() {
   const featuredTreks = activeTreks.filter((trek) => trek.isFeatured).slice(0, 4).length > 0 
     ? activeTreks.filter((trek) => trek.isFeatured).slice(0, 4)
     : activeTreks.slice(0, 4)
-  const regionMap = activeTreks.reduce((acc, trek) => {
-    const key = trek.region || 'Other'
-    if (!acc.has(key)) {
-      acc.set(key, {
-        id: key.toLowerCase().replace(/\s+/g, '-'),
-        name: `${key} Region`,
-        description: trek.regionDescription || trek.shortDescription,
-        image: trek.image,
-        treksCount: 1,
-      })
-    } else {
-      const entry = acc.get(key)
-      if (entry) {
-        entry.treksCount += 1
-      }
-    }
-    return acc
-  }, new Map<string, { id: string; name: string; description: string; image: string; treksCount: number }>())
-  const regions = Array.from(regionMap.values())
 
   return (
     <>
@@ -125,9 +105,8 @@ export default async function HomePage() {
             <TrustpilotWidget variant="plain" />
           </div>
         </section>
-        <RegionsSection regions={regions} />
         <BlogHighlights posts={activeBlogs} />
-          <BookingCTA />
+        <BookingCTA />
         </main>
       </div>
       <Footer />

@@ -25,7 +25,7 @@ export interface UiGoogleReview {
 }
 export interface AdminUser {
   email: string
-  role: 'admin' | 'superadmin'
+  role: 'editor' | 'superadmin'
 }
 export interface AdminTwoFactorSetupResponse {
   message: string
@@ -35,10 +35,10 @@ export interface AdminTwoFactorSetupResponse {
 }
 interface AdminLoginResponse {
   token?: string
-  role: 'admin' | 'superadmin'
+  role: 'editor' | 'superadmin'
   user?: {
     email: string
-    role: 'admin' | 'superadmin'
+    role: 'editor' | 'superadmin'
   }
   need2FA?: boolean
   message?: string
@@ -238,6 +238,28 @@ export interface AdminAlert {
   priority?: number
   createdAt?: string
   updatedAt?: string
+}
+export interface AdminInvite {
+  _id?: string
+  email: string
+  role: string
+  expiresAt: string
+  usedAt?: string | null
+  createdAt?: string
+}
+export interface AuditLog {
+  _id?: string
+  actor?: string
+  actorEmail?: string
+  action: string
+  targetType?: string
+  targetId?: string
+  targetLabel?: string
+  outcome: 'success' | 'failure'
+  ip?: string
+  userAgent?: string
+  meta?: Record<string, any>
+  createdAt?: string
 }
 export interface AdminActivity {
   _id: string
@@ -738,7 +760,7 @@ export async function getCurrentAdmin(token: string): Promise<AdminUser | null> 
     })
     const role = response.user?.role
     const email = response.user?.email
-    if (!email || (role !== 'admin' && role !== 'superadmin')) {
+    if (!email || (role !== 'editor' && role !== 'superadmin')) {
       return null
     }
     return {
@@ -1109,6 +1131,57 @@ export async function deleteAlert(token: string, id: string): Promise<void> {
   await fetchAdminJson<{ message: string }>(`/api/alerts/${id}`, token, {
     method: 'DELETE',
   })
+}
+
+// ============= ADMIN USER MANAGEMENT =============
+export async function createAdminInvite(token: string, email: string): Promise<AdminInvite> {
+  return fetchAdminJson<AdminInvite>('/api/admin/invites', token, {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+}
+
+export async function listAdminInvites(token: string): Promise<AdminInvite[]> {
+  const response = await fetchAdminJson<{ invites: AdminInvite[] }>('/api/admin/invites', token)
+  return response.invites || []
+}
+
+export async function acceptAdminInvite(token: string, email: string, password: string): Promise<{ message: string; token: string }> {
+  return fetchAdminJson<{ message: string; token: string }>('/api/admin/invites/accept', token, {
+    method: 'POST',
+    body: JSON.stringify({ token, email, password }),
+  })
+}
+
+export async function updateAdminUserStatus(token: string, userId: string, status: 'active' | 'suspended' | 'disabled'): Promise<{ message: string }> {
+  return fetchAdminJson<{ message: string }>(`/api/admin/users/${userId}/status`, token, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  })
+}
+
+export interface AuditLogsResponse {
+  logs: AuditLog[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export async function listAuditLogs(
+  token: string,
+  options: { action?: string; actor?: string; outcome?: string; limit?: number; offset?: number } = {}
+): Promise<AuditLogsResponse> {
+  const params = new URLSearchParams()
+  if (options.action) params.append('action', options.action)
+  if (options.actor) params.append('actor', options.actor)
+  if (options.outcome) params.append('outcome', options.outcome)
+  if (options.limit) params.append('limit', String(options.limit))
+  if (options.offset) params.append('offset', String(options.offset))
+
+  const queryString = params.toString()
+  const url = `/api/admin/audit-logs${queryString ? '?' + queryString : ''}`
+
+  return fetchAdminJson<AuditLogsResponse>(url, token)
 }
 
 export { API_BASE_URL }
