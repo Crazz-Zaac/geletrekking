@@ -6,8 +6,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   createAdminInvite,
+  disableAdminUser,
   listAdminInvites,
+  listAdminUsers,
+  revokeAdminInvite,
   updateAdminUserStatus,
+  type AdminManagedUser,
   type AdminInvite,
 } from '@/lib/api'
 import { getAdminToken, getAdminUser } from '@/lib/admin-auth'
@@ -15,9 +19,11 @@ import { Mail, Copy, Trash2, CheckCircle, Clock, AlertCircle } from 'lucide-reac
 import { cn } from '@/lib/utils'
 
 export default function AdminUsersPage() {
+  const [adminUsers, setAdminUsers] = useState<AdminManagedUser[]>([])
   const [invites, setInvites] = useState<AdminInvite[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [actioningId, setActioningId] = useState<string | null>(null)
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -32,22 +38,29 @@ export default function AdminUsersPage() {
     setUser(u)
 
     if (t && u?.role === 'superadmin') {
-      loadInvites(t)
+      void Promise.all([loadInvites(t), loadAdminUsers(t)]).finally(() => setLoading(false))
     } else {
       setLoading(false)
     }
   }, [])
 
   const loadInvites = async (t: string) => {
-    setLoading(true)
     setError('')
     try {
       const data = await listAdminInvites(t)
       setInvites(data)
     } catch (err: any) {
       setError(err.message || 'Failed to load invites')
-    } finally {
-      setLoading(false)
+    }
+  }
+
+  const loadAdminUsers = async (t: string) => {
+    setError('')
+    try {
+      const data = await listAdminUsers(t)
+      setAdminUsers(data)
+    } catch (err: any) {
+      setError(err.message || 'Failed to load admin users')
     }
   }
 
@@ -68,8 +81,13 @@ export default function AdminUsersPage() {
 
     try {
       const result = await createAdminInvite(token, email.trim())
-      setMessage('Invite created successfully!')
+      setMessage('Invite created successfully! The invitation email has been sent.')
       setEmail('')
+
+      if (result.inviteUrl) {
+        await navigator.clipboard.writeText(result.inviteUrl)
+        setCopied(result._id || result.inviteUrl)
+      }
       
       // Reload invites
       await loadInvites(token)
@@ -84,6 +102,69 @@ export default function AdminUsersPage() {
     navigator.clipboard.writeText(text)
     setCopied(id)
     setTimeout(() => setCopied(null), 2000)
+  }
+
+  const onRevokeInvite = async (inviteId: string) => {
+    if (!token) {
+      setError('Authentication required.')
+      return
+    }
+
+    setActioningId(inviteId)
+    setError('')
+    setMessage('')
+
+    try {
+      const response = await revokeAdminInvite(token, inviteId)
+      setMessage(response.message || 'Invite revoked successfully.')
+      await loadInvites(token)
+    } catch (err: any) {
+      setError(err.message || 'Failed to revoke invite')
+    } finally {
+      setActioningId(null)
+    }
+  }
+
+  const onDisableUser = async (userId: string) => {
+    if (!token) {
+      setError('Authentication required.')
+      return
+    }
+
+    setActioningId(userId)
+    setError('')
+    setMessage('')
+
+    try {
+      const response = await disableAdminUser(token, userId)
+      setMessage(response.message || 'User disabled successfully.')
+      await loadAdminUsers(token)
+    } catch (err: any) {
+      setError(err.message || 'Failed to disable user')
+    } finally {
+      setActioningId(null)
+    }
+  }
+
+  const onUpdateStatus = async (userId: string, status: 'active' | 'suspended' | 'disabled') => {
+    if (!token) {
+      setError('Authentication required.')
+      return
+    }
+
+    setActioningId(userId)
+    setError('')
+    setMessage('')
+
+    try {
+      const response = await updateAdminUserStatus(token, userId, status)
+      setMessage(response.message || 'User status updated.')
+      await loadAdminUsers(token)
+    } catch (err: any) {
+      setError(err.message || 'Failed to update user status')
+    } finally {
+      setActioningId(null)
+    }
   }
 
   const formatDate = (dateStr: string | undefined | null) => {
@@ -167,6 +248,76 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
+      {/* Existing Admin Users */}
+      {loading ? null : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Existing Admin Users</CardTitle>
+            <CardDescription>Manage active, suspended, and disabled admin users.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {adminUsers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No admin users found.</p>
+            ) : (
+              <div className="space-y-2">
+                {adminUsers.map((adminUser) => {
+                  const isSuperadmin = adminUser.role === 'superadmin'
+                  const currentStatus = adminUser.status || 'active'
+                  return (
+                    <div
+                      key={adminUser._id}
+                      className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between rounded-lg border p-4"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{adminUser.email}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Role: {adminUser.role} • Status: {currentStatus} • Created: {formatDate(adminUser.createdAt)}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {!isSuperadmin && currentStatus !== 'active' ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={actioningId === adminUser._id}
+                            onClick={() => onUpdateStatus(adminUser._id, 'active')}
+                          >
+                            Activate
+                          </Button>
+                        ) : null}
+                        {!isSuperadmin && currentStatus === 'active' ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={actioningId === adminUser._id}
+                            onClick={() => onUpdateStatus(adminUser._id, 'suspended')}
+                          >
+                            Suspend
+                          </Button>
+                        ) : null}
+                        {!isSuperadmin && currentStatus !== 'disabled' ? (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={actioningId === adminUser._id}
+                            onClick={() => onDisableUser(adminUser._id)}
+                          >
+                            Disable
+                          </Button>
+                        ) : null}
+                        {isSuperadmin ? (
+                          <span className="text-xs text-muted-foreground">Protected account</span>
+                        ) : null}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Invites List */}
       {loading ? (
         <Card>
@@ -227,20 +378,31 @@ export default function AdminUsersPage() {
                         </p>
                       </div>
                     </div>
-                    {!accepted && !expired && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 shrink-0"
-                        onClick={() => {
-                          const url = `${window.location.origin}/admin/invite?token=${invite._id}`
-                          onCopy(url, invite._id || '')
-                        }}
-                      >
-                        <Copy className="w-4 h-4" />
-                        {copied === invite._id ? 'Copied!' : 'Copy Link'}
-                      </Button>
-                    )}
+                    {!accepted && !expired && invite.inviteUrl ? (
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                          onClick={() => onCopy(invite.inviteUrl || '', invite._id || invite.inviteUrl || '')}
+                        >
+                          <Copy className="w-4 h-4" />
+                          {copied === invite._id ? 'Copied!' : 'Copy Link'}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="gap-2"
+                          disabled={!invite._id || actioningId === invite._id}
+                          onClick={() => invite._id && onRevokeInvite(invite._id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Revoke
+                        </Button>
+                      </div>
+                    ) : !accepted && !expired ? (
+                      <span className="text-xs text-muted-foreground shrink-0">Sent via email</span>
+                    ) : null}
                   </div>
                 )
               })}

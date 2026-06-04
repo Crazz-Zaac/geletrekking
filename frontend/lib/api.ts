@@ -246,6 +246,14 @@ export interface AdminInvite {
   expiresAt: string
   usedAt?: string | null
   createdAt?: string
+  inviteUrl?: string
+}
+export interface AdminManagedUser {
+  _id: string
+  email: string
+  role: 'editor' | 'superadmin' | 'admin'
+  status?: 'active' | 'suspended' | 'disabled'
+  createdAt?: string
 }
 export interface AuditLog {
   _id?: string
@@ -473,9 +481,18 @@ const getApiBaseUrl = () => {
     const url = (globalThis as any).process?.env?.INTERNAL_API_URL || 'http://backend:5000'
     return url.replace(/\/+$/, '')
   } else {
-    // Client-side: prefer same-origin to avoid mixed-content on HTTPS
-    const publicApiUrl = (globalThis as any).process?.env?.NEXT_PUBLIC_API_URL || ''
-    return publicApiUrl.replace(/\/+$/, '')
+    // Client-side: avoid mixed-content and prefer same-origin proxy when needed.
+    const configuredUrl = ((globalThis as any).process?.env?.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '')
+    if (!configuredUrl) return ''
+
+    const isHttpsPage = window.location.protocol === 'https:'
+    const isConfiguredHttp = configuredUrl.startsWith('http://')
+
+    if (isHttpsPage && isConfiguredHttp) {
+      return ''
+    }
+
+    return configuredUrl
   }
 }
 
@@ -1142,14 +1159,31 @@ export async function createAdminInvite(token: string, email: string): Promise<A
 }
 
 export async function listAdminInvites(token: string): Promise<AdminInvite[]> {
-  const response = await fetchAdminJson<{ invites: AdminInvite[] }>('/api/admin/invites', token)
+  const response = await fetchAdminJson<AdminInvite[] | { invites: AdminInvite[] }>('/api/admin/invites', token)
+  if (Array.isArray(response)) return response
   return response.invites || []
 }
 
-export async function acceptAdminInvite(token: string, email: string, password: string): Promise<{ message: string; token: string }> {
-  return fetchAdminJson<{ message: string; token: string }>('/api/admin/invites/accept', token, {
+export async function revokeAdminInvite(token: string, inviteId: string): Promise<{ message: string }> {
+  return fetchAdminJson<{ message: string }>(`/api/admin/invites/${inviteId}`, token, {
+    method: 'DELETE',
+  })
+}
+
+export async function listAdminUsers(token: string): Promise<AdminManagedUser[]> {
+  return fetchAdminJson<AdminManagedUser[]>('/api/admin/admins', token)
+}
+
+export async function disableAdminUser(token: string, userId: string): Promise<{ message: string }> {
+  return fetchAdminJson<{ message: string }>(`/api/admin/admins/${userId}`, token, {
+    method: 'DELETE',
+  })
+}
+
+export async function acceptAdminInvite(inviteToken: string, email: string, password: string, name?: string): Promise<{ message: string }> {
+  return fetchJson<{ message: string }>('/api/admin/invites/accept', {
     method: 'POST',
-    body: JSON.stringify({ token, email, password }),
+    body: JSON.stringify({ token: inviteToken, email, password, name }),
   })
 }
 

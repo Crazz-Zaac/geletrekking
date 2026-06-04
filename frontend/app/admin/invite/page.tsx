@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { acceptAdminInvite } from '@/lib/api'
-import { saveAdminSession } from '@/lib/admin-auth'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle } from 'lucide-react'
 
@@ -47,16 +46,13 @@ function AdminInviteContent() {
     setError('')
 
     try {
-      const result = await acceptAdminInvite(token, email.trim(), password)
-      
-      // Store the token and user info
-      saveAdminSession(result.token, { email: email.trim(), role: 'editor' })
-      
+      await acceptAdminInvite(token, email.trim(), password)
+
       setSuccess(true)
       
-      // Redirect to dashboard after 2 seconds
+      // Redirect to login after 2 seconds so the user signs in with the new password
       setTimeout(() => {
-        window.location.href = '/admin'
+        window.location.href = '/admin/login?invited=1'
       }, 2000)
     } catch (err: any) {
       setError(err.message || 'Failed to create account. The invite may have expired.')
@@ -77,10 +73,10 @@ function AdminInviteContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-green-700 dark:text-green-300">
-              Your account has been created successfully. Redirecting to dashboard...
+              Your password has been set successfully. Redirecting you to the login page...
             </p>
             <Button asChild className="w-full">
-              <Link href="/admin">Go to Dashboard</Link>
+              <Link href="/admin/login?invited=1">Go to Login</Link>
             </Button>
           </CardContent>
         </Card>
