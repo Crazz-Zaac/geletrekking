@@ -3,7 +3,6 @@ const TrekPackage = require('../models/TrekPackage')
 const BlogPost = require('../models/BlogPost')
 const GalleryItem = require('../models/GalleryItem')
 const Activity = require('../models/Activity')
-const Testimonial = require('../models/Testimonial')
 const TravelGuide = require('../models/TravelGuide')
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000
@@ -67,7 +66,6 @@ exports.getAdminAnalytics = async (req, res) => {
       activitiesCount,
       galleryCount,
       guidesCount,
-      testimonialsCount,
       guideViewsStats,
       inquiryDailyAll,
       inquiryDailyLast7,
@@ -89,7 +87,6 @@ exports.getAdminAnalytics = async (req, res) => {
       Activity.countDocuments(),
       GalleryItem.countDocuments(),
       TravelGuide.countDocuments(),
-      Testimonial.countDocuments(),
       TravelGuide.aggregate([
         {
           $group: {
@@ -134,7 +131,7 @@ exports.getAdminAnalytics = async (req, res) => {
 
     const guideViewSummary = guideViewsStats[0] || { totalGuideViews: 0, avgGuideViews: 0 }
 
-    const contentItems = treksCount + blogsCount + activitiesCount + galleryCount + guidesCount + testimonialsCount
+    const contentItems = treksCount + blogsCount + activitiesCount + galleryCount + guidesCount
 
     const contentLast7Map = new Map()
     const contentPrev7Map = new Map()
@@ -175,7 +172,6 @@ exports.getAdminAnalytics = async (req, res) => {
       { name: 'Activities', count: activitiesCount },
       { name: 'Gallery', count: galleryCount },
       { name: 'Guides', count: guidesCount },
-      { name: 'Testimonials', count: testimonialsCount },
     ].filter((entry) => entry.count > 0)
 
     const contentMix = contentMixRaw.map((entry) => ({

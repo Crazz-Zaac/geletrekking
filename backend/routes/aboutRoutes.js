@@ -3,7 +3,8 @@ const express = require("express");
 const router = express.Router();
 
 const protect = require("../middleware/authMiddleware");
-const restrictToRoles = require("../middleware/roleMiddleware");
+const { restrictToRoles } = require("../middleware/roleMiddleware");
+const { auditContent } = require("../middleware/auditMiddleware");
 const {
   getAboutPage,
   updateAboutPage,
@@ -17,6 +18,7 @@ router.put(
   "/",
   protect,
   restrictToRoles("admin", "superadmin"),
+  auditContent('about', () => 'about-page'),
   updateAboutPage
 );
 

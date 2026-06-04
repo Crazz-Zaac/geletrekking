@@ -1,4 +1,4 @@
-import { blogPosts as fallbackBlogPosts, testimonials as fallbackTestimonials, treks as fallbackTreks } from '@/lib/data'
+import { blogPosts as fallbackBlogPosts, treks as fallbackTreks } from '@/lib/data'
 import type { Trek } from '@/lib/data'
 export interface UiBlogPost {
   id: string
@@ -13,16 +13,6 @@ export interface UiBlogPost {
   readTime: string
   content: string
 }
-export interface UiTestimonial {
-  id: string
-  name: string
-  country: string
-  trek: string
-  rating: number
-  text: string
-  date: string
-  avatar: string
-}
 export interface UiGoogleReview {
   id: string
   authorName: string
@@ -35,7 +25,7 @@ export interface UiGoogleReview {
 }
 export interface AdminUser {
   email: string
-  role: 'admin' | 'superadmin'
+  role: 'editor' | 'superadmin'
 }
 export interface AdminTwoFactorSetupResponse {
   message: string
@@ -45,10 +35,10 @@ export interface AdminTwoFactorSetupResponse {
 }
 interface AdminLoginResponse {
   token?: string
-  role: 'admin' | 'superadmin'
+  role: 'editor' | 'superadmin'
   user?: {
     email: string
-    role: 'admin' | 'superadmin'
+    role: 'editor' | 'superadmin'
   }
   need2FA?: boolean
   message?: string
@@ -92,6 +82,10 @@ export interface AdminTrek {
   group_size_min?: number
   group_size_max?: number
   max_altitude_meters?: number
+  trip_length_km?: number
+  acclimatization_days?: number
+  daily_activity_hours?: string
+  wifi_availability?: string
   tour_type?: string
   transportation?: string
   itinerary_pdf_url?: string
@@ -245,6 +239,28 @@ export interface AdminAlert {
   createdAt?: string
   updatedAt?: string
 }
+export interface AdminInvite {
+  _id?: string
+  email: string
+  role: string
+  expiresAt: string
+  usedAt?: string | null
+  createdAt?: string
+}
+export interface AuditLog {
+  _id?: string
+  actor?: string
+  actorEmail?: string
+  action: string
+  targetType?: string
+  targetId?: string
+  targetLabel?: string
+  outcome: 'success' | 'failure'
+  ip?: string
+  userAgent?: string
+  meta?: Record<string, any>
+  createdAt?: string
+}
 export interface AdminActivity {
   _id: string
   title: string
@@ -314,15 +330,6 @@ export interface PublicActivity {
   description?: string
   date?: string
   image?: string | null
-}
-export interface AdminTestimonial {
-  _id: string
-  name: string
-  country?: string
-  rating: number
-  message: string
-  image?: string | null
-  isApproved: boolean
 }
 export interface AdminAnalyticsMetricSummary {
   totalInquiries: number
@@ -419,6 +426,10 @@ interface BackendTrek {
   group_size_min?: number
   group_size_max?: number
   max_altitude_meters?: number
+  trip_length_km?: number
+  acclimatization_days?: number
+  daily_activity_hours?: string
+  wifi_availability?: string
   trek_map_embed_url?: string
   has_offer?: boolean
   offer_type?: string
@@ -452,14 +463,6 @@ interface BackendBlogPost {
   coverImage?: string
   author?: string
   hashtags?: string[]
-  createdAt?: string
-}
-interface BackendTestimonial {
-  _id: string
-  name: string
-  country?: string
-  rating: number
-  message: string
   createdAt?: string
 }
 const getApiBaseUrl = () => {
@@ -601,6 +604,10 @@ function mapTrek(trek: BackendTrek): Trek {
     duration: trek.duration_days || 0,
     difficulty: normalizeDifficultyFull(trek.difficulty),
     maxAltitude: trek.max_altitude_meters || 0,
+    tripLengthKm: trek.trip_length_km,
+    acclimatizationDays: trek.acclimatization_days,
+    dailyActivityHours: trek.daily_activity_hours,
+    wifiAvailability: trek.wifi_availability,
     price: currentPrice,
     groupSize,
     bestSeason: trek.best_season || 'All year',
@@ -654,18 +661,6 @@ function mapBlog(post: BackendBlogPost): UiBlogPost {
     content: post.content || '',
   }
 }
-function mapTestimonial(item: BackendTestimonial): UiTestimonial {
-  return {
-    id: item._id,
-    name: item.name,
-    country: item.country || 'Nepal',
-    trek: 'Gele Trekking',
-    rating: item.rating,
-    text: item.message,
-    date: formatDate(item.createdAt),
-    avatar: toAvatar(item.name),
-  }
-}
 export async function getTreks(): Promise<Trek[]> {
   try {
     const data = await fetchJson<BackendTrek[]>('/api/treks')
@@ -689,14 +684,6 @@ export async function getBlogBySlug(slug: string): Promise<UiBlogPost | null> {
   } catch {
     const fallback = fallbackBlogPosts.find((post) => post.slug === slug)
     return fallback || null
-  }
-}
-export async function getTestimonials(): Promise<UiTestimonial[]> {
-  try {
-    const data = await fetchJson<BackendTestimonial[]>('/api/testimonials')
-    return data.map(mapTestimonial)
-  } catch {
-    return fallbackTestimonials
   }
 }
 export async function getGoogleReviews(): Promise<UiGoogleReview[]> {
@@ -773,7 +760,7 @@ export async function getCurrentAdmin(token: string): Promise<AdminUser | null> 
     })
     const role = response.user?.role
     const email = response.user?.email
-    if (!email || (role !== 'admin' && role !== 'superadmin')) {
+    if (!email || (role !== 'editor' && role !== 'superadmin')) {
       return null
     }
     return {
@@ -982,26 +969,6 @@ export async function deleteAdminActivity(token: string, id: string): Promise<vo
     method: 'DELETE',
   })
 }
-export async function getAdminTestimonials(token: string): Promise<AdminTestimonial[]> {
-  return fetchAdminJson<AdminTestimonial[]>('/api/testimonials/admin', token)
-}
-export async function createAdminTestimonial(token: string, payload: Partial<AdminTestimonial>): Promise<void> {
-  await fetchAdminJson<{ testimonialId: string }>('/api/testimonials', token, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-export async function updateAdminTestimonial(token: string, id: string, payload: Partial<AdminTestimonial>): Promise<AdminTestimonial> {
-  return fetchAdminJson<AdminTestimonial>(`/api/testimonials/admin/${id}`, token, {
-    method: 'PUT',
-    body: JSON.stringify(payload),
-  })
-}
-export async function deleteAdminTestimonial(token: string, id: string): Promise<void> {
-  await fetchAdminJson<{ message: string }>(`/api/testimonials/admin/${id}`, token, {
-    method: 'DELETE',
-  })
-}
 export interface TravelGuide {
   _id?: string
   id?: string
@@ -1164,6 +1131,57 @@ export async function deleteAlert(token: string, id: string): Promise<void> {
   await fetchAdminJson<{ message: string }>(`/api/alerts/${id}`, token, {
     method: 'DELETE',
   })
+}
+
+// ============= ADMIN USER MANAGEMENT =============
+export async function createAdminInvite(token: string, email: string): Promise<AdminInvite> {
+  return fetchAdminJson<AdminInvite>('/api/admin/invites', token, {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+}
+
+export async function listAdminInvites(token: string): Promise<AdminInvite[]> {
+  const response = await fetchAdminJson<{ invites: AdminInvite[] }>('/api/admin/invites', token)
+  return response.invites || []
+}
+
+export async function acceptAdminInvite(token: string, email: string, password: string): Promise<{ message: string; token: string }> {
+  return fetchAdminJson<{ message: string; token: string }>('/api/admin/invites/accept', token, {
+    method: 'POST',
+    body: JSON.stringify({ token, email, password }),
+  })
+}
+
+export async function updateAdminUserStatus(token: string, userId: string, status: 'active' | 'suspended' | 'disabled'): Promise<{ message: string }> {
+  return fetchAdminJson<{ message: string }>(`/api/admin/users/${userId}/status`, token, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  })
+}
+
+export interface AuditLogsResponse {
+  logs: AuditLog[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export async function listAuditLogs(
+  token: string,
+  options: { action?: string; actor?: string; outcome?: string; limit?: number; offset?: number } = {}
+): Promise<AuditLogsResponse> {
+  const params = new URLSearchParams()
+  if (options.action) params.append('action', options.action)
+  if (options.actor) params.append('actor', options.actor)
+  if (options.outcome) params.append('outcome', options.outcome)
+  if (options.limit) params.append('limit', String(options.limit))
+  if (options.offset) params.append('offset', String(options.offset))
+
+  const queryString = params.toString()
+  const url = `/api/admin/audit-logs${queryString ? '?' + queryString : ''}`
+
+  return fetchAdminJson<AuditLogsResponse>(url, token)
 }
 
 export { API_BASE_URL }

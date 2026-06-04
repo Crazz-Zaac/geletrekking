@@ -2,12 +2,11 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, ArrowRight, FileText, Image as ImageIcon, Mountain, Newspaper, ShieldCheck, TrendingUp, Bell } from 'lucide-react'
+import { Activity, ArrowRight, Image as ImageIcon, Mountain, Newspaper, ShieldCheck, TrendingUp, Bell } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { API_BASE_URL } from '@/lib/api'
-import { getAdminToken } from '@/lib/admin-auth'
 import { AlertsTab } from '@/components/admin/alerts-tab'
 
 type Metric = {
@@ -20,22 +19,12 @@ type Metric = {
 export default function AdminDashboardPage() {
   const [trekCount, setTrekCount] = useState<number | null>(null)
   const [blogCount, setBlogCount] = useState<number | null>(null)
-  const [testimonialCount, setTestimonialCount] = useState<number | null>(null)
 
   useEffect(() => {
     const loadCounts = async () => {
-      const token = getAdminToken()
-      const authHeaders: HeadersInit = token
-        ? { Authorization: `Bearer ${token}` }
-        : {}
-
-      const [treksRes, blogsRes, testimonialsRes] = await Promise.allSettled([
+      const [treksRes, blogsRes] = await Promise.allSettled([
         fetch(`${API_BASE_URL}/api/treks`, { cache: 'no-store' }),
         fetch(`${API_BASE_URL}/api/blogs`, { cache: 'no-store' }),
-        fetch(`${API_BASE_URL}/api/testimonials`, {
-          cache: 'no-store',
-          headers: authHeaders,
-        }),
       ])
 
       if (treksRes.status === 'fulfilled' && treksRes.value.ok) {
@@ -48,10 +37,6 @@ export default function AdminDashboardPage() {
         setBlogCount(Array.isArray(data) ? data.length : 0)
       }
 
-      if (testimonialsRes.status === 'fulfilled' && testimonialsRes.value.ok) {
-        const data = (await testimonialsRes.value.json()) as unknown[]
-        setTestimonialCount(Array.isArray(data) ? data.length : 0)
-      }
     }
 
     void loadCounts()
@@ -72,19 +57,13 @@ export default function AdminDashboardPage() {
         icon: Newspaper,
       },
       {
-        label: 'Testimonials',
-        value: testimonialCount === null ? '—' : String(testimonialCount),
-        hint: 'Approved public reviews',
-        icon: FileText,
-      },
-      {
         label: 'Auth Status',
         value: 'Active',
         hint: 'Session verified',
         icon: ShieldCheck,
       },
     ],
-    [trekCount, blogCount, testimonialCount]
+    [trekCount, blogCount]
   )
 
   return (

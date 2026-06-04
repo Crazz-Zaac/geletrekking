@@ -28,6 +28,8 @@ import {
   Sparkles,
   ArrowRight,
   SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 
 type CategoryKey = 'Adventures' | 'Wellness' | 'Culture'
@@ -95,6 +97,8 @@ function ActivitiesContent() {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('recommended')
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [topPicksIndex, setTopPicksIndex] = useState(0)
+  const [isTopPicksPaused, setIsTopPicksPaused] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -232,10 +236,49 @@ function ActivitiesContent() {
   }, [activities, activeCategory])
 
   // Top picks (activities marked as featured)
-  const topPicks = useMemo(
-    () => activities.filter((activity) => activity.isFeatured).slice(0, 3),
-    [activities]
-  )
+  const topPicks = useMemo(() => {
+    return activities
+      .filter((activity) => activity.isFeatured)
+      .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+  }, [activities])
+
+  const topPicksVisible = useMemo(() => {
+    if (topPicks.length <= 3) return topPicks
+
+    return Array.from({ length: 3 }, (_, offset) => {
+      const index = (topPicksIndex + offset) % topPicks.length
+      return topPicks[index]
+    })
+  }, [topPicks, topPicksIndex])
+
+  useEffect(() => {
+    if (topPicks.length <= 3) {
+      setTopPicksIndex(0)
+      return
+    }
+
+    if (isTopPicksPaused) {
+      return
+    }
+
+    const intervalId = window.setInterval(() => {
+      setTopPicksIndex((prev) => (prev + 1) % topPicks.length)
+    }, 3500)
+
+    return () => window.clearInterval(intervalId)
+  }, [topPicks, isTopPicksPaused])
+
+  const showTopPicksCarouselControls = topPicks.length > 3
+
+  const goToNextTopPicks = () => {
+    if (!showTopPicksCarouselControls) return
+    setTopPicksIndex((prev) => (prev + 1) % topPicks.length)
+  }
+
+  const goToPreviousTopPicks = () => {
+    if (!showTopPicksCarouselControls) return
+    setTopPicksIndex((prev) => (prev - 1 + topPicks.length) % topPicks.length)
+  }
 
   const categoryCounts = useMemo(() => {
     const counts = {
@@ -354,17 +397,44 @@ function ActivitiesContent() {
 
             {/* Top Picks Section */}
             {topPicks.length > 0 && activeCategory === 'All' && searchQuery.trim() === '' && activeTags.size === 0 && (
-              <div className="mb-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1">
-                    <Star className="w-3 h-3 fill-amber-700 text-amber-700" />
-                    <span className="text-xs font-semibold text-amber-900">Top picks</span>
+              <div
+                className="mb-8"
+                onMouseEnter={() => setIsTopPicksPaused(true)}
+                onMouseLeave={() => setIsTopPicksPaused(false)}
+              >
+                <div className="flex items-center justify-between gap-2 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1">
+                      <Star className="w-3 h-3 fill-amber-700 text-amber-700" />
+                      <span className="text-xs font-semibold text-amber-900">Top picks</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">Highest rated by our travellers</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">Highest rated by our travellers</span>
+
+                  {showTopPicksCarouselControls && (
+                    <div className="hidden sm:flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={goToPreviousTopPicks}
+                        aria-label="Previous top picks"
+                        className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={goToNextTopPicks}
+                        aria-label="Next top picks"
+                        className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                  {topPicks.map((activity) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-4">
+                  {topPicksVisible.map((activity) => {
                     const cat = getCategoryKey(activity)
                     const meta = categoryMeta[cat]
 
@@ -377,6 +447,23 @@ function ActivitiesContent() {
                     )
                   })}
                 </div>
+
+                {showTopPicksCarouselControls && (
+                  <div className="mb-8 flex items-center justify-center gap-1.5">
+                    {topPicks.map((_, index) => {
+                      const isActive = index === topPicksIndex
+                      return (
+                        <button
+                          type="button"
+                          key={`top-pick-dot-${index}`}
+                          aria-label={`Go to top pick ${index + 1}`}
+                          onClick={() => setTopPicksIndex(index)}
+                          className={`h-1.5 rounded-full transition-all ${isActive ? 'w-5 bg-primary' : 'w-1.5 bg-border'}`}
+                        />
+                      )
+                    })}
+                  </div>
+                )}
 
                 <hr className="border-border/30 my-8" />
               </div>

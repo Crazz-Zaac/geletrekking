@@ -47,3 +47,11 @@ coverage/
 temp/
 frontend_old/
 node_modules/*
+shell.nix
+pyproject.toml
+poetry.lock
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo

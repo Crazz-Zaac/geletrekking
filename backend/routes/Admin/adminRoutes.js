@@ -1,17 +1,23 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../../models/user");
-const bcrypt = require("bcrypt");
 const {
   login,
   beginTwoFactorSetup,
   verifyTwoFactorSetup,
   disableTwoFactor,
 } = require("../../controllers/authController");
+const {
+  createInvite,
+  listInvites,
+  acceptInvite,
+  updateUserStatus,
+  listAuditLogs,
+} = require("../../controllers/adminUserController");
 
 // ✅ Middleware
 const authMiddleware = require("../../middleware/authMiddleware");
-const restrictToRoles = require("../../middleware/roleMiddleware");
+const { restrictToRoles, requirePermission } = require("../../middleware/roleMiddleware");
 const { authLoginLimiter } = require("../../middleware/rateLimitMiddleware");
 
 
@@ -24,21 +30,21 @@ router.post("/login", authLoginLimiter, login);
 router.post(
   "/2fa/setup",
   authMiddleware,
-  restrictToRoles("admin", "superadmin"),
+  restrictToRoles("editor", "superadmin"),
   beginTwoFactorSetup
 );
 
 router.post(
   "/2fa/verify",
   authMiddleware,
-  restrictToRoles("admin", "superadmin"),
+  restrictToRoles("editor", "superadmin"),
   verifyTwoFactorSetup
 );
 
 router.post(
   "/2fa/disable",
   authMiddleware,
-  restrictToRoles("admin", "superadmin"),
+  restrictToRoles("editor", "superadmin"),
   disableTwoFactor
 );
 
@@ -49,11 +55,11 @@ router.post(
 router.get(
   "/admins",
   authMiddleware,
-  restrictToRoles("superadmin"),
+  requirePermission('manage_users'),
   async (req, res) => {
     try {
-      const admins = await User.find({ role: { $in: ["admin", "superadmin"] } })
-        .select("_id email role createdAt");
+      const admins = await User.find({ role: { $in: ["editor", "superadmin", "admin"] } })
+        .select("_id email role status createdAt");
 
       res.json(admins);
     } catch (err) {
@@ -66,35 +72,7 @@ router.get(
  ✅ CREATE ADMIN (SUPERADMIN)
   POST /api/admin/admins
 --------------------------------*/
-router.post(
-  "/admins",
-  authMiddleware,
-  restrictToRoles("superadmin"),
-  async (req, res) => {
-    try {
-      const { email, password, role } = req.body;
-
-      if (!email || !password)
-        return res.status(400).json({ message: "Email & password required" });
-
-      const exists = await User.findOne({ email });
-      if (exists)
-        return res.status(400).json({ message: "User already exists" });
-
-      const hashed = await bcrypt.hash(password, 10);
-
-      await User.create({
-        email,
-        password: hashed,
-        role: role || "admin",
-      });
-
-      res.json({ message: "✅ Admin created successfully" });
-    } catch (err) {
-      res.status(500).json({ message: "Server error" });
-    }
-  }
-);
+// Admin creation is handled via invite flow.
 
 /* -----------------------------
  ✅ DELETE ADMIN (SUPERADMIN)
@@ -103,7 +81,7 @@ router.post(
 router.delete(
   "/admins/:id",
   authMiddleware,
-  restrictToRoles("superadmin"),
+  requirePermission('manage_users'),
   async (req, res) => {
     try {
       const admin = await User.findById(req.params.id);
@@ -113,12 +91,43 @@ router.delete(
         return res.status(403).json({ message: "❌ Cannot delete a superadmin" });
       }
 
-      await User.findByIdAndDelete(req.params.id);
-      res.json({ message: "✅ Admin deleted successfully" });
+      admin.status = 'disabled';
+      await admin.save();
+      res.json({ message: "✅ Admin disabled successfully" });
     } catch (err) {
       res.status(500).json({ message: "Server error" });
     }
   }
+);
+
+router.post(
+  '/invites',
+  authMiddleware,
+  requirePermission('manage_users'),
+  createInvite
+);
+
+router.get(
+  '/invites',
+  authMiddleware,
+  requirePermission('manage_users'),
+  listInvites
+);
+
+router.post('/invites/accept', acceptInvite);
+
+router.patch(
+  '/users/:id/status',
+  authMiddleware,
+  requirePermission('manage_users'),
+  updateUserStatus
+);
+
+router.get(
+  '/audit-logs',
+  authMiddleware,
+  requirePermission('manage_users'),
+  listAuditLogs
 );
 
 module.exports = router;

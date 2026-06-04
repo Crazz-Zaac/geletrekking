@@ -4,7 +4,6 @@ import { Footer } from '@/components/footer';
 import { treks } from '@/lib/data';
 import { getTreks } from '@/lib/api';
 import TrekDetailClient from './TrekDetailClient';
-import { TrustpilotWidget } from '@/components/trustpilot-widget';
 
 interface TrekDetailPageProps {
   params: Promise<{ id: string }>
@@ -34,11 +33,6 @@ export default async function TrekDetailPage({ params }: TrekDetailPageProps) {
     <>
       <Navbar />
       <TrekDetailClient trek={trek} />
-      <section className="py-6 md:py-8 bg-background">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <TrustpilotWidget className="rounded-xl border border-border bg-card p-4" />
-        </div>
-      </section>
       <Footer />
     </>
   );

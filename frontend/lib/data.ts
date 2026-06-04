@@ -12,6 +12,10 @@ export interface Trek {
   bestSeason: string
   transportation: string
   tourType: string
+  tripLengthKm?: number
+  acclimatizationDays?: number
+  dailyActivityHours?: string
+  wifiAvailability?: string
   shortDescription: string
   fullDescription: string
   image: string
@@ -448,79 +452,5 @@ export const blogPosts = [
     readTime: '10 min',
     content:
       'Sherpa communities have shaped high-altitude trekking in Nepal through deep mountain knowledge, resilience, and hospitality. As a visitor, understanding local customs helps create respectful and rewarding interactions.\n\nIn villages and monasteries, move slowly, greet people politely, and ask before photographing individuals or rituals. When passing mani walls or chortens, follow the local clockwise direction whenever possible.\n\nTeahouse life is communal. Meals are often simple, warm, and shared. Supporting locally run lodges and guides helps sustain livelihoods in remote regions where opportunities are seasonal and hard-earned.\n\nCultural respect is not just etiquette — it improves your trek. You gain trust, hear richer stories, and connect more deeply with the places you walk through.'
-  },
-]
-
-export const testimonials = [
-  {
-    id: '1',
-    name: 'Sarah Mitchell',
-    country: 'United Kingdom',
-    trek: 'Everest Base Camp Trek',
-    rating: 5,
-    text: 'Absolutely incredible experience. Our guide Pemba was knowledgeable, patient, and genuinely cared about our safety. The whole trip was seamlessly organized and I felt in safe hands every step of the way. I\'ll be back for Annapurna!',
-    date: 'October 2024',
-    avatar: 'SM',
-  },
-  {
-    id: '2',
-    name: 'James Kowalski',
-    country: 'United States',
-    trek: 'Annapurna Circuit',
-    rating: 5,
-    text: 'This was my first Himalayan trek and I couldn\'t have asked for a better company to go with. Every detail was taken care of — permits, accommodation, even tea breaks at the best spots. The Thorong La crossing was the highlight of my year.',
-    date: 'November 2024',
-    avatar: 'JK',
-  },
-  {
-    id: '3',
-    name: 'Lena Müller',
-    country: 'Germany',
-    trek: 'Upper Mustang Trek',
-    rating: 5,
-    text: 'Upper Mustang was unlike anywhere I\'ve ever been. It feels like a lost world. Gele Trekking organized everything perfectly and our guide spoke excellent English and was a font of knowledge about Tibetan culture. Truly unforgettable.',
-    date: 'September 2024',
-    avatar: 'LM',
-  },
-  {
-    id: '4',
-    name: 'Daniel Park',
-    country: 'Australia',
-    trek: 'Manaslu Circuit',
-    rating: 5,
-    text: 'The Manaslu Circuit delivered everything it promised — remote, raw and absolutely spectacular. Our team handled every challenge with professionalism. I felt genuinely safe throughout. Already recommending to all my friends.',
-    date: 'October 2024',
-    avatar: 'DP',
-  },
-]
-
-export const regions = [
-  {
-    id: 'everest',
-    name: 'Everest Region',
-    description: 'Home to the world\'s highest peaks, Sherpa culture and the iconic Khumbu valley.',
-    image: '/images/region-everest.jpg',
-    treksCount: 6,
-  },
-  {
-    id: 'annapurna',
-    name: 'Annapurna Region',
-    description: 'Diverse landscapes from tropical lowlands to high alpine passes around the Annapurna massif.',
-    image: '/images/region-annapurna.jpg',
-    treksCount: 5,
-  },
-  {
-    id: 'langtang',
-    name: 'Langtang Region',
-    description: 'The "Valley of Glaciers" — pristine wilderness just 3 hours from Kathmandu.',
-    image: '/images/region-langtang.jpg',
-    treksCount: 4,
-  },
-  {
-    id: 'mustang',
-    name: 'Mustang Region',
-    description: 'The ancient forbidden Kingdom of Lo — Tibetan plateau culture and otherworldly landscapes.',
-    image: '/images/upper-mustang.jpg',
-    treksCount: 3,
   },
 ]

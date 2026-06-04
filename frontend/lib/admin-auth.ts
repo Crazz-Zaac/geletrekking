@@ -53,5 +53,5 @@ export function clearAdminSession(): void {
   document.cookie = `gele_admin_role=; path=/; max-age=0; samesite=lax`
 }
 export function isAdminRole(user: AdminUser | null): boolean {
-  return !!user && (user.role === 'admin' || user.role === 'superadmin')
+  return !!user && (user.role === 'editor' || user.role === 'superadmin')
 }

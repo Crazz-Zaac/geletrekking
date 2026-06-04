@@ -9,10 +9,18 @@ const protect = async (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+        issuer: process.env.JWT_ISSUER || 'gele-trekking-admin',
+        audience: process.env.JWT_AUDIENCE || 'gele-trekking-admin',
+      });
 
-      const user = await User.findById(decoded.id).select('-password');
+      const userId = decoded.sub || decoded.id;
+      const user = await User.findById(userId).select('-password');
       if (!user) return res.status(401).json({ message: 'User not found' });
+
+      if (user.status && user.status !== 'active') {
+        return res.status(403).json({ message: 'Account is not active' });
+      }
 
       req.user = user;
       next();

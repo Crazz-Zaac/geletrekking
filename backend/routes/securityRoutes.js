@@ -1,7 +1,7 @@
 const express = require("express");
 
 const authMiddleware = require("../middleware/authMiddleware");
-const restrictToRoles = require("../middleware/roleMiddleware");
+const { requirePermission } = require("../middleware/roleMiddleware");
 const {
   getRiskHealth,
   getSslHealth,
@@ -12,14 +12,14 @@ const router = express.Router();
 router.get(
   "/risk-health",
   authMiddleware,
-  restrictToRoles("admin", "superadmin"),
+  requirePermission('manage_security'),
   getRiskHealth
 );
 
 router.get(
   "/ssl-health",
   authMiddleware,
-  restrictToRoles("admin", "superadmin"),
+  requirePermission('manage_security'),
   getSslHealth
 );
 

@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    // Keep middleware.ts working (not using proxy yet)
+    // Remove this when fully migrated to proxy pattern
+  },
   images: {
     remotePatterns: [
       {

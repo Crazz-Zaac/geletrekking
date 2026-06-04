@@ -2,7 +2,7 @@ const express = require("express");
 const router  = express.Router();
 
 const authMiddleware  = require("../middleware/authMiddleware");
-const restrictToRoles = require("../middleware/roleMiddleware");
+const { restrictToRoles } = require("../middleware/roleMiddleware");
 const { contactLimiter, contactSlowDown } = require("../middleware/rateLimitMiddleware");
 
 const {

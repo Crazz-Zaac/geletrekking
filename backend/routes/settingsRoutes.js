@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const authMiddleware = require("../middleware/authMiddleware");
-const restrictToRoles = require("../middleware/roleMiddleware");
+const { requirePermission } = require("../middleware/roleMiddleware");
 const {
   getSettings,
   updateSettings,
@@ -17,25 +17,25 @@ router.get("/", getSettings);
 router.get("/registrations-affiliations", getRegistrationsAffiliations);
 
 // Admin/Superadmin
-router.put("/", authMiddleware, restrictToRoles("admin", "superadmin"), updateSettings);
+router.put("/", authMiddleware, requirePermission('manage_settings'), updateSettings);
 
 // Registrations & Affiliations Management
 router.post(
   "/registrations-affiliations",
   authMiddleware,
-  restrictToRoles("admin", "superadmin"),
+  requirePermission('manage_settings'),
   addRegistrationDocument
 );
 router.put(
   "/registrations-affiliations/:code",
   authMiddleware,
-  restrictToRoles("admin", "superadmin"),
+  requirePermission('manage_settings'),
   updateRegistrationDocument
 );
 router.delete(
   "/registrations-affiliations/:code",
   authMiddleware,
-  restrictToRoles("admin", "superadmin"),
+  requirePermission('manage_settings'),
   deleteRegistrationDocument
 );
 

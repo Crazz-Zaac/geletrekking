@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
-const restrictToRoles = require("../middleware/roleMiddleware");
+const { restrictToRoles } = require("../middleware/roleMiddleware");
+const { auditContent } = require("../middleware/auditMiddleware");
 const {
   getGalleryItems,
   createGalleryItem,
@@ -20,6 +21,7 @@ router.put(
   "/hero",
   authMiddleware,
   restrictToRoles("admin", "superadmin"),
+  auditContent('gallery.hero'),
   updateHeroImage
 );
 
@@ -32,6 +34,7 @@ router.post(
   "/",
   authMiddleware,
   restrictToRoles("admin", "superadmin"),
+  auditContent('gallery', (req) => ({ targetLabel: req.body?.title })),
   createGalleryItem
 );
 
@@ -40,6 +43,7 @@ router.put(
   "/:id",
   authMiddleware,
   restrictToRoles("admin", "superadmin"),
+  auditContent('gallery', (req) => ({ targetId: req.params.id })),
   updateGalleryItem
 );
 
@@ -48,6 +52,7 @@ router.delete(
   "/:id",
   authMiddleware,
   restrictToRoles("superadmin"),
+  auditContent('gallery', (req) => ({ targetId: req.params.id })),
   deleteGalleryItem
 );
 
