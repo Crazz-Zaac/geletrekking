@@ -1,21 +1,23 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { adminLogin, getCurrentAdmin } from '@/lib/api'
 import { getAdminToken, saveAdminSession } from '@/lib/admin-auth'
 
-export default function AdminLoginPage() {
+function AdminLoginContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [twoFactorCode, setTwoFactorCode] = useState('')
   const [needsTwoFactor, setNeedsTwoFactor] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const invitedMessage = searchParams.get('invited') === '1'
 
   useEffect(() => {
     const checkExistingSession = async () => {
@@ -67,6 +69,12 @@ export default function AdminLoginPage() {
         <p className="text-sm text-muted-foreground mt-1">
           Sign in to manage Gele Trekking content.
         </p>
+
+        {invitedMessage ? (
+          <div className="mt-4 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+            Your password has been set. Please sign in to continue.
+          </div>
+        ) : null}
 
         {error ? (
           <div className="mt-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
@@ -140,5 +148,21 @@ export default function AdminLoginPage() {
         </form>
       </Card>
     </main>
+  )
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+          <Card className="w-full max-w-md border-border p-6 md:p-8">
+            <p className="text-center text-muted-foreground">Loading...</p>
+          </Card>
+        </main>
+      }
+    >
+      <AdminLoginContent />
+    </Suspense>
   )
 }

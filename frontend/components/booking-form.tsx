@@ -272,26 +272,30 @@ interface FAQAccordionProps {
 }
 
 export function FAQAccordion({ faqs }: FAQAccordionProps) {
-  const [open, setOpen] = useState<number | null>(null)
+  const [openItems, setOpenItems] = useState<number[]>([])
+
+  const toggleItem = (index: number) => {
+    setOpenItems((prev) => (prev.includes(index) ? prev.filter((item) => item !== index) : [...prev, index]))
+  }
 
   return (
-    <div className="space-y-3">
+    <div className="border border-border rounded-xl overflow-hidden bg-card">
       {faqs.map((faq, i) => (
-        <div key={i} className="border border-border rounded-xl overflow-hidden">
+        <div key={i} className={i !== 0 ? 'border-t border-border' : ''}>
           <button
-            onClick={() => setOpen(open === i ? null : i)}
-            className="flex items-center justify-between w-full px-5 py-4 text-left hover:bg-muted/50 transition-colors"
+            onClick={() => toggleItem(i)}
+            className="flex items-center justify-between w-full px-5 py-3 text-left hover:bg-muted/40 transition-colors"
           >
             <span className="font-medium text-foreground text-sm pr-4">{faq.question}</span>
-            {open === i ? (
+            {openItems.includes(i) ? (
               <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
             ) : (
               <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
             )}
           </button>
-          {open === i && (
-            <div className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed border-t border-border bg-muted/20">
-              <p className="pt-3">{faq.answer}</p>
+          {openItems.includes(i) && (
+            <div className="px-5 pb-3 text-sm text-muted-foreground leading-relaxed border-t border-border bg-muted/20">
+              <p className="pt-2">{faq.answer}</p>
             </div>
           )}
         </div>

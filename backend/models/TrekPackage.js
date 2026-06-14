@@ -77,6 +77,9 @@ const trekPackageSchema = new mongoose.Schema(
     // what the trekker needs to pay for separately
     excludes: [{ type: String }],
 
+    // recommended gear checklist shown in "What to Pack"
+    what_to_pack: [{ type: String }],
+
     // day by day plan for the trek
     itinerary: [itinerarySchema],
 

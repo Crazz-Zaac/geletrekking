@@ -10,6 +10,7 @@ const {
 const {
   createInvite,
   listInvites,
+  revokeInvite,
   acceptInvite,
   updateUserStatus,
   listAuditLogs,
@@ -112,6 +113,13 @@ router.get(
   authMiddleware,
   requirePermission('manage_users'),
   listInvites
+);
+
+router.delete(
+  '/invites/:id',
+  authMiddleware,
+  requirePermission('manage_users'),
+  revokeInvite
 );
 
 router.post('/invites/accept', acceptInvite);

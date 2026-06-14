@@ -322,7 +322,7 @@ export function Navbar() {
                               column.items.map((activity) => (
                                 <Link
                                   key={activity._id}
-                                  href="/activities"
+                                  href={activity.slug ? `/activities/${activity.slug}` : '/activities'}
                                   className="group/item block"
                                   onClick={() => setOpenDropdown(null)}
                                 >
@@ -610,7 +610,7 @@ export function Navbar() {
                       column.items.map((activity) => (
                         <Link
                           key={activity._id}
-                          href="/activities"
+                          href={activity.slug ? `/activities/${activity.slug}` : '/activities'}
                           className="block px-3 py-2 text-white/70 text-sm hover:text-white hover:bg-white/10 rounded-md transition-colors"
                           onClick={() => {
                             setMobileOpen(false)

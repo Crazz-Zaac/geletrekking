@@ -45,6 +45,7 @@ import {
   Users,
   Wifi,
   Wind,
+  Backpack,
 } from 'lucide-react';
 
 interface TrekDetailClientProps {
@@ -130,6 +131,7 @@ export default function TrekDetailClient({
   ]
 
   const tertiaryKpis = [
+    { label: 'Trip Start', value: trek.startPoint || 'On request', icon: MapPin },
     { label: 'Transport', value: trek.transportation || 'On request', icon: Bus },
     { label: 'Group size', value: trek.groupSize || 'Flexible', icon: Users },
     { label: 'Tour type', value: trek.tourType || 'Group / Private', icon: Compass },
@@ -146,6 +148,7 @@ export default function TrekDetailClient({
       { id: 'trek-map', label: 'Map' },
       { id: 'trek-gallery', label: 'Gallery' },
       { id: 'trek-faq', label: 'FAQ' },
+      { id: 'trek-packing', label: 'Packing List' },
       { id: 'booking-inquiry-section', label: 'Inquiry Form' },
     ],
     []
@@ -280,12 +283,12 @@ export default function TrekDetailClient({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         
-        <div className="absolute bottom-0 left-0 right-0 p-5 md:p-7 text-white">
+        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 text-white">
           <motion.div
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="container mx-auto space-y-3"
+            className="container mx-auto space-y-2"
           >
             <motion.div variants={itemVariants} className="flex gap-2 flex-wrap">
               <Badge className="bg-primary text-white">{trek.region}</Badge>
@@ -298,27 +301,8 @@ export default function TrekDetailClient({
         </div>
       </motion.section>
 
-      <section className="relative z-10 border-b border-border bg-gradient-to-r from-primary/10 via-background to-accent/10">
-        <div className="container mx-auto px-4 md:px-6 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Card className="p-3 border-border bg-background/80">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Conversion Booster</p>
-              <p className="mt-1 text-sm font-medium text-foreground inline-flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-primary" /> Free expert itinerary consultation</p>
-            </Card>
-            <Card className="p-3 border-border bg-background/80">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Decision Confidence</p>
-              <p className="mt-1 text-sm font-medium text-foreground inline-flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-primary" /> Licensed local team + safety-first planning</p>
-            </Card>
-            <Card className="p-3 border-border bg-background/80">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Speed to Lead</p>
-              <p className="mt-1 text-sm font-medium text-foreground inline-flex items-center gap-1.5"><Timer className="w-4 h-4 text-primary" /> Replies within 24 hours</p>
-            </Card>
-          </div>
-        </div>
-      </section>
-
       <section className="sticky top-16 z-40 border-b border-border bg-background/95 backdrop-blur shadow-sm">
-        <div className="container mx-auto px-4 md:px-6 py-3">
+        <div className="container mx-auto px-4 md:px-6 py-2.5">
           <div className="flex flex-wrap items-center gap-2">
             {navItems.map((item) => {
               const isActive = activeSection === item.id
@@ -371,7 +355,7 @@ export default function TrekDetailClient({
               )
             })}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mt-2.5">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5 mt-2.5">
             {tertiaryKpis.map((info) => {
               const InfoIcon = info.icon
               return (
@@ -469,49 +453,38 @@ export default function TrekDetailClient({
               </motion.div>
 
               <motion.div variants={itemVariants} className="space-y-4">
-                <SectionHeader index="05" title="What’s Covered & What’s Not" icon={ClipboardList} />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card id="trek-includes" className="overflow-hidden border-emerald-200/70 scroll-mt-36">
-                    <div className="flex items-center gap-3 bg-emerald-50 px-5 py-4">
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-                        <CheckCircle2 className="h-4 w-4" />
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold text-emerald-900">Cost includes</p>
-                      </div>
+                <SectionHeader index="05" title="What's Covered" icon={ClipboardList} />
+                <Card className="overflow-hidden border-border scroll-mt-36">
+                  <div className="grid grid-cols-1 md:grid-cols-2">
+                    <div id="trek-includes" className="px-5 py-4 md:py-5">
+                      <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-700">Included</p>
+                      <ul className="mt-3 divide-y divide-border text-sm">
+                        {trek.includes.map((item) => (
+                          <li key={item} className="flex items-center gap-3 py-3">
+                            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                              <CheckCircle2 className="h-4 w-4" />
+                            </span>
+                            <span className="text-foreground">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <ul className="divide-y divide-border text-sm">
-                      {trek.includes.map((item) => (
-                        <li key={item} className="flex items-center gap-3 px-5 py-3">
-                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                            <CheckCircle2 className="h-4 w-4" />
-                          </span>
-                          <span className="text-foreground">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                  <Card id="trek-excludes" className="overflow-hidden border-rose-200/70 scroll-mt-36">
-                    <div className="flex items-center gap-3 bg-rose-50 px-5 py-4">
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
-                        <X className="h-4 w-4" />
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold text-rose-900">Cost excludes</p>
-                      </div>
+
+                    <div id="trek-excludes" className="px-5 py-4 md:py-5 border-t border-border md:border-t-0 md:border-l">
+                      <p className="text-sm font-semibold uppercase tracking-[0.14em] text-rose-700">Excluded</p>
+                      <ul className="mt-3 divide-y divide-border text-sm">
+                        {trek.excludes.map((item) => (
+                          <li key={item} className="flex items-center gap-3 py-3">
+                            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-100 text-rose-700">
+                              <X className="h-4 w-4" />
+                            </span>
+                            <span className="text-foreground">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <ul className="divide-y divide-border text-sm">
-                      {trek.excludes.map((item) => (
-                        <li key={item} className="flex items-center gap-3 px-5 py-3">
-                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-100 text-rose-700">
-                            <X className="h-4 w-4" />
-                          </span>
-                          <span className="text-foreground">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                </div>
+                  </div>
+                </Card>
               </motion.div>
 
               <motion.div id="trek-map" variants={itemVariants} className="space-y-4 scroll-mt-36">
@@ -567,8 +540,40 @@ export default function TrekDetailClient({
                 )}
               </motion.div>
 
+              <motion.div id="trek-packing" variants={itemVariants} className="space-y-4 scroll-mt-36">
+                <SectionHeader index="09" title="What to Pack" icon={Backpack} />
+                <Card className="border-border overflow-hidden">
+                  <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4 bg-muted/20">
+                    <p className="text-sm font-semibold text-foreground">Recommended Gear Checklist</p>
+                    <Badge variant="outline" className="text-xs">
+                      {(trek.whatToPack || []).length} items
+                    </Badge>
+                  </div>
+                  {trek.whatToPack && trek.whatToPack.length > 0 ? (
+                    <div className="max-h-[320px] overflow-y-auto px-5 py-4">
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
+                        {trek.whatToPack.map((item, idx) => (
+                          <li key={`${item}-${idx}`} className="flex items-start gap-2.5 text-sm">
+                            <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            </span>
+                            <span className="text-foreground leading-snug">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <div className="px-5 py-4">
+                      <p className="text-sm text-muted-foreground">
+                        Packing recommendations will be added soon. Contact us for a custom checklist.
+                      </p>
+                    </div>
+                  )}
+                </Card>
+              </motion.div>
+
               <motion.div id="booking-inquiry-section" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="09" title="Booking Inquiry Form" icon={FileText} />
+                <SectionHeader index="10" title="Booking Inquiry Form" icon={FileText} />
                 <Card className="border-border p-6 md:p-8">
                   <BookingForm trek={trek} />
                 </Card>
@@ -584,7 +589,7 @@ export default function TrekDetailClient({
               </motion.div>
             </motion.div>
 
-            <motion.aside variants={itemVariants} className="space-y-6 h-fit sticky top-20 w-full lg:max-w-sm lg:ml-auto">
+            <motion.aside variants={itemVariants} className="space-y-6 h-fit sticky top-32 w-full lg:max-w-sm lg:ml-auto">
               <Card className="border-border bg-white p-5 md:p-6 transition-all hover:shadow-md">
                 <div className="space-y-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Price of the Trek</p>
@@ -615,10 +620,15 @@ export default function TrekDetailClient({
                   <div className="hidden md:block h-12 w-px bg-border" />
 
                   <div className="space-y-2">
-                    <Button className="w-full" onClick={scrollToBooking}>
-                      <ArrowRight className="w-4 h-4 mr-2" />
-                      Start booking inquiry
-                    </Button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button className="w-full px-2 sm:px-3 text-[11px] sm:text-xs md:text-sm leading-tight" onClick={scrollToBooking}>
+                        <ArrowRight className="w-4 h-4 mr-2" />
+                        Start Inquiry
+                      </Button>
+                      <Button variant="outline" className="w-full" onClick={scrollToBooking}>
+                        Book Now
+                      </Button>
+                    </div>
                     <Button variant="outline" className="w-full" onClick={handleDownloadItinerary} disabled={downloadingItinerary}>
                       <Download className="w-4 h-4 mr-2" />
                       Download PDF itinerary

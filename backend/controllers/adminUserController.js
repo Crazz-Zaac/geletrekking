@@ -3,13 +3,20 @@ const User = require('../models/user')
 const AdminInvite = require('../models/AdminInvite')
 const { generateToken, hashToken } = require('../utils/crypto')
 const { logAudit } = require('../utils/auditLogger')
+const sendEmail = require('../utils/sendEmail')
 
 const INVITE_EXPIRY_HOURS = Number(process.env.ADMIN_INVITE_EXPIRY_HOURS || 48)
 
 const normalizeEmail = (email) => (email || '').toLowerCase().trim()
 
-const getInviteUrl = (token) => {
-  const base = (process.env.ADMIN_APP_URL || 'http://localhost:3000').replace(/\/$/, '')
+const getInviteUrl = (req, token) => {
+  const requestOrigin = req?.get?.('origin')
+  const forwardedHost = req?.get?.('x-forwarded-host')
+  const host = forwardedHost || req?.get?.('host')
+  const proto = req?.get?.('x-forwarded-proto') || req?.protocol || 'http'
+  const inferredOrigin = host ? `${proto}://${host}` : ''
+
+  const base = (requestOrigin || inferredOrigin || process.env.ADMIN_APP_URL || 'http://localhost:3000').replace(/\/$/, '')
   return `${base}/admin/invite?token=${token}`
 }
 
@@ -39,7 +46,29 @@ exports.createInvite = async (req, res) => {
       createdBy: req.user._id,
     })
 
-    const inviteUrl = getInviteUrl(token)
+    const inviteUrl = getInviteUrl(req, token)
+
+    try {
+      await sendEmail(
+        normalized,
+        'Your Gele Trekking admin invite',
+        [
+          `Hello,`,
+          '',
+          `You've been invited to join the Gele Trekking admin team as an editor.`,
+          '',
+          `Create your account here: ${inviteUrl}`,
+          '',
+          `This invitation expires in ${INVITE_EXPIRY_HOURS} hours.`,
+          '',
+          'After setting your password, please sign in again at the admin login page.',
+        ].join('\n')
+      )
+    } catch (emailError) {
+      await AdminInvite.deleteOne({ tokenHash })
+
+      throw emailError
+    }
 
     await logAudit({
       actor: req.user._id,
@@ -80,6 +109,39 @@ exports.listInvites = async (req, res) => {
     res.status(200).json(invites)
   } catch (error) {
     res.status(500).json({ message: 'Unable to fetch invites.' })
+  }
+}
+
+exports.revokeInvite = async (req, res) => {
+  const { id } = req.params
+
+  try {
+    const invite = await AdminInvite.findById(id)
+    if (!invite) {
+      return res.status(404).json({ message: 'Invite not found.' })
+    }
+
+    if (invite.usedAt) {
+      return res.status(400).json({ message: 'Cannot revoke an already accepted invite.' })
+    }
+
+    await AdminInvite.deleteOne({ _id: id })
+
+    await logAudit({
+      actor: req.user._id,
+      actorEmail: req.user.email,
+      action: 'admin.invite.revoke',
+      targetType: 'invite',
+      targetId: id,
+      targetLabel: invite.email,
+      outcome: 'success',
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    })
+
+    return res.status(200).json({ message: 'Invite revoked.' })
+  } catch (error) {
+    return res.status(500).json({ message: 'Unable to revoke invite.' })
   }
 }
 
@@ -131,7 +193,7 @@ exports.acceptInvite = async (req, res) => {
       userAgent: req.get('user-agent'),
     })
 
-    res.status(201).json({ message: 'Account created. Please login.' })
+    res.status(201).json({ message: 'Account created. Please login again to access the admin dashboard.' })
   } catch (error) {
     res.status(500).json({ message: 'Unable to accept invite.' })
   }

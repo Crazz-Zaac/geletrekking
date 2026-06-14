@@ -11,6 +11,7 @@ export interface Trek {
   groupSize: string
   bestSeason: string
   transportation: string
+  startPoint?: string
   tourType: string
   tripLengthKm?: number
   acclimatizationDays?: number
@@ -23,6 +24,7 @@ export interface Trek {
   itinerary: ItineraryDay[]
   includes: string[]
   excludes: string[]
+  whatToPack?: string[]
   faqs: FAQ[]
   gallery: string[]
   mapEmbed?: string
