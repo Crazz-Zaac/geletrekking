@@ -62,6 +62,7 @@ export interface AdminTrek {
   highlights?: string[]
   includes?: string[]
   excludes?: string[]
+  what_to_pack?: string[]
   itinerary?: Array<{
     _id?: string
     day: number
@@ -425,6 +426,7 @@ interface BackendTrek {
   }>
   includes?: string[]
   excludes?: string[]
+  what_to_pack?: string[]
   best_season?: string
   start_point?: string
   end_point?: string
@@ -629,6 +631,7 @@ function mapTrek(trek: BackendTrek): Trek {
     groupSize,
     bestSeason: trek.best_season || 'All year',
     transportation,
+    startPoint: trek.start_point?.trim() || undefined,
     tourType: trek.tour_type || (trek.is_optional ? 'Optional Trek' : 'Group / Private'),
     shortDescription,
     fullDescription,
@@ -644,6 +647,7 @@ function mapTrek(trek: BackendTrek): Trek {
     })),
     includes: trek.includes || [],
     excludes: trek.excludes || [],
+    whatToPack: trek.what_to_pack || [],
     faqs: trek.faqs || [],
     gallery:
       trek.gallery_images && trek.gallery_images.length > 0

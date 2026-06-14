@@ -13,7 +13,7 @@ import {
 } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
 
-type TabKey = 'basic' | 'details' | 'itinerary' | 'includes' | 'faqs' | 'offers' | 'media'
+type TabKey = 'basic' | 'details' | 'itinerary' | 'includes' | 'packing' | 'faqs' | 'offers' | 'media'
 
 type ItineraryDay = {
   day: number
@@ -62,6 +62,7 @@ type TrekForm = {
   highlights: string
   includes: string
   excludes: string
+  what_to_pack: string
   itinerary: ItineraryDay[]
   faqs: FaqItem[]
   has_offer: boolean
@@ -120,6 +121,7 @@ const initialForm: TrekForm = {
   highlights: '',
   includes: '',
   excludes: '',
+  what_to_pack: '',
   itinerary: [emptyDay()],
   faqs: [emptyFaq()],
   has_offer: false,
@@ -177,6 +179,9 @@ function formToPayload(form: TrekForm): Partial<AdminTrek> {
     excludes: form.excludes
       ? form.excludes.split('\n').map((s) => s.trim()).filter(Boolean)
       : [],
+    what_to_pack: form.what_to_pack
+      ? form.what_to_pack.split('\n').map((s) => s.trim()).filter(Boolean)
+      : [],
     itinerary: form.itinerary.filter((d) => d.title.trim()),
     faqs: form.faqs.filter((f) => f.question.trim() && f.answer.trim()),
     has_offer: form.has_offer,
@@ -227,6 +232,7 @@ function trekToForm(item: AdminTrek): TrekForm {
     highlights: (item.highlights || []).join('\n'),
     includes: (item.includes || []).join('\n'),
     excludes: (item.excludes || []).join('\n'),
+    what_to_pack: (item.what_to_pack || []).join('\n'),
     itinerary:
       item.itinerary && item.itinerary.length > 0
         ? item.itinerary.map((d) => ({
@@ -262,6 +268,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'media', label: 'Media' },
   { key: 'itinerary', label: 'Itinerary' },
   { key: 'includes', label: 'Includes / Excludes' },
+  { key: 'packing', label: 'Packing List' },
   { key: 'faqs', label: 'FAQs' },
   { key: 'offers', label: 'Offers' },
 ]
@@ -429,7 +436,7 @@ export default function AdminTreksPage() {
 
 
   // Text editing utilities for textareas
-  const insertMarkdown = (fieldName: 'dayDescription' | 'includes' | 'excludes' | 'dayAltitude', index: number | null, before: string, after: string = '', placeholder: string = '') => {
+  const insertMarkdown = (fieldName: 'dayDescription' | 'includes' | 'excludes' | 'whatToPack' | 'dayAltitude', index: number | null, before: string, after: string = '', placeholder: string = '') => {
     let currentValue = ''
     let setter: (v: string) => void = () => {}
 
@@ -442,6 +449,9 @@ export default function AdminTreksPage() {
     } else if (fieldName === 'excludes') {
       currentValue = form.excludes
       setter = (v) => setForm((p) => ({ ...p, excludes: v }))
+    } else if (fieldName === 'whatToPack') {
+      currentValue = form.what_to_pack
+      setter = (v) => setForm((p) => ({ ...p, what_to_pack: v }))
     }
 
     const textarea = document.querySelector(`textarea[data-field="${fieldName}-${index}"]`) as HTMLTextAreaElement
@@ -460,7 +470,7 @@ export default function AdminTreksPage() {
     }, 0)
   }
 
-  const TextToolbar = ({ fieldName, index }: { fieldName: 'dayDescription' | 'includes' | 'excludes', index?: number }) => (
+  const TextToolbar = ({ fieldName, index }: { fieldName: 'dayDescription' | 'includes' | 'excludes' | 'whatToPack', index?: number }) => (
     <div className="border border-input rounded-t-md bg-muted/30 p-2 flex flex-wrap gap-1">
       <Button
         type="button"
@@ -709,6 +719,13 @@ export default function AdminTreksPage() {
                         onChange={(e) => setForm((p) => ({ ...p, transportation: e.target.value }))}
                       />
                     ))}
+                    {field('Trip Start', (
+                      <Input
+                        placeholder="e.g. Kathmandu"
+                        value={form.start_point}
+                        onChange={(e) => setForm((p) => ({ ...p, start_point: e.target.value }))}
+                      />
+                    ))}
                   </div>
                 </div>
               </div>
@@ -730,13 +747,6 @@ export default function AdminTreksPage() {
                       type="number"
                       value={form.price_gbp}
                       onChange={(e) => setForm((p) => ({ ...p, price_gbp: Number(e.target.value) || 0 }))}
-                    />
-                  ))}
-                  {field('Start point', (
-                    <Input
-                      placeholder="e.g. Kathmandu"
-                      value={form.start_point}
-                      onChange={(e) => setForm((p) => ({ ...p, start_point: e.target.value }))}
                     />
                   ))}
                   {field('End point', (
@@ -907,6 +917,31 @@ export default function AdminTreksPage() {
                     value={form.excludes}
                     onChange={(e) => setForm((p) => ({ ...p, excludes: e.target.value }))}
                     rows={6}
+                    className="w-full rounded-b-md border border-t-0 border-input bg-background px-3 py-2 text-sm resize-vertical"
+                  />
+                </>
+              ))}
+              </div>
+            )}
+
+            {/* packing list tab */}
+            {activeTab === 'packing' && (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-border bg-muted/20 p-4">
+                  <p className="text-sm font-medium text-foreground">What to pack</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Add one gear item per line. This appears in Section 09 as the Packing List.
+                  </p>
+                </div>
+                {field('Packing checklist items', (
+                <>
+                  <TextToolbar fieldName="whatToPack" />
+                  <textarea
+                    data-field="whatToPack-null"
+                    placeholder="e.g. Down jacket\nTrekking poles\nHeadlamp"
+                    value={form.what_to_pack}
+                    onChange={(e) => setForm((p) => ({ ...p, what_to_pack: e.target.value }))}
+                    rows={10}
                     className="w-full rounded-b-md border border-t-0 border-input bg-background px-3 py-2 text-sm resize-vertical"
                   />
                 </>
