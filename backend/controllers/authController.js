@@ -39,6 +39,8 @@ const toSafeUser = (user) => ({
   name: user.name || user.username,
   email: user.email,
   role: normalizeRole(user.role),
+  twoFactorEnabled: !!user.twoFactorEnabled,
+  requiresTwoFactorSetup: normalizeRole(user.role) === 'superadmin' && !user.twoFactorEnabled,
 });
 
 const getDecryptedSecret = (user) => {
@@ -105,10 +107,6 @@ exports.login = async (req, res) => {
     }
 
     const role = normalizeRole(user.role);
-    if (role === 'superadmin' && !user.twoFactorEnabled) {
-      return res.status(403).json({ message: 'Superadmin must enable 2FA before logging in.' });
-    }
-
     if (user.twoFactorEnabled) {
       if (!twoFactorCode) {
         if (role !== 'superadmin' && isTwoFactorBypassAllowed(req)) {
@@ -196,10 +194,6 @@ exports.googleLogin = async (req, res) => {
     }
 
     const role = normalizeRole(user.role);
-    if (role === 'superadmin' && !user.twoFactorEnabled) {
-      return res.status(403).json({ message: 'Superadmin must enable 2FA before logging in.' });
-    }
-
     if (user.twoFactorEnabled) {
       if (!twoFactorCode) {
         if (role !== 'superadmin' && isTwoFactorBypassAllowed(req)) {

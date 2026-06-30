@@ -92,12 +92,17 @@ export default function ProtectedAdminLayout({ children }: ProtectedAdminLayoutP
         return
       }
 
+      if (remoteUser.requiresTwoFactorSetup && pathname !== '/admin/account-security') {
+        router.replace('/admin/account-security')
+        return
+      }
+
       setUser(remoteUser)
       setChecking(false)
     }
 
     void verifySession()
-  }, [router])
+  }, [pathname, router])
 
   const localUser = useMemo(() => getAdminUser(), [])
 

@@ -59,7 +59,7 @@ function AdminLoginContent() {
 
     saveAdminSession(result.token, result.user)
     setLoading(false)
-    router.replace('/admin')
+    router.replace(result.user.requiresTwoFactorSetup ? '/admin/account-security' : '/admin')
   }
 
   return (

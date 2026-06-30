@@ -59,6 +59,9 @@ export default function AdminAccountSecurityPage() {
       setMessage(response.message)
       setTwoFactorCode('')
       setTwoFactorSetup(null)
+      window.setTimeout(() => {
+        window.location.href = '/admin'
+      }, 800)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to verify 2FA setup.')
     } finally {

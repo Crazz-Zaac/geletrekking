@@ -26,6 +26,8 @@ export interface UiGoogleReview {
 export interface AdminUser {
   email: string
   role: 'editor' | 'superadmin'
+  twoFactorEnabled?: boolean
+  requiresTwoFactorSetup?: boolean
 }
 export interface AdminTwoFactorSetupResponse {
   message: string
@@ -39,6 +41,8 @@ interface AdminLoginResponse {
   user?: {
     email: string
     role: 'editor' | 'superadmin'
+    twoFactorEnabled?: boolean
+    requiresTwoFactorSetup?: boolean
   }
   need2FA?: boolean
   message?: string
@@ -47,6 +51,8 @@ interface AuthMeResponse {
   user?: {
     email?: string
     role?: string
+    twoFactorEnabled?: boolean
+    requiresTwoFactorSetup?: boolean
   }
 }
 export interface AdminTrek {
@@ -759,6 +765,8 @@ export async function adminLogin(payload: { email: string; password: string; two
     const user: AdminUser = {
       email: response.user?.email || payload.email,
       role: response.user?.role || response.role,
+      twoFactorEnabled: response.user?.twoFactorEnabled,
+      requiresTwoFactorSetup: response.user?.requiresTwoFactorSetup,
     }
     return {
       success: true,
@@ -787,6 +795,8 @@ export async function getCurrentAdmin(token: string): Promise<AdminUser | null> 
     return {
       email,
       role,
+      twoFactorEnabled: response.user?.twoFactorEnabled,
+      requiresTwoFactorSetup: response.user?.requiresTwoFactorSetup,
     }
   } catch {
     return null
