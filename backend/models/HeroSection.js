@@ -11,7 +11,7 @@ const heroSectionSchema = new mongoose.Schema(
     backgroundImage: { type: String, default: "" },
     overlay: { type: String, default: "linear-gradient(135deg, rgba(13, 110, 140, 0.55) 0%, rgba(59, 130, 246, 0.55) 100%)" },
     ctaText: { type: String, default: "Explore Treks" },
-    ctaLink: { type: String, default: "/optional-treks" },
+    ctaLink: { type: String, default: "/destinations" },
   },
   { timestamps: true }
 );

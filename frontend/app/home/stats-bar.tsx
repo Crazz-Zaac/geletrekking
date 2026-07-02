@@ -1,10 +1,12 @@
+import { SITE_METRICS } from '@/lib/site-metrics'
+
 export function StatsBar() {
   const stats = [
-    { value: '500+', label: 'Successful Treks' },
-    { value: '50+', label: 'Expert Guides' },
-    { value: '30+', label: 'Countries Served' },
-    { value: '15+', label: 'Years Experience' },
-    { value: '4.9★', label: 'Average Rating' },
+    { value: SITE_METRICS.successfulTreks, label: 'Successful Treks' },
+    { value: SITE_METRICS.expertGuides, label: 'Expert Guides' },
+    { value: SITE_METRICS.countriesServed, label: 'Countries Served' },
+    { value: SITE_METRICS.yearsExperience, label: 'Years Experience' },
+    { value: SITE_METRICS.googleReviewRating + '/5', label: 'Average Rating' },
   ]
 
   return (

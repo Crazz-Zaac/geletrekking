@@ -22,7 +22,8 @@ import {
 import { WhatsAppIcon } from '@/components/whatsapp-icon';
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons';
 import { useEffect, useMemo, useState } from 'react';
-import { getAdminAbout, getGoogleReviews, type AdminAbout, type UiGoogleReview } from '@/lib/api';
+import { getAdminAbout, getGoogleReviews, type AdminAbout, type AdminAboutStat, type UiGoogleReview } from '@/lib/api';
+import { SITE_METRICS } from '@/lib/site-metrics';
 import { useSiteSettings } from '@/hooks/use-site-settings';
 
 const values = [
@@ -63,11 +64,41 @@ const defaultAssociations = [
 ];
 
 const fallbackStats = [
-  { label: 'Years Of Local Expertise', value: '15+' },
-  { label: 'Guided Trekkers', value: '2,500+' },
-  { label: 'Average Traveller Rating', value: '4.9/5' },
-  { label: 'Safety-First Operations', value: '100%' },
+  { label: 'Years Of Local Expertise', value: SITE_METRICS.yearsExperience },
+  { label: 'Guided Trekkers', value: SITE_METRICS.successfulTreks },
+  { label: 'Average Traveller Rating', value: SITE_METRICS.googleReviewRating + '/5' },
+  { label: 'Expert Guides', value: SITE_METRICS.expertGuides },
 ];
+
+const normalizeAboutStat = (stat: AdminAboutStat): AdminAboutStat => {
+  const label = stat.label.trim();
+  const normalizedLabel = label.toLowerCase();
+
+  if (normalizedLabel.includes('average') && normalizedLabel.includes('rating')) {
+    return { label, value: SITE_METRICS.googleReviewRating + '/5' };
+  }
+
+  if (normalizedLabel.includes('guided trekkers') || normalizedLabel.includes('successful treks')) {
+    return { label, value: SITE_METRICS.successfulTreks };
+  }
+
+  if (normalizedLabel.includes('local expertise') || normalizedLabel.includes('years')) {
+    return { label, value: SITE_METRICS.yearsExperience };
+  }
+
+  if (normalizedLabel.includes('expert guides') || normalizedLabel.includes('safety-first operations')) {
+    return {
+      label: normalizedLabel.includes('safety-first operations') ? 'Expert Guides' : label,
+      value: SITE_METRICS.expertGuides,
+    };
+  }
+
+  if (normalizedLabel.includes('countries')) {
+    return { label, value: SITE_METRICS.countriesServed };
+  }
+
+  return stat;
+};
 
 const defaultAbout: Required<Pick<AdminAbout, 'heroTitle' | 'heroSubtitle' | 'storyTitle' | 'storyBody' | 'missionTitle' | 'missionBody'>> & {
   highlights: Array<{ title: string; description: string }>
@@ -253,7 +284,8 @@ export function AboutPageClient() {
   const aboutStats = useMemo(() => {
     const stats = (about?.stats || [])
       .filter((stat) => stat.label?.trim() && stat.value?.trim())
-      .slice(0, 4);
+      .slice(0, 4)
+      .map(normalizeAboutStat);
     return stats.length > 0 ? stats : fallbackStats;
   }, [about?.stats]);
 
@@ -615,7 +647,7 @@ export function AboutPageClient() {
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
                   <Button asChild>
-                    <Link href="/contact">Plan My Trek</Link>
+                    <Link href="/plan-my-trek">Plan My Trek</Link>
                   </Button>
                   <Button asChild variant="outline">
                     <Link href="/guides">Read Trekking Guides</Link>

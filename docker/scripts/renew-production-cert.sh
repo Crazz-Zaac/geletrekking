@@ -14,10 +14,10 @@ DOCKER_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$DOCKER_DIR"
 
 echo "[1/3] Running certbot renew"
-docker compose run --rm --profile prod certbot renew --webroot -w /var/www/certbot
+docker compose --profile prod run --rm certbot renew --webroot -w /var/www/certbot
 
 echo "[2/3] Exporting latest certificate for nginx"
-docker compose run --rm --profile prod certbot sh -lc "cp /etc/letsencrypt/live/$PRIMARY_DOMAIN/fullchain.pem /etc/nginx/certs/fullchain.pem && cp /etc/letsencrypt/live/$PRIMARY_DOMAIN/privkey.pem /etc/nginx/certs/privkey.pem"
+docker compose --profile prod run --rm --entrypoint sh certbot -lc "cp /etc/letsencrypt/live/$PRIMARY_DOMAIN/fullchain.pem /etc/nginx/certs/fullchain.pem && cp /etc/letsencrypt/live/$PRIMARY_DOMAIN/privkey.pem /etc/nginx/certs/privkey.pem"
 
 echo "[3/3] Reloading nginx"
 docker compose exec nginx nginx -s reload

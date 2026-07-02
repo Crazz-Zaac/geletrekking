@@ -11,8 +11,8 @@ import { WhyUsSection } from './home/why-us-section'
 import { BlogHighlights } from './home/blog-highlights'
 import { BookingCTA } from './home/booking-cta'
 import { StatsBar } from './home/stats-bar'
-import Script from 'next/script'
 import { TrustpilotWidget } from '@/components/trustpilot-widget'
+import { GoogleReviewsEmbed } from './home/google-reviews-embed'
 
 export default async function HomePage() {
   const [apiTreks, apiBlogs] = await Promise.all([
@@ -96,8 +96,7 @@ export default async function HomePage() {
                 Stories from the Trail
               </h2>
             </div>
-            <div id="featurable-d8cabeae-9e92-42e1-ab78-75f13b25aa45" data-featurable-async />
-            <Script src="https://featurable.com/assets/bundle.js" strategy="afterInteractive" />
+            <GoogleReviewsEmbed />
           </div>
         </section>
         <section className="py-6 md:py-8 bg-background">

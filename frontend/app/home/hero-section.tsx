@@ -2,6 +2,11 @@ import Link from 'next/link'
 import { ArrowRight, Search } from 'lucide-react'
 import { getAdminHero } from '@/lib/api'
 
+const normalizeHeroCtaLink = (link?: string) => {
+  const normalized = link?.trim() || ''
+  return normalized === '/optional-treks' ? '/destinations' : normalized
+}
+
 const defaultHero = {
   title: "Trek the World's\nGreatest Mountains",
   subtitle:
@@ -23,7 +28,7 @@ export async function HeroSection() {
       backgroundImage: remote.backgroundImage?.trim() || defaultHero.backgroundImage,
       overlay: remote.overlay?.trim() || defaultHero.overlay,
       ctaText: remote.ctaText?.trim() || defaultHero.ctaText,
-      ctaLink: remote.ctaLink?.trim() || defaultHero.ctaLink,
+      ctaLink: normalizeHeroCtaLink(remote.ctaLink) || defaultHero.ctaLink,
     }
   } catch {
     hero = defaultHero
@@ -68,7 +73,7 @@ export async function HeroSection() {
             <ArrowRight className="w-4 h-4" />
           </Link>
           <Link
-            href="/book"
+            href="/plan-my-trek"
             className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/30 text-white font-semibold px-7 py-3.5 rounded-xl hover:bg-white/20 transition-colors text-base"
           >
             Plan My Trek

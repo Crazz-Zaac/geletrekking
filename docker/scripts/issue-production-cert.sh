@@ -42,7 +42,7 @@ cd "$DOCKER_DIR"
 docker compose up -d nginx
 
 echo "[3/5] Requesting Let's Encrypt certificate for: $DOMAINS_CSV"
-docker compose run --rm --profile prod certbot certonly \
+docker compose --profile prod run --rm certbot certonly \
   --webroot \
   -w /var/www/certbot \
   --email "$EMAIL" \
@@ -53,7 +53,7 @@ docker compose run --rm --profile prod certbot certonly \
   "${STAGING_ARG[@]}"
 
 echo "[4/5] Exporting issued certificate for nginx"
-docker compose run --rm --profile prod certbot sh -lc "cp /etc/letsencrypt/live/$PRIMARY_DOMAIN/fullchain.pem /etc/nginx/certs/fullchain.pem && cp /etc/letsencrypt/live/$PRIMARY_DOMAIN/privkey.pem /etc/nginx/certs/privkey.pem"
+docker compose --profile prod run --rm --entrypoint sh certbot -lc "cp /etc/letsencrypt/live/$PRIMARY_DOMAIN/fullchain.pem /etc/nginx/certs/fullchain.pem && cp /etc/letsencrypt/live/$PRIMARY_DOMAIN/privkey.pem /etc/nginx/certs/privkey.pem"
 
 echo "[5/5] Reloading nginx with the new certificate"
 docker compose exec nginx nginx -s reload

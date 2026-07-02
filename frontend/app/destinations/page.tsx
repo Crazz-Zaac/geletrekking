@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
@@ -12,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { getTreks } from '@/lib/api';
-import { SlidersHorizontal, X, Scale } from 'lucide-react';
+import { SlidersHorizontal, X, Scale, Info, ArrowUpRight } from 'lucide-react';
 import { TrustpilotWidget } from '@/components/trustpilot-widget';
 
 const containerVariants = {
@@ -263,6 +264,22 @@ function DestinationsPageContent() {
     </div>
   );
 
+  const renderDifficultyGuideLink = () => (
+    <Link
+      href="/guides/gear-and-equipment"
+      className="flex items-start gap-2.5 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 text-sm text-foreground transition-colors hover:border-primary/35 hover:bg-primary/10"
+    >
+      <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <Info className="h-3.5 w-3.5" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-xs font-semibold uppercase tracking-wide">Need help judging trek difficulty?</span>
+        <span className="block text-xs leading-relaxed text-muted-foreground">See Section 09: What to Pack in the gear guide.</span>
+      </span>
+      <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+    </Link>
+  );
+
   const queryAnimationKey = `${selectedRegion}-${selectedDifficulty}-${selectedDuration}-${selectedSeason}-${selectedSort}`;
 
   return (
@@ -332,6 +349,7 @@ function DestinationsPageContent() {
                       </SheetHeader>
                       <div className="px-4 pb-6 space-y-4 overflow-y-auto">
                         {renderFilterControls(true)}
+                        {renderDifficultyGuideLink()}
                         <Button className="h-11 w-full" onClick={() => setIsMobileFiltersOpen(false)}>
                           Apply Filters
                         </Button>
@@ -344,6 +362,8 @@ function DestinationsPageContent() {
               <div className="hidden md:block">
                 {renderFilterControls(false)}
               </div>
+
+              {renderDifficultyGuideLink()}
 
               {activeFilters.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-2">
