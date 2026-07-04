@@ -488,16 +488,25 @@ export default function TrekDetailClient({
               <motion.div id="trek-map" variants={itemVariants} className="space-y-4 scroll-mt-36">
                 <SectionHeader index="06" title="Map" icon={MapPin} />
                 <Card className="border-border overflow-hidden">
-                  <iframe
-                    title={`${trek.title} map`}
-                    src={
-                      trek.mapEmbed ||
-                      `https://maps.google.com/maps?q=${encodeURIComponent(`${trek.title}, Nepal`)}&t=&z=7&ie=UTF8&iwloc=&output=embed`
-                    }
-                    className="w-full h-[380px] border-0"
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
+                  {trek.mapImageUrl ? (
+                    <img
+                      src={trek.mapImageUrl}
+                      alt={`${trek.title} route map`}
+                      className="h-auto w-full object-contain bg-muted/20"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <iframe
+                      title={`${trek.title} map`}
+                      src={
+                        trek.mapEmbed ||
+                        `https://maps.google.com/maps?q=${encodeURIComponent(`${trek.title}, Nepal`)}&t=&z=7&ie=UTF8&iwloc=&output=embed`
+                      }
+                      className="w-full h-[380px] border-0"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  )}
                 </Card>
               </motion.div>
 

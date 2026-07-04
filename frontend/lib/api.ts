@@ -421,6 +421,7 @@ interface BackendTrek {
   region_description?: string
   image_url?: string
   gallery_images?: string[]
+  map_image_url?: string
   highlights?: string[]
   itinerary?: Array<{
     day: number
@@ -660,6 +661,7 @@ function mapTrek(trek: BackendTrek): Trek {
         ? trek.gallery_images
         : [trek.image_url || '/images/hero-himalaya.jpg'],
     mapEmbed: trek.trek_map_embed_url,
+    mapImageUrl: trek.map_image_url,
     itineraryPdfUrl: trek.itinerary_pdf_url,
     hasOffer,
     offerType: trek.offer_type || trek.offer_title,

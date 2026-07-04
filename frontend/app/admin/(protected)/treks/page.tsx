@@ -40,6 +40,7 @@ type TrekForm = {
   image_url: string
   gallery_images: string
   trek_map_embed_url: string
+  map_image_url: string
   duration_days: number
   difficulty: 'Easy' | 'Moderate' | 'Hard'
   max_altitude_meters: number
@@ -100,6 +101,7 @@ const initialForm: TrekForm = {
   image_url: '',
   gallery_images: '',
   trek_map_embed_url: '',
+  map_image_url: '',
   duration_days: 10,
   difficulty: 'Moderate',
   max_altitude_meters: 0,
@@ -151,6 +153,7 @@ function formToPayload(form: TrekForm): Partial<AdminTrek> {
       ? form.gallery_images.split('\n').map((s) => s.trim()).filter(Boolean)
       : [],
     trek_map_embed_url: form.trek_map_embed_url.trim() || undefined,
+    map_image_url: form.map_image_url.trim() || undefined,
     duration_days: form.duration_days,
     difficulty: form.difficulty,
     max_altitude_meters: form.max_altitude_meters || undefined,
@@ -211,6 +214,7 @@ function trekToForm(item: AdminTrek): TrekForm {
     image_url: item.image_url || '',
     gallery_images: (item.gallery_images || []).join('\n'),
     trek_map_embed_url: item.trek_map_embed_url || '',
+    map_image_url: item.map_image_url || '',
     duration_days: item.duration_days || 10,
     difficulty: item.difficulty || 'Moderate',
     max_altitude_meters: item.max_altitude_meters || 0,
@@ -815,6 +819,13 @@ export default function AdminTreksPage() {
                   />
                 ))}
                 {field('Gallery image URLs — one per line', textarea('https://image1.jpg\nhttps://image2.jpg', form.gallery_images, (v) => setForm((p) => ({ ...p, gallery_images: v })), 5))}
+                {field('Route map image URL (JPG)', (
+                  <Input
+                    placeholder="https://.../everest-base-camp-map.jpg"
+                    value={form.map_image_url}
+                    onChange={(e) => setForm((p) => ({ ...p, map_image_url: e.target.value }))}
+                  />
+                ))}
                 {field('Google Maps embed URL', (
                   <Input
                     placeholder="https://maps.google.com/maps?..."
