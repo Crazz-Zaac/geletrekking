@@ -930,7 +930,7 @@ export default function AdminTreksPage() {
                 <div className="rounded-lg border border-border bg-muted/20 p-4">
                   <p className="text-sm font-medium text-foreground">What to pack</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Add one gear item per line. This appears in Section 09 as the Packing List.
+                    Add one gear item per line. Public packing guidance is maintained in the gear and equipment guide.
                   </p>
                 </div>
                 {field('Packing checklist items', (

@@ -45,7 +45,6 @@ import {
   Users,
   Wifi,
   Wind,
-  Backpack,
 } from 'lucide-react';
 
 interface TrekDetailClientProps {
@@ -148,7 +147,6 @@ export default function TrekDetailClient({
       { id: 'trek-map', label: 'Map' },
       { id: 'trek-gallery', label: 'Gallery' },
       { id: 'trek-faq', label: 'FAQ' },
-      { id: 'trek-packing', label: 'Packing List' },
       { id: 'booking-inquiry-section', label: 'Inquiry Form' },
     ],
     []
@@ -540,40 +538,8 @@ export default function TrekDetailClient({
                 )}
               </motion.div>
 
-              <motion.div id="trek-packing" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="09" title="What to Pack" icon={Backpack} />
-                <Card className="border-border overflow-hidden">
-                  <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4 bg-muted/20">
-                    <p className="text-sm font-semibold text-foreground">Recommended Gear Checklist</p>
-                    <Badge variant="outline" className="text-xs">
-                      {(trek.whatToPack || []).length} items
-                    </Badge>
-                  </div>
-                  {trek.whatToPack && trek.whatToPack.length > 0 ? (
-                    <div className="max-h-[320px] overflow-y-auto px-5 py-4">
-                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
-                        {trek.whatToPack.map((item, idx) => (
-                          <li key={`${item}-${idx}`} className="flex items-start gap-2.5 text-sm">
-                            <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                            </span>
-                            <span className="text-foreground leading-snug">{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : (
-                    <div className="px-5 py-4">
-                      <p className="text-sm text-muted-foreground">
-                        Packing recommendations will be added soon. Contact us for a custom checklist.
-                      </p>
-                    </div>
-                  )}
-                </Card>
-              </motion.div>
-
               <motion.div id="booking-inquiry-section" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="10" title="Booking Inquiry Form" icon={FileText} />
+                <SectionHeader index="09" title="Booking Inquiry Form" icon={FileText} />
                 <Card className="border-border p-6 md:p-8">
                   <BookingForm trek={trek} />
                 </Card>
