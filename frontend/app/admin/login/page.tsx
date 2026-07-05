@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { adminLogin, getCurrentAdmin } from '@/lib/api'
-import { getAdminToken, saveAdminSession } from '@/lib/admin-auth'
+import { clearAdminSession, getAdminToken, saveAdminSession } from '@/lib/admin-auth'
 
 function AdminLoginContent() {
   const router = useRouter()
@@ -27,7 +27,10 @@ function AdminLoginContent() {
       const user = await getCurrentAdmin(token)
       if (user) {
         router.replace('/admin')
+        return
       }
+
+      clearAdminSession()
     }
 
     void checkExistingSession()

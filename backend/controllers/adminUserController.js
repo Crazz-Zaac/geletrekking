@@ -147,6 +147,7 @@ exports.revokeInvite = async (req, res) => {
 
 exports.acceptInvite = async (req, res) => {
   const { token, password, name } = req.body
+  const submittedEmail = normalizeEmail(req.body.email)
 
   if (!token || !password) {
     return res.status(400).json({ message: 'Token and password are required.' })
@@ -162,6 +163,10 @@ exports.acceptInvite = async (req, res) => {
 
     if (invite.expiresAt < new Date()) {
       return res.status(400).json({ message: 'Invite expired.' })
+    }
+
+    if (submittedEmail && submittedEmail !== invite.email) {
+      return res.status(400).json({ message: 'Use the same email address this invite was sent to.' })
     }
 
     const existing = await User.findOne({ email: invite.email })

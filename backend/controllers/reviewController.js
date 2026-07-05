@@ -38,8 +38,28 @@ exports.getGoogleReviews = async (req, res) => {
 
     const payload = await response.json()
 
-    if (payload.status !== 'OK' && payload.status !== 'ZERO_RESULTS') {
-      throw new Error(`Google Places API error: ${payload.status}`)
+    if (payload.status === 'ZERO_RESULTS') {
+      return res.json({
+        place: null,
+        rating: null,
+        totalRatings: null,
+        url: null,
+        reviews: [],
+        configured: true,
+      })
+    }
+
+    if (payload.status !== 'OK') {
+      console.warn('Google reviews unavailable:', payload.status, payload.error_message || '')
+      return res.json({
+        place: null,
+        rating: null,
+        totalRatings: null,
+        url: null,
+        reviews: [],
+        configured: false,
+        message: 'Google reviews are not available right now.',
+      })
     }
 
     const result = payload.result || {}
