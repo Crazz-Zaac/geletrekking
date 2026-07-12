@@ -55,6 +55,13 @@ interface AuthMeResponse {
     requiresTwoFactorSetup?: boolean
   }
 }
+export interface AdminPricingTier {
+  name: string
+  price_usd?: number
+  price_gbp?: number
+  includes?: string[]
+}
+
 export interface AdminTrek {
   _id: string
   name: string
@@ -84,6 +91,7 @@ export interface AdminTrek {
   end_point?: string
   price_gbp?: number
   price_usd?: number
+  pricing_tiers?: AdminPricingTier[]
   duration_days?: number
   difficulty?: 'Easy' | 'Moderate' | 'Hard'
   group_size_min?: number
@@ -438,6 +446,7 @@ interface BackendTrek {
   start_point?: string
   end_point?: string
   price_usd?: number
+  pricing_tiers?: AdminPricingTier[]
   duration_days?: number
   difficulty?: 'Easy' | 'Moderate' | 'Hard'
   group_size_min?: number
@@ -583,6 +592,14 @@ function toAvatar(name: string): string {
     .map((part) => part[0]?.toUpperCase() || '')
     .join('') || 'GT'
 }
+function stripListMarker(value: string) {
+  return value.trim().replace(/^(?:[-*•]\s+|\d+[.)]\s+)/, "").trim()
+}
+
+function normalizeListItems(items?: string[]) {
+  return (items || []).map(stripListMarker).filter(Boolean)
+}
+
 function mapTrek(trek: BackendTrek): Trek {
   const title = trek.name || 'Untitled Trek'
   const fullDescription = (trek.description || trek.overview || 'Explore this amazing Himalayan trek.').trim()
@@ -617,10 +634,21 @@ function mapTrek(trek: BackendTrek): Trek {
   const originalPrice =
     trek.original_price_usd ||
     (hasOffer && trek.discounted_price_usd && trek.price_usd ? trek.price_usd : undefined)
+  const pricingTiers = (trek.pricing_tiers || [])
+    .map((tier) => ({
+      name: tier.name,
+      priceUsd: tier.price_usd || 0,
+      priceGbp: tier.price_gbp,
+      includes: normalizeListItems(tier.includes),
+    }))
+    .filter((tier) => tier.name && tier.priceUsd > 0)
+  const tierFromPrice = pricingTiers.length > 0
+    ? Math.min(...pricingTiers.map((tier) => tier.priceUsd))
+    : 0
   const currentPrice =
     hasOffer && trek.discounted_price_usd
       ? trek.discounted_price_usd
-      : trek.price_usd || 0
+      : tierFromPrice || trek.price_usd || 0
   return {
     id: trek._id,
     slug,
@@ -635,6 +663,7 @@ function mapTrek(trek: BackendTrek): Trek {
     dailyActivityHours: trek.daily_activity_hours,
     wifiAvailability: trek.wifi_availability,
     price: currentPrice,
+    pricingTiers: pricingTiers.length > 0 ? pricingTiers : undefined,
     groupSize,
     bestSeason: trek.best_season || 'All year',
     transportation,
@@ -643,7 +672,7 @@ function mapTrek(trek: BackendTrek): Trek {
     shortDescription,
     fullDescription,
     image: trek.image_url || '/images/hero-himalaya.jpg',
-    highlights: trek.highlights || [],
+    highlights: normalizeListItems(trek.highlights),
     itinerary: (trek.itinerary || []).map((day) => ({
       day: day.day,
       title: day.title,
@@ -652,9 +681,9 @@ function mapTrek(trek: BackendTrek): Trek {
       distance: day.distance,
       accommodation: day.accommodation || 'Teahouse',
     })),
-    includes: trek.includes || [],
-    excludes: trek.excludes || [],
-    whatToPack: trek.what_to_pack || [],
+    includes: normalizeListItems(trek.includes),
+    excludes: normalizeListItems(trek.excludes),
+    whatToPack: normalizeListItems(trek.what_to_pack),
     faqs: trek.faqs || [],
     gallery:
       trek.gallery_images && trek.gallery_images.length > 0

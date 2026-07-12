@@ -12,9 +12,16 @@ const defaultHero: AdminHero = {
   subtitle: '',
   backgroundImage: '',
   overlay: '',
-  ctaText: '',
-  ctaLink: '',
+  ctaText: 'Explore Treks',
+  ctaLink: '/destinations',
 }
+
+const normalizeHeroForm = (hero: AdminHero): AdminHero => ({
+  ...defaultHero,
+  ...hero,
+  ctaText: hero.ctaText?.trim() || defaultHero.ctaText,
+  ctaLink: hero.ctaLink?.trim() === '/optional-treks' ? '/destinations' : hero.ctaLink?.trim() || defaultHero.ctaLink,
+})
 
 export default function AdminHeroPage() {
   const [form, setForm] = useState<AdminHero>(defaultHero)
@@ -30,7 +37,7 @@ export default function AdminHeroPage() {
     setError('')
     try {
       const data = await getAdminHero()
-      setForm({ ...defaultHero, ...data })
+      setForm(normalizeHeroForm(data))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load hero section')
     } finally {
@@ -52,7 +59,7 @@ export default function AdminHeroPage() {
     setError('')
     setMessage('')
     try {
-      await updateAdminHero(token, form)
+      await updateAdminHero(token, normalizeHeroForm(form))
       setMessage('Hero section updated successfully.')
       await refresh()
     } catch (err) {
@@ -66,7 +73,7 @@ export default function AdminHeroPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Homepage Hero</h1>
-        <p className="text-sm text-muted-foreground">Update the hero image, copy, and primary CTA displayed on the homepage.</p>
+        <p className="text-sm text-muted-foreground">Update the hero image and copy displayed on the homepage.</p>
       </div>
 
       {error ? <Card className="border-red-200 bg-red-50"><CardContent className="pt-6 text-red-700 text-sm">{error}</CardContent></Card> : null}
@@ -131,31 +138,6 @@ export default function AdminHeroPage() {
                     onChange={(e) => setForm((prev) => ({ ...prev, overlay: e.target.value }))}
                   />
                   <p className="text-xs text-muted-foreground">Example: linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.8))</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border">
-              <CardHeader>
-                <CardTitle>Primary Call To Action</CardTitle>
-                <CardDescription>Displayed as the main hero button.</CardDescription>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">CTA text</label>
-                  <Input
-                    placeholder="Explore Treks"
-                    value={form.ctaText || ''}
-                    onChange={(e) => setForm((prev) => ({ ...prev, ctaText: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">CTA link</label>
-                  <Input
-                    placeholder="/destinations"
-                    value={form.ctaLink || ''}
-                    onChange={(e) => setForm((prev) => ({ ...prev, ctaLink: e.target.value }))}
-                  />
                 </div>
               </CardContent>
             </Card>

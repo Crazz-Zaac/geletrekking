@@ -23,6 +23,13 @@ const extraSectionSchema = new mongoose.Schema({
   content: { type: String, required: true },
 });
 
+const pricingTierSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  price_usd: { type: Number, default: 0 },
+  price_gbp: { type: Number, default: 0 },
+  includes: [{ type: String }],
+});
+
 // tracks when the trek is open for booking, fully booked, or has limited spots
 const availabilitySchema = new mongoose.Schema({
   start_date: { type: Date, required: true },
@@ -86,9 +93,12 @@ const trekPackageSchema = new mongoose.Schema(
     // the months or seasons when this trek is recommended
     best_season: { type: String },
 
-    // price in british pounds and us dollars
+    // base price kept for sorting and backwards compatibility
     price_gbp: { type: Number, default: 0 },
     price_usd: { type: Number, default: 0 },
+
+    // package tiers shown in the public booking price box
+    pricing_tiers: [pricingTierSchema],
 
     // how many days the trek takes
     duration_days: { type: Number, default: 0 },

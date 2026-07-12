@@ -198,12 +198,21 @@ export default function AdminSettingsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground">Map embed URL</label>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-foreground">Map embed URL</label>
+                  <span
+                    className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border bg-muted text-[11px] font-semibold text-muted-foreground"
+                    title="Paste only the src URL from Google Maps Share > Embed a map. Do not use maps.app.goo.gl share links or the full iframe code."
+                  >
+                    ?
+                  </span>
+                </div>
                 <Input
-                  placeholder="Google Maps embed URL"
+                  placeholder="https://www.google.com/maps/embed?pb=..."
                   value={form.mapEmbedUrl || ''}
                   onChange={(e) => setForm((prev) => ({ ...prev, mapEmbedUrl: e.target.value }))}
                 />
+                <p className="text-xs text-muted-foreground">Use the iframe src URL from Google Maps Embed a map, for example https://www.google.com/maps/embed?pb=...</p>
               </div>
             </section>
 

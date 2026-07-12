@@ -17,7 +17,6 @@ import {
   CalendarRange,
   ChevronDown,
   ChevronLeft,
-  CircleDollarSign,
   CheckCircle2,
   ClipboardList,
   CloudSun,
@@ -94,14 +93,99 @@ function SectionHeader({ index, title, icon: Icon }: SectionHeaderProps) {
   )
 }
 
+type FormattedTextBlock =
+  | { type: "paragraph"; text: string }
+  | { type: "ul" | "ol"; items: string[] }
+
+const unorderedListPattern = /^[-*•]\s+(.+)$/
+const orderedListPattern = /^\d+[.)]\s+(.+)$/
+
+function getFormattedTextBlocks(value: string): FormattedTextBlock[] {
+  const blocks: FormattedTextBlock[] = []
+  const lines = value.split("\n")
+
+  lines.forEach((rawLine) => {
+    const line = rawLine.trim()
+    const unorderedMatch = line.match(unorderedListPattern)
+    const orderedMatch = line.match(orderedListPattern)
+
+    if (!line) return
+
+    if (unorderedMatch) {
+      const previous = blocks[blocks.length - 1]
+      if (previous?.type === "ul") {
+        previous.items.push(unorderedMatch[1].trim())
+      } else {
+        blocks.push({ type: "ul", items: [unorderedMatch[1].trim()] })
+      }
+      return
+    }
+
+    if (orderedMatch) {
+      const previous = blocks[blocks.length - 1]
+      if (previous?.type === "ol") {
+        previous.items.push(orderedMatch[1].trim())
+      } else {
+        blocks.push({ type: "ol", items: [orderedMatch[1].trim()] })
+      }
+      return
+    }
+
+    const previous = blocks[blocks.length - 1]
+    if (previous?.type === "paragraph") {
+      previous.text = previous.text + " " + line
+    } else {
+      blocks.push({ type: "paragraph", text: line })
+    }
+  })
+
+  return blocks
+}
+
+function FormattedText({ value }: { value: string }) {
+  const blocks = getFormattedTextBlocks(value)
+
+  if (blocks.length === 0) return null
+
+  return (
+    <div className="space-y-3 text-muted-foreground">
+      {blocks.map((block, blockIndex) => {
+        if (block.type === "paragraph") {
+          return <p key={block.type + "-" + blockIndex}>{block.text}</p>
+        }
+
+        const ListTag = block.type
+        return (
+          <ListTag key={block.type + "-" + blockIndex} className={block.type === "ol" ? "list-decimal space-y-1 pl-5" : "list-disc space-y-1 pl-5"}>
+            {block.items.map((item, itemIndex) => (
+              <li key={item + "-" + itemIndex}>{item}</li>
+            ))}
+          </ListTag>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function TrekDetailClient({
   trek,
 }: TrekDetailClientProps) {
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [downloadingItinerary, setDownloadingItinerary] = useState(false);
+  const [expandedPricingTier, setExpandedPricingTier] = useState<string | null>(null);
   const weather = useTrekWeather(trek?.latitude, trek?.longitude)
   const fallbackFaqs = getTrekFAQBySlug(trek.slug)?.faqs || []
   const trekFaqs = trek.faqs && trek.faqs.length > 0 ? trek.faqs : fallbackFaqs
+  const pricingTiers = trek.pricingTiers && trek.pricingTiers.length > 0
+    ? trek.pricingTiers
+    : [
+        {
+          name: 'Economic',
+          priceUsd: trek.price,
+          includes: trek.includes || [],
+        },
+      ]
+  const specialEquipmentItems = trek.whatToPack || []
 
   const formatMetric = (value?: number, unit?: string) =>
     typeof value === 'number' && value > 0
@@ -145,6 +229,7 @@ export default function TrekDetailClient({
       { id: 'trek-includes', label: 'Included' },
       { id: 'trek-excludes', label: 'Excluded' },
       { id: 'trek-map', label: 'Map' },
+      { id: 'trek-special-equipment', label: 'Equipment' },
       { id: 'trek-gallery', label: 'Gallery' },
       { id: 'trek-faq', label: 'FAQ' },
       { id: 'booking-inquiry-section', label: 'Inquiry Form' },
@@ -424,7 +509,7 @@ export default function TrekDetailClient({
 
                         {expandedDay === day.day && (
                           <div className="mt-4 pt-4 border-t border-border">
-                            <p className="text-muted-foreground">{day.description}</p>
+                            <FormattedText value={day.description} />
                           </div>
                         )}
 
@@ -491,27 +576,58 @@ export default function TrekDetailClient({
                   {trek.mapImageUrl ? (
                     <img
                       src={trek.mapImageUrl}
-                      alt={`${trek.title} route map`}
-                      className="h-auto w-full object-contain bg-muted/20"
+                      alt={trek.title + " route map"}
+                      className="h-auto max-h-[720px] w-full object-contain bg-muted/20"
                       loading="lazy"
                     />
                   ) : (
-                    <iframe
-                      title={`${trek.title} map`}
-                      src={
-                        trek.mapEmbed ||
-                        `https://maps.google.com/maps?q=${encodeURIComponent(`${trek.title}, Nepal`)}&t=&z=7&ie=UTF8&iwloc=&output=embed`
-                      }
-                      className="w-full h-[380px] border-0"
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                    />
+                    <div className="flex min-h-[220px] items-center justify-center bg-muted/20 px-6 py-10 text-center">
+                      <p className="text-sm text-muted-foreground">Route map image will be added soon.</p>
+                    </div>
+                  )}
+                </Card>
+              </motion.div>
+
+              <motion.div id="trek-special-equipment" variants={itemVariants} className="space-y-4 scroll-mt-36">
+                <SectionHeader index="07" title="Special Equipment" icon={ClipboardList} />
+                <Card className="border-border p-5 md:p-6 space-y-5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-foreground">Trek-specific gear notes</p>
+                      <p className="text-sm text-muted-foreground">
+                        Review the full Nepal trekking packing list, then add these trek-specific items if listed by our team.
+                      </p>
+                    </div>
+                    <Link
+                      href="/guides/gear-and-equipment"
+                      className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80"
+                    >
+                      General packing list
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </div>
+
+                  {specialEquipmentItems.length > 0 ? (
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      {specialEquipmentItems.map((item) => (
+                        <li key={item} className="flex items-start gap-3 rounded-lg border border-border bg-muted/20 px-4 py-3">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                          <span className="text-foreground">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-5">
+                      <p className="text-sm text-muted-foreground">
+                        No extra trek-specific equipment has been added for this itinerary yet. Use the general packing list as your baseline.
+                      </p>
+                    </div>
                   )}
                 </Card>
               </motion.div>
 
               <motion.div id="trek-gallery" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="07" title="Gallery" icon={ImageIcon} />
+                <SectionHeader index="08" title="Gallery" icon={ImageIcon} />
                 <div className="flex items-center justify-between gap-4">
                   <Link
                     href={`/gallery?trek=${trek.slug}`}
@@ -535,7 +651,7 @@ export default function TrekDetailClient({
               </motion.div>
 
               <motion.div id="trek-faq" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="08" title="FAQ" icon={HelpCircle} />
+                <SectionHeader index="09" title="FAQ" icon={HelpCircle} />
                 {trekFaqs.length > 0 ? (
                   <FAQAccordion faqs={trekFaqs} />
                 ) : (
@@ -548,7 +664,7 @@ export default function TrekDetailClient({
               </motion.div>
 
               <motion.div id="booking-inquiry-section" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="09" title="Booking Inquiry Form" icon={FileText} />
+                <SectionHeader index="10" title="Booking Inquiry Form" icon={FileText} />
                 <Card className="border-border p-6 md:p-8">
                   <BookingForm trek={trek} />
                 </Card>
@@ -567,16 +683,59 @@ export default function TrekDetailClient({
             <motion.aside variants={itemVariants} className="space-y-6 h-fit sticky top-32 w-full lg:max-w-sm lg:ml-auto">
               <Card className="border-border bg-white p-5 md:p-6 transition-all hover:shadow-md">
                 <div className="space-y-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Price of the Trek</p>
-                  <div className="flex flex-col gap-1">
-                    {trek.originalPrice && trek.originalPrice > trek.price ? (
-                      <p className="text-xs text-muted-foreground line-through">${trek.originalPrice.toLocaleString()}</p>
-                    ) : null}
-                    <p className="text-2xl md:text-[34px] font-bold text-foreground leading-none">
-                      ${trek.price.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Per person • Custom private departures available</p>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Price of the Trek</p>
+                    <h3 className="mt-1 text-lg font-semibold text-foreground">Choose your package</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">Per person pricing. Expand a tier to see what is included.</p>
                   </div>
+
+                  <div className="space-y-2">
+                    {pricingTiers.map((tier) => {
+                      const isExpanded = expandedPricingTier === tier.name
+                      return (
+                        <div key={tier.name} className="rounded-lg border border-border bg-background overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedPricingTier(isExpanded ? null : tier.name)}
+                            className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
+                            aria-expanded={isExpanded}
+                          >
+                            <span className="min-w-0">
+                              <span className="block text-sm font-semibold text-foreground">{tier.name}</span>
+                              <span className="block text-xs text-muted-foreground">Package tier</span>
+                            </span>
+                            <span className="flex shrink-0 items-center gap-3">
+                              <span className="text-lg font-bold text-foreground">USD {tier.priceUsd.toLocaleString()}</span>
+                              <ChevronDown className={isExpanded ? "h-4 w-4 text-muted-foreground transition-transform rotate-180" : "h-4 w-4 text-muted-foreground transition-transform"} />
+                            </span>
+                          </button>
+
+                          {isExpanded ? (
+                            <div className="border-t border-border px-4 py-4 space-y-4">
+                              {tier.includes.length > 0 ? (
+                                <ul className="space-y-2 text-sm">
+                                  {tier.includes.map((item) => (
+                                    <li key={item} className="flex items-start gap-2 text-foreground">
+                                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                                      <span>{item}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">Tier details will be confirmed by our team.</p>
+                              )}
+
+                              <Button className="w-full" onClick={scrollToBooking}>
+                                <ArrowRight className="w-4 h-4 mr-2" />
+                                Inquire for {tier.name}
+                              </Button>
+                            </div>
+                          ) : null}
+                        </div>
+                      )
+                    })}
+                  </div>
+
                   {trek.offerDiscountPercent ? (
                     <Badge className="bg-emerald-100 text-emerald-700 text-[11px] px-3 py-1">Save {trek.offerDiscountPercent}% today</Badge>
                   ) : null}
@@ -584,31 +743,17 @@ export default function TrekDetailClient({
 
                 <div className="my-5 h-px bg-border" />
 
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-center">
+                <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3 text-xs text-muted-foreground">
                     <div className="flex items-center gap-2"><CalendarRange className="w-4 h-4 text-primary" /> {trek.duration} days</div>
                     <div className="flex items-center gap-2"><Mountain className="w-4 h-4 text-primary" /> {trek.maxAltitude}m</div>
                     <div className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> {trek.groupSize}</div>
-                    <div className="flex items-center gap-2"><CircleDollarSign className="w-4 h-4 text-primary" /> Flexible quote</div>
                   </div>
 
-                  <div className="hidden md:block h-12 w-px bg-border" />
-
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button className="w-full px-2 sm:px-3 text-[11px] sm:text-xs md:text-sm leading-tight" onClick={scrollToBooking}>
-                        <ArrowRight className="w-4 h-4 mr-2" />
-                        Start Inquiry
-                      </Button>
-                      <Button variant="outline" className="w-full" onClick={scrollToBooking}>
-                        Book Now
-                      </Button>
-                    </div>
-                    <Button variant="outline" className="w-full" onClick={handleDownloadItinerary} disabled={downloadingItinerary}>
-                      <Download className="w-4 h-4 mr-2" />
-                      Download PDF itinerary
-                    </Button>
-                  </div>
+                  <Button variant="outline" className="w-full" onClick={handleDownloadItinerary} disabled={downloadingItinerary}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF itinerary
+                  </Button>
                 </div>
               </Card>
 

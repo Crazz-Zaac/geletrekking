@@ -29,6 +29,13 @@ type FaqItem = {
   answer: string
 }
 
+type PricingTierForm = {
+  name: "Economic" | "Comfort"
+  price_usd: number
+  price_gbp: number
+  includes: string
+}
+
 type TrekForm = {
   name: string
   slug: string
@@ -56,6 +63,7 @@ type TrekForm = {
   end_point: string
   price_usd: number
   price_gbp: number
+  pricing_tiers: PricingTierForm[]
   // coordinates and location name for live weather fetching
   latitude: number
   longitude: number
@@ -90,6 +98,17 @@ const emptyDay = (): ItineraryDay => ({
 
 const emptyFaq = (): FaqItem => ({ question: '', answer: '' })
 
+const stripListMarker = (value: string) =>
+  value.trim().replace(/^(?:[-*•]\s+|\d+[.)]\s+)/, "").trim()
+
+const splitListItems = (value: string) =>
+  value.split("\n").map(stripListMarker).filter(Boolean)
+
+const defaultPricingTiers = (): PricingTierForm[] => ([
+  { name: 'Economic', price_usd: 0, price_gbp: 0, includes: '' },
+  { name: 'Comfort', price_usd: 0, price_gbp: 0, includes: '' },
+])
+
 const initialForm: TrekForm = {
   name: '',
   slug: '',
@@ -117,6 +136,7 @@ const initialForm: TrekForm = {
   end_point: '',
   price_usd: 0,
   price_gbp: 0,
+  pricing_tiers: defaultPricingTiers(),
   latitude: 0,
   longitude: 0,
   location_name: '',
@@ -140,6 +160,15 @@ const initialForm: TrekForm = {
 }
 
 function formToPayload(form: TrekForm): Partial<AdminTrek> {
+  const pricingTiers = form.pricing_tiers.map((tier) => ({
+    name: tier.name,
+    price_usd: tier.price_usd || 0,
+    price_gbp: tier.price_gbp || 0,
+    includes: tier.includes ? splitListItems(tier.includes) : [],
+  }))
+  const usdPrices = pricingTiers.map((tier) => tier.price_usd || 0).filter((price) => price > 0)
+  const gbpPrices = pricingTiers.map((tier) => tier.price_gbp || 0).filter((price) => price > 0)
+
   return {
     name: form.name.trim(),
     slug: form.slug.trim() || undefined,
@@ -167,24 +196,17 @@ function formToPayload(form: TrekForm): Partial<AdminTrek> {
     transportation: form.transportation.trim() || undefined,
     start_point: form.start_point.trim() || undefined,
     end_point: form.end_point.trim() || undefined,
-    price_usd: form.price_usd,
-    price_gbp: form.price_gbp,
+    price_usd: usdPrices.length > 0 ? Math.min(...usdPrices) : form.price_usd,
+    price_gbp: gbpPrices.length > 0 ? Math.min(...gbpPrices) : form.price_gbp,
+    pricing_tiers: pricingTiers,
     // only send coordinates if both are filled in
     latitude: form.latitude || undefined,
     longitude: form.longitude || undefined,
     location_name: form.location_name.trim() || undefined,
-    highlights: form.highlights
-      ? form.highlights.split('\n').map((s) => s.trim()).filter(Boolean)
-      : [],
-    includes: form.includes
-      ? form.includes.split('\n').map((s) => s.trim()).filter(Boolean)
-      : [],
-    excludes: form.excludes
-      ? form.excludes.split('\n').map((s) => s.trim()).filter(Boolean)
-      : [],
-    what_to_pack: form.what_to_pack
-      ? form.what_to_pack.split('\n').map((s) => s.trim()).filter(Boolean)
-      : [],
+    highlights: form.highlights ? splitListItems(form.highlights) : [],
+    includes: form.includes ? splitListItems(form.includes) : [],
+    excludes: form.excludes ? splitListItems(form.excludes) : [],
+    what_to_pack: form.what_to_pack ? splitListItems(form.what_to_pack) : [],
     itinerary: form.itinerary.filter((d) => d.title.trim()),
     faqs: form.faqs.filter((f) => f.question.trim() && f.answer.trim()),
     has_offer: form.has_offer,
@@ -230,6 +252,20 @@ function trekToForm(item: AdminTrek): TrekForm {
     end_point: item.end_point || '',
     price_usd: item.price_usd || 0,
     price_gbp: item.price_gbp || 0,
+    pricing_tiers: item.pricing_tiers && item.pricing_tiers.length > 0
+      ? defaultPricingTiers().map((defaultTier) => {
+          const savedTier = item.pricing_tiers?.find((tier) => tier.name === defaultTier.name)
+          return {
+            name: defaultTier.name,
+            price_usd: savedTier?.price_usd || 0,
+            price_gbp: savedTier?.price_gbp || 0,
+            includes: (savedTier?.includes || []).join('\n'),
+          }
+        })
+      : [
+          { name: 'Economic', price_usd: item.price_usd || 0, price_gbp: item.price_gbp || 0, includes: (item.includes || []).join('\n') },
+          { name: 'Comfort', price_usd: 0, price_gbp: 0, includes: '' },
+        ],
     latitude: item.latitude || 0,
     longitude: item.longitude || 0,
     location_name: item.location_name || '',
@@ -272,7 +308,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'media', label: 'Media' },
   { key: 'itinerary', label: 'Itinerary' },
   { key: 'includes', label: 'Includes / Excludes' },
-  { key: 'packing', label: 'Packing List' },
+  { key: 'packing', label: 'Special Equipment' },
   { key: 'faqs', label: 'FAQs' },
   { key: 'offers', label: 'Offers' },
 ]
@@ -414,6 +450,14 @@ export default function AdminTreksPage() {
 
   const removeFaq = (index: number) => {
     setForm((prev) => ({ ...prev, faqs: prev.faqs.filter((_, i) => i !== index) }))
+  }
+
+  const updatePricingTier = (index: number, field: keyof PricingTierForm, value: string | number) => {
+    setForm((prev) => {
+      const updated = [...prev.pricing_tiers]
+      updated[index] = { ...updated[index], [field]: value }
+      return { ...prev, pricing_tiers: updated }
+    })
   }
 
   const textarea = (
@@ -739,20 +783,44 @@ export default function AdminTreksPage() {
             {activeTab === 'details' && (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {field('Price USD', (
-                    <Input
-                      type="number"
-                      value={form.price_usd}
-                      onChange={(e) => setForm((p) => ({ ...p, price_usd: Number(e.target.value) || 0 }))}
-                    />
-                  ))}
-                  {field('Price GBP', (
-                    <Input
-                      type="number"
-                      value={form.price_gbp}
-                      onChange={(e) => setForm((p) => ({ ...p, price_gbp: Number(e.target.value) || 0 }))}
-                    />
-                  ))}
+                  <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-border bg-muted/20 p-4 space-y-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">Package pricing tiers</h3>
+                      <p className="text-xs text-muted-foreground">Economic and Comfort appear as expandable rows on the public trek page.</p>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {form.pricing_tiers.map((tier, index) => (
+                        <div key={tier.name} className="rounded-md border border-border bg-background p-3 space-y-3">
+                          <p className="text-sm font-semibold text-foreground">{tier.name}</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {field('Price USD', (
+                              <Input
+                                type="number"
+                                value={tier.price_usd}
+                                onChange={(e) => updatePricingTier(index, 'price_usd', Number(e.target.value) || 0)}
+                              />
+                            ))}
+                            {field('Price GBP', (
+                              <Input
+                                type="number"
+                                value={tier.price_gbp}
+                                onChange={(e) => updatePricingTier(index, 'price_gbp', Number(e.target.value) || 0)}
+                              />
+                            ))}
+                          </div>
+                          {field(tier.name + ' includes - one item per line; bullets optional', (
+                            <textarea
+                              value={tier.includes}
+                              onChange={(e) => updatePricingTier(index, 'includes', e.target.value)}
+                              rows={5}
+                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
+                              placeholder={"Guide service\nAccommodation\nMeals during trek"}
+                            />
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                   {field('End point', (
                     <Input
                       placeholder="e.g. Lukla"
@@ -795,7 +863,7 @@ export default function AdminTreksPage() {
                 <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
                   <div>
                     <h3 className="text-sm font-semibold text-foreground">Highlights</h3>
-                    <p className="text-xs text-muted-foreground">Add one highlight per line. These appear as trek bullet points.</p>
+                    <p className="text-xs text-muted-foreground">Add one highlight per line. Bullets or numbers are optional and will be cleaned on save.</p>
                   </div>
                   <textarea
                     placeholder="Stand at Everest Base Camp\nSunrise views from Kala Patthar\nVisit Tengboche Monastery"
@@ -819,20 +887,14 @@ export default function AdminTreksPage() {
                   />
                 ))}
                 {field('Gallery image URLs — one per line', textarea('https://image1.jpg\nhttps://image2.jpg', form.gallery_images, (v) => setForm((p) => ({ ...p, gallery_images: v })), 5))}
-                {field('Route map image URL (JPG)', (
+                {field('Route map image URL', (
                   <Input
-                    placeholder="https://.../everest-base-camp-map.jpg"
+                    placeholder="https://.../manaslu-circuit-route-map.jpg"
                     value={form.map_image_url}
                     onChange={(e) => setForm((p) => ({ ...p, map_image_url: e.target.value }))}
                   />
                 ))}
-                {field('Google Maps embed URL', (
-                  <Input
-                    placeholder="https://maps.google.com/maps?..."
-                    value={form.trek_map_embed_url}
-                    onChange={(e) => setForm((p) => ({ ...p, trek_map_embed_url: e.target.value }))}
-                  />
-                ))}
+                <p className="text-xs text-muted-foreground">Upload or paste a direct image URL for this trek route map. Wide, tall, or square images are all displayed without cropping.</p>
               </div>
             )}
 
@@ -864,7 +926,7 @@ export default function AdminTreksPage() {
                         <TextToolbar fieldName="dayDescription" index={index} />
                         <textarea
                           data-field={`dayDescription-${index}`}
-                          placeholder="What happens on this day"
+                          placeholder="Describe the day. Use - item or 1. item for lists."
                           value={day.description}
                           onChange={(e) => updateDay(index, 'description', e.target.value)}
                           rows={3}
@@ -906,7 +968,7 @@ export default function AdminTreksPage() {
             {/* includes and excludes tab */}
             {activeTab === 'includes' && (
               <div className="space-y-4">
-                {field('What is included in the price — one item per line', (
+                {field('What is included in the price — one item per line; bullets optional', (
                 <>
                   <TextToolbar fieldName="includes" />
                   <textarea
@@ -919,7 +981,7 @@ export default function AdminTreksPage() {
                   />
                 </>
               ))}
-                {field('What the trekker pays separately — one item per line', (
+                {field('What the trekker pays separately — one item per line; bullets optional', (
                 <>
                   <TextToolbar fieldName="excludes" />
                   <textarea
@@ -935,21 +997,30 @@ export default function AdminTreksPage() {
               </div>
             )}
 
-            {/* packing list tab */}
+            {/* special equipment tab */}
             {activeTab === 'packing' && (
               <div className="space-y-4">
                 <div className="rounded-lg border border-border bg-muted/20 p-4">
-                  <p className="text-sm font-medium text-foreground">What to pack</p>
+                  <p className="text-sm font-medium text-foreground">Trek-specific equipment</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Add one gear item per line. Public packing guidance is maintained in the gear and equipment guide.
+                    Add only special gear this trek requires beyond the general packing list. The public page will also link to the{' '}
+                    <a
+                      href="/guides/gear-and-equipment"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-medium text-primary hover:text-primary/80"
+                    >
+                      gear and equipment guide
+                    </a>
+                    .
                   </p>
                 </div>
-                {field('Packing checklist items', (
+                {field('Special equipment items — one item per line; bullets optional', (
                 <>
                   <TextToolbar fieldName="whatToPack" />
                   <textarea
                     data-field="whatToPack-null"
-                    placeholder="e.g. Down jacket\nTrekking poles\nHeadlamp"
+                    placeholder="e.g. Microspikes for icy sections\nSleeping bag rated to -15C\nGaiters for snow crossings"
                     value={form.what_to_pack}
                     onChange={(e) => setForm((p) => ({ ...p, what_to_pack: e.target.value }))}
                     rows={10}

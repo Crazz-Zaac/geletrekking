@@ -1,3 +1,10 @@
+export interface TrekPricingTier {
+  name: string
+  priceUsd: number
+  priceGbp?: number
+  includes: string[]
+}
+
 export interface Trek {
   id: string
   slug: string
@@ -8,6 +15,7 @@ export interface Trek {
   difficulty: 'Easy' | 'Moderate' | 'Strenuous' | 'Challenging'
   maxAltitude: number
   price: number
+  pricingTiers?: TrekPricingTier[]
   groupSize: string
   bestSeason: string
   transportation: string

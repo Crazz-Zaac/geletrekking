@@ -1,11 +1,13 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { Mail, Phone, MapPin } from 'lucide-react'
 import { WhatsAppIcon } from '@/components/whatsapp-icon'
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons'
 import Image from 'next/image'
 import { useSiteSettings } from '@/hooks/use-site-settings'
+import { getTreks } from '@/lib/api'
 
 const footerLinks = {
   destinations: [
@@ -36,6 +38,33 @@ const footerLinks = {
 export function Footer() {
   const { settings, social } = useSiteSettings()
   const contactEmail = settings.email.trim()
+  const [destinationLinks, setDestinationLinks] = useState(footerLinks.destinations)
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadDestinationLinks = async () => {
+      try {
+        const trekList = await getTreks()
+        if (!isMounted || trekList.length === 0) return
+
+        setDestinationLinks(
+          trekList.map((trek) => ({
+            label: trek.title.replace(/\s+Trek$/i, ''),
+            href: `/trek/${trek.slug}`,
+          }))
+        )
+      } catch {
+        // Keep the curated fallback links when trek loading fails.
+      }
+    }
+
+    void loadDestinationLinks()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const socialLinks = [
     { Icon: FacebookIcon, href: social.facebook, label: 'Facebook' },
@@ -105,7 +134,7 @@ export function Footer() {
           <div>
             <h3 className="font-semibold text-sm uppercase tracking-wider text-white/40 mb-4">Destinations</h3>
             <ul className="space-y-2">
-              {footerLinks.destinations.map((link) => (
+              {destinationLinks.map((link) => (
                 <li key={link.label}>
                   <Link href={link.href} className="text-sm text-white/60 hover:text-white transition-colors">
                     {link.label}
