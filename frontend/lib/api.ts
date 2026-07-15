@@ -698,7 +698,7 @@ function mapTrek(trek: BackendTrek): Trek {
         summary: item.summary?.trim() || '',
         detail: item.detail?.trim() || '',
       }))
-      .filter((item) => item.title && item.summary && item.detail),
+      .filter((item) => item.title && item.summary && item.detail && !item.title.toLowerCase().includes('tip')),
     faqs: trek.faqs || [],
     gallery:
       trek.gallery_images && trek.gallery_images.length > 0

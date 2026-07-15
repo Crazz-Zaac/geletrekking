@@ -26,7 +26,7 @@ const normalizeTripEssentials = (items) => {
       summary: (item?.summary || '').trim(),
       detail: (item?.detail || '').trim(),
     }))
-    .filter((item) => item.title && item.summary && item.detail);
+    .filter((item) => item.title && item.summary && item.detail && !item.title.toLowerCase().includes('tip'));
 };
 
 const createTrek = async (req, res) => {

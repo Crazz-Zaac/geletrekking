@@ -116,7 +116,6 @@ const defaultTripEssentials = (): TripEssentialForm[] => ([
   { title: "Accommodation", summary: "", detail: "" },
   { title: "Toilet and Shower", summary: "", detail: "" },
   { title: "Food and Drink", summary: "", detail: "" },
-  { title: "Tipping guideline", summary: "", detail: "" },
 ])
 
 const mergeTripEssentials = (items: AdminTrek["trip_essentials"] = []): TripEssentialForm[] => {
