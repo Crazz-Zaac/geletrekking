@@ -30,6 +30,12 @@ const pricingTierSchema = new mongoose.Schema({
   includes: [{ type: String }],
 });
 
+const tripEssentialSchema = new mongoose.Schema({
+  title: { type: String, required: true, trim: true },
+  summary: { type: String, trim: true },
+  detail: { type: String, trim: true },
+});
+
 // tracks when the trek is open for booking, fully booked, or has limited spots
 const availabilitySchema = new mongoose.Schema({
   start_date: { type: Date, required: true },
@@ -86,6 +92,9 @@ const trekPackageSchema = new mongoose.Schema(
 
     // recommended gear checklist shown in "What to Pack"
     what_to_pack: [{ type: String }],
+
+    // practical trip essential cards shown before the includes and excludes section
+    trip_essentials: [tripEssentialSchema],
 
     // day by day plan for the trek
     itinerary: [itinerarySchema],

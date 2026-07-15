@@ -62,6 +62,12 @@ export interface AdminPricingTier {
   includes?: string[]
 }
 
+export interface AdminTripEssential {
+  title: string
+  summary?: string
+  detail?: string
+}
+
 export interface AdminTrek {
   _id: string
   name: string
@@ -76,6 +82,7 @@ export interface AdminTrek {
   includes?: string[]
   excludes?: string[]
   what_to_pack?: string[]
+  trip_essentials?: AdminTripEssential[]
   itinerary?: Array<{
     _id?: string
     day: number
@@ -442,6 +449,7 @@ interface BackendTrek {
   includes?: string[]
   excludes?: string[]
   what_to_pack?: string[]
+  trip_essentials?: AdminTripEssential[]
   best_season?: string
   start_point?: string
   end_point?: string
@@ -684,6 +692,13 @@ function mapTrek(trek: BackendTrek): Trek {
     includes: normalizeListItems(trek.includes),
     excludes: normalizeListItems(trek.excludes),
     whatToPack: normalizeListItems(trek.what_to_pack),
+    tripEssentials: (trek.trip_essentials || [])
+      .map((item) => ({
+        title: item.title?.trim() || '',
+        summary: item.summary?.trim() || '',
+        detail: item.detail?.trim() || '',
+      }))
+      .filter((item) => item.title && item.summary && item.detail),
     faqs: trek.faqs || [],
     gallery:
       trek.gallery_images && trek.gallery_images.length > 0

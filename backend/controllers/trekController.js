@@ -18,10 +18,25 @@ const isOfferActiveNow = (trek, now = new Date()) => {
   return true;
 };
 
+const normalizeTripEssentials = (items) => {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((item) => ({
+      title: (item?.title || '').trim(),
+      summary: (item?.summary || '').trim(),
+      detail: (item?.detail || '').trim(),
+    }))
+    .filter((item) => item.title && item.summary && item.detail);
+};
+
 const createTrek = async (req, res) => {
   try {
     const trekData = { ...req.body };
     delete trekData.overview;
+
+    if (Object.prototype.hasOwnProperty.call(trekData, "trip_essentials")) {
+      trekData.trip_essentials = normalizeTripEssentials(trekData.trip_essentials);
+    }
 
     if (trekData.offer_type && !trekData.offer_title) {
       trekData.offer_title = trekData.offer_type;
@@ -135,6 +150,10 @@ const updateTrek = async (req, res) => {
   try {
     const payload = { ...req.body };
     delete payload.overview;
+
+    if (Object.prototype.hasOwnProperty.call(payload, "trip_essentials")) {
+      payload.trip_essentials = normalizeTripEssentials(payload.trip_essentials);
+    }
 
     if (payload.offer_type && !payload.offer_title) {
       payload.offer_title = payload.offer_type;

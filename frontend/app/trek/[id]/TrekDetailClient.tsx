@@ -24,6 +24,7 @@ import {
   Droplet,
   Eye,
   FileText,
+  Gift,
   HelpCircle,
   Image as ImageIcon,
   Info,
@@ -36,6 +37,7 @@ import {
   Sun,
   Thermometer,
   Timer,
+  Utensils,
   ArrowRight,
   ShieldCheck,
   TrendingUp,
@@ -173,6 +175,7 @@ export default function TrekDetailClient({
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [downloadingItinerary, setDownloadingItinerary] = useState(false);
   const [expandedPricingTier, setExpandedPricingTier] = useState<string | null>(null);
+  const [expandedEssential, setExpandedEssential] = useState<string | null>(null);
   const weather = useTrekWeather(trek?.latitude, trek?.longitude)
   const fallbackFaqs = getTrekFAQBySlug(trek.slug)?.faqs || []
   const trekFaqs = trek.faqs && trek.faqs.length > 0 ? trek.faqs : fallbackFaqs
@@ -205,7 +208,7 @@ export default function TrekDetailClient({
       label: 'Acclimatization',
       value:
         typeof trek.acclimatizationDays === 'number' && trek.acclimatizationDays > 0
-          ? `${trek.acclimatizationDays} rest day${trek.acclimatizationDays > 1 ? 's' : ''}`
+          ? String(trek.acclimatizationDays) + " rest day" + (trek.acclimatizationDays > 1 ? "s" : "")
           : 'On request',
       icon: BedDouble,
     },
@@ -221,11 +224,72 @@ export default function TrekDetailClient({
     { label: 'Altitude level', value: getAltitudeLabel(trek.maxAltitude), icon: TrendingUp },
   ]
 
+  const defaultTripEssentials = [
+    {
+      id: 'communication',
+      icon: Wifi,
+      title: 'Communication',
+      summary: 'Signal gets patchy above lower villages.',
+      detail: 'Phone reception and internet are limited in remote areas. Some teahouses offer paid WiFi, often slow. Guides carry emergency contact support for urgent situations.',
+    },
+    {
+      id: 'accommodation',
+      icon: BedDouble,
+      title: 'Accommodation',
+      summary: 'Twin-share rooms, pre-booked every night.',
+      detail: 'All trek nights are arranged in advance, usually in twin-share teahouse rooms. Room standards can vary in remote settlements and at higher elevation.',
+    },
+    {
+      id: 'toilet-shower',
+      icon: Droplet,
+      title: 'Toilet and shower',
+      summary: 'Facilities vary by teahouse.',
+      detail: 'Facilities range from comfortable to basic depending on the village. Bring personal toiletries, quick-dry towel, and small cash for paid hot showers where available.',
+    },
+    {
+      id: 'food-drink',
+      icon: Utensils,
+      title: 'Food and drink',
+      summary: 'Local dishes, prices rise with altitude.',
+      detail: 'Menus usually include rice, noodles, potatoes, soups, hot drinks, and some international options. Bottled water and snacks become more expensive as supplies move higher.',
+    },
+    {
+      id: 'tipping',
+      icon: Gift,
+      title: 'Tipping guideline',
+      summary: 'Not mandatory, customary on the last night.',
+      detail: 'Tips are usually given near the end of the trek. Amounts are discretionary and can reflect group size, trip length, and the support team experience.',
+    },
+  ]
+
+
+  const tripEssentials = (trek.tripEssentials && trek.tripEssentials.length > 0 ? trek.tripEssentials : defaultTripEssentials).map((item, index) => {
+    const title = item.title.toLowerCase()
+    const icon = title.includes('communication') || title.includes('wifi')
+      ? Wifi
+      : title.includes('accommodation') || title.includes('stay')
+        ? BedDouble
+        : title.includes('toilet') || title.includes('shower')
+          ? Droplet
+          : title.includes('food') || title.includes('drink')
+            ? Utensils
+            : title.includes('tip')
+              ? Gift
+              : defaultTripEssentials[index]?.icon || Compass
+
+    return {
+      ...item,
+      id: item.title.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).join("-") || "essential-" + index,
+      icon,
+    }
+  })
+
   const navItems = useMemo(
     () => [
       { id: 'trek-overview', label: 'Overview' },
       { id: 'trek-highlights', label: 'Highlights' },
       { id: 'trek-itinerary', label: 'Itinerary' },
+      { id: 'trek-trip-essentials', label: 'Essentials' },
       { id: 'trek-includes', label: 'Included' },
       { id: 'trek-excludes', label: 'Excluded' },
       { id: 'trek-map', label: 'Map' },
@@ -535,8 +599,43 @@ export default function TrekDetailClient({
                 </div>
               </motion.div>
 
+              <motion.div id="trek-trip-essentials" variants={itemVariants} className="space-y-4 scroll-mt-36">
+                <SectionHeader index="05" title="Trip Essentials" icon={Compass} />
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-stretch">
+                  {tripEssentials.map((item) => {
+                    const EssentialIcon = item.icon
+                    const isExpanded = expandedEssential === item.id
+
+                    return (
+                      <Card key={item.id} className={"h-full border-border bg-card p-4 " + (tripEssentials.length > 3 && tripEssentials.indexOf(item) > 2 ? "md:col-span-3" : "md:col-span-2")}>
+                        <div className="min-h-[104px]">
+                          <EssentialIcon className="h-5 w-5 text-[#004D67]" />
+                          <p className="mt-3 text-sm font-semibold text-foreground">{item.title}</p>
+                          <p className="mt-1 text-[13px] leading-6 text-muted-foreground">{item.summary}</p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="mt-2 h-8 px-3 text-xs"
+                          onClick={() => setExpandedEssential(isExpanded ? null : item.id)}
+                          aria-expanded={isExpanded}
+                        >
+                          {isExpanded ? 'Show less' : 'Read more'}
+                        </Button>
+                        {isExpanded ? (
+                          <div className="mt-3 text-[13px] leading-6 text-muted-foreground">
+                            <p>{item.detail}</p>
+                          </div>
+                        ) : null}
+                      </Card>
+                    )
+                  })}
+                </div>
+              </motion.div>
+
               <motion.div variants={itemVariants} className="space-y-4">
-                <SectionHeader index="05" title="What's Covered" icon={ClipboardList} />
+                <SectionHeader index="06" title="What's Covered" icon={ClipboardList} />
                 <Card className="overflow-hidden border-border scroll-mt-36">
                   <div className="grid grid-cols-1 md:grid-cols-2">
                     <div id="trek-includes" className="px-5 py-4 md:py-5">
@@ -571,7 +670,7 @@ export default function TrekDetailClient({
               </motion.div>
 
               <motion.div id="trek-map" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="06" title="Map" icon={MapPin} />
+                <SectionHeader index="07" title="Map" icon={MapPin} />
                 <Card className="border-border overflow-hidden">
                   {trek.mapImageUrl ? (
                     <img
@@ -589,7 +688,7 @@ export default function TrekDetailClient({
               </motion.div>
 
               <motion.div id="trek-special-equipment" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="07" title="Special Equipment" icon={ClipboardList} />
+                <SectionHeader index="08" title="Special Equipment" icon={ClipboardList} />
                 <Card className="border-border p-5 md:p-6 space-y-5">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="space-y-1">
@@ -627,7 +726,7 @@ export default function TrekDetailClient({
               </motion.div>
 
               <motion.div id="trek-gallery" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="08" title="Gallery" icon={ImageIcon} />
+                <SectionHeader index="09" title="Gallery" icon={ImageIcon} />
                 <div className="flex items-center justify-between gap-4">
                   <Link
                     href={`/gallery?trek=${trek.slug}`}
@@ -651,7 +750,7 @@ export default function TrekDetailClient({
               </motion.div>
 
               <motion.div id="trek-faq" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="09" title="FAQ" icon={HelpCircle} />
+                <SectionHeader index="10" title="FAQ" icon={HelpCircle} />
                 {trekFaqs.length > 0 ? (
                   <FAQAccordion faqs={trekFaqs} />
                 ) : (
@@ -664,7 +763,7 @@ export default function TrekDetailClient({
               </motion.div>
 
               <motion.div id="booking-inquiry-section" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="10" title="Booking Inquiry Form" icon={FileText} />
+                <SectionHeader index="11" title="Booking Inquiry Form" icon={FileText} />
                 <Card className="border-border p-6 md:p-8">
                   <BookingForm trek={trek} />
                 </Card>

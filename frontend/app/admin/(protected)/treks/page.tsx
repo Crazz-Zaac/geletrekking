@@ -13,7 +13,7 @@ import {
 } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
 
-type TabKey = 'basic' | 'details' | 'itinerary' | 'includes' | 'packing' | 'faqs' | 'offers' | 'media'
+type TabKey = 'basic' | 'details' | 'itinerary' | 'essentials' | 'includes' | 'packing' | 'faqs' | 'offers' | 'media'
 
 type ItineraryDay = {
   day: number
@@ -34,6 +34,12 @@ type PricingTierForm = {
   price_usd: number
   price_gbp: number
   includes: string
+}
+
+type TripEssentialForm = {
+  title: string
+  summary: string
+  detail: string
 }
 
 type TrekForm = {
@@ -72,6 +78,7 @@ type TrekForm = {
   includes: string
   excludes: string
   what_to_pack: string
+  trip_essentials: TripEssentialForm[]
   itinerary: ItineraryDay[]
   faqs: FaqItem[]
   has_offer: boolean
@@ -103,6 +110,26 @@ const stripListMarker = (value: string) =>
 
 const splitListItems = (value: string) =>
   value.split("\n").map(stripListMarker).filter(Boolean)
+
+const defaultTripEssentials = (): TripEssentialForm[] => ([
+  { title: "Communication", summary: "", detail: "" },
+  { title: "Accommodation", summary: "", detail: "" },
+  { title: "Toilet and Shower", summary: "", detail: "" },
+  { title: "Food and Drink", summary: "", detail: "" },
+  { title: "Tipping guideline", summary: "", detail: "" },
+])
+
+const mergeTripEssentials = (items: AdminTrek["trip_essentials"] = []): TripEssentialForm[] => {
+  const savedByTitle = new Map(items.map((item) => [item.title.toLowerCase(), item]))
+  return defaultTripEssentials().map((item) => {
+    const saved = savedByTitle.get(item.title.toLowerCase())
+    return {
+      title: item.title,
+      summary: saved?.summary || "",
+      detail: saved?.detail || "",
+    }
+  })
+}
 
 const defaultPricingTiers = (): PricingTierForm[] => ([
   { name: 'Economic', price_usd: 0, price_gbp: 0, includes: '' },
@@ -144,6 +171,7 @@ const initialForm: TrekForm = {
   includes: '',
   excludes: '',
   what_to_pack: '',
+  trip_essentials: defaultTripEssentials(),
   itinerary: [emptyDay()],
   faqs: [emptyFaq()],
   has_offer: false,
@@ -207,6 +235,13 @@ function formToPayload(form: TrekForm): Partial<AdminTrek> {
     includes: form.includes ? splitListItems(form.includes) : [],
     excludes: form.excludes ? splitListItems(form.excludes) : [],
     what_to_pack: form.what_to_pack ? splitListItems(form.what_to_pack) : [],
+    trip_essentials: form.trip_essentials
+      .map((item) => ({
+        title: item.title.trim(),
+        summary: item.summary.trim(),
+        detail: item.detail.trim(),
+      }))
+      .filter((item) => item.title && item.summary && item.detail),
     itinerary: form.itinerary.filter((d) => d.title.trim()),
     faqs: form.faqs.filter((f) => f.question.trim() && f.answer.trim()),
     has_offer: form.has_offer,
@@ -273,6 +308,7 @@ function trekToForm(item: AdminTrek): TrekForm {
     includes: (item.includes || []).join('\n'),
     excludes: (item.excludes || []).join('\n'),
     what_to_pack: (item.what_to_pack || []).join('\n'),
+    trip_essentials: mergeTripEssentials(item.trip_essentials),
     itinerary:
       item.itinerary && item.itinerary.length > 0
         ? item.itinerary.map((d) => ({
@@ -307,6 +343,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'details', label: 'Trek Details' },
   { key: 'media', label: 'Media' },
   { key: 'itinerary', label: 'Itinerary' },
+  { key: 'essentials', label: 'Trip Essentials' },
   { key: 'includes', label: 'Includes / Excludes' },
   { key: 'packing', label: 'Special Equipment' },
   { key: 'faqs', label: 'FAQs' },
@@ -962,6 +999,49 @@ export default function AdminTreksPage() {
                 <Button type="button" variant="outline" onClick={addDay}>
                   + Add Day
                 </Button>
+              </div>
+            )}
+
+            {/* trip essentials tab */}
+            {activeTab === "essentials" && (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-border bg-muted/20 p-4">
+                  <p className="text-sm font-medium text-foreground">Trip Essentials cards</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Fill each card separately. Cards with both summary and detail are shown on the public trek page.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {form.trip_essentials.map((item, index) => (
+                    <div key={item.title} className="rounded-md border border-border bg-background p-4 space-y-3">
+                      <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                      {field("Short summary", (
+                        <Input
+                          value={item.summary}
+                          onChange={(e) => setForm((p) => {
+                            const updated = [...p.trip_essentials]
+                            updated[index] = { ...updated[index], summary: e.target.value }
+                            return { ...p, trip_essentials: updated }
+                          })}
+                          placeholder="Short line shown before expansion"
+                        />
+                      ))}
+                      {field("Expanded detail", (
+                        <textarea
+                          value={item.detail}
+                          onChange={(e) => setForm((p) => {
+                            const updated = [...p.trip_essentials]
+                            updated[index] = { ...updated[index], detail: e.target.value }
+                            return { ...p, trip_essentials: updated }
+                          })}
+                          rows={4}
+                          placeholder="Full details shown after Read more"
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-vertical"
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

@@ -5,6 +5,12 @@ export interface TrekPricingTier {
   includes: string[]
 }
 
+export interface TripEssential {
+  title: string
+  summary: string
+  detail: string
+}
+
 export interface Trek {
   id: string
   slug: string
@@ -33,6 +39,7 @@ export interface Trek {
   includes: string[]
   excludes: string[]
   whatToPack?: string[]
+  tripEssentials?: TripEssential[]
   faqs: FAQ[]
   gallery: string[]
   mapEmbed?: string
