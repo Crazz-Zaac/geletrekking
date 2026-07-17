@@ -73,8 +73,8 @@ app.use((req, res, next) => {
 /* =========================================================
    3. MIDDLEWARE
 ========================================================= */
-app.use(express.urlencoded({ extended: true, limit: "20kb" }));
-app.use(express.json({ limit: "20kb" }));
+app.use(express.urlencoded({ extended: true, limit: "250kb" }));
+app.use(express.json({ limit: "250kb" }));
 app.use("/api", requestRiskMiddleware);
 app.use("/api", apiLimiter);
 
