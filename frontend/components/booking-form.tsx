@@ -2,16 +2,18 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { MapPin, ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import type { Trek } from '@/lib/data'
 import { submitContactMessage } from '@/lib/api'
 import { TurnstileWidget } from '@/components/turnstile-widget'
 
 interface BookingFormProps {
   trek?: Trek
+  treks?: Trek[]
+  requireTrek?: boolean
 }
 
-export function BookingForm({ trek }: BookingFormProps) {
+export function BookingForm({ trek, treks = [], requireTrek = false }: BookingFormProps) {
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -34,7 +36,10 @@ export function BookingForm({ trek }: BookingFormProps) {
     groupSize: '',
     message: '',
   })
-  const isFormReady = Boolean(form.name.trim()) && Boolean(form.email.trim())
+  const isFormReady =
+    Boolean(form.name.trim()) &&
+    Boolean(form.email.trim()) &&
+    (!requireTrek || Boolean(form.trek.trim()))
   const isCaptchaReady = !requiresCaptcha || Boolean(captchaToken)
   const canSubmit = !submitting && isFormReady && isCaptchaReady
 
@@ -145,14 +150,23 @@ export function BookingForm({ trek }: BookingFormProps) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">Preferred Trek</label>
-          <input
-            type="text"
+          <label className="block text-sm font-medium text-foreground mb-1.5">Preferred Trek {requireTrek ? "*" : ""}</label>
+          <select
             value={form.trek}
+            required={requireTrek}
             onChange={(e) => setForm({ ...form, trek: e.target.value })}
-            placeholder="Trek name"
             className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
-          />
+          >
+            <option value="">Select a trek</option>
+            {trek && !treks.some((item) => item.title === trek.title) ? (
+              <option value={trek.title}>{trek.title}</option>
+            ) : null}
+            {treks.map((item) => (
+              <option key={item.id} value={item.title}>
+                {item.title}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
