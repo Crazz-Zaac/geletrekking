@@ -150,7 +150,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false }: BookingFo
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">Preferred Trek {requireTrek ? "*" : ""}</label>
+          <label className="block text-sm font-medium text-foreground mb-1.5">Preferred Trek {requireTrek ? '*' : ''}</label>
           <select
             value={form.trek}
             required={requireTrek}
@@ -189,8 +189,8 @@ export function BookingForm({ trek, treks = [], requireTrek = false }: BookingFo
             <option value="">Select</option>
             <option>1 person</option>
             <option>2 people</option>
-            <option>3–5 people</option>
-            <option>6–10 people</option>
+            <option>3-5 people</option>
+            <option>6-10 people</option>
             <option>11+ people</option>
           </select>
         </div>
@@ -264,7 +264,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false }: BookingFo
       </button>
       {!isFormReady ? <p className="text-xs text-muted-foreground">Fill required fields to enable submission.</p> : null}
       <p className="text-xs text-muted-foreground leading-relaxed">
-        We use your data only to respond to your trekking inquiry and won’t share it without your consent.{' '}
+        We use your data only to respond to your trekking inquiry and won&apos;t share it without your consent.{' '}
         <Link href="/privacy-policy" className="text-primary underline underline-offset-2">
           Privacy Policy
         </Link>

@@ -168,6 +168,63 @@ export interface AdminContactMessage {
   isRead: boolean
   createdAt: string
 }
+export type BookingFormPayload = Record<string, string | boolean>
+export type BookingFieldType = 'text' | 'email' | 'tel' | 'date' | 'time' | 'textarea' | 'select' | 'checkbox'
+export interface BookingFormFieldConfig {
+  id: string
+  label: string
+  type: BookingFieldType
+  required?: boolean
+  options?: string[]
+  placeholder?: string
+  condition?: 'sharedAccommodation' | 'altitudeCoverage'
+  locked?: boolean
+}
+export interface BookingFormSectionConfig {
+  id: string
+  title: string
+  fields: BookingFormFieldConfig[]
+}
+export type BookingFormConfig = BookingFormSectionConfig[]
+export interface AdminBookingSubmission {
+  _id: string
+  firstName: string
+  lastName: string
+  email: string
+  mobileWhatsapp?: string
+  trekPackage: string
+  formLink?: string
+  trekStartDate?: string
+  trekEndDate?: string
+  formData: BookingFormPayload
+  isRead: boolean
+  createdAt: string
+  updatedAt?: string
+  pdfFilename?: string
+}
+export interface AdminBookingFormLink {
+  _id: string
+  clientName?: string
+  clientEmail?: string
+  trekPackage?: string
+  notes?: string
+  formConfig?: BookingFormConfig
+  isActive: boolean
+  expiresAt: string
+  submittedAt?: string
+  submission?: string
+  createdAt: string
+  updatedAt?: string
+  token?: string
+  path?: string
+}
+export interface PublicBookingFormLink {
+  clientName?: string
+  clientEmail?: string
+  trekPackage?: string
+  formConfig?: BookingFormConfig
+  expiresAt: string
+}
 export interface AdminSiteSettings {
   siteName?: string
   logoUrl?: string
@@ -792,6 +849,30 @@ export async function submitContactMessage(payload: {
     }
   }
 }
+export async function getPrivateBookingFormLink(token: string): Promise<PublicBookingFormLink> {
+  return fetchJson<PublicBookingFormLink>("/api/booking-submissions/link/" + encodeURIComponent(token), { credentials: "omit" })
+}
+
+export async function submitPrivateBookingSubmission(token: string, payload: {
+  formData: BookingFormPayload
+  pdfBase64: string
+  website?: string
+  formStartedAt?: number
+  captchaToken?: string
+}): Promise<{ success: boolean; message: string; id?: string }> {
+  try {
+    const response = await fetchJson<{ message?: string; id?: string }>("/api/booking-submissions/link/" + encodeURIComponent(token) + "/submit", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      credentials: "omit",
+    })
+    return { success: true, message: response.message || "Your booking form was submitted.", id: response.id }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to submit booking form right now. Please try again shortly."
+    return { success: false, message }
+  }
+}
+
 export async function adminLogin(payload: { email: string; password: string; twoFactorCode?: string }): Promise<{ success: boolean; token?: string; user?: AdminUser; message?: string; need2FA?: boolean }> {
   try {
     const response = await fetchJson<AdminLoginResponse>('/api/admin/login', {
@@ -921,6 +1002,50 @@ export async function updateAdminGalleryHero(token: string, heroImageUrl: string
 }
 export async function getAdminMessages(token: string): Promise<AdminContactMessage[]> {
   return fetchAdminJson<AdminContactMessage[]>('/api/contact/admin', token)
+}
+
+export async function getAdminBookingFormLinks(token: string): Promise<AdminBookingFormLink[]> {
+  return fetchAdminJson<AdminBookingFormLink[]>("/api/booking-submissions/admin/links", token)
+}
+
+export async function createAdminBookingFormLink(token: string, payload: { clientName?: string; clientEmail?: string; trekPackage?: string; notes?: string; ttlDays?: number; formConfig?: BookingFormConfig }): Promise<AdminBookingFormLink> {
+  return fetchAdminJson<AdminBookingFormLink>("/api/booking-submissions/admin/links", token, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function deactivateAdminBookingFormLink(token: string, id: string): Promise<AdminBookingFormLink> {
+  return fetchAdminJson<AdminBookingFormLink>("/api/booking-submissions/admin/links/" + id + "/deactivate", token, { method: "PATCH" })
+}
+
+export async function deleteAdminBookingFormLink(token: string, id: string): Promise<void> {
+  await fetchAdminJson<{ message: string }>("/api/booking-submissions/admin/links/" + id, token, { method: "DELETE" })
+}
+
+export async function getAdminBookingSubmissions(token: string): Promise<AdminBookingSubmission[]> {
+  return fetchAdminJson<AdminBookingSubmission[]>("/api/booking-submissions/admin", token)
+}
+
+export async function markAdminBookingRead(token: string, id: string): Promise<AdminBookingSubmission> {
+  return fetchAdminJson<AdminBookingSubmission>("/api/booking-submissions/admin/" + id + "/read", token, { method: "PATCH" })
+}
+
+export async function markAdminBookingUnread(token: string, id: string): Promise<AdminBookingSubmission> {
+  return fetchAdminJson<AdminBookingSubmission>("/api/booking-submissions/admin/" + id + "/unread", token, { method: "PATCH" })
+}
+
+export async function deleteAdminBookingSubmission(token: string, id: string): Promise<void> {
+  await fetchAdminJson<{ message: string }>("/api/booking-submissions/admin/" + id, token, { method: "DELETE" })
+}
+
+export async function downloadAdminBookingPdf(token: string, id: string): Promise<Blob> {
+  const response = await fetch(getApiUrl("/api/booking-submissions/admin/" + id + "/pdf"), {
+    headers: { Authorization: "Bearer " + token },
+    cache: "no-store",
+  })
+  if (!response.ok) throw new Error("PDF download failed: " + response.status + " " + response.statusText)
+  return response.blob()
 }
 export async function markAdminMessageRead(token: string, id: string): Promise<AdminContactMessage> {
   return fetchAdminJson<AdminContactMessage>(`/api/contact/admin/${id}/read`, token, {
