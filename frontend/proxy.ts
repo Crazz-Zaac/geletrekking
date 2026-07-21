@@ -29,16 +29,6 @@ export function proxy(request: NextRequest) {
 
   const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/')
 
-  if (pathname === '/private-booking' || pathname.startsWith('/private-booking/')) {
-    const response = NextResponse.next()
-    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, private, max-age=0')
-    response.headers.set('Pragma', 'no-cache')
-    response.headers.set('Expires', '0')
-    response.headers.set('Referrer-Policy', 'no-referrer')
-    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')
-    return response
-  }
-
   if (isAdminRoute) {
     if (pathname === '/admin/login') {
       return NextResponse.next()

@@ -8,7 +8,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Compass,
-  FileText,
   Flame,
   Info,
   LayoutDashboard,
@@ -59,7 +58,6 @@ const navItems: NavItem[] = [
   { label: 'Trip Plan', href: '/admin/trip-plan', icon: BookOpen, available: true },
   
   // Community & Feedback
-  { label: 'Bookings', href: '/admin/bookings', icon: FileText, available: true },
   { label: 'Messages', href: '/admin/messages', icon: Mail, available: true },
   
   // Settings

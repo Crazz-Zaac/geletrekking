@@ -1,19 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async headers() {
-    return [
-      {
-        source: "/private-booking/:path*",
-        headers: [
-          { key: "Cache-Control", value: "no-store, no-cache, must-revalidate, proxy-revalidate, private, max-age=0" },
-          { key: "Pragma", value: "no-cache" },
-          { key: "Expires", value: "0" },
-          { key: "Referrer-Policy", value: "no-referrer" },
-          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
-        ],
-      },
-    ]
-  },
   reactStrictMode: true,
   experimental: {
     // Keep middleware.ts working (not using proxy yet)
