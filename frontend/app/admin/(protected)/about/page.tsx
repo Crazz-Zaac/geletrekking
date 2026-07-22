@@ -53,36 +53,37 @@ const TextFormattingTools = ({
 }: {
   onFormat: (before: string, after?: string, placeholder?: string) => void
 }) => (
-  <div className="rounded-md border border-border bg-muted/50 p-2 mb-2">
-    <div className="flex flex-wrap items-center gap-1.5">
-      <Button variant="ghost" size="sm" onClick={() => onFormat('**', '**', 'bold text')} className="h-8 px-2" title="Bold">
-        <Bold className="w-4 h-4 mr-1" />
+  <div className="mb-2 rounded-md border border-border bg-background p-1.5 shadow-xs">
+    <div className="flex flex-wrap items-center gap-1">
+      <Button type="button" variant="ghost" size="sm" onClick={() => onFormat('**', '**', 'bold text')} className="h-8 gap-1.5 px-2" title="Bold">
+        <Bold className="w-4 h-4" />
         <span className="text-xs">Bold</span>
       </Button>
-      <Button variant="ghost" size="sm" onClick={() => onFormat('*', '*', 'italic text')} className="h-8 px-2" title="Italic">
-        <Italic className="w-4 h-4 mr-1" />
+      <Button type="button" variant="ghost" size="sm" onClick={() => onFormat('*', '*', 'italic text')} className="h-8 gap-1.5 px-2" title="Italic">
+        <Italic className="w-4 h-4" />
         <span className="text-xs">Italic</span>
       </Button>
-      <Button variant="ghost" size="sm" onClick={() => onFormat('## ', '', 'Heading')} className="h-8 px-2" title="Heading">
-        <Heading2 className="w-4 h-4 mr-1" />
+      <Button type="button" variant="ghost" size="sm" onClick={() => onFormat('## ', '', 'Heading')} className="h-8 gap-1.5 px-2" title="Heading">
+        <Heading2 className="w-4 h-4" />
         <span className="text-xs">Heading</span>
       </Button>
-      <Button variant="ghost" size="sm" onClick={() => onFormat('- ', '', 'List item')} className="h-8 px-2" title="Bullet List">
-        <List className="w-4 h-4 mr-1" />
+      <Button type="button" variant="ghost" size="sm" onClick={() => onFormat('- ', '', 'List item')} className="h-8 gap-1.5 px-2" title="Bullet List">
+        <List className="w-4 h-4" />
         <span className="text-xs">Bullet</span>
       </Button>
-      <Button variant="ghost" size="sm" onClick={() => onFormat('1. ', '', 'List item')} className="h-8 px-2" title="Numbered List">
-        <ListOrdered className="w-4 h-4 mr-1" />
+      <Button type="button" variant="ghost" size="sm" onClick={() => onFormat('1. ', '', 'List item')} className="h-8 gap-1.5 px-2" title="Numbered List">
+        <ListOrdered className="w-4 h-4" />
         <span className="text-xs">Numbered</span>
       </Button>
-      <Button variant="ghost" size="sm" onClick={() => onFormat('> ', '', 'Quote')} className="h-8 px-2" title="Quote">
-        <Quote className="w-4 h-4 mr-1" />
+      <Button type="button" variant="ghost" size="sm" onClick={() => onFormat('> ', '', 'Quote')} className="h-8 gap-1.5 px-2" title="Quote">
+        <Quote className="w-4 h-4" />
         <span className="text-xs">Quote</span>
       </Button>
+      <Button type="button" variant="ghost" size="sm" onClick={() => onFormat('[', '](/about)', 'link text')} className="h-8 gap-1.5 px-2" title="Link">
+        <LinkIcon className="w-4 h-4" />
+        <span className="text-xs">Link</span>
+      </Button>
     </div>
-    <p className="mt-2 text-[11px] text-muted-foreground">
-      Tip: highlight text first, then click a format option.
-    </p>
   </div>
 )
 
@@ -207,6 +208,15 @@ export default function AdminAboutPage() {
         setForm((prev) => ({ ...prev, storyBody: newValue }))
       } else if (textareaId === 'missionBody') {
         setForm((prev) => ({ ...prev, missionBody: newValue }))
+      } else if (textareaId.startsWith('whyChooseUs-')) {
+        const index = Number(textareaId.replace('whyChooseUs-', ''))
+        if (!Number.isNaN(index)) {
+          setForm((prev) => {
+            const next = [...(prev.whyChooseUs || [])]
+            next[index] = newValue
+            return { ...prev, whyChooseUs: next }
+          })
+        }
       }
 
       setTimeout(() => {
@@ -218,12 +228,20 @@ export default function AdminAboutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">About Page Editor</h1>
-          <p className="text-muted-foreground">Customize the content shown on your public About page</p>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">Admin dashboard</p>
+          <h1 className="mt-1 text-3xl font-bold text-foreground">About Page Editor</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Customize the public About page content, associations, team, values, and linked Why Us points.</p>
         </div>
+        <Button variant="outline" asChild className="gap-2 lg:self-center">
+          <a href="/about" target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="w-4 h-4" />
+            Preview Page
+          </a>
+        </Button>
+      </div>
 
         {error && (
           <Card className="mb-6 border-red-500/50 bg-red-50/50 dark:bg-red-950/20">
@@ -246,13 +264,13 @@ export default function AdminAboutPage() {
           </Card>
         )}
 
-        <Card className="border-border shadow-lg">
-          <CardHeader className="border-b border-border bg-gradient-to-r from-muted/50 to-background">
+        <Card className="border-border shadow-xs overflow-hidden">
+          <CardHeader className="border-b border-border bg-muted/20">
             <CardTitle>About Page Content</CardTitle>
-            <CardDescription>Edit sections that appear on the public About page. Supports markdown formatting.</CardDescription>
+            <CardDescription>Use Markdown-style tools for formatting. Links use [label](/page-url) or [label](https://example.com).</CardDescription>
           </CardHeader>
 
-          <CardContent className="pt-6">
+          <CardContent className="p-4 md:p-5">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -260,32 +278,32 @@ export default function AdminAboutPage() {
               </div>
             ) : (
               <Tabs defaultValue="hero" className="w-full">
-                <TabsList className="grid w-full grid-cols-7 lg:w-auto mb-6 overflow-x-auto">
-                  <TabsTrigger value="hero" className="gap-2">
+                <TabsList className="mb-5 flex h-auto w-full justify-start gap-2 overflow-x-auto bg-transparent p-0">
+                  <TabsTrigger value="hero" className="min-w-fit gap-2 rounded-md border border-border bg-background px-3 py-2 data-[state=active]:border-primary data-[state=active]:bg-primary/5">
                     <BookOpen className="w-4 h-4" />
                     <span className="hidden sm:inline">Hero</span>
                   </TabsTrigger>
-                  <TabsTrigger value="story" className="gap-2">
+                  <TabsTrigger value="story" className="min-w-fit gap-2 rounded-md border border-border bg-background px-3 py-2 data-[state=active]:border-primary data-[state=active]:bg-primary/5">
                     <Users className="w-4 h-4" />
                     <span className="hidden sm:inline">Story</span>
                   </TabsTrigger>
-                  <TabsTrigger value="values" className="gap-2">
+                  <TabsTrigger value="values" className="min-w-fit gap-2 rounded-md border border-border bg-background px-3 py-2 data-[state=active]:border-primary data-[state=active]:bg-primary/5">
                     <Heart className="w-4 h-4" />
                     <span className="hidden sm:inline">Values</span>
                   </TabsTrigger>
-                  <TabsTrigger value="why" className="gap-2">
+                  <TabsTrigger value="why" className="min-w-fit gap-2 rounded-md border border-border bg-background px-3 py-2 data-[state=active]:border-primary data-[state=active]:bg-primary/5">
                     <Zap className="w-4 h-4" />
                     <span className="hidden sm:inline">Why Us</span>
                   </TabsTrigger>
-                  <TabsTrigger value="team" className="gap-2">
+                  <TabsTrigger value="team" className="min-w-fit gap-2 rounded-md border border-border bg-background px-3 py-2 data-[state=active]:border-primary data-[state=active]:bg-primary/5">
                     <Users2 className="w-4 h-4" />
                     <span className="hidden sm:inline">Team</span>
                   </TabsTrigger>
-                  <TabsTrigger value="stats" className="gap-2">
+                  <TabsTrigger value="stats" className="min-w-fit gap-2 rounded-md border border-border bg-background px-3 py-2 data-[state=active]:border-primary data-[state=active]:bg-primary/5">
                     <BarChart3 className="w-4 h-4" />
                     <span className="hidden sm:inline">Stats</span>
                   </TabsTrigger>
-                  <TabsTrigger value="associations" className="gap-2">
+                  <TabsTrigger value="associations" className="min-w-fit gap-2 rounded-md border border-border bg-background px-3 py-2 data-[state=active]:border-primary data-[state=active]:bg-primary/5">
                     <Building2 className="w-4 h-4" />
                     <span className="hidden sm:inline">Associates</span>
                   </TabsTrigger>
@@ -293,7 +311,7 @@ export default function AdminAboutPage() {
 
                 {/* ── Hero Tab ── */}
                 <TabsContent value="hero" className="space-y-6">
-                  <div className="bg-gradient-to-br from-blue-50/50 to-cyan-50/50 dark:from-blue-950/20 dark:to-cyan-950/20 p-6 rounded-lg border border-blue-200/50 dark:border-blue-800/30">
+                  <div className="rounded-lg border border-border bg-background p-4 md:p-5">
                     <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                       <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       Hero Section
@@ -331,7 +349,7 @@ export default function AdminAboutPage() {
 
                 {/* ── Stats Tab ── */}
                 <TabsContent value="stats" className="space-y-6">
-                  <div className="bg-gradient-to-br from-cyan-50/50 to-sky-50/50 dark:from-cyan-950/20 dark:to-sky-950/20 p-6 rounded-lg border border-cyan-200/50 dark:border-cyan-800/30">
+                  <div className="rounded-lg border border-border bg-background p-4 md:p-5">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
                         <BarChart3 className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
@@ -406,7 +424,7 @@ export default function AdminAboutPage() {
 
                 {/* ── Story & Mission Tab ── */}
                 <TabsContent value="story" className="space-y-6">
-                  <div className="bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20 p-6 rounded-lg border border-purple-200/50 dark:border-purple-800/30">
+                  <div className="rounded-lg border border-border bg-background p-4 md:p-5">
                     <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                       <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                       Story & Mission
@@ -472,7 +490,7 @@ export default function AdminAboutPage() {
 
                 {/* ── Values Tab ── */}
                 <TabsContent value="values" className="space-y-6">
-                  <div className="bg-gradient-to-br from-red-50/50 to-orange-50/50 dark:from-red-950/20 dark:to-orange-950/20 p-6 rounded-lg border border-red-200/50 dark:border-red-800/30">
+                  <div className="rounded-lg border border-border bg-background p-4 md:p-5">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
                         <Heart className="w-5 h-5 text-red-600 dark:text-red-400" />
@@ -492,7 +510,7 @@ export default function AdminAboutPage() {
                       {(form.highlights || []).map((highlight, index) => (
                         <div key={index} className="bg-white dark:bg-slate-950 border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
                           <div className="flex items-center justify-between mb-3">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Value {index + 1}</p>
+                            <p className="text-xs font-semibold uppercase text-muted-foreground">Value {index + 1}</p>
                             <Button variant="destructive" size="sm" onClick={() => setForm((prev) => ({ ...prev, highlights: (prev.highlights || []).filter((_, idx) => idx !== index) }))}>
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -521,12 +539,15 @@ export default function AdminAboutPage() {
 
                 {/* ── Why Choose Us Tab ── */}
                 <TabsContent value="why" className="space-y-6">
-                  <div className="bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20 p-6 rounded-lg border border-green-200/50 dark:border-green-800/30">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                        <Zap className="w-5 h-5 text-green-600 dark:text-green-400" />
-                        Why Choose Us
-                      </h3>
+                  <div className="overflow-hidden rounded-lg border border-border bg-background">
+                    <div className="flex flex-col gap-3 border-b border-border bg-muted/20 p-4 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                          <Zap className="w-5 h-5 text-green-600 dark:text-green-400" />
+                          Why Choose Us
+                        </h3>
+                        <p className="mt-1 text-sm text-muted-foreground">Add short points. Use the link tool to create redirects such as [Everest treks](/destination/everest-region).</p>
+                      </div>
                       <Button
                         variant="outline"
                         size="sm"
@@ -537,31 +558,35 @@ export default function AdminAboutPage() {
                         Add Point
                       </Button>
                     </div>
-                    <div className="space-y-3">
+                    <div className="divide-y divide-border">
                       {(form.whyChooseUs || []).map((point, index) => (
-                        <div key={index} className="bg-white dark:bg-slate-950 border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <div className="flex items-center justify-between mb-3">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Point {index + 1}</p>
-                            <Button variant="destructive" size="sm" onClick={() => setForm((prev) => ({ ...prev, whyChooseUs: (prev.whyChooseUs || []).filter((_, idx) => idx !== index) }))}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                        <div key={index} className="grid gap-4 p-4 lg:grid-cols-[180px_1fr_auto] lg:items-start">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">Point {index + 1}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">Supports bold, italic, lists, quotes, and links.</p>
                           </div>
-                          <div className="grid grid-cols-1 gap-3 items-start">
-                            <div>
-                              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Reason</label>
-                              <Textarea
-                                value={point}
-                                onChange={(e) => {
-                                  const next = [...(form.whyChooseUs || [])]
-                                  next[index] = e.target.value
-                                  setForm((prev) => ({ ...prev, whyChooseUs: next }))
-                                }}
-                                placeholder="Enter a reason to choose us..."
-                                rows={2}
-                                className="text-sm"
-                              />
-                            </div>
+                          <div>
+                            <TextFormattingTools
+                              onFormat={(before, after, placeholder) =>
+                                handleTextAreaInsert(`whyChooseUs-${index}`, before, after, placeholder)
+                              }
+                            />
+                            <Textarea
+                              id={`whyChooseUs-${index}`}
+                              value={point}
+                              onChange={(e) => {
+                                const next = [...(form.whyChooseUs || [])]
+                                next[index] = e.target.value
+                                setForm((prev) => ({ ...prev, whyChooseUs: next }))
+                              }}
+                              placeholder="Example: Explore our [trek packages](/destinations) with transparent guidance."
+                              rows={4}
+                              className="font-mono text-sm"
+                            />
                           </div>
+                          <Button variant="outline" size="sm" className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700" onClick={() => setForm((prev) => ({ ...prev, whyChooseUs: (prev.whyChooseUs || []).filter((_, idx) => idx !== index) }))}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       ))}
                     </div>
@@ -570,7 +595,7 @@ export default function AdminAboutPage() {
 
                 {/* ── Team Tab ── */}
                 <TabsContent value="team" className="space-y-6">
-                  <div className="bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-950/20 dark:to-purple-950/20 p-6 rounded-lg border border-indigo-200/50 dark:border-indigo-800/30">
+                  <div className="rounded-lg border border-border bg-background p-4 md:p-5">
                     <div className="space-y-4 mb-6">
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">Section Title</label>
@@ -653,7 +678,7 @@ export default function AdminAboutPage() {
 
                 {/* ── Associations Tab ── */}
                 <TabsContent value="associations" className="space-y-6">
-                  <div className="bg-gradient-to-br from-amber-50/50 to-yellow-50/50 dark:from-amber-950/20 dark:to-yellow-950/20 p-6 rounded-lg border border-amber-200/50 dark:border-amber-800/30">
+                  <div className="rounded-lg border border-border bg-background p-4 md:p-5">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
                         <Building2 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
@@ -767,12 +792,6 @@ export default function AdminAboutPage() {
                   </span>
                 </p>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" asChild className="gap-2">
-                    <a href="/about" target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="w-4 h-4" />
-                      Preview Page
-                    </a>
-                  </Button>
                   <Button onClick={onSave} disabled={saving} size="lg" className="gap-2">
                     {saving ? (
                       <>
@@ -788,7 +807,6 @@ export default function AdminAboutPage() {
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   )
 }

@@ -394,6 +394,7 @@ export default function TrekDetailClient({
         { label: "WhatsApp", url: social.whatsapp },
         { label: "Twitter", url: social.twitter },
       ].filter((item) => Boolean(item.url))
+      const tipGuideline = "Tipping is not mandatory, but it is a meaningful way to express gratitude for the services provided, in line with trekking traditions. It typically occurs on the final night of the trek, often accompanied by a celebration with the team. During this time, the support team shares their joy and emotions. The leader will guide the group in collecting the tips, which are then distributed by one of the group members to the team. The recommended tip for each Sherpa is $ 90 to $ 100, or an amount of your choice, excluding the trip leader. For the trip leader, depending on the group size, the suggested contribution is USD $40-$50 per person. However, the amount is entirely at your discretion and can be adjusted as you see fit."
 
       pdf.setProperties({
         title: trek.title + " Complete Itinerary",
@@ -636,6 +637,9 @@ export default function TrekDetailClient({
         addSection("Special Equipment")
         addBulletList(specialEquipmentItems)
       }
+
+      addSection("Tip guideline")
+      addParagraph(tipGuideline, 9)
 
       addPage(false)
       addSection("Map")

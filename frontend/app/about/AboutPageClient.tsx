@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/whatsapp-icon';
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { getAdminAbout, getGoogleReviews, type AdminAbout, type AdminAboutStat, type UiGoogleReview } from '@/lib/api';
 import { SITE_METRICS } from '@/lib/site-metrics';
 import { useSiteSettings } from '@/hooks/use-site-settings';
@@ -116,6 +116,72 @@ const defaultAbout: Required<Pick<AdminAbout, 'heroTitle' | 'heroSubtitle' | 'st
   highlights: values.map((item) => ({ title: item.title, description: item.description })),
   whyChooseUs,
   teamTitle: 'Meet Our Team',
+};
+
+
+const isSafeMarkdownHref = (href: string) => {
+  const value = href.trim();
+  return value.startsWith('/') || value.startsWith('#') || /^https?:\/\//i.test(value) || /^mailto:/i.test(value) || /^tel:/i.test(value);
+};
+
+const renderInlineMarkdown = (text: string): ReactNode[] => {
+  const nodes: ReactNode[] = [];
+  const pattern = /(\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*|\*([^*]+)\*)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index));
+
+    if (match[2] && match[3]) {
+      const href = match[3].trim();
+      const label = renderInlineMarkdown(match[2]);
+      if (isSafeMarkdownHref(href)) {
+        const isInternal = href.startsWith('/') || href.startsWith('#');
+        nodes.push(
+          isInternal ? (
+            <Link key={match.index} href={href} className="font-semibold text-primary underline underline-offset-4 hover:text-primary/80">
+              {label}
+            </Link>
+          ) : (
+            <a key={match.index} href={href} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline underline-offset-4 hover:text-primary/80">
+              {label}
+            </a>
+          )
+        );
+      } else {
+        nodes.push(match[2]);
+      }
+    } else if (match[4]) {
+      nodes.push(<strong key={match.index} className="font-semibold text-foreground">{renderInlineMarkdown(match[4])}</strong>);
+    } else if (match[5]) {
+      nodes.push(<em key={match.index}>{renderInlineMarkdown(match[5])}</em>);
+    }
+
+    lastIndex = pattern.lastIndex;
+  }
+
+  if (lastIndex < text.length) nodes.push(text.slice(lastIndex));
+  return nodes;
+};
+
+const MarkdownText = ({ value, className = '' }: { value: string; className?: string }) => {
+  const lines = value.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  if (lines.length === 0) return null;
+
+  return (
+    <div className={className}>
+      {lines.map((line, index) => {
+        if (line.startsWith('## ')) {
+          return <h3 key={index} className="mt-4 first:mt-0 text-lg font-bold text-foreground">{renderInlineMarkdown(line.slice(3))}</h3>;
+        }
+        if (line.startsWith('> ')) {
+          return <blockquote key={index} className="my-3 border-l-2 border-primary pl-3 text-sm italic text-muted-foreground">{renderInlineMarkdown(line.slice(2))}</blockquote>;
+        }
+        return <p key={index} className="mt-3 first:mt-0 text-muted-foreground leading-relaxed text-[15px] md:text-base">{renderInlineMarkdown(line.replace(/^[-*]\s+/, '').replace(/^\d+\.\s+/, ''))}</p>;
+      })}
+    </div>
+  );
 };
 
 type CombinedReview = {
@@ -339,7 +405,7 @@ export function AboutPageClient() {
               {heroTitle}
             </motion.h1>
             <motion.p variants={itemVariants} className={`text-base md:text-lg max-w-3xl mx-auto ${heroImageUrl ? 'text-white/85' : 'text-muted-foreground'}`}>
-              {heroSubtitle}
+              {renderInlineMarkdown(heroSubtitle)}
             </motion.p>
             <motion.div variants={itemVariants} className="flex flex-wrap justify-center gap-2.5 pt-1">
               <Button asChild className="h-10 px-5">
@@ -392,13 +458,13 @@ export function AboutPageClient() {
               <motion.div variants={itemVariants}>
                 <div className="p-1 md:p-2">
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">{storyTitle}</h2>
-                  <p className="text-muted-foreground leading-relaxed text-[15px] md:text-base">{storyBody}</p>
+                  <MarkdownText value={storyBody} />
                   {storyBullets.length > 0 && (
                     <ul className="mt-4 space-y-2.5">
                       {storyBullets.map((point) => (
                         <li key={point} className="flex gap-2.5 text-sm text-muted-foreground">
                           <span className="text-primary font-bold">•</span>
-                          <span>{point}</span>
+                          <MarkdownText value={point} className="flex-1" />
                         </li>
                       ))}
                     </ul>
@@ -409,13 +475,13 @@ export function AboutPageClient() {
               <motion.div variants={itemVariants}>
                 <div className="p-1 md:p-2">
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">{missionTitle}</h2>
-                  <p className="text-muted-foreground leading-relaxed text-[15px] md:text-base">{missionBody}</p>
+                  <MarkdownText value={missionBody} />
                   {missionBullets.length > 0 && (
                     <ul className="mt-4 space-y-2.5">
                       {missionBullets.map((point) => (
                         <li key={point} className="flex gap-2.5 text-sm text-muted-foreground">
                           <span className="text-primary font-bold">•</span>
-                          <span>{point}</span>
+                          <MarkdownText value={point} className="flex-1" />
                         </li>
                       ))}
                     </ul>
