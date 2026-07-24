@@ -1279,6 +1279,7 @@ export interface AdminFaq {
   heroTitle?: string
   heroSubtitle?: string
   faqs?: AdminFaqItem[]
+  updatedAt?: string
 }
 export async function getAdminFaq(): Promise<AdminFaq> {
   return fetchJson<AdminFaq>('/api/faq')
