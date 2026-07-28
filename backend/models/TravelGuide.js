@@ -6,11 +6,12 @@ const travelGuideSchema = new mongoose.Schema(
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     category: {
       type: String,
-      enum: ['Logistics', 'Health', 'Preparation', 'Legal', 'Communication', 'Safety'],
+      enum: ['Logistics', 'Health', 'Health & Safety', 'Preparation', 'Guidelines', 'Legal', 'Communication', 'Safety'],
       required: true,
     },
     description: { type: String, default: '' },
     icon: { type: String, default: 'BookOpen' },
+    section: { type: String, default: '' },
     content: { type: String, required: true },
     order: { type: Number, default: 0 },
     region: {

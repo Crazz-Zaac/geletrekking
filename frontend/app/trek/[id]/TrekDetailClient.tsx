@@ -52,6 +52,10 @@ interface TrekDetailClientProps {
   trek: Trek;
 }
 
+function formatPdfText(value?: string) {
+  return String(value || "").replace(/[^\x20-\x7E]/g, "").replace(/\s+/g, " ").trim()
+}
+
 function getAltitudeLabel(maxAltitude: number) {
   if (maxAltitude >= 5000) return 'Extreme High Altitude';
   if (maxAltitude >= 4000) return 'High Altitude';
@@ -610,7 +614,7 @@ export default function TrekDetailClient({
         pdf.text("Day " + day.day + ": " + day.title, margin, cursorY)
         cursorY += 6
         addParagraph(day.description)
-        const meta = "Altitude: " + (day.altitude ? day.altitude + "m" : "N/A") + " | Distance: " + (day.distance || "N/A") + " | Stay: " + (day.accommodation || "N/A")
+        const meta = "Altitude: " + (day.altitude ? day.altitude + "m" : "N/A") + " | Distance: " + (formatPdfText(day.distance) || "N/A") + " | Stay: " + (day.accommodation || "N/A")
         setText(8, "bold", [73, 85, 91])
         ensureSpace(5)
         pdf.text(meta, margin, cursorY)
@@ -830,7 +834,7 @@ export default function TrekDetailClient({
                           {day.distance ? (
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/15 text-sky-700 dark:text-sky-300 px-3 py-1.5 text-xs font-semibold">
                               <MapPin className="w-3.5 h-3.5" />
-                              Distance: {day.distance}
+                              {day.distance}
                             </span>
                           ) : null}
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 px-3 py-1.5 text-xs font-semibold">

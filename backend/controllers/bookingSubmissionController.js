@@ -111,6 +111,7 @@ const linkSummary = (link) => ({
   trekPackage: link.trekPackage,
   notes: link.notes,
   formConfig: link.formConfig,
+  path: link.path,
   isActive: link.isActive,
   expiresAt: link.expiresAt,
   submittedAt: link.submittedAt,
@@ -141,8 +142,10 @@ exports.createBookingFormLink = async (req, res) => {
     const ttlDays = Number.parseInt(String(req.body?.ttlDays || DEFAULT_LINK_TTL_DAYS), 10);
     const safeTtlDays = Math.min(60, Math.max(1, Number.isNaN(ttlDays) ? DEFAULT_LINK_TTL_DAYS : ttlDays));
     const token = crypto.randomBytes(32).toString("base64url");
+    const path = "/private-booking/" + token;
     const link = await BookingFormLink.create({
       tokenHash: hashToken(token),
+      path,
       clientName: normalizeText(req.body?.clientName),
       clientEmail: normalizeText(req.body?.clientEmail).toLowerCase(),
       trekPackage: normalizeText(req.body?.trekPackage),
@@ -152,7 +155,7 @@ exports.createBookingFormLink = async (req, res) => {
       createdBy: req.user?._id,
     });
 
-    res.status(201).json({ ...linkSummary(link), token, path: `/private-booking/${token}` });
+    res.status(201).json({ ...linkSummary(link), token, path });
   } catch (err) {
     console.error("Create booking form link error:", err);
     res.status(500).json({ message: "Server error" });

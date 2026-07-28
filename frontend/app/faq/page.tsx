@@ -149,17 +149,6 @@ export default async function FAQPage() {
                     </Link>
                   </div>
                 </Card>
-
-                <div className="rounded-lg border border-border bg-muted/20 p-5">
-                  <h3 className="text-sm font-semibold text-foreground">Helpful Topics</h3>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {['Permits', 'Insurance', 'Difficulty', 'Payment', 'Packing', 'Best season'].map((topic) => (
-                      <span key={topic} className="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                        {topic}
-                      </span>
-                    ))}
-                  </div>
-                </div>
               </aside>
             </div>
           </div>

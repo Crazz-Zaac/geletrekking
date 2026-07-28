@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const bookingFormLinkSchema = new mongoose.Schema(
   {
     tokenHash: { type: String, required: true, unique: true, index: true },
+    path: { type: String, trim: true },
     clientName: { type: String, trim: true },
     clientEmail: { type: String, trim: true },
     trekPackage: { type: String, trim: true },

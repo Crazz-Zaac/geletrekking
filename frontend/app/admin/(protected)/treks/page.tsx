@@ -94,6 +94,46 @@ type TrekForm = {
   is_featured: boolean
 }
 
+const DISTANCE_ACTIVITY_OPTIONS = [
+  "🥾 Hike",
+  "🚗 Drive",
+  "🚙 Jeep Drive",
+  "🚌 Bus",
+  "✈️ Flight",
+  "🚁 Helicopter",
+  "🚲 Bike",
+  "🚤 Boat",
+  "🚶 Walk",
+  "🐎 Horse",
+  "🛶 Raft / Canoe",
+] as const
+
+const parseDistanceActivity = (value: string) => {
+  const trimmed = value.trim()
+  const separatorIndex = trimmed.lastIndexOf(" - ")
+  const activityText = separatorIndex >= 0 ? trimmed.slice(0, separatorIndex) : trimmed
+  const activities = activityText
+    .split(" + ")
+    .map((item) => item.trim())
+    .filter((item) => DISTANCE_ACTIVITY_OPTIONS.includes(item as (typeof DISTANCE_ACTIVITY_OPTIONS)[number]))
+  const km = separatorIndex >= 0 ? trimmed.slice(separatorIndex + 3) : activities.length > 0 ? "" : trimmed
+
+  return {
+    activities,
+    km: km.replace(/\s*km$/i, "").trim(),
+  }
+}
+
+const formatDistanceActivity = (activities: string[], km: string) => {
+  const cleanedKm = km.replace(/\s*km$/i, "").trim()
+  const activityText = activities.join(" + ")
+
+  if (activityText && cleanedKm) return activityText + " - " + cleanedKm + " km"
+  if (activityText) return activityText
+  if (cleanedKm) return cleanedKm + " km"
+  return ""
+}
+
 const emptyDay = (): ItineraryDay => ({
   day: 1,
   title: '',
@@ -978,13 +1018,52 @@ export default function AdminTreksPage() {
                           onChange={(e) => updateDay(index, 'altitude', e.target.value)}
                         />
                       ))}
-                      {field('Distance', (
-                        <Input
-                          placeholder="e.g. 12 km"
-                          value={day.distance}
-                          onChange={(e) => updateDay(index, 'distance', e.target.value)}
-                        />
-                      ))}
+                      {field('Distance', (() => {
+                        const distance = parseDistanceActivity(day.distance)
+
+                        return (
+                          <div className="space-y-2">
+                            <details className="group relative">
+                              <summary className="flex h-9 cursor-pointer list-none items-center justify-between rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs outline-none transition-colors hover:bg-muted/40 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] [&::-webkit-details-marker]:hidden">
+                                <span className={distance.activities.length ? "truncate" : "truncate text-muted-foreground"}>
+                                  {distance.activities.length ? distance.activities.join(" + ") : "Select travel modes"}
+                                </span>
+                                <span className="ml-2 text-xs text-muted-foreground group-open:rotate-180">⌄</span>
+                              </summary>
+                              <div className="absolute z-20 mt-1 grid max-h-56 w-full overflow-y-auto rounded-md border border-input bg-background p-2 shadow-md">
+                                {DISTANCE_ACTIVITY_OPTIONS.map((option) => {
+                                  const checked = distance.activities.includes(option)
+
+                                  return (
+                                    <label key={option} className="flex items-center gap-2 rounded px-2 py-1.5 text-sm text-foreground hover:bg-muted/50">
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={(e) => {
+                                          const activities = e.target.checked
+                                            ? [...distance.activities, option]
+                                            : distance.activities.filter((item) => item !== option)
+                                          updateDay(index, 'distance', formatDistanceActivity(activities, distance.km))
+                                        }}
+                                        className="h-4 w-4 rounded border-input"
+                                      />
+                                      <span className="truncate">{option}</span>
+                                    </label>
+                                  )
+                                })}
+                              </div>
+                            </details>
+                            <Input
+                              type="text"
+                              inputMode="decimal"
+                              pattern="[0-9.]*"
+                              placeholder="km"
+                              value={distance.km}
+                              onChange={(e) => updateDay(index, 'distance', formatDistanceActivity(distance.activities, e.target.value))}
+                            />
+                          </div>
+                        )
+                      })())}
                       {field('Accommodation', (
                         <Input
                           placeholder="e.g. Teahouse in Namche"

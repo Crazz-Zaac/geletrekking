@@ -1222,6 +1222,10 @@ export async function getGuideBySlug(slug: string): Promise<TravelGuide | null> 
     return null
   }
 }
+export async function getAdminGuides(token: string): Promise<TravelGuide[]> {
+  const response = await fetchAdminJson<{ guides: TravelGuide[] }>('/api/guides/admin', token)
+  return response.guides || []
+}
 export async function getGuidesByCategory(category: string): Promise<TravelGuide[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/guides/category/${category}`, {

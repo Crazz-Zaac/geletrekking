@@ -13,11 +13,10 @@ import { WhatsAppIcon } from '@/components/whatsapp-icon'
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons'
 import Image from 'next/image'
 import { useSiteSettings } from '@/hooks/use-site-settings'
-import { getTreks, getActivities, type PublicActivity } from '@/lib/api'
-import { getPlanYourTripColumns, type PlanYourTripGuide } from '@/lib/plan-your-trip-data'
+import { getTreks, getActivities, getGuides, type PublicActivity, type TravelGuide } from '@/lib/api'
 import { getActivityMenuColumn, getActivityMenuIcon, getActivityMenuLabel } from '@/lib/activity-menu'
 
-interface Guide extends PlanYourTripGuide {}
+type Guide = TravelGuide
 
 interface GuideColumn {
   title: string
@@ -82,8 +81,28 @@ export function Navbar() {
   const isMobileMenuExpanded = (menuName: string) => expandedMobileMenu.has(menuName)
 
   // Map guides to mega-menu columns
-  const mapGuidesToColumns = (): GuideColumn[] => {
-    return getPlanYourTripColumns() as GuideColumn[]
+  const mapGuidesToColumns = (guides: Guide[]): GuideColumn[] => {
+    const columns: GuideColumn[] = [
+      { title: 'Logistics', items: [] },
+      { title: 'Health & Safety', items: [] },
+      { title: 'Preparation', items: [] },
+    ]
+
+    guides.forEach((guide) => {
+      const index = columns.findIndex((column) => column.title === guide.category)
+      columns[index >= 0 ? index : 2].items.push(guide)
+    })
+
+    return columns.map((column) => ({
+      ...column,
+      items: column.items
+        .sort((a, b) => {
+          const orderDiff = (a.order || 0) - (b.order || 0)
+          if (orderDiff !== 0) return orderDiff
+          return a.title.localeCompare(b.title)
+        })
+        .slice(0, 5),
+    }))
   }
 
   const mapActivitiesToColumns = (activities: PublicActivity[]): ActivityColumn[] => {
@@ -153,9 +172,19 @@ export function Navbar() {
     void loadTreks()
   }, [])
 
-  // Load guides from local data
+  // Load guides from editable API data
   useEffect(() => {
-    setGuideColumns(mapGuidesToColumns())
+    const loadGuides = async () => {
+      try {
+        const data = await getGuides()
+        setGuideColumns(mapGuidesToColumns(data.guides || []))
+      } catch (err) {
+        console.error('Error loading guides:', err)
+        setGuideColumns([])
+      }
+    }
+
+    void loadGuides()
   }, [])
 
   // Load activities from database
@@ -399,7 +428,7 @@ export function Navbar() {
                           {column.items.length > 0 ? (
                             column.items.map((guide) => (
                               <Link
-                                key={guide.id}
+                                key={guide._id || guide.id || guide.slug}
                                 href={`/guides/${guide.slug}`}
                                 className="group/item block"
                               >
@@ -419,7 +448,7 @@ export function Navbar() {
                                         FileBadge2: '📄',
                                         CircleHelp: '?',
                                       }
-                                      return <span className="text-primary text-lg">{iconMap[guide.icon] || '📌'}</span>
+                                      return <span className="text-primary text-lg">{iconMap[guide.icon || ''] || '📌'}</span>
                                     })()}
                                   </div>
                                   <div className="flex-1 min-w-0">
@@ -655,7 +684,7 @@ export function Navbar() {
                   {guideColumns.flatMap((column) =>
                     column.items.map((guide) => (
                       <Link
-                        key={guide.id}
+                        key={guide._id || guide.id || guide.slug}
                         href={`/guides/${guide.slug}`}
                         className="block px-3 py-2 text-white/70 text-sm hover:text-white hover:bg-white/10 rounded-md transition-colors"
                         onClick={() => {

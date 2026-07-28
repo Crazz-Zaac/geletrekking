@@ -15,7 +15,7 @@ import {
   updateAdminAbout,
 } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
-import { Bold, Italic, Heading2, List, ListOrdered, Quote, Trash2, Plus, AlertCircle, CheckCircle, BookOpen, Heart, Users, Zap, Users2, Link as LinkIcon, Building2, BarChart3, ExternalLink } from 'lucide-react'
+import { Bold, Italic, Heading2, List, ListOrdered, Quote, Trash2, Plus, AlertCircle, CheckCircle, BookOpen, Heart, Users, Zap, Users2, Link as LinkIcon, Building2, BarChart3, ExternalLink, ImageIcon, X } from 'lucide-react'
 
 const defaultAbout: AdminAbout & { associations: AdminAboutAssociation[] } = {
   heroTitle: 'About Us',
@@ -325,6 +325,49 @@ export default function AdminAboutPage() {
                           onChange={(e) => setForm((prev) => ({ ...prev, heroTitle: e.target.value }))}
                           className="h-10"
                         />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">Hero Image URL</label>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <Input
+                            placeholder="https://example.com/about-hero.jpg"
+                            value={form.heroImageUrl || ''}
+                            onChange={(e) => setForm((prev) => ({ ...prev, heroImageUrl: e.target.value }))}
+                            className="h-10"
+                          />
+                          {form.heroImageUrl ? (
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm" asChild className="h-10 shrink-0">
+                                <a href={form.heroImageUrl} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="w-4 h-4" />
+                                </a>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-10 shrink-0 text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+                                onClick={() => setForm((prev) => ({ ...prev, heroImageUrl: '' }))}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : null}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">This image appears behind the About page heading with a dark overlay for readability.</p>
+                        {form.heroImageUrl ? (
+                          <div className="mt-3 overflow-hidden rounded-lg border border-border bg-muted/30">
+                            <div className="relative aspect-[16/7] w-full">
+                              <img src={form.heroImageUrl} alt="About page hero preview" className="h-full w-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40" />
+                              <div className="absolute inset-x-0 bottom-0 p-4">
+                                <div className="inline-flex items-center gap-2 rounded-md bg-black/45 px-3 py-2 text-sm font-semibold text-white">
+                                  <ImageIcon className="w-4 h-4" /> Hero image preview
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : null}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">Subtitle / Introduction</label>

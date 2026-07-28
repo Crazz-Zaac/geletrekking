@@ -16,7 +16,6 @@ import {
 import { TurnstileWidget } from '@/components/turnstile-widget'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface PrivateBookingFormProps {
   token: string
@@ -358,20 +357,41 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
             </div>
           </div>
           <Progress value={progressValue} />
-          <Tabs value={String(step)} onValueChange={(value) => { setStep(Number(value)); setError(null) }}>
-            <TabsList className="flex h-auto w-full justify-start gap-2 overflow-x-auto bg-transparent p-0">
+          <div className="space-y-2">
+            <select
+              value={String(step)}
+              onChange={(event) => { setStep(Number(event.target.value)); setError(null) }}
+              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm font-medium text-foreground shadow-xs outline-none focus:ring-2 focus:ring-ring sm:hidden"
+              aria-label="Booking form section"
+            >
               {formConfig.map((section, index) => {
                 const missingCount = getMissingRequiredFields([section]).length
                 const complete = missingCount === 0
+                return <option key={section.id} value={String(index)}>{index + 1}. {section.title}{complete ? ' ✓' : missingCount > 0 ? ` (${missingCount})` : ''}</option>
+              })}
+            </select>
+            <div className="hidden grid-cols-2 gap-2 sm:grid lg:grid-cols-5">
+              {formConfig.map((section, index) => {
+                const missingCount = getMissingRequiredFields([section]).length
+                const complete = missingCount === 0
+                const selected = step === index
                 return (
-                  <TabsTrigger key={section.id} value={String(index)} className="min-w-[150px] justify-start gap-2 whitespace-normal rounded-md border border-border bg-background px-3 py-2 text-left text-xs leading-tight data-[state=active]:border-primary data-[state=active]:bg-primary/5">
-                    <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${complete ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                    <span className="line-clamp-2">{section.title}</span>
-                  </TabsTrigger>
+                  <button
+                    key={section.id}
+                    type="button"
+                    onClick={() => { setStep(index); setError(null) }}
+                    className={`flex min-h-14 items-center gap-2 rounded-md border px-3 py-2 text-left text-xs leading-tight transition-colors ${selected ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-background text-foreground hover:bg-muted/50'}`}
+                  >
+                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${complete ? 'bg-emerald-500/15 text-emerald-700' : 'bg-amber-500/15 text-amber-700'}`}>{index + 1}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="line-clamp-2 font-semibold">{section.title}</span>
+                      {!complete ? <span className="mt-0.5 block text-[11px] text-muted-foreground">{missingCount} left</span> : null}
+                    </span>
+                  </button>
                 )
               })}
-            </TabsList>
-          </Tabs>
+            </div>
+          </div>
         </div>
         <div className="p-4">
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
