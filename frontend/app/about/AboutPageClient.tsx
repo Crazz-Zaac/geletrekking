@@ -327,7 +327,6 @@ export function AboutPageClient() {
   }, []);
 
   const heroTitle = (about?.heroTitle || '').trim() || defaultAbout.heroTitle;
-  const heroSubtitle = (about?.heroSubtitle || '').trim() || defaultAbout.heroSubtitle;
   const storyTitle = (about?.storyTitle || '').trim() || defaultAbout.storyTitle;
   const storyBody = (about?.storyBody || '').trim() || defaultAbout.storyBody;
   const missionTitle = (about?.missionTitle || '').trim() || defaultAbout.missionTitle;
@@ -404,9 +403,6 @@ export function AboutPageClient() {
             <motion.h1 variants={itemVariants} className={`text-4xl md:text-5xl font-bold text-balance ${heroImageUrl ? 'text-white' : 'text-foreground'}`}>
               {heroTitle}
             </motion.h1>
-            <motion.p variants={itemVariants} className={`text-base md:text-lg max-w-3xl mx-auto ${heroImageUrl ? 'text-white/85' : 'text-muted-foreground'}`}>
-              {renderInlineMarkdown(heroSubtitle)}
-            </motion.p>
             <motion.div variants={itemVariants} className="flex flex-wrap justify-center gap-2.5 pt-1">
               <Button asChild className="h-10 px-5">
                 <Link href="/destinations">Explore Treks</Link>

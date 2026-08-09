@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { ExternalLink, Image as ImageIcon, X } from 'lucide-react'
 import {
   AdminSiteSettings,
   getAdminSettings,
@@ -14,6 +15,7 @@ import { getAdminToken } from '@/lib/admin-auth'
 const defaultSettings: AdminSiteSettings = {
   siteName: '',
   logoUrl: '',
+  contactHeroImageUrl: '',
   phone: '',
   email: '',
   address: '',
@@ -140,6 +142,56 @@ export default function AdminSettingsPage() {
                 <div className="rounded-md border border-border bg-muted/30 p-3 w-fit">
                   <p className="text-xs text-muted-foreground mb-2">Logo preview</p>
                   <img src={form.logoUrl} alt="Logo preview" className="h-16 w-16 rounded-md border border-border object-cover" />
+                </div>
+              ) : null}
+            </section>
+
+            <section className="rounded-md border border-border p-4 space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Contact Page Hero</h3>
+                <p className="text-xs text-muted-foreground mt-1">Set the image behind the Contact Us page heading.</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">Hero image URL</label>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    placeholder="https://example.com/contact-hero.jpg"
+                    value={form.contactHeroImageUrl || ''}
+                    onChange={(e) => setForm((prev) => ({ ...prev, contactHeroImageUrl: e.target.value }))}
+                  />
+                  {form.contactHeroImageUrl ? (
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" asChild className="h-10 shrink-0">
+                        <a href={form.contactHeroImageUrl} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-10 shrink-0 text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => setForm((prev) => ({ ...prev, contactHeroImageUrl: '' }))}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              {form.contactHeroImageUrl ? (
+                <div className="overflow-hidden rounded-lg border border-border bg-muted/30">
+                  <div className="relative aspect-[16/7] w-full">
+                    <img src={form.contactHeroImageUrl} alt="Contact page hero preview" className="h-full w-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40" />
+                    <div className="absolute inset-x-0 bottom-0 p-4">
+                      <div className="inline-flex items-center gap-2 rounded-md bg-black/45 px-3 py-2 text-sm font-semibold text-white">
+                        <ImageIcon className="h-4 w-4" /> Hero image preview
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : null}
             </section>

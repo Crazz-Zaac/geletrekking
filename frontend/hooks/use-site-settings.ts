@@ -6,6 +6,7 @@ type SocialKey = 'facebook' | 'instagram' | 'twitter' | 'linkedin' | 'youtube' |
 const defaultSettings: Required<AdminSiteSettings> = {
   siteName: 'GELE TREKKING',
   logoUrl: '/geletrekking.png',
+  contactHeroImageUrl: '',
   phone: '+977 985 123 4567',
   email: '',
   address: 'Thamel, Kathmandu 44600, Nepal',

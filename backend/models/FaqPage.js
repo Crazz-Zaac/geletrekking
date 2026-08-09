@@ -17,6 +17,7 @@ const faqPageSchema = new mongoose.Schema(
       default:
         "Helpful answers about trekking seasons, permits, difficulty, insurance, and planning your Himalayan adventure.",
     },
+    heroImageUrl: { type: String, default: "" },
     faqs: { type: [faqItemSchema], default: [] },
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,

@@ -54,7 +54,7 @@ export const defaultBookingFormConfig: BookingFormConfig = [
       { id: 'trekEndDate', label: 'Trek end date', type: 'date', required: true },
       { id: 'arrivalDate', label: 'Flight arrival date', type: 'date' },
       { id: 'arrivalTime', label: 'Flight arrival time', type: 'time' },
-      { id: 'arrivalFlightNumber', label: 'Arrival flight number', type: 'text' },
+      { id: 'arrivalFlightNumber', label: 'Arrival airline name and flight number', type: 'text' },
       { id: 'departureDate', label: 'Flight departure date', type: 'date' },
       { id: 'departureTime', label: 'Flight departure time', type: 'time' },
       { id: 'departureFlightNumber', label: 'Departure flight number', type: 'text' },
@@ -69,8 +69,7 @@ export const defaultBookingFormConfig: BookingFormConfig = [
       { id: 'highAltitudeExperience', label: 'Previous high-altitude trekking experience', type: 'textarea' },
       { id: 'fitnessLevel', label: 'Fitness level', type: 'select', required: true, options: ['Beginner', 'Intermediate', 'Advanced'] },
       { id: 'insuranceProvider', label: 'Travel insurance provider', type: 'text', required: true },
-      { id: 'insurancePolicyNumber', label: 'Insurance policy number', type: 'text', required: true },
-      { id: 'altitudeCoveragePolicyNumber', label: 'Altitude coverage policy number', type: 'text', condition: 'altitudeCoverage' },
+      { id: 'insurancePolicyNumber', label: 'Travel insurance policy number', type: 'text', required: true },
     ],
   },
   {
@@ -91,16 +90,16 @@ export const defaultBookingFormConfig: BookingFormConfig = [
     id: 'emergency',
     title: 'Emergency information',
     fields: [
-      { id: 'emergencyContactName', label: 'Emergency contact name', type: 'text', required: true },
+      { id: 'emergencyContactName', label: 'Emergency contact person name', type: 'text', required: true },
       { id: 'emergencyContactNumber', label: 'Emergency contact number', type: 'tel', required: true },
-      { id: 'emergencyContactRelationship', label: 'Relationship to emergency contact', type: 'text', required: true },
+      { id: 'emergencyContactRelationship', label: 'Emergency contact email', type: 'email', required: true },
     ],
   },
   {
     id: 'payment',
     title: 'Payment',
     fields: [
-      { id: 'paymentMethod', label: 'Preferred payment method', type: 'select', required: true, options: ['Bank transfer', 'Credit card', 'PayPal'] },
+      { id: 'paymentMethod', label: 'Preferred payment method', type: 'select', required: true, options: ['Bank transfer', 'Credit card', 'PayPal', 'Cash'] },
     ],
   },
   {
@@ -125,6 +124,30 @@ export const defaultBookingFormConfig: BookingFormConfig = [
   },
 ]
 
+
+const fieldOverrides: Record<string, Partial<BookingFormFieldConfig> | null> = {
+  arrivalFlightNumber: { label: 'Arrival airline name and flight number' },
+  insurancePolicyNumber: { label: 'Travel insurance policy number' },
+  altitudeCoveragePolicyNumber: null,
+  emergencyContactName: { label: 'Emergency contact person name' },
+  emergencyContactRelationship: { label: 'Emergency contact email', type: 'email' },
+  paymentMethod: { options: ['Bank transfer', 'Credit card', 'PayPal', 'Cash'] },
+}
+
+const applyFieldOverrides = (field: BookingFormFieldConfig): BookingFormFieldConfig | null => {
+  if (!(field.id in fieldOverrides)) return field
+  const override = fieldOverrides[field.id]
+  if (override === null) return null
+
+  const nextType = override.type || field.type
+  return {
+    ...field,
+    ...override,
+    type: nextType,
+    options: nextType === 'select' ? (override.options || field.options || []) : undefined,
+  }
+}
+
 export const normalizeBookingFormConfig = (value: unknown): BookingFormConfig => {
   if (!Array.isArray(value)) return defaultBookingFormConfig
 
@@ -143,7 +166,7 @@ export const normalizeBookingFormConfig = (value: unknown): BookingFormConfig =>
               const id = String(rawField.id || '').trim().replace(/[^A-Za-z0-9_]+/g, '')
               const label = String(rawField.label || '').trim()
               if (!id || !label) return null
-              return {
+              return applyFieldOverrides({
                 id,
                 label,
                 type,
@@ -152,7 +175,7 @@ export const normalizeBookingFormConfig = (value: unknown): BookingFormConfig =>
                 placeholder: rawField.placeholder ? String(rawField.placeholder).trim() : undefined,
                 condition: rawField.condition,
                 locked: Boolean(rawField.locked),
-              }
+              })
             })
             .filter(Boolean) as BookingFormFieldConfig[]
         : []

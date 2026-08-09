@@ -228,6 +228,7 @@ export interface PublicBookingFormLink {
 export interface AdminSiteSettings {
   siteName?: string
   logoUrl?: string
+  contactHeroImageUrl?: string
   phone?: string
   email?: string
   address?: string
@@ -1282,6 +1283,7 @@ export interface AdminFaqItem {
 export interface AdminFaq {
   heroTitle?: string
   heroSubtitle?: string
+  heroImageUrl?: string
   faqs?: AdminFaqItem[]
   updatedAt?: string
 }

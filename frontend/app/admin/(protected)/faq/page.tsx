@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowDown, ArrowUp, Bold, CheckCircle, ExternalLink, Heading2, Italic, Link as LinkIcon, List, ListOrdered, Loader2, Plus, Quote, Save, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Bold, CheckCircle, ExternalLink, Heading2, Image as ImageIcon, Italic, Link as LinkIcon, List, ListOrdered, Loader2, Plus, Quote, Save, Trash2, X } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -42,7 +42,7 @@ const TextFormattingTools = ({ onFormat }: { onFormat: (before: string, after?: 
 )
 
 export default function AdminFaqPage() {
-  const [form, setForm] = useState<AdminFaq>({ heroTitle: '', heroSubtitle: '', faqs: [emptyFaq()] })
+  const [form, setForm] = useState<AdminFaq>({ heroTitle: '', heroSubtitle: '', heroImageUrl: '', faqs: [emptyFaq()] })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -61,6 +61,7 @@ export default function AdminFaqPage() {
       setForm({
         heroTitle: data.heroTitle || 'Frequently Asked Questions',
         heroSubtitle: data.heroSubtitle || 'Helpful answers about trekking seasons, permits, difficulty, insurance, and planning your Himalayan adventure.',
+        heroImageUrl: data.heroImageUrl || '',
         faqs: faqs.length > 0 ? faqs.map((item, index) => ({ ...item, order: index })) : [emptyFaq()],
         updatedAt: data.updatedAt,
       })
@@ -253,6 +254,51 @@ export default function AdminFaqPage() {
                   Page subtitle
                   <Textarea value={form.heroSubtitle || ''} onChange={(event) => setForm((prev) => ({ ...prev, heroSubtitle: event.target.value }))} rows={3} placeholder="Helpful answers about trekking..." />
                 </label>
+              </div>
+
+              <div className="space-y-3 rounded-lg border border-border bg-background p-4">
+                <label className="block space-y-1.5 text-sm font-medium text-foreground">
+                  Hero image URL
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      value={form.heroImageUrl || ''}
+                      onChange={(event) => setForm((prev) => ({ ...prev, heroImageUrl: event.target.value }))}
+                      placeholder="https://example.com/faq-hero.jpg"
+                    />
+                    {form.heroImageUrl ? (
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" asChild className="h-10 shrink-0">
+                          <a href={form.heroImageUrl} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-10 shrink-0 text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => setForm((prev) => ({ ...prev, heroImageUrl: '' }))}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                </label>
+                <p className="text-xs text-muted-foreground">This image appears behind the FAQ page heading with a dark overlay for readability.</p>
+                {form.heroImageUrl ? (
+                  <div className="overflow-hidden rounded-lg border border-border bg-muted/30">
+                    <div className="relative aspect-[16/7] w-full">
+                      <img src={form.heroImageUrl} alt="FAQ page hero preview" className="h-full w-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40" />
+                      <div className="absolute inset-x-0 bottom-0 p-4">
+                        <div className="inline-flex items-center gap-2 rounded-md bg-black/45 px-3 py-2 text-sm font-semibold text-white">
+                          <ImageIcon className="h-4 w-4" /> Hero image preview
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               <div className="overflow-hidden rounded-lg border border-border bg-background">

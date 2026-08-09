@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Search, X } from 'lucide-react';
+import { Loader2, Search, X } from 'lucide-react';
 
 type GalleryItem = {
   id: string;
@@ -52,6 +52,8 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
   const [sortBy, setSortBy] = useState<SortOption>('featured');
   const [featuredOnly, setFeaturedOnly] = useState(false);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
+  const [openingImageId, setOpeningImageId] = useState<string | null>(null);
+  const [selectedImageLoaded, setSelectedImageLoaded] = useState(false);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -175,23 +177,27 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
     : -1;
 
   const openImage = (itemId: string) => {
+    setOpeningImageId(itemId);
+    setSelectedImageLoaded(false);
     setSelectedImageId(itemId);
   };
 
   const closeModal = () => {
     setSelectedImageId(null);
+    setOpeningImageId(null);
+    setSelectedImageLoaded(false);
   };
 
   const showPrev = () => {
     if (!selectedImage || filteredItems.length === 0 || selectedImageIndex < 0) return;
     const prevIndex = selectedImageIndex === 0 ? filteredItems.length - 1 : selectedImageIndex - 1;
-    setSelectedImageId(filteredItems[prevIndex].id);
+    openImage(filteredItems[prevIndex].id);
   };
 
   const showNext = () => {
     if (!selectedImage || filteredItems.length === 0 || selectedImageIndex < 0) return;
     const nextIndex = selectedImageIndex === filteredItems.length - 1 ? 0 : selectedImageIndex + 1;
-    setSelectedImageId(filteredItems[nextIndex].id);
+    openImage(filteredItems[nextIndex].id);
   };
 
   const activeFilters = [
@@ -241,13 +247,6 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
             >
               Trek Gallery
             </motion.h1>
-
-            <motion.p
-              variants={itemVariants}
-              className="text-base md:text-lg text-white/80 max-w-2xl mx-auto"
-            >
-              Explore destination photos from the gallery managed in your backend
-            </motion.p>
           </motion.div>
         </div>
       </section>
@@ -440,6 +439,14 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
                             Featured
                           </div>
                         )}
+                        {openingImageId === item.id && !selectedImageLoaded ? (
+                          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/45 backdrop-blur-[1px]">
+                            <div className="flex items-center gap-2 rounded-full bg-white/95 px-3 py-2 text-xs font-semibold text-foreground shadow-lg">
+                              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                              Opening
+                            </div>
+                          </div>
+                        ) : null}
                       </div>
 
                       <div className="p-3">
@@ -501,12 +508,25 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
               )}
 
               <div className="relative w-full h-[60vh] lg:h-[85vh]">
+                {!selectedImageLoaded ? (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-white/5">
+                    <div className="absolute inset-0 animate-pulse rounded-lg bg-gradient-to-r from-white/5 via-white/15 to-white/5" />
+                    <div className="relative flex items-center gap-2 rounded-full bg-black/65 px-4 py-2 text-sm font-semibold text-white shadow-lg">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Loading image
+                    </div>
+                  </div>
+                ) : null}
                 <Image
                   src={selectedImage.image}
                   alt={selectedImage.trekTitle}
                   fill
-                  className="object-contain rounded-lg"
+                  className={selectedImageLoaded ? "object-contain rounded-lg transition-opacity duration-200 opacity-100" : "object-contain rounded-lg transition-opacity duration-200 opacity-0"}
                   priority
+                  onLoadingComplete={() => {
+                    setSelectedImageLoaded(true);
+                    setOpeningImageId(null);
+                  }}
                 />
               </div>
 
@@ -528,7 +548,7 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setSelectedImageId(item.id)}
+                      onClick={() => openImage(item.id)}
                       className={`relative shrink-0 w-24 h-24 lg:w-full lg:h-24 rounded-lg overflow-hidden border-2 transition ${
                         isActive
                           ? 'border-white scale-[1.02]'

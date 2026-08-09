@@ -386,6 +386,10 @@ export default function TrekDetailClient({
 
       const logo = await toImage(settings.logoUrl || "/geletrekking.png")
       const mapImage = await toImage(trek.mapImageUrl)
+      const loadCarryingImages = await Promise.all([
+        toImage("/images/load_carrying_1.JPG"),
+        toImage("/images/load_carrying_2.JPG"),
+      ])
       const companyName = settings.siteName || "Gele Trekking"
       const contactPhone = settings.phone || "+977 985 123 4567"
       const contactEmail = settings.email || "info@geletrekking.com"
@@ -399,6 +403,8 @@ export default function TrekDetailClient({
         { label: "Twitter", url: social.twitter },
       ].filter((item) => Boolean(item.url))
       const tipGuideline = "Tipping is not mandatory, but it is a meaningful way to express gratitude for the services provided, in line with trekking traditions. It typically occurs on the final night of the trek, often accompanied by a celebration with the team. During this time, the support team shares their joy and emotions. The leader will guide the group in collecting the tips, which are then distributed by one of the group members to the team. The recommended tip for each Sherpa is $ 90 to $ 100, or an amount of your choice, excluding the trip leader. For the trip leader, depending on the group size, the suggested contribution is USD $40-$50 per person. However, the amount is entirely at your discretion and can be adjusted as you see fit."
+      const loadCarryingTitle = "Traditional Load-Carrying in Nepal"
+      const loadCarryingContent = "Gele Trekking is committed to bringing attention to the potential brain damage being caused to countless Nepalese by the common practice of carrying heavy loads on their heads, known as 'head carrying'. Gele Trekking has pledged to make this a top focus for their treks and to actively seek solutions, including having one sherpa accompany each guest and to supporting further research on this critical health concern. By choosing Gele Trekking, our guests are providing support from around the world to help protect and nurture the minds of Nepalese in Nepal."
 
       pdf.setProperties({
         title: trek.title + " Complete Itinerary",
@@ -558,6 +564,57 @@ export default function TrekDetailClient({
       }
 
 
+      const addFaqItems = (items: { question: string; answer: string }[]) => {
+        if (items.length === 0) {
+          addParagraph("FAQs for this destination will be added soon. Please contact us for trek-specific questions.")
+          return
+        }
+
+        items.forEach((faq, index) => {
+          ensureSpace(18)
+          setText(10, "bold", [0, 77, 103])
+          const questionLines = pdf.splitTextToSize(String(index + 1) + ". " + faq.question, contentWidth)
+          questionLines.forEach((line: string) => {
+            ensureSpace(6)
+            pdf.text(line, margin, cursorY)
+            cursorY += 5
+          })
+          addParagraph(faq.answer, 9)
+          cursorY += 2
+        })
+      }
+
+      const addImageRow = (images: PdfImage[]) => {
+        const availableImages = images.filter(Boolean)
+        if (availableImages.length === 0) return
+
+        const gap = 6
+        const imageCount = Math.min(2, availableImages.length)
+        const imageWidth = imageCount === 1 ? Math.min(contentWidth, 100) : (contentWidth - gap) / 2
+        const maxHeight = 82
+        ensureSpace(maxHeight + 8)
+
+        const startY = cursorY
+        availableImages.slice(0, 2).forEach((image, index) => {
+          let width = imageWidth
+          let height = maxHeight
+
+          try {
+            const props = pdf.getImageProperties(image.dataUrl)
+            const scale = Math.min(imageWidth / props.width, maxHeight / props.height)
+            width = props.width * scale
+            height = props.height * scale
+          } catch {
+            height = Math.min(maxHeight, imageWidth * 0.75)
+          }
+
+          const columnX = imageCount === 1 ? margin + (contentWidth - width) / 2 : margin + index * (imageWidth + gap) + (imageWidth - width) / 2
+          pdf.addImage(image.dataUrl, image.format, columnX, startY, width, height)
+        })
+
+        cursorY = startY + maxHeight + 6
+      }
+
       const addCenteredImageBlock = (image: PdfImage, maxHeight: number) => {
         let imageWidth = contentWidth
         let imageHeight = maxHeight
@@ -645,6 +702,9 @@ export default function TrekDetailClient({
       addSection("Tip guideline")
       addParagraph(tipGuideline, 9)
 
+      addSection("FAQ")
+      addFaqItems(trekFaqs)
+
       addPage(false)
       addSection("Map")
       if (mapImage) {
@@ -655,6 +715,11 @@ export default function TrekDetailClient({
       } else {
         addParagraph("Map details are currently not available for this trek.")
       }
+
+      addSection(loadCarryingTitle)
+      addParagraph(loadCarryingContent, 9)
+      cursorY += 2
+      addImageRow(loadCarryingImages.filter((image): image is PdfImage => Boolean(image)))
 
       pdf.save(trek.slug + "-complete-itinerary.pdf")
     } finally {

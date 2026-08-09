@@ -4,6 +4,7 @@ const { generalFAQ } = require("../data/faq-data");
 const fallbackFaqs = () => ({
   heroTitle: generalFAQ.heroTitle,
   heroSubtitle: generalFAQ.heroSubtitle,
+  heroImageUrl: "",
   faqs: (generalFAQ.faqs || []).map((item, index) => ({
     question: item.question,
     answer: item.answer,
@@ -14,6 +15,7 @@ const fallbackFaqs = () => ({
 const normalizeFaqPayload = (data = {}) => ({
   heroTitle: String(data.heroTitle || "").trim() || generalFAQ.heroTitle,
   heroSubtitle: String(data.heroSubtitle || "").trim() || generalFAQ.heroSubtitle,
+  heroImageUrl: String(data.heroImageUrl || "").trim(),
   faqs: Array.isArray(data.faqs)
     ? data.faqs
         .map((item, index) => ({
@@ -55,6 +57,7 @@ exports.updateFaqPage = async (req, res) => {
 
     faq.heroTitle = data.heroTitle;
     faq.heroSubtitle = data.heroSubtitle;
+    faq.heroImageUrl = data.heroImageUrl;
     faq.faqs = data.faqs;
 
     if (req.user && req.user._id) {

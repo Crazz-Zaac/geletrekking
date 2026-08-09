@@ -65,7 +65,7 @@ const navItems: NavItem[] = [
   // Settings
   { label: 'Company', href: '/admin/company', icon: Building2, available: true },
   { label: 'Account Security', href: '/admin/account-security', icon: ShieldCheck, available: true, roles: ['editor', 'superadmin'] },
-  { label: 'Site Settings', href: '/admin/settings', icon: Settings, available: true, roles: ['superadmin'] },
+  { label: 'Site Settings', href: '/admin/settings', icon: Settings, available: true },
   
   // Admin & Security
   { label: 'Users', href: '/admin/users', icon: Users, available: true, roles: ['superadmin'] },

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Navbar } from '@/components/navbar';
@@ -32,6 +33,7 @@ const itemVariants = {
 export default function ContactPage() {
   const { settings, social } = useSiteSettings();
   const contactEmail = settings.email.trim();
+  const heroImageUrl = settings.contactHeroImageUrl.trim();
 
   const contactInfo = [
     {
@@ -181,26 +183,32 @@ export default function ContactPage() {
     <>
       <Navbar />
       <main className="min-h-screen bg-background pt-16">
-        <section className="py-10 md:py-14 bg-gradient-to-br from-primary/15 via-accent/10 to-background border-b border-border">
-          <div className="container mx-auto px-4 md:px-6">
+        <section className="relative overflow-hidden border-b border-border py-10 md:py-14">
+          {heroImageUrl ? (
+            <div className="absolute inset-0">
+              <Image
+                src={heroImageUrl}
+                alt="Contact page hero background"
+                fill
+                priority
+                className="object-cover"
+                unoptimized
+              />
+              <div className="absolute inset-0 bg-black/60" />
+            </div>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-accent/10 to-background" />
+          )}
+          <div className="container relative z-10 mx-auto px-4 md:px-6">
             <motion.div
               initial="hidden"
               animate="visible"
               variants={containerVariants}
               className="space-y-3 text-center"
             >
-              <motion.p
-                variants={itemVariants}
-                className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs md:text-sm font-semibold text-primary"
-              >
-                Plan Your Trek with Confidence
-              </motion.p>
-              <motion.h1 variants={itemVariants} className="text-4xl md:text-5xl font-bold text-foreground text-balance">
-                Contact Our Trek Experts
+              <motion.h1 variants={itemVariants} className={heroImageUrl ? "text-4xl md:text-5xl font-bold text-white text-balance" : "text-4xl md:text-5xl font-bold text-foreground text-balance"}>
+                Contact Us
               </motion.h1>
-              <motion.p variants={itemVariants} className="text-base md:text-lg text-muted-foreground max-w-3xl mx-auto">
-                Get route recommendations, difficulty guidance, and transparent pricing. We usually respond within 24 hours.
-              </motion.p>
             </motion.div>
           </div>
         </section>

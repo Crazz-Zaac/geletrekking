@@ -41,8 +41,17 @@ export function TurnstileWidget({
 }: TurnstileWidgetProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const widgetIdRef = useRef<string | null>(null)
+  const onVerifyRef = useRef(onVerify)
+  const onErrorRef = useRef(onError)
+  const onExpireRef = useRef(onExpire)
   const [isReady, setIsReady] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+
+  useEffect(() => {
+    onVerifyRef.current = onVerify
+    onErrorRef.current = onError
+    onExpireRef.current = onExpire
+  }, [onError, onExpire, onVerify])
 
   useEffect(() => {
     setLoadError(null)
@@ -60,10 +69,14 @@ export function TurnstileWidget({
         const onLoad = () => setIsReady(true)
         const onScriptError = () => {
           setLoadError('Unable to load captcha script. Check network or ad blocker settings.')
-          onError?.('script-load-failed')
+          onErrorRef.current?.('script-load-failed')
         }
         existingScript.addEventListener('load', onLoad, { once: true })
         existingScript.addEventListener('error', onScriptError, { once: true })
+        return () => {
+          existingScript.removeEventListener('load', onLoad)
+          existingScript.removeEventListener('error', onScriptError)
+        }
       }
       return
     }
@@ -76,7 +89,7 @@ export function TurnstileWidget({
     script.onload = () => setIsReady(true)
     script.onerror = () => {
       setLoadError('Unable to load captcha script. Check network or ad blocker settings.')
-      onError?.('script-load-failed')
+      onErrorRef.current?.('script-load-failed')
     }
     document.head.appendChild(script)
 
@@ -84,27 +97,29 @@ export function TurnstileWidget({
       script.onload = null
       script.onerror = null
     }
-  }, [onError])
+  }, [])
 
   useEffect(() => {
     if (!isReady || !containerRef.current || !window.turnstile) return
+
+    setLoadError(null)
 
     try {
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: siteKey,
         theme,
-        callback: (token) => onVerify(token),
+        callback: (token) => onVerifyRef.current(token),
         'error-callback': () => {
           setLoadError('Captcha verification failed. Confirm your site key domain settings in Cloudflare.')
-          onError?.('verification-error')
+          onErrorRef.current?.('verification-error')
         },
         'expired-callback': () => {
-          onExpire?.()
+          onExpireRef.current?.()
         },
       })
     } catch {
       setLoadError('Captcha failed to initialize. Verify your Turnstile site key and allowed domains.')
-      onError?.('render-failed')
+      onErrorRef.current?.('render-failed')
     }
 
     return () => {
@@ -113,7 +128,7 @@ export function TurnstileWidget({
       }
       widgetIdRef.current = null
     }
-  }, [isReady, onError, onExpire, onVerify, siteKey, theme])
+  }, [isReady, siteKey, theme])
 
   return (
     <div className="space-y-2">

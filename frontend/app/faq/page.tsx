@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { Navbar } from '@/components/navbar'
@@ -75,12 +76,14 @@ const loadFaq = async (): Promise<AdminFaq> => {
     return {
       heroTitle: data.heroTitle || generalFAQ.heroTitle,
       heroSubtitle: data.heroSubtitle || generalFAQ.heroSubtitle,
+      heroImageUrl: data.heroImageUrl || '',
       faqs: faqs.length > 0 ? faqs.sort((a, b) => (a.order || 0) - (b.order || 0)) : generalFAQ.faqs.map((item, index) => ({ ...item, order: index })),
     }
   } catch {
     return {
       heroTitle: generalFAQ.heroTitle,
       heroSubtitle: generalFAQ.heroSubtitle,
+      heroImageUrl: '',
       faqs: generalFAQ.faqs.map((item, index) => ({ ...item, order: index })),
     }
   }
@@ -89,20 +92,30 @@ const loadFaq = async (): Promise<AdminFaq> => {
 export default async function FAQPage() {
   const faq = await loadFaq()
   const faqItems = faq.faqs || []
+  const heroImageUrl = (faq.heroImageUrl || '').trim()
 
   return (
     <>
       <Navbar />
       <main className="min-h-screen bg-background pt-16">
-        <section className="py-16 md:py-20 bg-gradient-to-br from-primary/10 via-accent/10 to-background border-b border-border">
-          <div className="container mx-auto px-4 md:px-6 text-center">
-            <p className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs md:text-sm font-semibold text-primary mb-4">
-              FAQ&apos;s
-            </p>
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground">{faq.heroTitle}</h1>
-            <p className="text-muted-foreground max-w-3xl mx-auto mt-4 text-base md:text-lg">
-              {faq.heroSubtitle}
-            </p>
+        <section className="relative overflow-hidden border-b border-border py-16 md:py-20">
+          {heroImageUrl ? (
+            <div className="absolute inset-0">
+              <Image
+                src={heroImageUrl}
+                alt="FAQ page hero background"
+                fill
+                priority
+                className="object-cover"
+                unoptimized
+              />
+              <div className="absolute inset-0 bg-black/60" />
+            </div>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/10 to-background" />
+          )}
+          <div className="container relative z-10 mx-auto px-4 md:px-6 text-center">
+            <h1 className={heroImageUrl ? "text-4xl md:text-5xl font-bold text-white" : "text-4xl md:text-5xl font-bold text-foreground"}>FAQ</h1>
           </div>
         </section>
 

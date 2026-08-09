@@ -90,6 +90,7 @@ exports.updateSettings = async (req, res) => {
     const allowed = [
       "siteName",
       "logoUrl",
+      "contactHeroImageUrl",
       "phone",
       "email",
       "address",
