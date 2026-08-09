@@ -503,6 +503,7 @@ export default function TrekDetailClient({
         const lines = pdf.splitTextToSize(text, contentWidth - indent)
         lines.forEach((line: string) => {
           ensureSpace(6)
+          setText(size, "normal", [43, 52, 57])
           pdf.text(line, margin + indent, cursorY)
           cursorY += 5
         })
@@ -515,6 +516,7 @@ export default function TrekDetailClient({
           pdf.circle(margin + 1.5, cursorY - 1.2, 0.8, "F")
           const lines = pdf.splitTextToSize(item, contentWidth - 7)
           lines.forEach((line: string, index: number) => {
+            setText(10, "normal", [43, 52, 57])
             pdf.text(line, margin + 6, cursorY)
             if (index < lines.length - 1) {
               cursorY += 5
