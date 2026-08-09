@@ -229,6 +229,14 @@ export default function TrekDetailClient({
     { label: 'Altitude level', value: getAltitudeLabel(trek.maxAltitude), icon: TrendingUp },
   ]
 
+  const tripPreparationEssential = {
+    id: 'trip-preparation',
+    icon: ClipboardList,
+    title: 'Trip Preparation',
+    summary: "Prepare by improving your fitness, arranging travel documents and insurance, and packing suitable trekking gear. Bring only lightweight equipment and your personal medications. Follow your guide's advice, maintain a positive mindset for a safe and enjoyable trek.",
+    detail: 'Proper preparation is essential for a safe and enjoyable trek. Maintain good fitness before departure and ensure your passport, visa, travel insurance, and permits are in order. Pack clothing and equipment as recommended on the packing list. Share your itinerary and emergency contacts with family or friends, and carry some USD cash for remote areas. If you have any medical conditions, consult your doctor and inform your guide. Mountain weather can affect travel plans, so flexibility and a positive attitude are important. Respect local customs, protect the environment, and support local communities throughout your journey.',
+  }
+
   const defaultTripEssentials = [
     {
       id: 'communication',
@@ -258,29 +266,35 @@ export default function TrekDetailClient({
       summary: 'Local dishes, prices rise with altitude.',
       detail: 'Menus usually include rice, noodles, potatoes, soups, hot drinks, and some international options. Bottled water and snacks become more expensive as supplies move higher.',
     },
+    tripPreparationEssential,
   ]
 
 
-  const tripEssentials = (trek.tripEssentials && trek.tripEssentials.length > 0 ? trek.tripEssentials : defaultTripEssentials)
+  const tripEssentialSource = trek.tripEssentials && trek.tripEssentials.length > 0 ? trek.tripEssentials : defaultTripEssentials
+  const tripEssentials = (tripEssentialSource.some((item) => item.title.toLowerCase() === 'trip preparation')
+    ? tripEssentialSource
+    : [...tripEssentialSource, tripPreparationEssential])
     .filter((item) => !item.title.toLowerCase().includes('tip'))
     .map((item, index) => {
-    const title = item.title.toLowerCase()
-    const icon = title.includes('communication') || title.includes('wifi')
-      ? Wifi
-      : title.includes('accommodation') || title.includes('stay')
-        ? BedDouble
-        : title.includes('toilet') || title.includes('shower')
-          ? Droplet
-          : title.includes('food') || title.includes('drink')
-            ? Utensils
-            : defaultTripEssentials[index]?.icon || Compass
+      const title = item.title.toLowerCase()
+      const icon = title.includes('communication') || title.includes('wifi')
+        ? Wifi
+        : title.includes('accommodation') || title.includes('stay')
+          ? BedDouble
+          : title.includes('toilet') || title.includes('shower')
+            ? Droplet
+            : title.includes('food') || title.includes('drink')
+              ? Utensils
+              : title.includes('preparation') || title.includes('prepare')
+                ? ClipboardList
+                : defaultTripEssentials[index]?.icon || Compass
 
-    return {
-      ...item,
-      id: item.title.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).join("-") || "essential-" + index,
-      icon,
-    }
-  })
+      return {
+        ...item,
+        id: item.title.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).join("-") || "essential-" + index,
+        icon,
+      }
+    })
 
   const navItems = useMemo(
     () => [
@@ -657,10 +671,33 @@ export default function TrekDetailClient({
         cursorY += 2
         setText(11, "bold", [28, 35, 39])
         pdf.text("Package options", margin, cursorY)
-        cursorY += 6
+        cursorY += 7
         pricingTiers.forEach((tier) => {
-          addParagraph(tier.name + " - USD " + tier.priceUsd.toLocaleString(), 10)
-          addBulletList(tier.includes || [])
+          const detailLines = (tier.includes && tier.includes.length > 0
+            ? tier.includes
+            : ["Package details will be confirmed by our team."]
+          ).flatMap((item) => pdf.splitTextToSize(formatPdfText(item), contentWidth - 12))
+          const boxHeight = Math.max(30, 21 + detailLines.length * 4.5)
+
+          ensureSpace(boxHeight + 5)
+          pdf.setDrawColor(0, 77, 103)
+          pdf.setFillColor(240, 248, 250)
+          pdf.roundedRect(margin, cursorY, contentWidth, boxHeight, 3, 3, "FD")
+
+          setText(7, "bold", [0, 77, 103])
+          pdf.text("PACKAGE OPTION", margin + 5, cursorY + 6)
+          setText(13, "bold", [22, 31, 36])
+          pdf.text(tier.name, margin + 5, cursorY + 14)
+          const priceText = "USD " + tier.priceUsd.toLocaleString()
+          pdf.text(priceText, pageWidth - margin - 5 - pdf.getTextWidth(priceText), cursorY + 14)
+
+          setText(9, "normal", [43, 52, 57])
+          let detailY = cursorY + 22
+          detailLines.forEach((line: string) => {
+            pdf.text(line, margin + 5, detailY)
+            detailY += 4.5
+          })
+          cursorY += boxHeight + 5
         })
       }
 
@@ -1079,7 +1116,7 @@ export default function TrekDetailClient({
               <motion.div id="booking-inquiry-section" variants={itemVariants} className="space-y-4 scroll-mt-36">
                 <SectionHeader index="11" title="Booking Inquiry Form" icon={FileText} />
                 <Card className="border-border p-6 md:p-8">
-                  <BookingForm trek={trek} />
+                  <BookingForm trek={trek} packageOptions={pricingTiers.map((tier) => tier.name)} />
                 </Card>
               </motion.div>
 

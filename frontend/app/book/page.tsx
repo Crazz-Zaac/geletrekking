@@ -1,26 +1,37 @@
+import Image from "next/image";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Card } from "@/components/ui/card";
 import { BookingForm } from "@/components/booking-form";
-import { getTreks } from "@/lib/api";
+import { getAdminSettings, getTreks } from "@/lib/api";
 import { CalendarDays, Mail, MapPinned, Users } from "lucide-react";
 
 export default async function BookPage() {
-  const treks = await getTreks();
+  const [treks, settings] = await Promise.all([getTreks(), getAdminSettings()]);
+  const heroImageUrl = (settings.bookingHeroImageUrl || "").trim();
 
   return (
     <>
       <Navbar />
       <main className="min-h-screen bg-background pt-16">
-        <section className="py-10 md:py-14 bg-gradient-to-br from-primary/15 via-accent/10 to-background border-b border-border">
-          <div className="container mx-auto px-4 md:px-6 text-center">
-            <p className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs md:text-sm font-semibold text-primary">
-              Trek Booking Inquiry
-            </p>
-            <h1 className="mt-3 text-4xl md:text-5xl font-bold text-foreground text-balance">Book Your Trek</h1>
-            <p className="mt-3 text-base md:text-lg text-muted-foreground max-w-3xl mx-auto">
-              Share your details, choose a trek, and our team will confirm availability, route options, and next steps.
-            </p>
+        <section className="relative overflow-hidden border-b border-border py-10 md:py-14">
+          {heroImageUrl ? (
+            <div className="absolute inset-0">
+              <Image
+                src={heroImageUrl}
+                alt="Booking page hero background"
+                fill
+                priority
+                className="object-cover"
+                unoptimized
+              />
+              <div className="absolute inset-0 bg-black/60" />
+            </div>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-accent/10 to-background" />
+          )}
+          <div className="container relative z-10 mx-auto px-4 md:px-6 text-center">
+            <h1 className={heroImageUrl ? "text-4xl md:text-5xl font-bold text-white text-balance" : "text-4xl md:text-5xl font-bold text-foreground text-balance"}>Booking Inquiry Form</h1>
           </div>
         </section>
 

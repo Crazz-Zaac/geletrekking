@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import type { Trek } from '@/lib/data'
 import { submitContactMessage } from '@/lib/api'
@@ -11,9 +11,10 @@ interface BookingFormProps {
   trek?: Trek
   treks?: Trek[]
   requireTrek?: boolean
+  packageOptions?: string[]
 }
 
-export function BookingForm({ trek, treks = [], requireTrek = false }: BookingFormProps) {
+export function BookingForm({ trek, treks = [], requireTrek = false, packageOptions }: BookingFormProps) {
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -32,10 +33,23 @@ export function BookingForm({ trek, treks = [], requireTrek = false }: BookingFo
     email: '',
     phone: '',
     trek: trek?.title ?? '',
+    packageTier: '',
     date: '',
     groupSize: '',
     message: '',
   })
+  const selectedTrek = useMemo(
+    () => treks.find((item) => item.title === form.trek) || trek,
+    [form.trek, trek, treks]
+  )
+  const availablePackageOptions = useMemo(() => {
+    const fromProps = (packageOptions || []).filter(Boolean)
+    if (fromProps.length > 0) return fromProps
+
+    const fromTrek = (selectedTrek?.pricingTiers || []).map((tier) => tier.name).filter(Boolean)
+    return fromTrek.length > 0 ? fromTrek : ['Economic', 'Comfort']
+  }, [packageOptions, selectedTrek])
+
   const isFormReady =
     Boolean(form.name.trim()) &&
     Boolean(form.email.trim()) &&
@@ -65,6 +79,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false }: BookingFo
         form.message,
         form.phone ? `Phone: ${form.phone}` : '',
         form.trek ? `Preferred Trek: ${form.trek}` : '',
+        form.packageTier ? `Choose Package: ${form.packageTier}` : '',
         form.date ? `Preferred Date: ${form.date}` : '',
         form.groupSize ? `Group Size: ${form.groupSize}` : '',
       ]
@@ -154,7 +169,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false }: BookingFo
           <select
             value={form.trek}
             required={requireTrek}
-            onChange={(e) => setForm({ ...form, trek: e.target.value })}
+            onChange={(e) => setForm({ ...form, trek: e.target.value, packageTier: '' })}
             className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
           >
             <option value="">Select a trek</option>
@@ -170,6 +185,19 @@ export function BookingForm({ trek, treks = [], requireTrek = false }: BookingFo
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-1.5">Choose Package</label>
+          <select
+            value={form.packageTier}
+            onChange={(e) => setForm({ ...form, packageTier: e.target.value })}
+            className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+          >
+            <option value="">Select package</option>
+            {availablePackageOptions.map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+        </div>
         <div>
           <label className="block text-sm font-medium text-foreground mb-1.5">Preferred Start Date</label>
           <input

@@ -91,6 +91,7 @@ exports.updateSettings = async (req, res) => {
       "siteName",
       "logoUrl",
       "contactHeroImageUrl",
+      "bookingHeroImageUrl",
       "phone",
       "email",
       "address",

@@ -5,6 +5,7 @@ const siteSettingsSchema = new mongoose.Schema(
     siteName: { type: String, default: "GELE TREKKING" },
     logoUrl: { type: String, default: "" },
     contactHeroImageUrl: { type: String, default: "" },
+    bookingHeroImageUrl: { type: String, default: "" },
     phone: { type: String, default: "" },
     email: { type: String, default: "" },
     address: { type: String, default: "" },

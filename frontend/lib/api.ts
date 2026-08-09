@@ -229,6 +229,7 @@ export interface AdminSiteSettings {
   siteName?: string
   logoUrl?: string
   contactHeroImageUrl?: string
+  bookingHeroImageUrl?: string
   phone?: string
   email?: string
   address?: string
