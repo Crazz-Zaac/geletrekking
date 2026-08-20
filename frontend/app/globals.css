@@ -186,9 +186,60 @@
 }
 
 .markdown-content blockquote {
-  @apply border-l-4 border-primary/40 pl-4 py-2 italic text-foreground/80 bg-muted/40 rounded-r-md my-6;
+  @apply my-8 rounded-r-lg border-l-4 border-primary bg-primary/5 px-5 py-4 italic text-foreground shadow-sm;
+}
+
+.markdown-content blockquote p {
+  @apply mb-0 text-foreground/85;
 }
 
 .markdown-content a {
   @apply text-primary hover:text-primary/80 underline underline-offset-4;
+}
+
+
+.trekking-blog-content {
+  @apply text-[1.05rem] leading-8 text-foreground/90;
+}
+
+.trekking-blog-content > *:first-child {
+  @apply mt-0;
+}
+
+.trekking-blog-content h1,
+.trekking-blog-content h2,
+.trekking-blog-content h3 {
+  @apply font-serif scroll-mt-24;
+}
+
+.trekking-blog-content p {
+  @apply text-foreground/80;
+}
+
+.trekking-blog-content img {
+  @apply mx-auto my-8 h-auto max-w-full rounded-lg border border-border object-cover shadow-sm;
+}
+
+.trekking-blog-content figure {
+  @apply my-8;
+}
+
+.trekking-blog-content figcaption {
+  @apply -mt-5 text-center text-xs text-muted-foreground;
+}
+
+.trekking-blog-content hr {
+  @apply my-10 border-border;
+}
+
+.trekking-blog-content table {
+  @apply my-8 w-full overflow-hidden rounded-lg border border-border text-sm;
+}
+
+.trekking-blog-content th {
+  @apply bg-muted px-4 py-3 text-left font-semibold text-foreground;
+}
+
+.trekking-blog-content td {
+  @apply border-t border-border px-4 py-3 text-muted-foreground;
 }

@@ -8,8 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import Link from 'next/link';
-import { blogPosts } from '@/lib/data';
-import { Clock3, Search, X } from 'lucide-react';
+import { ArrowRight, CalendarDays, Clock3, Compass, Search, X } from 'lucide-react';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { getBlogs, type UiBlogPost } from '@/lib/api';
@@ -50,7 +49,7 @@ function BlogContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [posts, setPosts] = useState<UiBlogPost[]>(blogPosts);
+  const [posts, setPosts] = useState<UiBlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedHashtag, setSelectedHashtag] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,13 +67,9 @@ function BlogContent() {
       setLoading(true);
       try {
         const apiPosts = await getBlogs();
-        if (apiPosts.length > 0) {
-          setPosts(apiPosts);
-        } else {
-          setPosts(blogPosts);
-        }
+        setPosts(apiPosts);
       } catch {
-        setPosts(blogPosts);
+        setPosts([]);
       } finally {
         setLoading(false);
       }
@@ -191,11 +186,35 @@ function BlogContent() {
   const suggestedPosts = posts.slice(0, 3);
   const visiblePosts = filteredPosts.slice(0, visibleCount);
   const hasMorePosts = visibleCount < filteredPosts.length;
+  const featuredPost = filteredPosts[0];
+  const gridPosts = visiblePosts.slice(featuredPost ? 1 : 0);
 
   return (
     <>
       <Navbar />
       <main className="min-h-screen bg-background pt-16">
+        <section className="relative overflow-hidden border-b border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,255,255,0.98)),url('/images/hero-himalaya.jpg')] bg-cover bg-center py-14 md:py-20 dark:bg-[linear-gradient(180deg,rgba(17,24,39,0.84),rgba(17,24,39,0.98)),url('/images/hero-himalaya.jpg')]">
+          <div className="container mx-auto px-4 md:px-6">
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={containerVariants}
+              className="max-w-3xl space-y-5"
+            >
+              <motion.div variants={itemVariants} className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary shadow-sm backdrop-blur">
+                <Compass className="h-3.5 w-3.5" />
+                Trekking Journal
+              </motion.div>
+              <motion.h1 variants={itemVariants} className="font-serif text-4xl font-bold leading-tight text-foreground md:text-6xl">
+                Field notes from Nepal&apos;s trails
+              </motion.h1>
+              <motion.p variants={itemVariants} className="max-w-2xl text-base leading-8 text-muted-foreground md:text-lg">
+                Practical route insight, company stories, gear notes, and mountain culture from the Gele Trekking team.
+              </motion.p>
+            </motion.div>
+          </div>
+        </section>
+
         <section className="py-10 md:py-14">
           <div className="container mx-auto px-4 md:px-6">
             <motion.div
@@ -204,12 +223,12 @@ function BlogContent() {
               variants={containerVariants}
               className="space-y-6"
             >
-                <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+              <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
                 <div>
                   <p className="text-xs md:text-sm font-semibold tracking-widest uppercase text-primary mb-2">Latest Updates</p>
-                  <h2 className="text-2xl md:text-3xl font-bold text-foreground">Recent Articles</h2>
+                  <h2 className="font-serif text-2xl md:text-3xl font-bold text-foreground">Recent Articles</h2>
                 </div>
-                  <p className="text-sm text-muted-foreground">Showing {Math.min(visibleCount, filteredPosts.length)} of {filteredPosts.length}</p>
+                <p className="text-sm text-muted-foreground">Showing {Math.min(visibleCount, filteredPosts.length)} of {filteredPosts.length}</p>
               </motion.div>
 
               <motion.div variants={itemVariants} className="sticky top-16 z-20 rounded-xl border border-border bg-background/95 backdrop-blur p-3 md:p-4 space-y-3">
@@ -294,7 +313,7 @@ function BlogContent() {
                 </div>
               ) : filteredPosts.length === 0 ? (
                 <motion.div variants={itemVariants} className="space-y-4 text-sm text-muted-foreground rounded-lg border border-dashed border-border p-6 text-center">
-                  <p>No articles found for your current filters.</p>
+                  <p>{posts.length === 0 ? 'No published articles yet.' : 'No articles found for your current filters.'}</p>
                   <button
                     onClick={clearAll}
                     className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-semibold hover:bg-muted transition-colors"
@@ -313,18 +332,28 @@ function BlogContent() {
                   ) : null}
                 </motion.div>
               ) : (
-                <motion.div
-                  initial={false}
-                  animate="visible"
-                  variants={containerVariants}
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-                >
-                  {visiblePosts.map((post) => (
-                    <motion.div key={post.slug} variants={itemVariants}>
-                      <BlogCard post={post} />
+                <div className="space-y-6">
+                  {featuredPost ? (
+                    <motion.div variants={itemVariants}>
+                      <FeaturedBlogCard post={featuredPost} />
                     </motion.div>
-                  ))}
-                </motion.div>
+                  ) : null}
+
+                  {gridPosts.length > 0 ? (
+                    <motion.div
+                      initial={false}
+                      animate="visible"
+                      variants={containerVariants}
+                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                    >
+                      {gridPosts.map((post) => (
+                        <motion.div key={post.slug} variants={itemVariants}>
+                          <BlogCard post={post} />
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  ) : null}
+                </div>
               )}
 
               {!loading && filteredPosts.length > 0 ? (
@@ -398,12 +427,58 @@ function BlogCard({ post, compact = false }: { post: UiBlogPost; compact?: boole
             </div>
           ) : null}
 
-          <div className="pt-1 flex items-center justify-between text-xs text-muted-foreground">
+          <div className="pt-1 flex items-center justify-between gap-3 text-xs text-muted-foreground">
             <span>{post.author}</span>
-            <span>{post.date}</span>
+            <span className="inline-flex items-center gap-1 whitespace-nowrap">
+              <CalendarDays className="h-3.5 w-3.5" />
+              {post.date}
+            </span>
           </div>
         </div>
       </Card>
+    </Link>
+  );
+}
+
+function FeaturedBlogCard({ post }: { post: UiBlogPost }) {
+  return (
+    <Link href={`/blog/${post.slug}`} className="group grid overflow-hidden rounded-lg border border-border bg-card shadow-sm md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+      <div className="relative min-h-72 overflow-hidden">
+        <Image
+          src={post.image}
+          alt={post.title}
+          fill
+          priority
+          className="object-cover transition-transform duration-700 group-hover:scale-105"
+          sizes="(max-width: 768px) 100vw, 55vw"
+        />
+        <div className="absolute left-4 top-4">
+          <Badge className="bg-primary text-primary-foreground">Featured</Badge>
+        </div>
+      </div>
+      <div className="flex flex-col justify-center gap-4 p-5 md:p-8">
+        <div className="flex flex-wrap items-center gap-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <span>{post.category}</span>
+          <span className="inline-flex items-center gap-1">
+            <Clock3 className="h-3.5 w-3.5" />
+            {post.readTime}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <CalendarDays className="h-3.5 w-3.5" />
+            {post.date}
+          </span>
+        </div>
+        <h3 className="font-serif text-2xl font-bold leading-tight text-foreground transition-colors group-hover:text-primary md:text-4xl">
+          {post.title}
+        </h3>
+        <p className="text-sm leading-7 text-muted-foreground md:text-base">
+          {post.excerpt}
+        </p>
+        <span className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
+          Read article
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+        </span>
+      </div>
     </Link>
   );
 }

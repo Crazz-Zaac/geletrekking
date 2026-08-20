@@ -1,4 +1,4 @@
-import { blogPosts as fallbackBlogPosts, treks as fallbackTreks } from '@/lib/data'
+import { treks as fallbackTreks } from '@/lib/data'
 import type { Trek } from '@/lib/data'
 export interface UiBlogPost {
   id: string
@@ -806,16 +806,15 @@ export async function getBlogs(): Promise<UiBlogPost[]> {
     const data = await fetchJson<BackendBlogPost[]>('/api/blogs')
     return data.map(mapBlog)
   } catch {
-    return fallbackBlogPosts
+    return []
   }
 }
 export async function getBlogBySlug(slug: string): Promise<UiBlogPost | null> {
   try {
-    const data = await fetchJson<BackendBlogPost>(`/api/blogs/${slug}`)
+    const data = await fetchJson<BackendBlogPost>(`/api/blogs/${encodeURIComponent(slug)}`)
     return mapBlog(data)
   } catch {
-    const fallback = fallbackBlogPosts.find((post) => post.slug === slug)
-    return fallback || null
+    return null
   }
 }
 export async function getGoogleReviews(): Promise<UiGoogleReview[]> {

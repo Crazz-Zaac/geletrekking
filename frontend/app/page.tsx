@@ -4,7 +4,7 @@ import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { HomepageAlertBanner } from '@/components/homepage-alert-banner'
 import { TrekCard } from '@/components/trek-card'
-import { treks, blogPosts } from '@/lib/data'
+import { treks } from '@/lib/data'
 import { getBlogs, getTreks } from '@/lib/api'
 import { HeroSection } from './home/hero-section'
 import { WhyUsSection } from './home/why-us-section'
@@ -21,7 +21,7 @@ export default async function HomePage() {
   ])
 
   const activeTreks = apiTreks.length > 0 ? apiTreks : treks
-  const activeBlogs = apiBlogs.length > 0 ? apiBlogs : blogPosts
+  const activeBlogs = apiBlogs
   const offerTreks = activeTreks.filter((trek) => trek.hasOffer).slice(0, 4)
   const featuredTreks = activeTreks.filter((trek) => trek.isFeatured).slice(0, 4).length > 0 
     ? activeTreks.filter((trek) => trek.isFeatured).slice(0, 4)

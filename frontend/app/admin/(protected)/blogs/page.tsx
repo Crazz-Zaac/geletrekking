@@ -187,12 +187,50 @@ export default function AdminBlogsPage() {
     insertText(ref, fieldName, prefix, '', 'Heading')
   }
 
+  const insertQuote = (ref: HTMLTextAreaElement | null, fieldName: 'excerpt' | 'content') => {
+    if (!ref) return
+
+    const textarea = ref
+    const currentValue = fieldName === 'excerpt' ? form.excerpt : form.content
+    const selectionStart = textarea.selectionStart
+    const selectionEnd = textarea.selectionEnd
+    const blockStart = currentValue.lastIndexOf('\n', Math.max(0, selectionStart - 1)) + 1
+    const nextLineBreak = currentValue.indexOf('\n', selectionEnd)
+    const blockEnd = nextLineBreak === -1 ? currentValue.length : nextLineBreak
+    const selectedBlock = currentValue.slice(blockStart, blockEnd) || 'Quote'
+    const quotedBlock = selectedBlock
+      .split('\n')
+      .map((line) => line.startsWith('> ') ? line : `> ${line.replace(/^> ?/, '')}`)
+      .join('\n')
+    const prefix = blockStart > 0 && currentValue[blockStart - 1] !== '\n' ? '\n' : ''
+    const suffix = blockEnd < currentValue.length && currentValue[blockEnd] !== '\n' ? '\n' : ''
+    const newContent = currentValue.slice(0, blockStart) + prefix + quotedBlock + suffix + currentValue.slice(blockEnd)
+    const nextStart = blockStart + prefix.length
+    const nextEnd = nextStart + quotedBlock.length
+
+    setForm((prev) => ({ ...prev, [fieldName]: newContent }))
+
+    setTimeout(() => {
+      textarea.focus()
+      textarea.setSelectionRange(nextStart, nextEnd)
+    }, 0)
+  }
+
+  const formatImageMarkdown = (url: string, alt: string, width?: string | null, height?: string | null) => {
+    const imageSize = [
+      width?.trim() ? `width=${width.trim()}` : '',
+      height?.trim() ? `height=${height.trim()}` : '',
+    ].filter(Boolean).join(' ')
+
+    return `![${alt || 'Image'}](${url})${imageSize ? `{${imageSize}}` : ''}`
+  }
+
   const insertImage = () => {
     if (!imageUrl.trim()) {
       alert('Please enter an image URL')
       return
     }
-    const markdown = `![${imageAlt || 'Image'}](${imageUrl})`
+    const markdown = formatImageMarkdown(imageUrl, imageAlt || 'Image')
     insertText(contentRef, 'content', markdown, '', '')
     setImageUrl('')
     setImageAlt('')
@@ -467,7 +505,7 @@ export default function AdminBlogsPage() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => insertText(contentRef, 'content', '> ', '', 'Quote')}
+                      onClick={() => insertQuote(contentRef, 'content')}
                       title="Quote"
                       className="h-8 px-2 text-xs"
                     >
@@ -496,10 +534,11 @@ export default function AdminBlogsPage() {
                         const url = prompt('Enter image URL:')
                         if (url) {
                           const alt = prompt('Enter alt text (optional):') || 'Image'
+                          const width = prompt('Width in pixels (optional, e.g. 640):')
+                          const height = prompt('Height in pixels (optional, e.g. 360):')
                           setImageUrl(url)
                           setImageAlt(alt)
-                          // Directly insert the image markdown
-                          insertText(contentRef, 'content', `![${alt}](${url})`, '', '')
+                          insertText(contentRef, 'content', formatImageMarkdown(url, alt, width, height), '', '')
                         }
                       }}
                       title="Insert Image"
@@ -514,7 +553,7 @@ export default function AdminBlogsPage() {
                     value={form.content}
                     onChange={(e) => setForm((prev) => ({ ...prev, content: e.target.value }))}
                     rows={24}
-                    placeholder="Write your full blog post content here... Use the toolbar above for formatting or write plain text/markdown. Images: ![alt text](image-url)"
+                    placeholder="Write your full blog post content here... Use the toolbar above for formatting or write plain text/markdown. Images: ![alt text](image-url){width=640 height=360}"
                     className="w-full rounded-b-md border border-t-0 border-input bg-background px-3 py-2 text-sm font-mono resize-vertical min-h-96"
                   />
                 </div>
