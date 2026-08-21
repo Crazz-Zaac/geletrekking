@@ -225,6 +225,18 @@ export default function AdminBlogsPage() {
     return `![${alt || 'Image'}](${url})${imageSize ? `{${imageSize}}` : ''}`
   }
 
+  const formatYouTubeEmbed = (url: string, title?: string | null) => {
+    return `::youtube${title?.trim() ? `[${title.trim()}]` : ''}(${url.trim()})`
+  }
+
+  const insertYouTubeEmbed = () => {
+    const url = prompt('Enter YouTube URL:')
+    if (!url?.trim()) return
+
+    const title = prompt('Video title (optional):')
+    insertText(contentRef, 'content', formatYouTubeEmbed(url, title), '', '')
+  }
+
   const insertImage = () => {
     if (!imageUrl.trim()) {
       alert('Please enter an image URL')
@@ -530,7 +542,6 @@ export default function AdminBlogsPage() {
                       size="sm"
                       variant="ghost"
                       onClick={() => {
-                        // Trigger a simple dialog for image insertion
                         const url = prompt('Enter image URL:')
                         if (url) {
                           const alt = prompt('Enter alt text (optional):') || 'Image'
@@ -546,6 +557,15 @@ export default function AdminBlogsPage() {
                     >
                       🖼️ Image
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={insertYouTubeEmbed}
+                      title="Embed YouTube Video"
+                      className="h-8 px-2 text-xs"
+                    >
+                      ▶ Video
+                    </Button>
                   </div>
 
                   <textarea
@@ -553,7 +573,7 @@ export default function AdminBlogsPage() {
                     value={form.content}
                     onChange={(e) => setForm((prev) => ({ ...prev, content: e.target.value }))}
                     rows={24}
-                    placeholder="Write your full blog post content here... Use the toolbar above for formatting or write plain text/markdown. Images: ![alt text](image-url){width=640 height=360}"
+                    placeholder="Write your full blog post content here... Use the toolbar above for formatting or write plain text/markdown. Images: ![alt text](image-url){width=640 height=360}. YouTube: ::youtube[Video title](youtube-url)"
                     className="w-full rounded-b-md border border-t-0 border-input bg-background px-3 py-2 text-sm font-mono resize-vertical min-h-96"
                   />
                 </div>

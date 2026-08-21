@@ -7,6 +7,8 @@ import { Card } from '@/components/ui/card'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { generalFAQ } from '@/lib/faq-data'
 import { getAdminFaq, type AdminFaq } from '@/lib/api'
+import { JsonLd } from '@/components/json-ld'
+import { faqJsonLd } from '@/lib/seo'
 
 const isSafeMarkdownHref = (href: string) => {
   const value = href.trim()
@@ -96,6 +98,7 @@ export default async function FAQPage() {
 
   return (
     <>
+      <JsonLd data={faqJsonLd(faqItems)} />
       <Navbar />
       <main className="min-h-screen bg-background pt-16">
         <section className="relative overflow-hidden border-b border-border py-16 md:py-20">

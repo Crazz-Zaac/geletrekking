@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, BookOpen, Eye, CalendarDays } from 'lucide-react'
@@ -12,9 +13,42 @@ import { GuideHero } from '@/components/guide-hero'
 import { GuideContentClient } from '@/components/guide-content-client'
 import { marked } from 'marked'
 import GuideContent from '@/components/guide-content'
+import { JsonLd } from '@/components/json-ld'
+import { breadcrumbJsonLd, buildMetadata, guideArticleJsonLd, truncateDescription } from '@/lib/seo'
 
 interface GuideDetailPageProps {
   params: Promise<{ slug: string }>
+}
+
+async function loadGuide(slug: string) {
+  try {
+    return await getGuideBySlug(slug)
+  } catch {
+    return null
+  }
+}
+
+export async function generateMetadata({ params }: GuideDetailPageProps): Promise<Metadata> {
+  const { slug } = await params
+  const guide = await loadGuide(slug)
+
+  if (!guide) {
+    return buildMetadata({
+      title: 'Travel Guide Not Found',
+      description: 'This Gele Trekking travel guide could not be found.',
+      path: `/guides/${slug}`,
+    })
+  }
+
+  return buildMetadata({
+    title: guide.title,
+    description: truncateDescription(guide.description || guide.content, `Read ${guide.title} from Gele Trekking.`),
+    path: `/guides/${guide.slug}`,
+    type: 'article',
+    publishedTime: guide.createdAt,
+    modifiedTime: guide.updatedAt || guide.createdAt,
+    tags: [guide.category, guide.region, guide.section].filter(Boolean) as string[],
+  })
 }
 
 function formatGuideDate(value?: string): string {
@@ -36,7 +70,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
   let readingTime = 0
 
   try {
-    const data = await getGuideBySlug(slug)
+    const data = await loadGuide(slug)
     guide = data
     if (data?.content) {
       contentHtml = (await marked(data.content)) as string
@@ -52,6 +86,14 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
 
   return (
     <>
+      <JsonLd data={[
+        guideArticleJsonLd(guide, `/guides/${guide.slug}`),
+        breadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Guides', path: '/guides' },
+          { name: guide.title, path: `/guides/${guide.slug}` },
+        ]),
+      ]} />
       <Navbar />
       
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 pt-28 pb-28 md:pb-16">

@@ -220,6 +220,15 @@
   @apply mx-auto my-8 h-auto max-w-full rounded-lg border border-border object-cover shadow-sm;
 }
 
+.trekking-blog-content .blog-video-embed {
+  @apply my-8 overflow-hidden rounded-lg border border-border bg-black shadow-sm;
+  aspect-ratio: 16 / 9;
+}
+
+.trekking-blog-content .blog-video-embed iframe {
+  @apply h-full w-full;
+}
+
 .trekking-blog-content figure {
   @apply my-8;
 }
