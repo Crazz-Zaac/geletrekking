@@ -38,6 +38,11 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
     groupSize: '',
     message: '',
   })
+
+  const updateForm = (patch: Partial<typeof form>) => {
+    setForm((current) => ({ ...current, ...patch }))
+    setError(null)
+  }
   const selectedTrek = useMemo(
     () => treks.find((item) => item.title === form.trek) || trek,
     [form.trek, trek, treks]
@@ -88,6 +93,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
       website: honeypot,
       formStartedAt,
       captchaToken,
+      source: 'Booking Inquiry Form',
     })
 
     setSubmitting(false)
@@ -136,7 +142,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
             type="text"
             required
             value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            onChange={(e) => updateForm({ name: e.target.value })}
             placeholder="Your full name"
             className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
           />
@@ -147,7 +153,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
             type="email"
             required
             value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            onChange={(e) => updateForm({ email: e.target.value })}
             placeholder="you@email.com"
             className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
           />
@@ -159,7 +165,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
           <input
             type="tel"
             value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            onChange={(e) => updateForm({ phone: e.target.value })}
             placeholder="+1 234 567 890"
             className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
           />
@@ -169,7 +175,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
           <select
             value={form.trek}
             required={requireTrek}
-            onChange={(e) => setForm({ ...form, trek: e.target.value, packageTier: '' })}
+            onChange={(e) => updateForm({ trek: e.target.value, packageTier: '' })}
             className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
           >
             <option value="">Select a trek</option>
@@ -189,7 +195,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
           <label className="block text-sm font-medium text-foreground mb-1.5">Choose Package</label>
           <select
             value={form.packageTier}
-            onChange={(e) => setForm({ ...form, packageTier: e.target.value })}
+            onChange={(e) => updateForm({ packageTier: e.target.value })}
             className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
           >
             <option value="">Select package</option>
@@ -203,7 +209,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
           <input
             type="date"
             value={form.date}
-            onChange={(e) => setForm({ ...form, date: e.target.value })}
+            onChange={(e) => updateForm({ date: e.target.value })}
             className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
           />
         </div>
@@ -211,7 +217,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
           <label className="block text-sm font-medium text-foreground mb-1.5">Group Size</label>
           <select
             value={form.groupSize}
-            onChange={(e) => setForm({ ...form, groupSize: e.target.value })}
+            onChange={(e) => updateForm({ groupSize: e.target.value })}
             className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
           >
             <option value="">Select</option>
@@ -227,7 +233,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
         <label className="block text-sm font-medium text-foreground mb-1.5">Message / Special Requirements</label>
         <textarea
           value={form.message}
-          onChange={(e) => setForm({ ...form, message: e.target.value })}
+          onChange={(e) => updateForm({ message: e.target.value })}
           placeholder="Tell us about your trekking experience, any dietary needs, or questions..."
           rows={4}
           className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm resize-none"

@@ -120,10 +120,11 @@ export default function ContactPage() {
   const canSubmit = !submitting && isFormReady && isCaptchaReady;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
+    setFormData((current) => ({
+      ...current,
       [e.target.name]: e.target.value,
-    });
+    }));
+    setSubmitError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

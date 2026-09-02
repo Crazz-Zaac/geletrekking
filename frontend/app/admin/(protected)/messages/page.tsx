@@ -130,6 +130,9 @@ export default function AdminMessagesPage() {
                       {!item.isRead && <span className="h-2.5 w-2.5 rounded-full bg-sky-500 flex-shrink-0" />}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 truncate">{item.email}</p>
+                    <p className="mt-2 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                      {item.source || 'Contact Form'}
+                    </p>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{item.message}</p>
 
                     {/* Trash button — visible on hover */}
@@ -160,6 +163,9 @@ export default function AdminMessagesPage() {
                 <div>
                   <p className="font-semibold">{selected.name}</p>
                   <p className="text-sm text-muted-foreground">{selected.email}</p>
+                  <p className="mt-1 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                    {selected.source || 'Contact Form'}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     {new Date(selected.createdAt).toLocaleString()}
                   </p>

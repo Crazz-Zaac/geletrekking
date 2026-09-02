@@ -165,6 +165,7 @@ export interface AdminContactMessage {
   name: string
   email: string
   message: string
+  source?: string
   isRead: boolean
   createdAt: string
 }
@@ -832,6 +833,7 @@ export async function submitContactMessage(payload: {
   website?: string
   formStartedAt?: number
   captchaToken?: string
+  source?: string
 }): Promise<{ success: boolean; message: string }> {
   try {
     const response = await fetchJson<{ message?: string }>('/api/contact', {

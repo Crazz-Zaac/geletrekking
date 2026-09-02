@@ -117,6 +117,17 @@ export default function PlanMyTrekPage() {
   )
   const turnstileSiteKey = hasPlaceholderTurnstileKey ? '' : rawTurnstileSiteKey
   const requiresCaptcha = Boolean(turnstileSiteKey)
+
+  const updatePlan = (patch: Partial<typeof plan>) => {
+    setPlan((current) => ({ ...current, ...patch }))
+    setSubmitError('')
+  }
+
+  const updateContact = (patch: Partial<typeof contact>) => {
+    setContact((current) => ({ ...current, ...patch }))
+    setSubmitError('')
+  }
+
   const isContactReady = Boolean(contact.name.trim()) && Boolean(contact.email.trim())
   const isCaptchaReady = !requiresCaptcha || Boolean(captchaToken)
   const canSubmit = !submitting && isContactReady && isCaptchaReady
@@ -175,6 +186,7 @@ export default function PlanMyTrekPage() {
         [key]: !current.interests[key],
       },
     }))
+    setSubmitError('')
   }
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -252,7 +264,7 @@ export default function PlanMyTrekPage() {
                     Trek region
                     <select
                       value={plan.region}
-                      onChange={(event) => setPlan({ ...plan, region: event.target.value as Region })}
+                      onChange={(event) => updatePlan({ region: event.target.value as Region })}
                       className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     >
                       {Object.entries(regionOptions).map(([value, option]) => (
@@ -264,7 +276,7 @@ export default function PlanMyTrekPage() {
                     Preferred season
                     <select
                       value={plan.season}
-                      onChange={(event) => setPlan({ ...plan, season: event.target.value })}
+                      onChange={(event) => updatePlan({ season: event.target.value })}
                       className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     >
                       {Object.entries(seasonLabels).map(([value, label]) => (
@@ -276,7 +288,7 @@ export default function PlanMyTrekPage() {
                     Fitness level
                     <select
                       value={plan.fitness}
-                      onChange={(event) => setPlan({ ...plan, fitness: event.target.value as Fitness })}
+                      onChange={(event) => updatePlan({ fitness: event.target.value as Fitness })}
                       className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     >
                       {Object.entries(fitnessAdjustments).map(([value, option]) => (
@@ -288,7 +300,7 @@ export default function PlanMyTrekPage() {
                     Group size
                     <input
                       value={plan.groupSize}
-                      onChange={(event) => setPlan({ ...plan, groupSize: event.target.value })}
+                      onChange={(event) => updatePlan({ groupSize: event.target.value })}
                       className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                       placeholder="2"
                     />
@@ -308,7 +320,7 @@ export default function PlanMyTrekPage() {
                       <button
                         key={value}
                         type="button"
-                        onClick={() => setPlan({ ...plan, transport: value as Transport })}
+                        onClick={() => updatePlan({ transport: value as Transport })}
                         className={`rounded-lg border p-4 text-left transition-colors ${
                           plan.transport === value
                             ? 'border-primary bg-primary/10 text-primary'
@@ -327,7 +339,7 @@ export default function PlanMyTrekPage() {
                     <button
                       key={value}
                       type="button"
-                      onClick={() => setPlan({ ...plan, comfort: value as Comfort })}
+                      onClick={() => updatePlan({ comfort: value as Comfort })}
                       className={`rounded-lg border p-4 text-left transition-colors ${
                         plan.comfort === value
                           ? 'border-primary bg-primary/10 text-primary'
@@ -382,7 +394,7 @@ export default function PlanMyTrekPage() {
                     <div className="grid gap-4 md:grid-cols-2">
                       <input
                         value={contact.name}
-                        onChange={(event) => setContact({ ...contact, name: event.target.value })}
+                        onChange={(event) => updateContact({ name: event.target.value })}
                         className="rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         placeholder="Full name *"
                         required
@@ -390,7 +402,7 @@ export default function PlanMyTrekPage() {
                       <input
                         type="email"
                         value={contact.email}
-                        onChange={(event) => setContact({ ...contact, email: event.target.value })}
+                        onChange={(event) => updateContact({ email: event.target.value })}
                         className="rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         placeholder="Email address *"
                         required
@@ -398,13 +410,13 @@ export default function PlanMyTrekPage() {
                     </div>
                     <input
                       value={contact.phone}
-                      onChange={(event) => setContact({ ...contact, phone: event.target.value })}
+                      onChange={(event) => updateContact({ phone: event.target.value })}
                       className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                       placeholder="Phone / WhatsApp"
                     />
                     <textarea
                       value={contact.notes}
-                      onChange={(event) => setContact({ ...contact, notes: event.target.value })}
+                      onChange={(event) => updateContact({ notes: event.target.value })}
                       className="min-h-28 w-full resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                       placeholder="Anything we should know about dates, budget, previous altitude experience, or travel constraints?"
                     />

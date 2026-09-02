@@ -1,4 +1,5 @@
 const ContactMessage = require("../models/ContactMessage");
+const sendEmail = require("../utils/sendEmail");
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -13,11 +14,13 @@ const toBoolean = (value, fallback = false) => {
 
 const normalizeText = (value) => String(value || "").replace(/\s+/g, " ").trim();
 
-const verifyCaptcha = async ({ token, remoteIp }) => {
+const verifyCaptcha = async ({ token }) => {
   const provider = (process.env.CAPTCHA_PROVIDER || "turnstile").toLowerCase();
   const secret = process.env.CAPTCHA_SECRET_KEY;
 
-  if (!token || !secret) return false;
+  if (!token || !secret) {
+    return { success: false, errorCodes: ["missing-input"] };
+  }
 
   const endpoint =
     provider === "hcaptcha"
@@ -27,19 +30,34 @@ const verifyCaptcha = async ({ token, remoteIp }) => {
   const payload = new URLSearchParams();
   payload.append("secret", secret);
   payload.append("response", token);
-  if (remoteIp) payload.append("remoteip", remoteIp);
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: payload.toString(),
-  });
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: payload.toString(),
+    });
 
-  if (!response.ok) return false;
-  const data = await response.json();
-  return Boolean(data.success);
+    const data = await response.json().catch(() => null);
+    const errorCodes = data && Array.isArray(data["error-codes"]) ? data["error-codes"] : [];
+
+    if (!response.ok) {
+      return {
+        success: false,
+        errorCodes: errorCodes.length > 0 ? errorCodes : [`verify-http-${response.status}`],
+      };
+    }
+
+    return {
+      success: Boolean(data?.success),
+      errorCodes,
+    };
+  } catch (error) {
+    console.error("Captcha verification request error:", error);
+    return { success: false, errorCodes: ["verify-request-failed"] };
+  }
 };
 
 /* ─────────────────────────────────────────────
@@ -56,11 +74,13 @@ exports.submitMessage = async (req, res) => {
       website,
       formStartedAt,
       captchaToken,
+      source,
     } = req.body || {};
 
     const normalizedName = normalizeText(name);
     const normalizedEmail = normalizeText(email).toLowerCase();
     const normalizedMessage = normalizeText(message);
+    const normalizedSource = normalizeText(source).slice(0, 80) || "Contact Form";
 
     const honeypotValue = normalizeText(website);
     if (honeypotValue) {
@@ -89,20 +109,16 @@ exports.submitMessage = async (req, res) => {
       if (!captchaToken) {
         return res.status(400).json({ message: "Captcha verification is required." });
       }
-      const passedCaptcha = await verifyCaptcha({
-        token: captchaToken,
-        remoteIp: req.ip,
-      });
-      if (!passedCaptcha) {
-        return res.status(400).json({ message: "Captcha verification failed. Please try again." });
+      const captchaResult = await verifyCaptcha({ token: captchaToken });
+      if (!captchaResult.success) {
+        console.warn("Captcha verification failed:", captchaResult.errorCodes.join(", ") || "unknown");
+        return res.status(400).json({ message: "Captcha verification failed. Please refresh the captcha and try again." });
       }
     } else if (hasCaptchaSecret && captchaToken) {
-      const passedCaptcha = await verifyCaptcha({
-        token: captchaToken,
-        remoteIp: req.ip,
-      });
-      if (!passedCaptcha) {
-        return res.status(400).json({ message: "Captcha verification failed. Please try again." });
+      const captchaResult = await verifyCaptcha({ token: captchaToken });
+      if (!captchaResult.success) {
+        console.warn("Captcha verification failed:", captchaResult.errorCodes.join(", ") || "unknown");
+        return res.status(400).json({ message: "Captcha verification failed. Please refresh the captcha and try again." });
       }
     }
 
@@ -139,7 +155,27 @@ exports.submitMessage = async (req, res) => {
       name: normalizedName,
       email: normalizedEmail,
       message: normalizedMessage,
+      source: normalizedSource,
     });
+
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      const subject = `${normalizedSource}: ${normalizedName}`;
+      const body = [
+        `Source: ${normalizedSource}`,
+        `Name: ${normalizedName}`,
+        `Email: ${normalizedEmail}`,
+        "",
+        "Message:",
+        normalizedMessage,
+      ].join("\n");
+
+      sendEmail(process.env.EMAIL_USER, subject, body).catch((emailError) => {
+        console.error("Contact notification email error:", emailError);
+      });
+    } else {
+      console.warn("Contact notification email skipped: EMAIL_USER or EMAIL_PASS is not configured.");
+    }
+
     res.status(201).json({ message: "Thank you for contacting us!" });
   } catch (err) {
     console.error("Contact submit error:", err);

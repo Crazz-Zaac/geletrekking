@@ -102,6 +102,7 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
   const updateField = (field: string, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }))
     setMissingFieldIds((prev) => prev.filter((item) => item !== field))
+    setError(null)
   }
 
   const downloadLocalPdf = (dataUri: string, filename: string) => {
