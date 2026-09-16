@@ -28,6 +28,11 @@ interface ActivityColumn {
   items: PublicActivity[]
 }
 
+type DestinationChild = { label: string; href: string }
+
+const sortDestinationChildren = (items: DestinationChild[]) =>
+  [...items].sort((a, b) => a.label.localeCompare(b.label))
+
 export function Navbar() {
   const { settings, social } = useSiteSettings()
   const activitiesEnabled = settings.navigation?.activitiesEnabled ?? true
@@ -43,7 +48,7 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
-  const [destinationChildren, setDestinationChildren] = useState<Array<{ label: string; href: string }>>([])
+  const [destinationChildren, setDestinationChildren] = useState<DestinationChild[]>([])
   const [guideColumns, setGuideColumns] = useState<GuideColumn[]>([])
   const [activityColumns, setActivityColumns] = useState<ActivityColumn[]>([])
   const [expandedMobileMenu, setExpandedMobileMenu] = useState<Set<string>>(new Set())
@@ -140,32 +145,25 @@ export function Navbar() {
   // Load treks from database
   useEffect(() => {
     const loadTreks = async () => {
+      const fallbackChildren = sortDestinationChildren(defaultTreks.map((trek) => ({
+        label: trek.title.replace(/\s+Trek$/i, ""),
+        href: '/trek/' + trek.slug,
+      })))
+
       try {
         const dbTreks = await getTreks()
         if (dbTreks && dbTreks.length > 0) {
           setDestinationChildren(
-            dbTreks.map((trek: any) => ({
+            sortDestinationChildren(dbTreks.map((trek: any) => ({
               label: trek.name || trek.title,
-              href: `/trek/${trek.id || trek.slug}`,
-            }))
+              href: '/trek/' + (trek.id || trek.slug),
+            })))
           )
         } else {
-          // Fallback to default treks if database is empty
-          setDestinationChildren(
-            defaultTreks.map((trek) => ({
-              label: trek.title.replace(/\s+Trek$/i, ''),
-              href: `/trek/${trek.slug}`,
-            }))
-          )
+          setDestinationChildren(fallbackChildren)
         }
       } catch {
-        // Fallback to default treks on error
-        setDestinationChildren(
-          defaultTreks.map((trek) => ({
-            label: trek.title.replace(/\s+Trek$/i, ''),
-            href: `/trek/${trek.slug}`,
-          }))
-        )
+        setDestinationChildren(fallbackChildren)
       }
     }
 
@@ -278,26 +276,28 @@ export function Navbar() {
 
             {openDropdown === 'Destinations' && (
               <div
-                className="absolute top-full left-1/2 -translate-x-1/2 pt-2"
+                className="fixed left-1/2 top-16 -translate-x-1/2 pt-2"
                 onMouseEnter={() => openMenu('Destinations')}
                 onMouseLeave={closeMenuWithDelay}
               >
-                <div className="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden min-w-64">
-                  <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/70">
+                <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden w-[calc(100vw-3rem)] max-w-6xl">
+                  <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/70">
                     <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold">Popular Destinations</p>
                   </div>
-                  <div className="p-2 max-h-80 overflow-y-auto">
+                  <div className="p-4 max-h-[calc(100vh-10rem)] overflow-y-auto">
                   {destinationChildren.length > 0 ? (
-                    destinationChildren.map((child: any) => (
-                      <Link
-                        key={child.label}
-                        href={child.href}
-                        className="block px-3 py-2.5 text-sm text-gray-900 hover:bg-gray-100 hover:text-primary rounded-lg transition-colors font-medium"
-                        onClick={() => setOpenDropdown(null)}
-                      >
-                        {child.label}
-                      </Link>
-                    ))
+                    <div className="grid grid-cols-3 gap-2">
+                      {destinationChildren.map((child: any) => (
+                        <Link
+                          key={child.label}
+                          href={child.href}
+                          className="block rounded-lg px-3 py-2 text-sm font-medium leading-snug text-gray-900 hover:bg-gray-100 hover:text-primary transition-colors"
+                          onClick={() => setOpenDropdown(null)}
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
                   ) : (
                     <div className="px-3 py-2.5 text-sm text-gray-500">No treks available</div>
                   )}

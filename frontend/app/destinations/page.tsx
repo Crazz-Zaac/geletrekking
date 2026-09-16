@@ -79,7 +79,7 @@ function DestinationsPageContent() {
   const selectedDifficulty = searchParams.get('difficulty') ?? '';
   const selectedDuration = searchParams.get('duration') ?? '';
   const selectedSeason = (searchParams.get('season') ?? '').toLowerCase();
-  const selectedSort = searchParams.get('sort') ?? 'popularity';
+  const selectedSort = searchParams.get('sort') ?? 'nameAsc';
 
   const updateFilters = (updates: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -114,12 +114,12 @@ function DestinationsPageContent() {
   });
 
   const regionOptions = useMemo(
-    () => Array.from(new Set(trekList.map((trek) => trek.region))),
+    () => Array.from(new Set(trekList.map((trek) => trek.region))).sort((a, b) => a.localeCompare(b)),
     [trekList]
   );
 
   const difficultyOptions = useMemo(
-    () => Array.from(new Set(trekList.map((trek) => trek.difficulty))),
+    () => Array.from(new Set(trekList.map((trek) => trek.difficulty))).sort((a, b) => a.localeCompare(b)),
     [trekList]
   );
 
@@ -127,6 +127,8 @@ function DestinationsPageContent() {
     const items = [...filteredTreks];
 
     switch (selectedSort) {
+      case 'nameAsc':
+        return items.sort((a, b) => a.title.localeCompare(b.title));
       case 'priceAsc':
         return items.sort((a, b) => a.price - b.price);
       case 'priceDesc':
@@ -138,19 +140,23 @@ function DestinationsPageContent() {
         return items.sort((a, b) => order[a.difficulty] - order[b.difficulty]);
       }
       case 'popularity':
-      default:
         return items.sort((a, b) => {
           const aScore = (a.isFeatured ? 2 : 0) + (a.hasOffer ? 1 : 0);
           const bScore = (b.isFeatured ? 2 : 0) + (b.hasOffer ? 1 : 0);
-          return bScore - aScore;
+          const scoreDiff = bScore - aScore;
+          if (scoreDiff !== 0) return scoreDiff;
+          return a.title.localeCompare(b.title);
         });
+      default:
+        return items.sort((a, b) => a.title.localeCompare(b.title));
     }
   }, [filteredTreks, selectedSort]);
 
   const suggestedTreks = useMemo(() => {
-    const featured = trekList.filter((trek) => trek.isFeatured);
+    const byName = [...trekList].sort((a, b) => a.title.localeCompare(b.title));
+    const featured = byName.filter((trek) => trek.isFeatured);
     if (featured.length >= 3) return featured.slice(0, 3);
-    return trekList.slice(0, 3);
+    return byName.slice(0, 3);
   }, [trekList]);
 
   const activeFilters = [
@@ -182,7 +188,7 @@ function DestinationsPageContent() {
   ].filter(Boolean) as Array<{ key: string; label: string; value: string }>;
 
   const clearAllFilters = () => {
-    updateFilters({ region: '', difficulty: '', duration: '', season: '', sort: 'popularity' });
+    updateFilters({ region: '', difficulty: '', duration: '', season: '', sort: 'nameAsc' });
   };
 
   const handleToggleCompare = (trekId: string) => {
@@ -381,6 +387,7 @@ function DestinationsPageContent() {
                   onChange={(e) => updateFilters({ sort: e.target.value })}
                   className="h-11 rounded-md border border-border bg-background px-3 text-sm"
                 >
+                  <option value="nameAsc">Alphabetical</option>
                   <option value="popularity">Popularity</option>
                   <option value="priceAsc">Price: Low to High</option>
                   <option value="priceDesc">Price: High to Low</option>

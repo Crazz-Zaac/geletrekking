@@ -158,7 +158,11 @@ exports.submitMessage = async (req, res) => {
       source: normalizedSource,
     });
 
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    const skipExternalEmail = normalizedSource === "Pre-booking Form";
+
+    if (skipExternalEmail) {
+      console.info("Pre-booking form stored in backend only; external email notification skipped.");
+    } else if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       const subject = `${normalizedSource}: ${normalizedName}`;
       const body = [
         `Source: ${normalizedSource}`,

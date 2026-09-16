@@ -11,6 +11,7 @@ const {
   deleteBookingFormLink,
   getPublicBookingFormLink,
   submitBooking,
+  submitPreBooking,
   getBookingSubmissions,
   downloadBookingPdf,
   markBookingAsRead,
@@ -20,6 +21,7 @@ const {
 
 router.get("/link/:token", getPublicBookingFormLink);
 router.post("/link/:token/submit", contactSlowDown, contactLimiter, submitBooking);
+router.post("/pre-booking", contactSlowDown, contactLimiter, submitPreBooking);
 
 router.get("/admin/links", authMiddleware, restrictToRoles("admin", "superadmin"), getBookingFormLinks);
 router.post("/admin/links", authMiddleware, restrictToRoles("admin", "superadmin"), createBookingFormLink);

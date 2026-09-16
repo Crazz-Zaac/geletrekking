@@ -45,11 +45,20 @@ const decayScore = (profile, elapsedMs) => {
   }
 };
 
+const flattenPayloadText = (value, depth = 0) => {
+  if (depth > 2 || value == null) return [];
+  if (["string", "number", "boolean"].includes(typeof value)) return [String(value)];
+  if (Array.isArray(value)) return value.flatMap((item) => flattenPayloadText(item, depth + 1));
+  if (typeof value === "object") return Object.values(value).flatMap((item) => flattenPayloadText(item, depth + 1));
+  return [];
+};
+
 const classifyPayload = (body = {}) => {
-  const text = [body.name, body.email, body.message]
-    .map((item) => String(item || "").trim())
+  const text = flattenPayloadText(body)
+    .map((item) => item.trim())
     .filter(Boolean)
-    .join(" ");
+    .join(" ")
+    .slice(0, 10000);
 
   const urls = text.match(URL_PATTERN) || [];
   let points = 0;
@@ -114,8 +123,12 @@ const requestRiskMiddleware = async (req, res, next) => {
       addScore(deviceProfile, 35);
     }
 
-    const isContactSubmission = req.method === "POST" && req.path === "/contact";
-    if (isContactSubmission) {
+    const isPublicFormSubmission = req.method === "POST" && (
+      req.path === "/contact" ||
+      req.path === "/booking-submissions/pre-booking" ||
+      /^\/booking-submissions\/link\/[^/]+\/submit$/.test(req.path)
+    );
+    if (isPublicFormSubmission) {
       ipProfile.contactEvents.push(currentTime);
       deviceProfile.contactEvents.push(currentTime);
       trimEvents(ipProfile.contactEvents, config.contactWindowMs, currentTime);

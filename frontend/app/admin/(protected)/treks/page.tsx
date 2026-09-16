@@ -42,6 +42,11 @@ type TripEssentialForm = {
   detail: string
 }
 
+type AvailabilityRangeForm = {
+  start_date: string
+  end_date: string
+}
+
 type TrekForm = {
   name: string
   slug: string
@@ -49,6 +54,7 @@ type TrekForm = {
   region: string
   region_description: string
   best_season: string
+  availability: AvailabilityRangeForm[]
   season_tag: string
   image_url: string
   gallery_images: string
@@ -182,6 +188,7 @@ const initialForm: TrekForm = {
   region: '',
   region_description: '',
   best_season: '',
+  availability: [],
   season_tag: '',
   image_url: '',
   gallery_images: '',
@@ -243,6 +250,9 @@ function formToPayload(form: TrekForm): Partial<AdminTrek> {
     region: form.region.trim() || undefined,
     region_description: form.region_description.trim() || undefined,
     best_season: form.best_season.trim() || undefined,
+    availability: form.availability
+      .filter((range) => range.start_date && range.end_date)
+      .map((range) => ({ start_date: range.start_date, end_date: range.end_date, status: 'available' as const })),
     season_tag: form.season_tag.trim() || undefined,
     image_url: form.image_url.trim() || undefined,
     gallery_images: form.gallery_images
@@ -306,6 +316,12 @@ function trekToForm(item: AdminTrek): TrekForm {
     region: item.region || '',
     region_description: item.region_description || '',
     best_season: item.best_season || '',
+    availability: (item.availability || [])
+      .filter((range) => range.start_date && range.end_date && (range.status || 'available') === 'available')
+      .map((range) => ({
+        start_date: range.start_date.slice(0, 10),
+        end_date: range.end_date.slice(0, 10),
+      })),
     season_tag: item.season_tag || '',
     image_url: item.image_url || '',
     gallery_images: (item.gallery_images || []).join('\n'),
@@ -456,6 +472,14 @@ export default function AdminTreksPage() {
       setActiveTab('basic')
       return
     }
+    const invalidAvailabilityRange = form.availability.find((range) =>
+      range.start_date && range.end_date && range.start_date > range.end_date
+    )
+    if (invalidAvailabilityRange) {
+      setError('Availability range start date must be before end date.')
+      setActiveTab('basic')
+      return
+    }
     setSaving(true)
     setError('')
     setMessage('')
@@ -488,6 +512,25 @@ export default function AdminTreksPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete trek')
     }
+  }
+
+  const updateAvailabilityRange = (index: number, field: keyof AvailabilityRangeForm, value: string) => {
+    setForm((prev) => {
+      const updated = [...prev.availability]
+      updated[index] = { ...updated[index], [field]: value }
+      return { ...prev, availability: updated }
+    })
+  }
+
+  const addAvailabilityRange = () => {
+    setForm((prev) => ({
+      ...prev,
+      availability: [...prev.availability, { start_date: '', end_date: '' }],
+    }))
+  }
+
+  const removeAvailabilityRange = (index: number) => {
+    setForm((prev) => ({ ...prev, availability: prev.availability.filter((_, i) => i !== index) }))
   }
 
   const updateDay = (index: number, field: keyof ItineraryDay, value: string | number) => {
@@ -735,6 +778,46 @@ export default function AdminTreksPage() {
                     />
                   ))}
                 </div>
+
+                <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">Available date ranges</h3>
+                      <p className="text-xs text-muted-foreground">Add one or more booking windows across any month.</p>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={addAvailabilityRange}>
+                      + Add range
+                    </Button>
+                  </div>
+                  {form.availability.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No availability ranges added yet.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {form.availability.map((range, index) => (
+                        <div key={index} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 rounded-md border border-border bg-background p-3">
+                          {field("Start date", (
+                            <Input
+                              type="date"
+                              value={range.start_date}
+                              onChange={(e) => updateAvailabilityRange(index, "start_date", e.target.value)}
+                            />
+                          ))}
+                          {field("End date", (
+                            <Input
+                              type="date"
+                              value={range.end_date}
+                              onChange={(e) => updateAvailabilityRange(index, "end_date", e.target.value)}
+                            />
+                          ))}
+                          <Button type="button" variant="outline" size="sm" onClick={() => removeAvailabilityRange(index)} className="self-end">
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {field('Region description (used on homepage region cards)', textarea(
                   'Short summary for this trekking region',
                   form.region_description,

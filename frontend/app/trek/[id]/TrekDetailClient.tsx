@@ -16,6 +16,7 @@ import {
   BedDouble,
   Bus,
   CalendarRange,
+  CalendarDays,
   ChevronDown,
   ChevronLeft,
   CheckCircle2,
@@ -61,6 +62,21 @@ function getAltitudeLabel(maxAltitude: number) {
   if (maxAltitude >= 4000) return 'High Altitude';
   if (maxAltitude >= 3000) return 'Moderate Altitude';
   return 'Low Altitude';
+}
+
+function formatAvailabilityDate(value?: string) {
+  if (!value) return null;
+  const date = new Date(value + (value.length === 10 ? 'T00:00:00' : ''));
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
+}
+
+function formatAvailabilityRange(startDate: string, endDate: string) {
+  const start = formatAvailabilityDate(startDate);
+  const end = formatAvailabilityDate(endDate);
+  if (!start || !end) return null;
+  if (startDate === endDate) return start;
+  return start + ' - ' + end;
 }
 
 const containerVariants = {
@@ -193,6 +209,15 @@ export default function TrekDetailClient({
           includes: trek.includes || [],
         },
       ]
+  const pricingTierOrder: Record<string, number> = { Comfort: 0, Economic: 1 }
+  const orderedPricingTiers = [...pricingTiers].sort((a, b) => {
+    const orderDiff = (pricingTierOrder[a.name] ?? 2) - (pricingTierOrder[b.name] ?? 2)
+    if (orderDiff !== 0) return orderDiff
+    return a.name.localeCompare(b.name)
+  })
+  const availabilityRanges = (trek.availabilityRanges || [])
+    .map((range) => formatAvailabilityRange(range.startDate, range.endDate))
+    .filter((range): range is string => Boolean(range))
   const specialEquipmentItems = trek.whatToPack || []
 
   const formatMetric = (value?: number, unit?: string) =>
@@ -1118,7 +1143,7 @@ export default function TrekDetailClient({
               <motion.div id="booking-inquiry-section" variants={itemVariants} className="space-y-4 scroll-mt-36">
                 <SectionHeader index="11" title="Booking Inquiry Form" icon={FileText} />
                 <Card className="border-border p-6 md:p-8">
-                  <BookingForm trek={trek} packageOptions={pricingTiers.map((tier) => tier.name)} />
+                  <BookingForm trek={trek} packageOptions={orderedPricingTiers.map((tier) => tier.name)} />
                 </Card>
               </motion.div>
 
@@ -1142,7 +1167,7 @@ export default function TrekDetailClient({
                   </div>
 
                   <div className="space-y-2">
-                    {pricingTiers.map((tier) => {
+                    {orderedPricingTiers.map((tier) => {
                       const isExpanded = expandedPricingTier === tier.name
                       return (
                         <div key={tier.name} className="rounded-lg border border-border bg-background overflow-hidden">
@@ -1201,6 +1226,20 @@ export default function TrekDetailClient({
                     <div className="flex items-center gap-2"><Mountain className="w-4 h-4 text-primary" /> {trek.maxAltitude}m</div>
                     <div className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> {trek.groupSize}</div>
                   </div>
+
+                  {availabilityRanges.length > 0 ? (
+                    <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                      <div className="flex items-center gap-2 font-semibold">
+                        <CalendarDays className="h-4 w-4 shrink-0" />
+                        <span>Available dates</span>
+                      </div>
+                      <div className="mt-2 space-y-1">
+                        {availabilityRanges.map((range) => (
+                          <div key={range}>{range}</div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
 
                   <Button variant="outline" className="w-full" onClick={handleDownloadItinerary} disabled={downloadingItinerary}>
                     <Download className="w-4 h-4 mr-2" />

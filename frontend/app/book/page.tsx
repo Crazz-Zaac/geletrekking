@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Card } from "@/components/ui/card";
-import { BookingForm } from "@/components/booking-form";
+import { PreBookingForm } from "@/components/pre-booking-form";
 import { getAdminSettings, getTreks } from "@/lib/api";
 import { CalendarDays, Mail, MapPinned, Users } from "lucide-react";
 
@@ -31,7 +31,7 @@ export default async function BookPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-accent/10 to-background" />
           )}
           <div className="container relative z-10 mx-auto px-4 md:px-6 text-center">
-            <h1 className={heroImageUrl ? "text-4xl md:text-5xl font-bold text-white text-balance" : "text-4xl md:text-5xl font-bold text-foreground text-balance"}>Booking Inquiry Form</h1>
+            <h1 className={heroImageUrl ? "text-4xl md:text-5xl font-bold text-white text-balance" : "text-4xl md:text-5xl font-bold text-foreground text-balance"}>Pre-booking Form</h1>
           </div>
         </section>
 
@@ -40,12 +40,12 @@ export default async function BookPage() {
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
               <Card className="lg:col-span-3 border-border p-5 md:p-8 shadow-sm">
                 <div className="mb-6">
-                  <h2 className="text-2xl md:text-3xl font-bold text-foreground">Booking Inquiry Form</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold text-foreground">Pre-booking Form</h2>
                   <p className="mt-2 text-sm md:text-base text-muted-foreground">
-                    Email is required. Add your preferred date and group size so we can respond with a practical plan.
+                    Complete the pre-booking form below so our team can review your trek details and prepare the next steps.
                   </p>
                 </div>
-                <BookingForm treks={treks} requireTrek />
+                <PreBookingForm treks={treks} requireTrek />
               </Card>
 
               <div className="lg:col-span-2 space-y-4">

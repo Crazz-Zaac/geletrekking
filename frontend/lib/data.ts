@@ -5,6 +5,13 @@ export interface TrekPricingTier {
   includes: string[]
 }
 
+export interface TrekAvailabilityRange {
+  startDate: string
+  endDate: string
+  status?: "available" | "booked" | "limited"
+  note?: string
+}
+
 export interface TripEssential {
   title: string
   summary: string
@@ -24,6 +31,7 @@ export interface Trek {
   pricingTiers?: TrekPricingTier[]
   groupSize: string
   bestSeason: string
+  availabilityRanges?: TrekAvailabilityRange[]
   transportation: string
   startPoint?: string
   tourType: string

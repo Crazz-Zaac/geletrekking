@@ -15,6 +15,7 @@ const {
   updateUserStatus,
   listAuditLogs,
 } = require("../../controllers/adminUserController");
+const { getNotificationSummary } = require("../../controllers/adminNotificationController");
 
 // ✅ Middleware
 const authMiddleware = require("../../middleware/authMiddleware");
@@ -47,6 +48,13 @@ router.post(
   authMiddleware,
   restrictToRoles("editor", "superadmin"),
   disableTwoFactor
+);
+
+router.get(
+  "/notifications",
+  authMiddleware,
+  restrictToRoles("admin", "editor", "superadmin"),
+  getNotificationSummary
 );
 
 /* -----------------------------

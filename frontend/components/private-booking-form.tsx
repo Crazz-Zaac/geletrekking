@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, ArrowRight, CheckCircle2, CircleAlert, FileText, Loader2, Send } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, CircleAlert, Download, FileText, Loader2, Send } from 'lucide-react'
 import type { Trek } from '@/lib/data'
 import { getPrivateBookingFormLink, submitPrivateBookingSubmission } from '@/lib/api'
 import {
@@ -14,6 +14,7 @@ import {
   type BookingFormState,
 } from '@/lib/booking-form-config'
 import { TurnstileWidget } from '@/components/turnstile-widget'
+import { useSiteSettings } from '@/hooks/use-site-settings'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 
@@ -39,6 +40,7 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
   const [linkLoading, setLinkLoading] = useState(true)
   const [linkError, setLinkError] = useState<string | null>(null)
   const [downloadPdf, setDownloadPdf] = useState<{ dataUri: string; filename: string } | null>(null)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   const rawTurnstileSiteKey = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '').trim()
   const hasPlaceholderTurnstileKey = /your_turnstile_site_key|your-site-key|changeme|placeholder/i.test(rawTurnstileSiteKey)
@@ -69,6 +71,7 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
   const isCaptchaReady = !requiresCaptcha || Boolean(captchaToken)
   const canSubmit = !submitting && getMissingRequiredFields().length === 0 && consentComplete && isCaptchaReady
   const progressValue = ((step + 1) / formConfig.length) * 100
+  const { settings } = useSiteSettings()
 
   useEffect(() => {
     let cancelled = false
@@ -105,13 +108,25 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
     setError(null)
   }
 
+  const getPdfFilename = () => ('gele-trekking-booking-' + (String(form.firstName) || 'client') + '-' + (String(form.lastName) || 'form') + '.pdf').toLowerCase().replace(/[^a-z0-9.-]+/g, '-')
+
+  const createPdfBlobUrl = (dataUri: string) => {
+    const base64 = dataUri.includes(',') ? dataUri.split(',').pop() || '' : dataUri
+    const binary = window.atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index)
+    return URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }))
+  }
+
   const downloadLocalPdf = (dataUri: string, filename: string) => {
+    const href = createPdfBlobUrl(dataUri)
     const link = document.createElement('a')
-    link.href = dataUri
+    link.href = href
     link.download = filename
     document.body.appendChild(link)
     link.click()
     link.remove()
+    window.setTimeout(() => URL.revokeObjectURL(href), 1000)
   }
 
   const validateStep = () => {
@@ -151,43 +166,174 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
     const pageWidth = pdf.internal.pageSize.getWidth()
     const pageHeight = pdf.internal.pageSize.getHeight()
     const margin = 16
+    const headerHeight = 30
+    const footerTop = pageHeight - 18
     const contentWidth = pageWidth - margin * 2
-    let y = 18
+    let y = headerHeight + 12
 
-    const addText = (text: string, size = 10, style: 'normal' | 'bold' = 'normal') => {
+    type PdfImage = { dataUrl: string; format: 'PNG' | 'JPEG' }
+
+    const toImage = async (src?: string): Promise<PdfImage | null> => {
+      if (!src) return null
+
+      try {
+        const response = await fetch(src, { cache: 'force-cache' })
+        if (!response.ok) return null
+
+        const blob = await response.blob()
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(String(reader.result || ''))
+          reader.onerror = reject
+          reader.readAsDataURL(blob)
+        })
+
+        return {
+          dataUrl,
+          format: dataUrl.includes('image/jpeg') || dataUrl.includes('image/jpg') ? 'JPEG' : 'PNG',
+        }
+      } catch {
+        return null
+      }
+    }
+
+    const logo = await toImage(settings.logoUrl || '/geletrekking.png')
+    const companyName = settings.siteName || 'GELE TREKKING'
+    const contactLine = [settings.phone, settings.email].filter(Boolean).join(' | ')
+
+    pdf.setProperties({
+      title: 'Gele Trekking Booking Form',
+      subject: 'Private booking form submission',
+      author: companyName,
+    })
+
+    const setText = (size: number, style: 'normal' | 'bold' = 'normal', color: [number, number, number] = [28, 35, 39]) => {
       pdf.setFont('helvetica', style)
       pdf.setFontSize(size)
-      const lines = pdf.splitTextToSize(text || '-', contentWidth)
-      lines.forEach((line: string) => {
-        if (y > pageHeight - 18) {
-          pdf.addPage()
-          y = 18
-        }
-        pdf.text(line, margin, y)
-        y += size > 11 ? 7 : 5
+      pdf.setTextColor(color[0], color[1], color[2])
+    }
+
+    const withOpacity = (opacity: number, draw: () => void) => {
+      const doc = pdf as unknown as { GState?: new (value: { opacity: number }) => unknown; setGState?: (state: unknown) => void }
+      if (!doc.GState || !doc.setGState) return
+
+      try {
+        doc.setGState(new doc.GState({ opacity }))
+        draw()
+      } finally {
+        doc.setGState(new doc.GState({ opacity: 1 }))
+      }
+    }
+
+    const drawWatermark = () => {
+      if (!logo) return
+      withOpacity(0.05, () => {
+        const size = 112
+        pdf.addImage(logo.dataUrl, logo.format, (pageWidth - size) / 2, 92, size, size)
       })
     }
 
-    pdf.setProperties({ title: 'Gele Trekking Booking Form' })
-    addText('Gele Trekking Booking Form', 16, 'bold')
-    addText(`Submitted: ${new Date().toLocaleString()}`)
-    y += 3
+    const drawHeader = () => {
+      pdf.setFillColor(250, 252, 252)
+      pdf.rect(0, 0, pageWidth, headerHeight, 'F')
+      pdf.setDrawColor(218, 226, 230)
+      pdf.line(margin, headerHeight, pageWidth - margin, headerHeight)
+
+      if (logo) pdf.addImage(logo.dataUrl, logo.format, margin, 7, 18, 18)
+
+      setText(15, 'bold', [22, 31, 36])
+      pdf.text('Gele Trekking Booking Form', pageWidth / 2, 15, { align: 'center' })
+      setText(8, 'normal', [91, 104, 111])
+      pdf.text(companyName.toUpperCase(), pageWidth / 2, 21, { align: 'center' })
+      pdf.text(new Date().toLocaleDateString(), pageWidth - margin, 14, { align: 'right' })
+    }
+
+    const drawFooter = () => {
+      pdf.setDrawColor(218, 226, 230)
+      pdf.line(margin, footerTop - 5, pageWidth - margin, footerTop - 5)
+      setText(8, 'normal', [91, 104, 111])
+      pdf.text(companyName, margin, footerTop)
+      if (contactLine) pdf.text(contactLine, pageWidth - margin, footerTop, { align: 'right' })
+    }
+
+    const decoratePage = () => {
+      drawWatermark()
+      drawHeader()
+      drawFooter()
+    }
+
+    const addPage = () => {
+      pdf.addPage()
+      y = headerHeight + 12
+      decoratePage()
+    }
+
+    const ensureSpace = (needed = 10) => {
+      if (y + needed <= footerTop - 8) return
+      addPage()
+    }
+
+    const addSectionTitle = (title: string) => {
+      ensureSpace(18)
+      y += 3
+      pdf.setFillColor(230, 241, 245)
+      pdf.setDrawColor(202, 217, 224)
+      pdf.roundedRect(margin, y - 7, contentWidth, 11, 2, 2, 'FD')
+      setText(11, 'bold', [0, 77, 103])
+      pdf.text(title.toUpperCase(), margin + 4, y)
+      y += 11
+    }
+
+    const addField = (label: string, rawValue: string | boolean | undefined) => {
+      const value = typeof rawValue === 'boolean' ? (rawValue ? 'Yes' : 'No') : String(rawValue || '-').trim() || '-'
+      const labelWidth = 50
+      const labelLines = pdf.splitTextToSize(label.toUpperCase(), labelWidth - 6)
+      const valueLines = pdf.splitTextToSize(value, contentWidth - labelWidth - 6)
+      const rowHeight = Math.max(9, labelLines.length * 4 + 4, valueLines.length * 5 + 4)
+      ensureSpace(rowHeight + 2)
+
+      pdf.setDrawColor(232, 237, 240)
+      pdf.setFillColor(255, 255, 255)
+      pdf.roundedRect(margin, y - 5, contentWidth, rowHeight, 1.5, 1.5, 'FD')
+      setText(8, 'bold', [73, 85, 91])
+      pdf.text(labelLines, margin + 3, y)
+      setText(10, 'normal', [28, 35, 39])
+      pdf.text(valueLines, margin + labelWidth + 3, y)
+      y += rowHeight + 2
+    }
+
+    decoratePage()
+    setText(9, 'normal', [73, 85, 91])
+    pdf.text('Submitted: ' + new Date().toLocaleString(), margin, y)
+    y += 9
 
     formConfig.forEach((section) => {
-      if (y > pageHeight - 35) {
-        pdf.addPage()
-        y = 18
-      }
-      addText(section.title, 12, 'bold')
+      addSectionTitle(section.title)
       section.fields.forEach((field) => {
         if (!isFieldVisible(field)) return
-        const value = form[field.id]
-        addText(`${field.label}: ${typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value || '-'}`)
+        addField(field.label, form[field.id])
       })
       y += 2
     })
 
     return pdf.output('datauristring')
+  }
+
+  const handleDownloadPdfCopy = async () => {
+    if (!validateAll()) return
+    setDownloadingPdf(true)
+    setError(null)
+
+    try {
+      const dataUri = await generatePdf()
+      const filename = getPdfFilename()
+      setDownloadPdf({ dataUri, filename })
+      downloadLocalPdf(dataUri, filename)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to create the PDF form. Please try again.')
+    } finally {
+      setDownloadingPdf(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -220,7 +366,7 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
         return
       }
 
-      const filename = ('gele-trekking-booking-' + (String(form.firstName) || 'client') + '-' + (String(form.lastName) || 'form') + '.pdf').toLowerCase().replace(/[^a-z0-9.-]+/g, '-')
+      const filename = getPdfFilename()
       setDownloadPdf({ dataUri: pdfBase64, filename })
       downloadLocalPdf(pdfBase64, filename)
       setSubmitted(true)
@@ -441,16 +587,22 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
             Next <ArrowRight className="w-4 h-4" />
           </button>
         ) : (
-          <button type="submit" disabled={!canSubmit} className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
-            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            {submitting ? 'Creating PDF...' : 'Submit PDF Form'}
-          </button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <button type="button" onClick={() => void handleDownloadPdfCopy()} disabled={submitting || downloadingPdf || getMissingRequiredFields().length > 0 || !consentComplete} className="inline-flex items-center justify-center gap-2 rounded-lg border border-input px-4 py-2.5 text-sm font-semibold hover:bg-muted/60 disabled:opacity-50">
+              {downloadingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              {downloadingPdf ? 'Preparing PDF...' : 'Download PDF copy'}
+            </button>
+            <button type="submit" disabled={!canSubmit} className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {submitting ? 'Creating PDF...' : 'Submit PDF Form'}
+            </button>
+          </div>
         )}
       </div>
 
       <p className="text-xs text-muted-foreground leading-relaxed flex gap-2">
         <FileText className="w-4 h-4 shrink-0" />
-        Admins download the PDF from the protected dashboard. No PDF copy is emailed; you can download your copy immediately after submission.
+        Admins download the submitted PDF from the protected dashboard. Use Download PDF copy on the final step to save your own copy before or after submitting.
       </p>
     </form>
   )

@@ -62,6 +62,14 @@ export interface AdminPricingTier {
   includes?: string[]
 }
 
+export interface AdminAvailabilityRange {
+  _id?: string
+  start_date: string
+  end_date: string
+  status?: "available" | "booked" | "limited"
+  note?: string
+}
+
 export interface AdminTripEssential {
   title: string
   summary?: string
@@ -94,6 +102,7 @@ export interface AdminTrek {
     highlights?: string[]
   }>
   best_season?: string
+  availability?: AdminAvailabilityRange[]
   start_point?: string
   end_point?: string
   price_gbp?: number
@@ -202,6 +211,20 @@ export interface AdminBookingSubmission {
   createdAt: string
   updatedAt?: string
   pdfFilename?: string
+}
+export interface AdminNotificationItem {
+  id: string
+  type: 'message' | 'booking'
+  title: string
+  description: string
+  href: string
+  createdAt: string
+}
+export interface AdminNotificationSummary {
+  totalUnread: number
+  unreadMessages: number
+  unreadBookings: number
+  items: AdminNotificationItem[]
 }
 export interface AdminBookingFormLink {
   _id: string
@@ -511,6 +534,7 @@ interface BackendTrek {
   what_to_pack?: string[]
   trip_essentials?: AdminTripEssential[]
   best_season?: string
+  availability?: AdminAvailabilityRange[]
   start_point?: string
   end_point?: string
   price_usd?: number
@@ -734,6 +758,14 @@ function mapTrek(trek: BackendTrek): Trek {
     pricingTiers: pricingTiers.length > 0 ? pricingTiers : undefined,
     groupSize,
     bestSeason: trek.best_season || 'All year',
+    availabilityRanges: (trek.availability || [])
+      .filter((range) => range.start_date && range.end_date && (range.status || 'available') === 'available')
+      .map((range) => ({
+        startDate: range.start_date.slice(0, 10),
+        endDate: range.end_date.slice(0, 10),
+        status: range.status || 'available',
+        note: range.note,
+      })),
     transportation,
     startPoint: trek.start_point?.trim() || undefined,
     tourType: trek.tour_type || (trek.is_optional ? 'Optional Trek' : 'Group / Private'),
@@ -854,6 +886,26 @@ export async function submitContactMessage(payload: {
 }
 export async function getPrivateBookingFormLink(token: string): Promise<PublicBookingFormLink> {
   return fetchJson<PublicBookingFormLink>("/api/booking-submissions/link/" + encodeURIComponent(token), { credentials: "omit" })
+}
+
+export async function submitPreBookingSubmission(payload: {
+  formData: BookingFormPayload
+  pdfBase64: string
+  website?: string
+  formStartedAt?: number
+  captchaToken?: string
+}): Promise<{ success: boolean; message: string; id?: string }> {
+  try {
+    const response = await fetchJson<{ message?: string; id?: string }>("/api/booking-submissions/pre-booking", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      credentials: "omit",
+    })
+    return { success: true, message: response.message || "Your pre-booking form was submitted.", id: response.id }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to submit pre-booking form right now. Please try again shortly."
+    return { success: false, message }
+  }
 }
 
 export async function submitPrivateBookingSubmission(token: string, payload: {
@@ -1005,6 +1057,10 @@ export async function updateAdminGalleryHero(token: string, heroImageUrl: string
 }
 export async function getAdminMessages(token: string): Promise<AdminContactMessage[]> {
   return fetchAdminJson<AdminContactMessage[]>('/api/contact/admin', token)
+}
+
+export async function getAdminNotificationSummary(token: string): Promise<AdminNotificationSummary> {
+  return fetchAdminJson<AdminNotificationSummary>('/api/admin/notifications', token)
 }
 
 export async function getAdminBookingFormLinks(token: string): Promise<AdminBookingFormLink[]> {

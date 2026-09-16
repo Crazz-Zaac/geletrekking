@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const BookingSubmission = require("../models/BookingSubmission");
 const BookingFormLink = require("../models/BookingFormLink");
+const sendEmail = require("../utils/sendEmail");
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const DEFAULT_LINK_TTL_DAYS = 14;
@@ -110,10 +111,12 @@ const verifyCaptcha = async ({ token }) => {
 
 const extractPdfBuffer = (pdfBase64) => {
   const value = String(pdfBase64 || "");
-  const match = value.match(/^data:application\/pdf;base64,([A-Za-z0-9+/=]+)$/);
-  const rawBase64 = match ? match[1] : value;
-  if (!rawBase64 || rawBase64.length > 220000) return null;
-  return Buffer.from(rawBase64, "base64");
+  const match = value.match(/^data:application\/pdf(?:;[^,]*)?;base64,([A-Za-z0-9+/=\s]+)$/i);
+  const rawBase64 = (match ? match[1] : value).replace(/\s+/g, "");
+  if (!rawBase64 || rawBase64.length > 5000000 || !/^[A-Za-z0-9+/]+={0,2}$/.test(rawBase64)) return null;
+
+  const buffer = Buffer.from(rawBase64, "base64");
+  return buffer.subarray(0, 4).toString("utf8") === "%PDF" ? buffer : null;
 };
 
 const isLinkUsable = (link) => {
@@ -325,12 +328,135 @@ exports.submitBooking = async (req, res) => {
     link.submission = submission._id;
     await link.save();
 
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      const customerName = [firstName, lastName].filter(Boolean).join(" ") || "a customer";
+      const recipient = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.EMAIL_USER;
+      const subject = "New private booking form submitted";
+      const body = [
+        `A new private booking form has been submitted by ${customerName}.`,
+        "",
+        "No sensitive customer details are included in this email.",
+        "Please sign in to the admin dashboard to review the submission.",
+      ].join("\n");
+
+      sendEmail(recipient, subject, body).catch((emailError) => {
+        console.error("Booking submission notification email error:", emailError);
+      });
+    } else {
+      console.warn("Booking submission notification email skipped: EMAIL_USER or EMAIL_PASS is not configured.");
+    }
+
     res.status(201).json({
       message: "Your booking form was submitted.",
       id: submission._id,
     });
   } catch (err) {
     console.error("Booking submit error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+exports.submitPreBooking = async (req, res) => {
+  try {
+    noStore(res);
+    const { formData, pdfBase64, website, formStartedAt, captchaToken } = req.body || {};
+
+    const honeypotValue = normalizeText(website);
+    if (honeypotValue) {
+      return res.status(202).json({ message: "Thank you. Your pre-booking form has been received." });
+    }
+
+    const minFillMs = Number.parseInt(process.env.CONTACT_MIN_FILL_MS || "2500", 10);
+    if (formStartedAt) {
+      const started = Number.parseInt(String(formStartedAt), 10);
+      if (!Number.isNaN(started)) {
+        const elapsed = Date.now() - started;
+        if (elapsed > 0 && elapsed < minFillMs) {
+          return res.status(400).json({ message: "Please take a moment and try again." });
+        }
+      }
+    }
+
+    const captchaRequired = toBoolean(process.env.CAPTCHA_REQUIRED, true);
+    const hasCaptchaSecret = Boolean(process.env.CAPTCHA_SECRET_KEY);
+
+    if (captchaRequired && !hasCaptchaSecret) {
+      return res.status(500).json({ message: "Captcha is not configured on server." });
+    }
+
+    if (captchaRequired) {
+      if (!captchaToken) return res.status(400).json({ message: "Captcha verification is required." });
+      const captchaResult = await verifyCaptcha({ token: captchaToken });
+      if (!captchaResult.success) {
+        console.warn("Pre-booking captcha verification failed:", captchaResult.errorCodes.join(", ") || "unknown");
+        return res.status(400).json({ message: "Captcha verification failed. Please refresh the captcha and try again." });
+      }
+    } else if (hasCaptchaSecret && captchaToken) {
+      const captchaResult = await verifyCaptcha({ token: captchaToken });
+      if (!captchaResult.success) {
+        console.warn("Pre-booking captcha verification failed:", captchaResult.errorCodes.join(", ") || "unknown");
+        return res.status(400).json({ message: "Captcha verification failed. Please refresh the captcha and try again." });
+      }
+    }
+
+    if (!formData || typeof formData !== "object") {
+      return res.status(400).json({ message: "Pre-booking form data is required." });
+    }
+
+    const fullName = normalizeText(formData.fullName);
+    const nameParts = fullName.split(" ").filter(Boolean);
+    const firstName = nameParts[0] || fullName;
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "Pre-booking";
+    const email = normalizeText(formData.email).toLowerCase();
+    const mobileWhatsapp = normalizeText(formData.phoneNumber);
+    const trekPackage = normalizeText(formData.nameOfTrekRoute);
+    const trekStartDate = normalizeText(formData.trekStartDate);
+    const trekEndDate = normalizeText(formData.trekEndDate);
+
+    if (!fullName || !email || !trekPackage) {
+      return res.status(400).json({ message: "Full name, email and trek route are required." });
+    }
+
+    if (!EMAIL_REGEX.test(email) || email.length > 255) {
+      return res.status(400).json({ message: "Please provide a valid email address." });
+    }
+
+    const pdfBuffer = extractPdfBuffer(pdfBase64);
+    if (!pdfBuffer || pdfBuffer.length < 1000) {
+      return res.status(400).json({ message: "A valid PDF copy of the form is required." });
+    }
+
+    const filename = `pre-booking-form-${Date.now()}-${fullName}.pdf`
+      .toLowerCase()
+      .replace(/[^a-z0-9.-]+/g, "-");
+
+    const submission = await BookingSubmission.create({
+      firstName,
+      lastName,
+      email,
+      mobileWhatsapp,
+      trekPackage,
+      trekStartDate,
+      trekEndDate,
+      formData: {
+        ...formData,
+        fullName,
+        submissionSource: "Pre-booking Form",
+      },
+      pdf: {
+        filename,
+        contentType: "application/pdf",
+        data: pdfBuffer,
+      },
+    });
+
+    res.status(201).json({
+      message: "Your pre-booking form was submitted.",
+      id: submission._id,
+    });
+  } catch (err) {
+    console.error("Pre-booking submit error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
