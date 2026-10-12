@@ -53,10 +53,10 @@ export const defaultBookingFormConfig: BookingFormConfig = [
       { id: 'trekStartDate', label: 'Trek start date', type: 'date', required: true },
       { id: 'trekEndDate', label: 'Trek end date', type: 'date', required: true },
       { id: 'arrivalDate', label: 'Flight arrival date', type: 'date' },
-      { id: 'arrivalTime', label: 'Flight arrival time', type: 'time' },
+      { id: 'arrivalTime', label: 'Flight arrival time', type: 'text', placeholder: 'HH:MM or 2:30 PM' },
       { id: 'arrivalFlightNumber', label: 'Arrival airline name and flight number', type: 'text' },
       { id: 'departureDate', label: 'Flight departure date', type: 'date' },
-      { id: 'departureTime', label: 'Flight departure time', type: 'time' },
+      { id: 'departureTime', label: 'Flight departure time', type: 'text', placeholder: 'HH:MM or 2:30 PM' },
       { id: 'departureFlightNumber', label: 'Departure flight number', type: 'text' },
     ],
   },
@@ -126,6 +126,8 @@ export const defaultBookingFormConfig: BookingFormConfig = [
 
 
 const fieldOverrides: Record<string, Partial<BookingFormFieldConfig> | null> = {
+  arrivalTime: { type: 'text', placeholder: 'HH:MM or 2:30 PM' },
+  departureTime: { type: 'text', placeholder: 'HH:MM or 2:30 PM' },
   arrivalFlightNumber: { label: 'Arrival airline name and flight number' },
   insurancePolicyNumber: { label: 'Travel insurance policy number' },
   altitudeCoveragePolicyNumber: null,

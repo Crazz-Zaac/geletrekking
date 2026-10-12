@@ -29,7 +29,7 @@ const footerLinks = {
   ],
   usefulLinks: [
     { label: 'Visa Office Nepal', href: 'https://nepaliport.immigration.gov.np/', external: true },
-    { label: 'Terms and Conditions', href: '/terms' },
+    { label: 'Terms and Conditions', href: '/terms-and-conditions' },
     { label: 'Privacy Policy', href: '/privacy-policy' },
     { label: 'Disclaimer', href: '/disclaimer' },
   ],

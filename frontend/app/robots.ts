@@ -7,7 +7,12 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin/', '/private-booking/', '/maintenance'],
+        disallow: [
+          '/admin/',
+          '/private-booking/',
+          '/maintenance',
+          '/wp-content/plugins/',
+        ],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

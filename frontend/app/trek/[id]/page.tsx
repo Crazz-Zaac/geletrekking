@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { treks } from '@/lib/data';
@@ -54,6 +54,12 @@ export default async function TrekDetailPage({ params }: TrekDetailPageProps) {
 
   if (!trek) {
     notFound();
+  }
+
+  const canonicalTrekId = trek.slug || trek.id;
+
+  if (canonicalTrekId && trekId !== canonicalTrekId) {
+    permanentRedirect('/trek/' + canonicalTrekId);
   }
 
   return (

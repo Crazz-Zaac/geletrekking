@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
-import { ArrowLeft, ArrowRight, CheckCircle2, CircleAlert, Download, Loader2, Send } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, CircleAlert, Loader2, Send } from 'lucide-react'
 import type { Trek } from '@/lib/data'
 import { submitPreBookingSubmission } from '@/lib/api'
 import {
@@ -56,11 +56,11 @@ const preBookingFormConfig: BookingFormConfig = [
     fields: [
       { id: 'arrivalAirline', label: 'Arrival Airline', type: 'text' },
       { id: 'arrivalDate', label: 'Arrival Date', type: 'date' },
-      { id: 'arrivalTime', label: 'Arrival Time', type: 'time' },
+      { id: 'arrivalTime', label: 'Arrival Time', type: 'text', placeholder: 'HH:MM or 2:30 PM' },
       { id: 'arrivalFlightNumber', label: 'Arrival Flight Number', type: 'text' },
       { id: 'departureAirline', label: 'Departure Airline', type: 'text' },
       { id: 'departureDate', label: 'Departure Date', type: 'date' },
-      { id: 'departureTime', label: 'Departure Time', type: 'time' },
+      { id: 'departureTime', label: 'Departure Time', type: 'text', placeholder: 'HH:MM or 2:30 PM' },
       { id: 'departureFlightNumber', label: 'Departure Flight Number', type: 'text' },
     ],
   },
@@ -110,7 +110,6 @@ export function PreBookingForm({ trek, treks = [], requireTrek = true }: PreBook
   const [formStartedAt, setFormStartedAt] = useState<number>(() => Date.now())
   const [captchaToken, setCaptchaToken] = useState('')
   const [turnstileRenderKey, setTurnstileRenderKey] = useState(0)
-  const [downloadPdf, setDownloadPdf] = useState<{ dataUri: string; filename: string } | null>(null)
   const [form, setForm] = useState<BookingFormState>(() => ({
     ...createEmptyBookingFormState(preBookingFormConfig, trek),
     nameOfTrekRoute: trek?.title || '',
@@ -143,13 +142,25 @@ export function PreBookingForm({ trek, treks = [], requireTrek = true }: PreBook
   const requiredConsentFields = ['agreeTerms', 'acceptLiabilityWaiver'].filter((id) => fieldMap.has(id))
   const consentComplete = requiredConsentFields.every((id) => form[id] === true)
   const isCaptchaReady = !requiresCaptcha || Boolean(captchaToken)
-  const canSubmit = !submitting && getMissingRequiredFields().length === 0 && consentComplete && isCaptchaReady
+  const visibleRequiredFields = preBookingFormConfig.flatMap((section) => section.fields).filter((field) => field.required && isFieldVisible(field))
+  const missingRequiredFields = getMissingRequiredFields()
+  const canSubmit = !submitting && missingRequiredFields.length === 0 && consentComplete && isCaptchaReady
   const currentMissingFields = getMissingRequiredFields([activeSection])
-  const progressValue = ((step + 1) / preBookingFormConfig.length) * 100
+  const progressValue = visibleRequiredFields.length === 0 ? 100 : ((visibleRequiredFields.length - missingRequiredFields.length) / visibleRequiredFields.length) * 100
 
   const updateField = (field: string, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }))
     setMissingFieldIds((prev) => prev.filter((item) => item !== field))
+    setError(null)
+  }
+
+  const resetForm = () => {
+    setForm({
+      ...createEmptyBookingFormState(preBookingFormConfig, trek),
+      nameOfTrekRoute: trek?.title || '',
+    })
+    setStep(0)
+    setMissingFieldIds([])
     setError(null)
   }
 
@@ -220,7 +231,7 @@ export function PreBookingForm({ trek, treks = [], requireTrek = true }: PreBook
     const toImage = async (src?: string): Promise<PdfImage | null> => {
       if (!src) return null
       try {
-        const response = await fetch(src, { cache: 'force-cache' })
+        const response = await fetch(src, { cache: 'no-store' })
         if (!response.ok) return null
         const blob = await response.blob()
         const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -344,8 +355,8 @@ export function PreBookingForm({ trek, treks = [], requireTrek = true }: PreBook
     }
 
     const filename = getPdfFilename()
-    setDownloadPdf({ dataUri: pdfBase64, filename })
     downloadLocalPdf(pdfBase64, filename)
+    resetForm()
     setSubmitted(true)
     setHoneypot('')
     setFormStartedAt(Date.now())
@@ -389,7 +400,7 @@ export function PreBookingForm({ trek, treks = [], requireTrek = true }: PreBook
       return (
         <label className={`sm:col-span-2 flex items-start gap-3 rounded-md border bg-background p-4 text-sm ${hasError ? 'border-red-400' : 'border-border'}`}>
           <Checkbox checked={form.agreeTerms === true} onCheckedChange={(checked) => updateField('agreeTerms', checked === true)} />
-          <span>I agree to the <Link href="/terms" className="text-primary underline underline-offset-2" target="_blank">Terms and Conditions</Link>.</span>
+          <span>I agree to the <Link href="/terms-and-conditions" className="text-primary underline underline-offset-2" target="_blank">Terms and Conditions</Link>.</span>
         </label>
       )
     }
@@ -404,11 +415,10 @@ export function PreBookingForm({ trek, treks = [], requireTrek = true }: PreBook
     }
 
     if (field.type === 'checkbox') {
-      const yesOnly = field.id === 'insuranceDetailsLater' || field.id === 'balanceAgreement'
       return (
         <label className={`sm:col-span-2 flex items-start gap-3 rounded-md border bg-background p-4 text-sm ${hasError ? 'border-red-400' : 'border-border'}`}>
           <Checkbox checked={form[field.id] === true} onCheckedChange={(checked) => updateField(field.id, checked === true)} />
-          <span>{field.label}{yesOnly ? ' Yes' : ''}</span>
+          <span>{field.label}</span>
         </label>
       )
     }
@@ -436,17 +446,7 @@ export function PreBookingForm({ trek, treks = [], requireTrek = true }: PreBook
           <CheckCircle2 className="h-8 w-8 text-foreground" />
         </div>
         <h3 className="text-xl font-bold text-foreground">Pre-booking Form Sent</h3>
-        <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">Thank you. We have received your pre-booking details. A PDF copy has been downloaded in this browser.</p>
-      {downloadPdf ? (
-          <button
-            type="button"
-            onClick={() => downloadLocalPdf(downloadPdf.dataUri, downloadPdf.filename)}
-            className="mt-4 inline-flex items-center justify-center gap-2 rounded-md border border-border px-4 py-2.5 text-sm font-medium"
-          >
-            <Download className="h-4 w-4" />
-            Download another copy
-          </button>
-        ) : null}
+        <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">Thank you. We have received your pre-booking details. Your filled PDF has been downloaded, and the form has been reset.</p>
       </div>
     )
   }
@@ -485,8 +485,8 @@ export function PreBookingForm({ trek, treks = [], requireTrek = true }: PreBook
         </div>
         <div className="p-4">
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-muted-foreground">{currentMissingFields.length === 0 ? 'This section is complete.' : `${currentMissingFields.length} required field(s) remaining in this section.`}</p>
-            <span className="text-xs text-muted-foreground">{activeSection.fields.length} fields</span>
+            <p className="text-sm text-muted-foreground">{currentMissingFields.length === 0 ? 'No required fields remaining in this section.' : `${currentMissingFields.length} required field(s) remaining in this section.`}</p>
+            <span className="text-xs text-muted-foreground">{activeSection.fields.filter((field) => field.required && isFieldVisible(field)).length} required field(s)</span>
           </div>
           {error ? <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p> : null}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

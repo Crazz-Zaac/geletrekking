@@ -2,7 +2,19 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { pathname, searchParams, hostname } = request.nextUrl
+
+  if (hostname === 'www.geletrekking.com') {
+    const canonicalUrl = request.nextUrl.clone()
+    canonicalUrl.hostname = 'geletrekking.com'
+    return NextResponse.redirect(canonicalUrl, 308)
+  }
+
+  if (pathname === '/blog' && searchParams.has('tag') && !searchParams.get('tag')?.trim()) {
+    const canonicalUrl = request.nextUrl.clone()
+    canonicalUrl.searchParams.delete('tag')
+    return NextResponse.redirect(canonicalUrl, 308)
+  }
 
   const maintenanceMode =
     process.env.MAINTENANCE_MODE === 'true' ||

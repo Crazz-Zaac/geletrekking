@@ -65,12 +65,13 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
   })
 
   const currentMissingFields = getMissingRequiredFields([activeSection])
-  const currentStepComplete = currentMissingFields.length === 0
   const requiredConsentFields = ['agreeTerms', 'acceptLiabilityWaiver'].filter((id) => fieldMap.has(id))
   const consentComplete = requiredConsentFields.every((id) => form[id] === true)
   const isCaptchaReady = !requiresCaptcha || Boolean(captchaToken)
-  const canSubmit = !submitting && getMissingRequiredFields().length === 0 && consentComplete && isCaptchaReady
-  const progressValue = ((step + 1) / formConfig.length) * 100
+  const visibleRequiredFields = formConfig.flatMap((section) => section.fields).filter((field) => field.required && isFieldVisible(field))
+  const missingRequiredFields = getMissingRequiredFields()
+  const canSubmit = !submitting && missingRequiredFields.length === 0 && consentComplete && isCaptchaReady
+  const progressValue = visibleRequiredFields.length === 0 ? 100 : ((visibleRequiredFields.length - missingRequiredFields.length) / visibleRequiredFields.length) * 100
   const { settings } = useSiteSettings()
 
   useEffect(() => {
@@ -416,7 +417,7 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
       return (
         <label className={`sm:col-span-2 flex items-start gap-3 rounded-md border bg-background p-4 text-sm shadow-xs ${hasError ? 'border-red-400 bg-red-50' : 'border-border'}`}>
           <Checkbox checked={form.agreeTerms === true} onCheckedChange={(checked) => updateField('agreeTerms', checked === true)} />
-          <span>I agree to the <Link href="/terms" className="text-primary underline underline-offset-2" target="_blank">Terms and Conditions</Link>.</span>
+          <span>I agree to the <Link href="/terms-and-conditions" className="text-primary underline underline-offset-2" target="_blank">Terms and Conditions</Link>.</span>
         </label>
       )
     }
@@ -542,8 +543,8 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
         </div>
         <div className="p-4">
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-muted-foreground">{currentStepComplete ? 'This section is complete.' : `${currentMissingFields.length} required field(s) remaining in this section.`}</p>
-            <span className="w-fit rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">{activeSection.fields.length} fields</span>
+            <p className="text-sm text-muted-foreground">{currentMissingFields.length === 0 ? 'No required fields remaining in this section.' : `${currentMissingFields.length} required field(s) remaining in this section.`}</p>
+            <span className="w-fit rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">{activeSection.fields.filter((field) => field.required && isFieldVisible(field)).length} required field(s)</span>
           </div>
 
           {error ? <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p> : null}

@@ -31,6 +31,7 @@ import {
   Info,
   MapPin,
   Mountain,
+  Package,
   Download,
   Route,
   Sparkles,
@@ -262,6 +263,14 @@ export default function TrekDetailClient({
     detail: 'Proper preparation is essential for a safe and enjoyable trek. Maintain good fitness before departure and ensure your passport, visa, travel insurance, and permits are in order. Pack clothing and equipment as recommended on the packing list. Share your itinerary and emergency contacts with family or friends, and carry some USD cash for remote areas. If you have any medical conditions, consult your doctor and inform your guide. Mountain weather can affect travel plans, so flexibility and a positive attitude are important. Respect local customs, protect the environment, and support local communities throughout your journey.',
   }
 
+  const traditionalLoadCarryingEssential = {
+    id: 'traditional-load-carrying',
+    icon: Package,
+    title: 'Traditional Load-Carrying in Nepal',
+    summary: 'Gele Trekking supports safer alternatives to heavy head carrying and works to protect Nepalese trekking staff.',
+    detail: "Gele Trekking is committed to bringing attention to the potential brain damage being caused to countless Nepalese by the common practice of carrying heavy loads on their heads, known as 'head carrying'. Gele Trekking has pledged to make this a top focus for their treks and to actively seek solutions, including having one sherpa accompany each guest and to supporting further research on this critical health concern. By choosing Gele Trekking, our guests are providing support from around the world to help protect and nurture the minds of Nepalese in Nepal.",
+  }
+
   const defaultTripEssentials = [
     {
       id: 'communication',
@@ -292,13 +301,28 @@ export default function TrekDetailClient({
       detail: 'Menus usually include rice, noodles, potatoes, soups, hot drinks, and some international options. Bottled water and snacks become more expensive as supplies move higher.',
     },
     tripPreparationEssential,
+    traditionalLoadCarryingEssential,
   ]
 
 
   const tripEssentialSource = trek.tripEssentials && trek.tripEssentials.length > 0 ? trek.tripEssentials : defaultTripEssentials
-  const tripEssentials = (tripEssentialSource.some((item) => item.title.toLowerCase() === 'trip preparation')
-    ? tripEssentialSource
-    : [...tripEssentialSource, tripPreparationEssential])
+  const normalizeEssentialTitle = (title: string) => title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+  const hasTripPreparation = tripEssentialSource.some((item) => normalizeEssentialTitle(item.title) === 'trip preparation')
+  const hasTraditionalLoadCarrying = tripEssentialSource.some((item) => normalizeEssentialTitle(item.title).includes('traditional load carrying'))
+  const tripEssentialWithRequiredItems = [
+    ...tripEssentialSource,
+    ...(hasTripPreparation ? [] : [tripPreparationEssential]),
+    ...(hasTraditionalLoadCarrying ? [] : [traditionalLoadCarryingEssential]),
+  ]
+  const tripPreparationIndex = tripEssentialWithRequiredItems.findIndex((item) => normalizeEssentialTitle(item.title) === 'trip preparation')
+  const loadCarryingIndex = tripEssentialWithRequiredItems.findIndex((item) => normalizeEssentialTitle(item.title).includes('traditional load carrying'))
+  if (tripPreparationIndex >= 0 && loadCarryingIndex >= 0 && loadCarryingIndex !== tripPreparationIndex + 1) {
+    const [loadCarryingItem] = tripEssentialWithRequiredItems.splice(loadCarryingIndex, 1)
+    const nextTripPreparationIndex = tripEssentialWithRequiredItems.findIndex((item) => normalizeEssentialTitle(item.title) === 'trip preparation')
+    tripEssentialWithRequiredItems.splice(nextTripPreparationIndex + 1, 0, loadCarryingItem)
+  }
+
+  const tripEssentials = tripEssentialWithRequiredItems
     .filter((item) => !item.title.toLowerCase().includes('tip'))
     .map((item, index) => {
       const title = item.title.toLowerCase()
@@ -312,7 +336,9 @@ export default function TrekDetailClient({
               ? Utensils
               : title.includes('preparation') || title.includes('prepare')
                 ? ClipboardList
-                : defaultTripEssentials[index]?.icon || Compass
+                : title.includes('traditional load') || title.includes('porter') || title.includes('load carrying')
+                  ? Package
+                  : defaultTripEssentials[index]?.icon || Compass
 
       return {
         ...item,
@@ -985,7 +1011,7 @@ export default function TrekDetailClient({
                     const isExpanded = expandedEssential === item.id
 
                     return (
-                      <Card key={item.id} className={"h-full border-border bg-card p-4 " + (tripEssentials.length === 4 && index > 2 ? "md:col-span-6" : tripEssentials.length > 4 && index > 2 ? "md:col-span-3" : "md:col-span-2")}>
+                      <Card key={item.id} className={"h-full border-border bg-card p-4 " + (tripEssentials.length === 4 && index > 2 ? "md:col-span-6" : tripEssentials.length === 5 && index > 2 ? "md:col-span-3" : "md:col-span-2")}>
                         <div className="min-h-[104px]">
                           <EssentialIcon className="h-5 w-5 text-[#004D67]" />
                           <p className="mt-3 text-sm font-semibold text-foreground">{item.title}</p>

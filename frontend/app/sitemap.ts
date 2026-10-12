@@ -16,7 +16,7 @@ const staticRoutes = [
   '/plan-my-trek',
   '/company/registrations-affiliations',
   '/privacy-policy',
-  '/terms',
+  '/terms-and-conditions',
   '/disclaimer',
 ]
 

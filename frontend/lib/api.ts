@@ -900,6 +900,7 @@ export async function submitPreBookingSubmission(payload: {
       method: "POST",
       body: JSON.stringify(payload),
       credentials: "omit",
+      cache: "no-store",
     })
     return { success: true, message: response.message || "Your pre-booking form was submitted.", id: response.id }
   } catch (error) {
