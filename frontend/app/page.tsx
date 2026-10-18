@@ -1,5 +1,5 @@
-import Image from 'next/image'
 import Link from 'next/link'
+import { HomepageGreetingWidget } from '@/components/homepage-greeting-widget'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { HomepageAlertBanner } from '@/components/homepage-alert-banner'
@@ -109,6 +109,7 @@ export default async function HomePage() {
         </main>
       </div>
       <Footer />
+      <HomepageGreetingWidget />
     </>
   )
 }

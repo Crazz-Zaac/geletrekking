@@ -1,0 +1,44 @@
+
+    .widget{--gt-orange:#ff7a1a;--gt-navy:#0f2b3d;--gt-green:#00b67a;
+      position:fixed;right:18px;bottom:96px;z-index:99999;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+    .widget *{box-sizing:border-box}
+    .widget :global(.gt-panel){position:absolute;right:0;bottom:108px;width:250px;background:#fff;border-radius:20px;
+      box-shadow:0 18px 50px rgba(15,43,61,.3);padding:16px 12px 12px;
+      opacity:0;transform:translateY(14px) scale(.92);transform-origin:bottom right;pointer-events:none;
+      transition:.35s cubic-bezier(.2,1.4,.4,1)}
+    .widget:global(.open) :global(.gt-panel){opacity:1;transform:none;pointer-events:auto}
+    .widget :global(.gt-panel):after{content:"";position:absolute;right:32px;bottom:-9px;width:18px;height:18px;background:#fff;transform:rotate(45deg)}
+    .widget :global(.gt-title){margin:0 0 2px;font-size:16px;font-weight:800;color:var(--gt-navy)}
+    .widget :global(.gt-sub){margin:0 0 10px;font-size:12px;color:#5b6f7c}
+    .widget :global(.gt-btn){display:flex;align-items:center;gap:9px;padding:9px 10px;margin-top:6px;border-radius:14px;
+      text-decoration:none;font-weight:700;font-size:13px;color:#fff;transition:transform .2s,box-shadow .2s}
+    .widget :global(.gt-btn):hover{transform:translateY(-2px) scale(1.02);box-shadow:0 8px 18px rgba(0,0,0,.2)}
+    .widget :global(.gt-btn) small{display:block;font-weight:500;opacity:.9;font-size:10.5px}
+    .widget :global(.gt-btn) :global(.ic){width:28px;height:28px;border-radius:10px;background:#fff;display:grid;place-items:center;flex:none}
+    .widget :global(.gt-google){background:#4285f4}
+    .widget :global(.gt-tp){background:var(--gt-green)}
+    .widget :global(.gt-book){background:linear-gradient(135deg,#ff7a1a,#ff4d2e);animation:gt-pulse 2s infinite}
+    .widget :global(.gt-book) :global(.ic){font-size:18px}
+    @keyframes gt-pulse{0%{box-shadow:0 0 0 0 rgba(255,100,30,.55)}70%{box-shadow:0 0 0 14px rgba(255,100,30,0)}100%{box-shadow:0 0 0 0 rgba(255,100,30,0)}}
+    .widget :global(.gt-close){position:absolute;top:8px;right:10px;border:0;background:none;font-size:20px;cursor:pointer;color:#8aa;line-height:1}
+
+    .widget :global(.gt-char){position:relative;width:84px;height:98px;margin-left:auto;cursor:pointer;display:block;
+      background:none;border:0;padding:0;filter:drop-shadow(0 8px 10px rgba(0,0,0,.25));animation:gt-bob 2.4s ease-in-out infinite}
+    .widget :global(.gt-char) svg{display:block;width:100%;height:100%}
+    @keyframes gt-bob{50%{transform:translateY(-7px)}}
+    .widget :global(.gt-bow){transform-origin:60px 106px;animation:gt-bow 2.6s ease-in-out infinite}
+    @keyframes gt-bow{0%,55%,100%{transform:rotate(0)}70%,85%{transform:rotate(9deg) translateY(2px)}}
+    .widget:global(.open) :global(.gt-bow){animation-duration:1.8s}
+    .widget :global(.gt-blink){transform-origin:50px 46px;animation:gt-blink 4s infinite}
+    @keyframes gt-blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+    .widget :global(.gt-tag){position:absolute;left:-66px;top:10px;background:var(--gt-orange);color:#fff;font-weight:800;font-size:11px;
+      padding:6px 11px;border-radius:14px 14px 3px 14px;white-space:nowrap;animation:gt-tag 2.4s ease-in-out infinite}
+    .widget:global(.open) :global(.gt-tag){display:none}
+    @keyframes gt-tag{50%{transform:scale(1.08) rotate(-3deg)}}
+    @media (prefers-reduced-motion:reduce){.widget *{animation:none!important}}
+    @media (max-width:480px){.widget :global(.gt-panel){width:234px}}
+
+    .widget{bottom:calc(96px + env(safe-area-inset-bottom))}
+    .widget :global(.gt-panel){max-width:calc(100vw - 36px);max-height:calc(100dvh - 224px - env(safe-area-inset-bottom));overflow-y:auto}
+    .widget button:focus-visible,.widget a:focus-visible{outline:3px solid var(--gt-orange);outline-offset:4px}
+    @media (prefers-reduced-motion:reduce){.widget *{transition:none!important}}
