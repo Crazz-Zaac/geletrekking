@@ -21,9 +21,9 @@ export default async function BookPage() {
                 src={heroImageUrl}
                 alt="Booking page hero background"
                 fill
+                sizes="100vw"
                 priority
                 className="object-cover"
-                unoptimized
               />
               <div className="absolute inset-0 bg-black/60" />
             </div>

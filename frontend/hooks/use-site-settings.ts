@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getAdminSettings, type AdminSiteSettings } from '@/lib/api'
+import { CONTACT_EMAIL, CONTACT_PHONE, WHATSAPP_URL } from '@/lib/contact-links'
 
 type SocialKey = 'facebook' | 'instagram' | 'twitter' | 'linkedin' | 'youtube' | 'whatsapp'
 
@@ -8,8 +9,8 @@ const defaultSettings: Required<AdminSiteSettings> = {
   logoUrl: '/geletrekking.png',
   contactHeroImageUrl: '',
   bookingHeroImageUrl: '',
-  phone: '+977 985 123 4567',
-  email: '',
+  phone: CONTACT_PHONE,
+  email: CONTACT_EMAIL,
   address: 'Thamel, Kathmandu 44600, Nepal',
   officeHoursWeekdays: 'Sunday – Friday: 9:00 AM – 6:00 PM',
   officeHoursWeekend: 'Saturday: By appointment only',
@@ -23,7 +24,7 @@ const defaultSettings: Required<AdminSiteSettings> = {
     twitter: '',
     linkedin: '',
     youtube: '',
-    whatsapp: '',
+    whatsapp: WHATSAPP_URL,
   },
   registrationsAffiliations: [],
 }
@@ -75,6 +76,8 @@ export function useSiteSettings() {
           ...defaultSettings,
           ...data,
           logoUrl: (data.logoUrl || '').trim() || defaultSettings.logoUrl,
+          email: (data.email || '').trim() || CONTACT_EMAIL,
+          phone: (data.phone || '').trim() || CONTACT_PHONE,
           navigation: {
             ...defaultSettings.navigation,
             ...(data.navigation || {}),

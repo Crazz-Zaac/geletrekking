@@ -42,7 +42,6 @@ export function ActivityCard({ activity, categoryLabel }: ActivityCardProps) {
               loading="lazy"
               className="object-cover"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              unoptimized
             />
           )}
 

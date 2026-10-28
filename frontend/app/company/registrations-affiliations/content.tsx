@@ -1,37 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { FileText, ShieldCheck, X, ZoomIn } from 'lucide-react'
-import { getRegistrationsAffiliations } from '@/lib/api'
 import type { RegistrationDocument } from '@/lib/api'
 
-export default function RegistrationsAffiliationsContent() {
-  const [documents, setDocuments] = useState<RegistrationDocument[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export default function RegistrationsAffiliationsContent({ documents }: { documents: RegistrationDocument[] }) {
   const [selectedDoc, setSelectedDoc] = useState<RegistrationDocument | null>(null)
   const [fullScreenOpen, setFullScreenOpen] = useState(false)
-
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        setLoading(true)
-        const data = await getRegistrationsAffiliations()
-        setDocuments(data)
-        setError(null)
-      } catch (err) {
-        console.error('Failed to load documents:', err)
-        setError('Failed to load documents. Please try again later.')
-        setDocuments([])
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchDocuments()
-  }, [])
 
   const handleOpenFullScreen = (doc: RegistrationDocument) => {
     setSelectedDoc(doc)
@@ -65,20 +42,7 @@ export default function RegistrationsAffiliationsContent() {
 
         <section className="py-10 md:py-14">
           <div className="container mx-auto px-4 md:px-6">
-            {loading ? (
-              <div className="flex justify-center items-center py-12">
-                <div className="text-center space-y-3">
-                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <p className="text-muted-foreground">Loading documents...</p>
-                </div>
-              </div>
-            ) : error ? (
-              <div className="flex justify-center items-center py-12">
-                <div className="text-center space-y-3">
-                  <p className="text-red-600 font-medium">{error}</p>
-                </div>
-              </div>
-            ) : documents.length === 0 ? (
+            {documents.length === 0 ? (
               <div className="flex justify-center items-center py-12">
                 <div className="text-center space-y-3">
                   <p className="text-muted-foreground">No documents available yet.</p>
@@ -118,13 +82,16 @@ export default function RegistrationsAffiliationsContent() {
 
                       {/* View button - only show if document is uploaded */}
                       {document.status === 'uploaded' && document.documentUrl && (
-                        <button
-                          onClick={() => handleOpenFullScreen(document)}
+                        <a
+                          href={document.documentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(event) => { event.preventDefault(); handleOpenFullScreen(document) }}
                           className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition text-sm font-medium"
                         >
                           <ZoomIn className="w-4 h-4" />
                           View Document
-                        </button>
+                        </a>
                       )}
                     </div>
                   </Card>

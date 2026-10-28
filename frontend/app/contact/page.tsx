@@ -4,17 +4,19 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { ConsentGate } from '@/components/cookie-consent';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Mail, Phone, MapPin, Clock3, MessageCircle, ShieldCheck, Loader2 } from 'lucide-react';
+import { Mail, Phone, CalendarDays, MapPin, Clock3, MessageCircle, ShieldCheck, Loader2 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/whatsapp-icon';
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons';
 import { TurnstileWidget } from '@/components/turnstile-widget';
 import { TrustpilotWidget } from '@/components/trustpilot-widget';
 import { submitContactMessage } from '@/lib/api';
+import { GELE_CALL_URL } from '@/lib/contact-links';
 import { useSiteSettings } from '@/hooks/use-site-settings';
 
 const containerVariants = {
@@ -34,6 +36,8 @@ export default function ContactPage() {
   const { settings, social } = useSiteSettings();
   const contactEmail = settings.email.trim();
   const heroImageUrl = settings.contactHeroImageUrl.trim();
+  const officeHoursWeekdays = settings.officeHoursWeekdays || 'Sunday – Friday: 9:00 AM – 6:00 PM';
+  const officeHoursWeekend = settings.officeHoursWeekend || 'Saturday: By appointment only';
 
   const contactInfo = [
     {
@@ -48,7 +52,14 @@ export default function ContactPage() {
       label: 'Phone',
       value: settings.phone || '+977 985 123 4567',
       href: `tel:${(settings.phone || '+9779851234567').replace(/\s+/g, '')}`,
-      description: 'Mon–Sat support for urgent travel assistance',
+      description: `${officeHoursWeekdays}; ${officeHoursWeekend} (NPT).`,
+    },
+    {
+      icon: CalendarDays,
+      label: '15-minute call with Gele',
+      value: 'Choose a time on Cal.com',
+      href: GELE_CALL_URL,
+      description: 'Discuss your route, dates, and trekking plans with Gele',
     },
     {
       icon: MapPin,
@@ -191,9 +202,9 @@ export default function ContactPage() {
                 src={heroImageUrl}
                 alt="Contact page hero background"
                 fill
+                sizes="100vw"
                 priority
                 className="object-cover"
-                unoptimized
               />
               <div className="absolute inset-0 bg-black/60" />
             </div>
@@ -465,7 +476,7 @@ export default function ContactPage() {
                           </div>
                           <div className="space-y-1">
                             <p className="text-sm text-muted-foreground font-semibold">{info.label}</p>
-                            <a href={info.href} className="text-base font-bold text-foreground hover:text-primary transition-colors">
+                            <a href={info.href} target={info.href.startsWith('https://') ? '_blank' : undefined} rel={info.href.startsWith('https://') ? 'noopener noreferrer' : undefined} className="text-base font-bold text-foreground hover:text-primary transition-colors">
                               {info.value}
                             </a>
                             <p className="text-sm text-muted-foreground">{info.description}</p>
@@ -481,11 +492,12 @@ export default function ContactPage() {
                     <Clock3 className="w-4 h-4 text-primary" />
                     <h3 className="text-base font-bold text-foreground">Office Hours (NPT)</h3>
                   </div>
-                  <p className="text-sm text-muted-foreground">{settings.officeHoursWeekdays || 'Sunday – Friday: 9:00 AM – 6:00 PM'}</p>
-                  <p className="text-sm text-muted-foreground">{settings.officeHoursWeekend || 'Saturday: By appointment only'}</p>
+                  <p className="text-sm text-muted-foreground">{officeHoursWeekdays}</p>
+                  <p className="text-sm text-muted-foreground">{officeHoursWeekend}</p>
                 </Card>
 
                 <Card className="border-border overflow-hidden">
+                  <ConsentGate label="Kathmandu office map" externalUrl="https://maps.google.com/maps?q=Kathmandu%2C%20Nepal">
                   <iframe
                     title="Kathmandu office map"
                     src={settings.mapEmbedUrl || 'https://maps.google.com/maps?q=Kathmandu%2C%20Nepal&t=&z=12&ie=UTF8&iwloc=&output=embed'}
@@ -493,6 +505,7 @@ export default function ContactPage() {
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                   />
+                  </ConsentGate>
                 </Card>
               </motion.div>
             </motion.div>

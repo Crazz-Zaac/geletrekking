@@ -1,8 +1,10 @@
 const rateLimit = require("express-rate-limit");
 const { ipKeyGenerator } = require("express-rate-limit");
 const slowDown = require("express-slow-down");
+const { isTrustedContentRequest } = require('../utils/trustedContentRequest');
 
 const apiLimiter = rateLimit({
+  skip: isTrustedContentRequest,
   windowMs: 15 * 60 * 1000,
   max: 300,
   standardHeaders: true,

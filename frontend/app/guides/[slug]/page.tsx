@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { cache } from 'react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, BookOpen, Eye, CalendarDays } from 'lucide-react'
@@ -20,13 +21,7 @@ interface GuideDetailPageProps {
   params: Promise<{ slug: string }>
 }
 
-async function loadGuide(slug: string) {
-  try {
-    return await getGuideBySlug(slug)
-  } catch {
-    return null
-  }
-}
+const loadGuide = cache((slug: string) => getGuideBySlug(slug))
 
 export async function generateMetadata({ params }: GuideDetailPageProps): Promise<Metadata> {
   const { slug } = await params
@@ -69,15 +64,10 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
   let contentHtml = ''
   let readingTime = 0
 
-  try {
-    const data = await loadGuide(slug)
-    guide = data
-    if (data?.content) {
-      contentHtml = (await marked(data.content)) as string
-      readingTime = calculateReadingTime(data.content)
-    }
-  } catch {
-    guide = null
+  guide = await loadGuide(slug)
+  if (guide?.content) {
+    contentHtml = (await marked(guide.content)) as string
+    readingTime = calculateReadingTime(guide.content)
   }
 
   if (!guide) {

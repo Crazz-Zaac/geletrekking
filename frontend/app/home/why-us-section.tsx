@@ -1,3 +1,4 @@
+import { COMPANY_FOUNDING_STORY } from '@/lib/site-metrics'
 import { Shield, Users, Leaf, Award, Clock, MapPin } from 'lucide-react'
 
 const reasons = [
@@ -50,7 +51,7 @@ export function WhyUsSection() {
             Trek With Confidence
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base text-pretty">
-            With 15+ years of experience guiding international trekkers through the Himalayas, we deliver safe, memorable, and responsibly run adventures.
+            {COMPANY_FOUNDING_STORY} We deliver safe, memorable, and responsibly run adventures.
           </p>
         </div>
 

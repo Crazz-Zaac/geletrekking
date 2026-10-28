@@ -14,6 +14,7 @@ import {
   getAdminAbout,
   updateAdminAbout,
 } from '@/lib/api'
+import { TEAM_SOCIAL_FIELDS, isValidSocialUrl } from '@/lib/team-social-links'
 import { getAdminToken } from '@/lib/admin-auth'
 import { Bold, Italic, Heading2, List, ListOrdered, Quote, Trash2, Plus, AlertCircle, CheckCircle, BookOpen, Heart, Users, Zap, Users2, Link as LinkIcon, Building2, BarChart3, ExternalLink, ImageIcon, X } from 'lucide-react'
 
@@ -170,6 +171,15 @@ export default function AdminAboutPage() {
     if (!token) {
       setError('Missing admin token. Please login again.')
       return
+    }
+    for (const [index, member] of (form.teamMembers || []).entries()) {
+      for (const { key, label } of TEAM_SOCIAL_FIELDS) {
+        const value = member.social?.[key]?.trim()
+        if (value && !isValidSocialUrl(value)) {
+          setError(`${member.name || `Team member ${index + 1}`}: enter a complete HTTP or HTTPS URL for ${label}.`)
+          return
+        }
+      }
     }
     setSaving(true)
     setError('')
@@ -700,6 +710,25 @@ export default function AdminAboutPage() {
                                 <label className="block text-xs font-medium text-muted-foreground mb-1.5">Bio / Description</label>
                                 <Textarea value={member.description} onChange={(e) => updateTeamMember(index, { description: e.target.value })} placeholder="Brief bio about this team member..." rows={3} className="text-sm" />
                               </div>
+                              <fieldset className="space-y-3">
+                                <legend className="text-sm font-medium text-foreground">Social media links (optional)</legend>
+                                <p className="text-xs text-muted-foreground">Add this person’s profile URLs. Leave unused links blank to hide them on their profile.</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  {TEAM_SOCIAL_FIELDS.map(({ key, label, placeholder }) => (
+                                    <div key={key}>
+                                      <label htmlFor={`team-${index}-${key}`} className="block text-xs font-medium text-muted-foreground mb-1.5">{label}</label>
+                                      <Input
+                                        id={`team-${index}-${key}`}
+                                        type="url"
+                                        value={member.social?.[key] || ''}
+                                        onChange={(e) => updateTeamMember(index, { social: { ...member.social, [key]: e.target.value } })}
+                                        placeholder={placeholder}
+                                        className="h-9"
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </fieldset>
                             </div>
                             <div className="flex items-start">
                               <Button variant="destructive" size="sm" onClick={() => setForm((prev) => ({ ...prev, teamMembers: (prev.teamMembers || []).filter((_, idx) => idx !== index) }))}>

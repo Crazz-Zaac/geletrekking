@@ -56,6 +56,9 @@ exports.updateAboutPage = async (req, res) => {
 
     res.json(about);
   } catch (err) {
+    if (err.name === "ValidationError") {
+      return res.status(400).json({ message: "Check team profile fields and use complete HTTP or HTTPS URLs for social links." });
+    }
     console.error("Error updating About page:", err);
     res.status(500).json({ message: "Failed to update About page" });
   }

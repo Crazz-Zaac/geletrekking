@@ -16,14 +16,14 @@ import {
   Quote,
   ShieldCheck,
   Mountain,
-  Clock3,
   Globe,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/whatsapp-icon';
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { getAdminAbout, getGoogleReviews, type AdminAbout, type AdminAboutStat, type UiGoogleReview } from '@/lib/api';
-import { SITE_METRICS } from '@/lib/site-metrics';
+import { COMPANY_FOUNDING_STORY, SITE_METRICS } from '@/lib/site-metrics';
+import { TEAM_SOCIAL_FIELDS, isValidSocialUrl } from '@/lib/team-social-links';
 import { useSiteSettings } from '@/hooks/use-site-settings';
 
 const values = [
@@ -64,8 +64,8 @@ const defaultAssociations = [
 ];
 
 const fallbackStats = [
-  { label: 'Years Of Local Expertise', value: SITE_METRICS.yearsExperience },
-  { label: 'Guided Trekkers', value: SITE_METRICS.successfulTreks },
+  { label: 'Gele’s Years Guiding', value: SITE_METRICS.founderYearsGuiding },
+  { label: 'Successful Treks', value: SITE_METRICS.successfulTreks },
   { label: 'Average Traveller Rating', value: SITE_METRICS.googleReviewRating + '/5' },
   { label: 'Expert Guides', value: SITE_METRICS.expertGuides },
 ];
@@ -79,11 +79,11 @@ const normalizeAboutStat = (stat: AdminAboutStat): AdminAboutStat => {
   }
 
   if (normalizedLabel.includes('guided trekkers') || normalizedLabel.includes('successful treks')) {
-    return { label, value: SITE_METRICS.successfulTreks };
+    return { label: 'Successful Treks', value: SITE_METRICS.successfulTreks };
   }
 
   if (normalizedLabel.includes('local expertise') || normalizedLabel.includes('years')) {
-    return { label, value: SITE_METRICS.yearsExperience };
+    return { label: 'Gele’s Years Guiding', value: SITE_METRICS.founderYearsGuiding };
   }
 
   if (normalizedLabel.includes('expert guides') || normalizedLabel.includes('safety-first operations')) {
@@ -109,7 +109,7 @@ const defaultAbout: Required<Pick<AdminAbout, 'heroTitle' | 'heroSubtitle' | 'st
   heroSubtitle: 'We are a Nepal-based trekking company focused on safe, authentic, and responsibly operated Himalayan experiences.',
   storyTitle: 'Our Story',
   storyBody:
-    'Gele Trekking began with mountain professionals who believed travellers deserve honest guidance, strong safety standards, and authentic connection with local culture. Today, we continue with the same approach: details handled well, local teams treated fairly, and itineraries designed for meaningful Himalayan journeys.',
+    `${COMPANY_FOUNDING_STORY} Gele Trekking began with mountain professionals who believed travellers deserve honest guidance, strong safety standards, and authentic connection with local culture. Today, we continue with the same approach: details handled well, local teams treated fairly, and itineraries designed for meaningful Himalayan journeys.`,
   missionTitle: 'Our Mission',
   missionBody:
     'Our mission is to deliver safe, memorable, and responsibly operated trekking journeys while supporting local livelihoods and preserving mountain environments for future generations.',
@@ -242,7 +242,7 @@ export function AboutPageClient() {
   const [aboutFetchFailed, setAboutFetchFailed] = useState(false);
   const [reviewsFetchFailed, setReviewsFetchFailed] = useState(false);
   const [expandedReviews, setExpandedReviews] = useState<Record<string, boolean>>({});
-  const { social } = useSiteSettings();
+  const { settings, social } = useSiteSettings();
 
   const containerVariants = shouldReduceMotion
     ? { hidden: { opacity: 1 }, visible: { opacity: 1 } }
@@ -373,7 +373,6 @@ export function AboutPageClient() {
     setExpandedReviews((previous) => ({ ...previous, [id]: !previous[id] }));
   };
 
-  const whatsappLink = social.whatsapp || 'https://wa.me/9779800000000';
 
   return (
     <>
@@ -384,9 +383,9 @@ export function AboutPageClient() {
               src={heroImageUrl}
               alt="About page hero background"
               fill
+              sizes="100vw"
               priority
               className="object-cover"
-              unoptimized
             />
             <div className="absolute inset-0 bg-black/60" />
           </div>
@@ -541,7 +540,6 @@ export function AboutPageClient() {
                               fill
                               className="object-cover"
                               sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                              unoptimized
                             />
                           </div>
                         ) : (
@@ -553,6 +551,26 @@ export function AboutPageClient() {
                           <h3 className="text-lg font-bold text-foreground mb-1">{member.name}</h3>
                           <p className="text-sm font-medium text-primary mb-3">{member.role}</p>
                           <p className="text-sm text-muted-foreground leading-relaxed">{member.description}</p>
+                          <div className="flex flex-wrap gap-2 mt-4">
+                            {TEAM_SOCIAL_FIELDS.map(({ key, label }) => {
+                              const href = member.social?.[key]?.trim();
+                              if (!href || !isValidSocialUrl(href)) return null;
+                              const Icon = { facebook: FacebookIcon, instagram: InstagramIcon, linkedin: LinkedInIcon, youtube: YouTubeIcon, whatsapp: WhatsAppIcon }[key];
+                              return (
+                                <a
+                                  key={key}
+                                  href={href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  aria-label={`${member.name} on ${label}`}
+                                  className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-primary/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                >
+                                  <Icon className="w-4 h-4" />
+                                  <span>{label}</span>
+                                </a>
+                              );
+                            })}
+                          </div>
                         </div>
                       </Card>
                     ))}
@@ -595,7 +613,7 @@ export function AboutPageClient() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">No social links configured yet.</p>
+                    <Link href="/contact" className="text-sm font-medium text-primary underline underline-offset-4">Contact our team</Link>
                   )}
                 </Card>
               </motion.div>
@@ -603,23 +621,9 @@ export function AboutPageClient() {
               <motion.div variants={itemVariants}>
                 <Card className="border-border p-5 bg-gradient-to-br from-primary/5 to-accent/10">
                   <h3 className="text-lg font-bold text-foreground mb-2">Plan Your Trek With Confidence</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-sm text-muted-foreground">
                     Get expert route guidance, transparent costs, and personalized recommendations from our local team.
                   </p>
-                  <div className="space-y-2.5">
-                    <Button asChild className="w-full">
-                      <Link href="/contact">Get a Custom Itinerary</Link>
-                    </Button>
-                    <Button asChild variant="outline" className="w-full">
-                      <Link href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                        Chat On WhatsApp
-                      </Link>
-                    </Button>
-                  </div>
-                  <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock3 className="w-3.5 h-3.5" />
-                    Fast replies during Nepal business hours.
-                  </div>
                 </Card>
               </motion.div>
             </motion.aside>
@@ -658,7 +662,6 @@ export function AboutPageClient() {
                           fill
                           className="object-contain"
                           sizes={isLargeLogoAssociation ? "(max-width: 768px) 144px, 160px" : "(max-width: 768px) 96px, 112px"}
-                          unoptimized
                         />
                       </div>
                     </div>
@@ -679,6 +682,16 @@ export function AboutPageClient() {
                       <div>
                         <h3 className="text-lg font-bold text-foreground">Legal Registry Verification</h3>
                         <p className="text-sm text-muted-foreground">TAAN Member Directory • Member ID: 2540</p>
+                        <dl aria-label="Company registration numbers" className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
+                          <div className="flex gap-1.5">
+                            <dt className="font-medium text-foreground">Reg No:</dt>
+                            <dd>329488/080/081</dd>
+                          </div>
+                          <div className="flex gap-1.5">
+                            <dt className="font-medium text-foreground">PAN:</dt>
+                            <dd>619869766</dd>
+                          </div>
+                        </dl>
                       </div>
                     </div>
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">

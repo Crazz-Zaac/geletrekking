@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
-import { treks } from '@/lib/data';
-import { getTreks } from '@/lib/api';
+import { getTrekByIdentifier } from '@/lib/api';
+import { getTrekPath } from '@/lib/trek-path';
 import TrekDetailClient from './TrekDetailClient';
 import { JsonLd } from '@/components/json-ld';
 import { breadcrumbJsonLd, buildMetadata, faqJsonLd, trekJsonLd, truncateDescription } from '@/lib/seo';
@@ -12,20 +13,7 @@ interface TrekDetailPageProps {
   params: Promise<{ id: string }>
 }
 
-async function loadTrek(trekId: string) {
-  let trekList = treks;
-
-  try {
-    const apiTreks = await getTreks();
-    if (apiTreks.length > 0) {
-      trekList = apiTreks;
-    }
-  } catch {
-    // fallback to local data
-  }
-
-  return trekList.find((t) => t.id === trekId || t.slug === trekId) || null;
-}
+const loadTrek = cache((identifier: string) => getTrekByIdentifier(identifier));
 
 export async function generateMetadata({ params }: TrekDetailPageProps): Promise<Metadata> {
   const { id: trekId } = await params;
@@ -42,7 +30,7 @@ export async function generateMetadata({ params }: TrekDetailPageProps): Promise
   return buildMetadata({
     title: `${trek.title} - ${trek.duration} Days Itinerary, Cost & Guide`,
     description: truncateDescription(trek.shortDescription || trek.fullDescription, `${trek.title} guided trek in Nepal with Gele Trekking.`),
-    path: `/trek/${trek.slug || trek.id}`,
+    path: getTrekPath(trek),
     image: trek.image,
   });
 }
@@ -56,21 +44,21 @@ export default async function TrekDetailPage({ params }: TrekDetailPageProps) {
     notFound();
   }
 
-  const canonicalTrekId = trek.slug || trek.id;
+  const canonicalPath = getTrekPath(trek);
 
-  if (canonicalTrekId && trekId !== canonicalTrekId) {
-    permanentRedirect('/trek/' + canonicalTrekId);
+  if (`/trek/${encodeURIComponent(trekId)}` !== canonicalPath) {
+    permanentRedirect(canonicalPath);
   }
 
   return (
     <>
       <JsonLd data={[
-        trekJsonLd(trek, `/trek/${trek.slug || trek.id}`),
+        trekJsonLd(trek, canonicalPath),
         faqJsonLd(trek.faqs),
         breadcrumbJsonLd([
           { name: 'Home', path: '/' },
           { name: 'Destinations', path: '/destinations' },
-          { name: trek.title, path: `/trek/${trek.slug || trek.id}` },
+          { name: trek.title, path: canonicalPath },
         ]),
       ].filter(Boolean) as Record<string, unknown>[]} />
       <Navbar />

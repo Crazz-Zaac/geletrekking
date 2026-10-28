@@ -4,24 +4,22 @@ import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useTrekWeather } from '@/hooks/use-trek-weather'
 import { useSiteSettings } from '@/hooks/use-site-settings'
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookingForm, FAQAccordion } from '@/components/booking-form';
 import type { Trek } from '@/lib/data';
+import { TrekAvailabilityCalendar } from '@/components/trek-availability-calendar';
 import { getTrekFAQBySlug } from '@/lib/faq-data';
 import {
   BedDouble,
   Bus,
   CalendarRange,
-  CalendarDays,
   ChevronDown,
   ChevronLeft,
   CheckCircle2,
   ClipboardList,
-  CloudSun,
   Compass,
   Droplet,
   Eye,
@@ -37,7 +35,6 @@ import {
   Sparkles,
   Star,
   Sun,
-  Thermometer,
   Timer,
   Utensils,
   ArrowRight,
@@ -47,15 +44,10 @@ import {
   Activity,
   Users,
   Wifi,
-  Wind,
 } from 'lucide-react';
 
 interface TrekDetailClientProps {
   trek: Trek;
-}
-
-function formatPdfText(value?: string) {
-  return String(value || "").replace(/[^\x20-\x7E]/g, "").replace(/\s+/g, " ").trim()
 }
 
 function getAltitudeLabel(maxAltitude: number) {
@@ -65,19 +57,8 @@ function getAltitudeLabel(maxAltitude: number) {
   return 'Low Altitude';
 }
 
-function formatAvailabilityDate(value?: string) {
-  if (!value) return null;
-  const date = new Date(value + (value.length === 10 ? 'T00:00:00' : ''));
-  if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
-}
-
-function formatAvailabilityRange(startDate: string, endDate: string) {
-  const start = formatAvailabilityDate(startDate);
-  const end = formatAvailabilityDate(endDate);
-  if (!start || !end) return null;
-  if (startDate === endDate) return start;
-  return start + ' - ' + end;
+function formatPdfText(value?: string) {
+  return String(value || "").replace(/[^\x20-\x7E]/g, "").replace(/\s+/g, " ").trim()
 }
 
 const containerVariants = {
@@ -197,7 +178,6 @@ export default function TrekDetailClient({
   const [downloadingItinerary, setDownloadingItinerary] = useState(false);
   const [expandedPricingTier, setExpandedPricingTier] = useState<string | null>(null);
   const [expandedEssential, setExpandedEssential] = useState<string | null>(null);
-  const weather = useTrekWeather(trek?.latitude, trek?.longitude)
   const { settings, social } = useSiteSettings()
   const fallbackFaqs = getTrekFAQBySlug(trek.slug)?.faqs || []
   const trekFaqs = trek.faqs && trek.faqs.length > 0 ? trek.faqs : fallbackFaqs
@@ -216,9 +196,6 @@ export default function TrekDetailClient({
     if (orderDiff !== 0) return orderDiff
     return a.name.localeCompare(b.name)
   })
-  const availabilityRanges = (trek.availabilityRanges || [])
-    .map((range) => formatAvailabilityRange(range.startDate, range.endDate))
-    .filter((range): range is string => Boolean(range))
   const specialEquipmentItems = trek.whatToPack || []
 
   const formatMetric = (value?: number, unit?: string) =>
@@ -352,6 +329,7 @@ export default function TrekDetailClient({
       { id: 'trek-overview', label: 'Overview' },
       { id: 'trek-highlights', label: 'Highlights' },
       { id: 'trek-itinerary', label: 'Itinerary' },
+      { id: 'trek-availability', label: 'Available Dates' },
       { id: 'trek-trip-essentials', label: 'Essentials' },
       { id: 'trek-includes', label: 'Included' },
       { id: 'trek-excludes', label: 'Excluded' },
@@ -829,6 +807,7 @@ export default function TrekDetailClient({
           src={trek.image}
           alt={trek.title}
           fill
+          sizes="100vw"
           className="object-cover"
           priority
         />
@@ -1146,6 +1125,7 @@ export default function TrekDetailClient({
                         src={img}
                         alt={`${trek.title} gallery ${idx + 1}`}
                         fill
+                        sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 767px) 45vw, (max-width: 1023px) 30vw, 22vw"
                         className="object-cover"
                       />
                     </div>
@@ -1183,7 +1163,7 @@ export default function TrekDetailClient({
               </motion.div>
             </motion.div>
 
-            <motion.aside variants={itemVariants} className="space-y-6 h-fit sticky top-32 w-full lg:max-w-sm lg:ml-auto">
+            <motion.aside variants={itemVariants} className="space-y-6 h-fit w-full lg:max-w-sm lg:ml-auto">
               <Card className="border-border bg-white p-5 md:p-6 transition-all hover:shadow-md">
                 <div className="space-y-4">
                   <div>
@@ -1253,19 +1233,7 @@ export default function TrekDetailClient({
                     <div className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> {trek.groupSize}</div>
                   </div>
 
-                  {availabilityRanges.length > 0 ? (
-                    <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-                      <div className="flex items-center gap-2 font-semibold">
-                        <CalendarDays className="h-4 w-4 shrink-0" />
-                        <span>Available dates</span>
-                      </div>
-                      <div className="mt-2 space-y-1">
-                        {availabilityRanges.map((range) => (
-                          <div key={range}>{range}</div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
+                  <TrekAvailabilityCalendar key={trek.id} ranges={trek.availabilityRanges || []} />
 
                   <Button variant="outline" className="w-full" onClick={handleDownloadItinerary} disabled={downloadingItinerary}>
                     <Download className="w-4 h-4 mr-2" />
@@ -1274,70 +1242,6 @@ export default function TrekDetailClient({
                 </div>
               </Card>
 
-              <Card className="border-border bg-white p-6 transition-all hover:shadow-md">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{trek.locationName || trek.region}</p>
-                    <p className="text-xs text-muted-foreground">Live conditions vary by altitude</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-foreground">
-                      {weather.status === 'ready' ? weather.data.temp : '—'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {weather.status === 'ready' ? weather.data.condition : '—'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="my-4 h-px bg-border" />
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="flex items-center gap-3">
-                    <Droplet className="h-4 w-4 text-emerald-600" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Humidity</p>
-                      <p className="font-semibold text-foreground">{weather.status === 'ready' ? weather.data.humidity : '—'}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Wind className="h-4 w-4 text-emerald-600" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Wind</p>
-                      <p className="font-semibold text-foreground">{weather.status === 'ready' ? weather.data.wind : '—'}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Eye className="h-4 w-4 text-emerald-600" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Visibility</p>
-                      <p className="font-semibold text-foreground">—</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Thermometer className="h-4 w-4 text-emerald-600" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Feels like</p>
-                      <p className="font-semibold text-foreground">{weather.status === 'ready' ? weather.data.temp : '—'}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                  <span className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-muted-foreground hover:text-foreground transition">
-                    <MapPin className="h-3.5 w-3.5" /> {trek.region}
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-muted-foreground hover:text-foreground transition">
-                    <Bus className="h-3.5 w-3.5" /> {trek.transportation || 'On request'}
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-muted-foreground hover:text-foreground transition">
-                    <TrendingUp className="h-3.5 w-3.5" /> {getAltitudeLabel(trek.maxAltitude)}
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-muted-foreground hover:text-foreground transition">
-                    <Wind className="h-3.5 w-3.5" /> Seasonal shifts
-                  </span>
-                </div>
-              </Card>
             </motion.aside>
           </motion.div>
         </div>

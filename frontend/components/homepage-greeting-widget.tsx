@@ -23,7 +23,7 @@ export function HomepageGreetingWidget() {
           <span>Rate on Google<small>★★★★★ Leave a review</small></span></a>
         <a className="gt-btn gt-tp" href="https://www.trustpilot.com/review/geletrekking.com" target="_blank" rel="noopener noreferrer">
           <span className="ic"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path fill="#00b67a" d="M12 1.5l3 7.6h8l-6.5 4.8 2.5 7.8L12 17l-7 4.7 2.5-7.8L1 9.1h8z"/></svg></span>
-          <span>Rate on Trustpilot<small>★★★★★ Share your story</small></span></a>
+          <span>Rate on Trustpilot<small>Share your story</small></span></a>
         <a className="gt-btn gt-book" href="/book">
           <span className="ic">🏔️</span>
           <span>Book Your Trek Now<small>Next adventure awaits →</small></span></a>

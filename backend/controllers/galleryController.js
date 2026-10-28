@@ -39,7 +39,7 @@ exports.updateGalleryItem = async (req, res) => {
   }
 };
 
-// Delete a gallery item (superadmin)
+// Delete a gallery item (content manager)
 exports.deleteGalleryItem = async (req, res) => {
   try {
     const { id } = req.params;
@@ -87,5 +87,25 @@ exports.updateHeroImage = async (req, res) => {
     res.json({ heroImageUrl: settings.heroImageUrl });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
+  }
+};
+// Rename a filter category across every gallery item using it.
+exports.renameGalleryCategory = async (req, res) => {
+  const { category, newCategory } = req.body;
+  if (typeof category !== "string" || typeof newCategory !== "string" || !category.trim() || !newCategory.trim()) {
+    return res.status(400).json({ message: "Current and new category names are required" });
+  }
+  const name = newCategory.trim();
+  try {
+    if (!(await GalleryItem.exists({ category }))) {
+      return res.status(404).json({ message: "Category no longer exists. Refresh the gallery." });
+    }
+    if (category !== name && await GalleryItem.exists({ category: name })) {
+      return res.status(409).json({ message: "A category with that name already exists. Choose another name." });
+    }
+    const result = await GalleryItem.updateMany({ category }, { $set: { category: name } }, { runValidators: true });
+    res.json({ category: name, updatedCount: result.modifiedCount });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to rename gallery category" });
   }
 };

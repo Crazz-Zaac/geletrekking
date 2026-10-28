@@ -4,6 +4,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 const { restrictToRoles } = require("../middleware/roleMiddleware");
 const { auditContent } = require("../middleware/auditMiddleware");
 const {
+  renameGalleryCategory,
   getGalleryItems,
   createGalleryItem,
   updateGalleryItem,
@@ -23,6 +24,15 @@ router.put(
   restrictToRoles("admin", "superadmin"),
   auditContent('gallery.hero'),
   updateHeroImage
+);
+
+// Category route must precede the /:id item route.
+router.put(
+  "/categories/rename",
+  authMiddleware,
+  restrictToRoles("admin", "superadmin"),
+  auditContent('gallery.category', (req) => ({ targetLabel: req.body?.category })),
+  renameGalleryCategory
 );
 
 // ============== GALLERY ITEMS ROUTES ==============
@@ -47,11 +57,11 @@ router.put(
   updateGalleryItem
 );
 
-// Superadmin: delete a gallery item
+// Content managers: delete a gallery item
 router.delete(
   "/:id",
   authMiddleware,
-  restrictToRoles("superadmin"),
+  restrictToRoles("admin", "superadmin"),
   auditContent('gallery', (req) => ({ targetId: req.params.id })),
   deleteGalleryItem
 );

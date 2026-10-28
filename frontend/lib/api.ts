@@ -1,3 +1,4 @@
+import type { TeamSocialLinks } from '@/lib/team-social-links'
 import { treks as fallbackTreks } from '@/lib/data'
 import type { Trek } from '@/lib/data'
 export interface UiBlogPost {
@@ -300,6 +301,7 @@ export interface AdminAboutStat {
   value: string
 }
 export interface AdminAboutTeamMember {
+  social?: TeamSocialLinks
   name: string
   role: string
   description: string
@@ -611,11 +613,20 @@ const getApiUrl = (path: string) => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
   return API_BASE_URL ? `${API_BASE_URL}${normalizedPath}` : normalizedPath
 }
+export class ApiRequestError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message)
+    this.name = 'ApiRequestError'
+  }
+}
+
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const internalToken = typeof window === 'undefined' ? process.env.INTERNAL_API_TOKEN : undefined
   const response = await fetch(getApiUrl(path), {
     ...init,
     headers: {
       'Content-Type': 'application/json',
+      ...(internalToken ? { 'x-internal-api-token': internalToken } : {}),
       ...(init?.headers || {}),
     },
     cache: 'no-store',
@@ -628,7 +639,7 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       // Ignore JSON parsing errors and keep default message
     }
-    throw new Error(message)
+    throw new ApiRequestError(message, response.status)
   }
   return response.json() as Promise<T>
 }
@@ -759,7 +770,7 @@ function mapTrek(trek: BackendTrek): Trek {
     groupSize,
     bestSeason: trek.best_season || 'All year',
     availabilityRanges: (trek.availability || [])
-      .filter((range) => range.start_date && range.end_date && (range.status || 'available') === 'available')
+      .filter((range) => range.start_date && range.end_date)
       .map((range) => ({
         startDate: range.start_date.slice(0, 10),
         endDate: range.end_date.slice(0, 10),
@@ -832,6 +843,16 @@ export async function getTreks(): Promise<Trek[]> {
     return data.map(mapTrek)
   } catch {
     return fallbackTreks
+  }
+}
+export async function getTrekByIdentifier(identifier: string): Promise<Trek | null> {
+  try {
+    const data = await fetchJson<BackendTrek>(`/api/treks/${encodeURIComponent(identifier)}`)
+    if (!data?._id || !data.name) throw new Error('Invalid itinerary response')
+    return mapTrek(data)
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 404) return null
+    throw error
   }
 }
 export async function getBlogs(): Promise<UiBlogPost[]> {
@@ -1255,13 +1276,7 @@ export interface GuideCategory {
 }
 export async function getGuides(): Promise<{ guides: TravelGuide[]; categories: GuideCategory[] }> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/guides`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    })
-    if (!response.ok) throw new Error(`Failed to fetch guides: ${response.status}`)
-    return response.json()
+    return await fetchJson<{ guides: TravelGuide[]; categories: GuideCategory[] }>('/api/guides')
   } catch (error) {
     console.error('Error fetching guides:', error)
     return { guides: [], categories: [] }
@@ -1269,17 +1284,12 @@ export async function getGuides(): Promise<{ guides: TravelGuide[]; categories: 
 }
 export async function getGuideBySlug(slug: string): Promise<TravelGuide | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/guides/slug/${slug}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    })
-    if (!response.ok) throw new Error(`Failed to fetch guide: ${response.status}`)
-    const data = await response.json()
-    return data.guide || null
+    const data = await fetchJson<{ guide: TravelGuide }>(`/api/guides/slug/${encodeURIComponent(slug)}`)
+    if (!data.guide) throw new Error('Invalid guide response')
+    return data.guide
   } catch (error) {
-    console.error(`Error fetching guide ${slug}:`, error)
-    return null
+    if (error instanceof ApiRequestError && error.status === 404) return null
+    throw error
   }
 }
 export async function getAdminGuides(token: string): Promise<TravelGuide[]> {
@@ -1470,3 +1480,10 @@ export async function listAuditLogs(
 }
 
 export { API_BASE_URL }
+
+export async function renameAdminGalleryCategory(token: string, category: string, newCategory: string): Promise<{ category: string; updatedCount: number }> {
+  return fetchAdminJson('/api/gallery/categories/rename', token, {
+    method: 'PUT',
+    body: JSON.stringify({ category, newCategory }),
+  })
+}

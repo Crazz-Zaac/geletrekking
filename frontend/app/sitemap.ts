@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { getActivities, getBlogs, getGuides, getTreks } from '@/lib/api'
 import { SITE_URL } from '@/lib/seo'
+import { getTrekPath } from '@/lib/trek-path'
 
 const staticRoutes = [
   '',
@@ -39,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticRoutes.map((path) => route(path, path === '' ? 1 : 0.75, path === '' ? 'daily' : 'weekly')),
-    ...treks.map((trek) => route(`/trek/${trek.slug || trek.id}`, 0.9, 'weekly')),
+    ...treks.map((trek) => route(getTrekPath(trek), 0.9, 'weekly')),
     ...blogs.map((post) => route(`/blog/${post.slug}`, 0.8, 'weekly')),
     ...(guidesData.guides || []).map((guide) => route(`/guides/${guide.slug}`, 0.75, 'weekly')),
     ...activities.map((activity) => route(`/activities/${activity.slug}`, 0.7, 'weekly')),

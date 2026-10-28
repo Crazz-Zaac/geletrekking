@@ -76,6 +76,7 @@ export function BlogHighlights({ posts }: BlogHighlightsProps) {
                     src={post.image}
                     alt={post.title}
                     fill
+                    sizes="(max-width: 767px) calc(100vw - 32px), (max-width: 1279px) 30vw, 390px"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute top-3 left-3">

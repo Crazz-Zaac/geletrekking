@@ -5,7 +5,7 @@ export function StatsBar() {
     { value: SITE_METRICS.successfulTreks, label: 'Successful Treks' },
     { value: SITE_METRICS.expertGuides, label: 'Expert Guides' },
     { value: SITE_METRICS.countriesServed, label: 'Countries Served' },
-    { value: SITE_METRICS.yearsExperience, label: 'Years Experience' },
+    { value: SITE_METRICS.founderYearsGuiding, label: 'Gele’s Years Guiding' },
     { value: SITE_METRICS.googleReviewRating + '/5', label: 'Average Rating' },
   ]
 

@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import {
   AdminGalleryItem,
+  renameAdminGalleryCategory,
   createAdminGalleryItem,
   deleteAdminGalleryItem,
   getAdminGalleryHero,
@@ -39,7 +40,7 @@ import {
   updateAdminGalleryHero,
   updateAdminGalleryItem,
 } from '@/lib/api'
-import { getAdminToken } from '@/lib/admin-auth'
+import { getAdminToken, getAdminUser } from '@/lib/admin-auth'
 import {
   ImageIcon,
   Trash2,
@@ -84,8 +85,18 @@ export default function AdminGalleryPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [openDialog, setOpenDialog] = useState(false)
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+
+  const [categoryToEdit, setCategoryToEdit] = useState<string | null>(null)
+  const [categoryName, setCategoryName] = useState('')
+  const [categorySaving, setCategorySaving] = useState(false)
+  const [categoryError, setCategoryError] = useState('')
 
   const token = getAdminToken()
+  const role = getAdminUser()?.role
+  const canDelete = role === 'editor' || role === 'superadmin'
 
   const refresh = async () => {
     setLoading(true)
@@ -198,16 +209,50 @@ export default function AdminGalleryPage() {
 
   const onDelete = async (item: AdminGalleryItem) => {
     if (!token) {
-      setError('Missing admin token. Please login again.')
+      setDeleteError('Missing admin token. Please login again.')
       return
     }
-
+    setDeleting(true)
+    setDeleteError('')
     try {
       await deleteAdminGalleryItem(token, item._id)
+      setItems((previous) => previous.filter((entry) => entry._id !== item._id))
+      if (categoryFilter === item.category && !items.some((entry) => entry._id !== item._id && entry.category === item.category)) {
+        setCategoryFilter('all')
+      }
+      setDeleteItemId(null)
+      setError('')
       setMessage('Gallery item deleted successfully.')
-      await refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Delete failed. (Only superadmin can delete.)')
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete gallery item. Please try again.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const onRenameCategory = async () => {
+    if (!token || categoryToEdit === null) {
+      setCategoryError('Please login again before saving.')
+      return
+    }
+    if (!categoryName.trim()) {
+      setCategoryError('Category name is required.')
+      return
+    }
+    setCategorySaving(true)
+    setCategoryError('')
+    try {
+      const result = await renameAdminGalleryCategory(token, categoryToEdit, categoryName.trim())
+      setItems((previous) => previous.map((item) => item.category === categoryToEdit ? { ...item, category: result.category } : item))
+      setCategoryFilter(result.category)
+      if (form.category === categoryToEdit) setForm((previous) => ({ ...previous, category: result.category }))
+      setMessage('Category renamed across all matching gallery items.')
+      setError('')
+      setCategoryToEdit(null)
+    } catch (err) {
+      setCategoryError(err instanceof Error ? err.message : 'Failed to rename category')
+    } finally {
+      setCategorySaving(false)
     }
   }
 
@@ -223,6 +268,7 @@ export default function AdminGalleryPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Gallery Manager</h1>
           <p className="text-muted-foreground mt-1">Manage your gallery hero image and photo collections.</p>
+          {!canDelete && <p className="text-sm text-muted-foreground mt-2">Sign in with an editor or superadmin account to delete gallery items.</p>}
         </div>
         <Button
           onClick={() => {
@@ -409,6 +455,38 @@ export default function AdminGalleryPage() {
                       </Select>
                     </div>
 
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-2"
+                      disabled={loading || categoryFilter === 'all'}
+                      onClick={() => {
+                        setCategoryToEdit(categoryFilter)
+                        setCategoryName(categoryFilter)
+                        setCategoryError('')
+                      }}
+                    >
+                      <Edit2 className="h-4 w-4" /> Edit category
+                    </Button>
+                    <p className="text-xs text-muted-foreground">Select a category above to rename it for all its photos.</p>
+                    <Dialog open={categoryToEdit !== null} onOpenChange={(open) => { if (!open && !categorySaving) setCategoryToEdit(null) }}>
+                      <DialogContent className="max-w-lg">
+                        <DialogHeader>
+                          <DialogTitle>Edit Gallery Filter Category</DialogTitle>
+                          <DialogDescription>Rename “{categoryToEdit}” for all {items.filter((item) => item.category === categoryToEdit).length} photos in this category. The public gallery filter will use the new name.</DialogDescription>
+                        </DialogHeader>
+                        <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void onRenameCategory() }}>
+                          <label htmlFor="gallery-category-name" className="text-sm font-medium">Category name</label>
+                          <Input id="gallery-category-name" value={categoryName} onChange={(event) => setCategoryName(event.target.value)} disabled={categorySaving} required />
+                          {categoryError && <p role="alert" className="text-sm text-red-600">{categoryError}</p>}
+                          <div className="flex justify-end gap-2">
+                            <Button type="button" variant="outline" disabled={categorySaving} onClick={() => setCategoryToEdit(null)}>Cancel</Button>
+                            <Button type="submit" disabled={categorySaving || !categoryName.trim() || categoryName.trim() === categoryToEdit}>{categorySaving ? 'Saving...' : 'Save category'}</Button>
+                          </div>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+
                     <div className="flex gap-2 border-t pt-3">
                       <Button
                         variant={viewMode === 'grid' ? 'default' : 'outline'}
@@ -512,9 +590,9 @@ export default function AdminGalleryPage() {
                             {item.isFeatured && <div className="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded">⭐</div>}
                           </div>
 
-                          <div className="p-3 bg-card absolute inset-0 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition">
-                            <p className="font-semibold text-sm text-white line-clamp-2 mb-2">{item.title || 'Untitled'}</p>
-                            {item.category && <p className="text-xs text-gray-300 mb-3">{item.category}</p>}
+                          <div className="p-3 bg-card flex flex-col justify-end">
+                            <p className="font-semibold text-sm text-foreground line-clamp-2 mb-2">{item.title || 'Untitled'}</p>
+                            {item.category && <p className="text-xs text-muted-foreground mb-3">{item.category}</p>}
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
@@ -525,9 +603,13 @@ export default function AdminGalleryPage() {
                                 <Edit2 className="w-3 h-3" />
                                 Edit
                               </Button>
-                              <AlertDialog>
+                              <AlertDialog open={deleteItemId === item._id} onOpenChange={(open) => {
+                                if (deleting) return
+                                setDeleteError('')
+                                setDeleteItemId(open ? item._id : null)
+                              }}>
                                 <AlertDialogTrigger asChild>
-                                  <Button size="sm" variant="destructive" className="h-8 w-8 p-0">
+                                  <Button size="sm" variant="destructive" className="h-8 w-8 p-0" disabled={!canDelete} title={canDelete ? 'Delete item' : 'An editor or superadmin account is required'} aria-label={`Delete ${item.title || 'gallery item'}`}>
                                     <Trash2 className="w-3 h-3" />
                                   </Button>
                                 </AlertDialogTrigger>
@@ -538,13 +620,15 @@ export default function AdminGalleryPage() {
                                       Are you sure you want to delete "{item.title}"? This action cannot be undone.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
+                                  {deleteError && <p role="alert" className="text-sm text-red-600">{deleteError}</p>}
                                   <div className="flex gap-2 justify-end">
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
                                     <AlertDialogAction
                                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                      onClick={() => onDelete(item)}
+                                      disabled={deleting}
+                                      onClick={(event) => { event.preventDefault(); void onDelete(item) }}
                                     >
-                                      Delete
+                                      {deleting ? 'Deleting...' : 'Delete'}
                                     </AlertDialogAction>
                                   </div>
                                 </AlertDialogContent>
@@ -589,9 +673,13 @@ export default function AdminGalleryPage() {
                             >
                               <Edit2 className="w-4 h-4" />
                             </Button>
-                            <AlertDialog>
+                            <AlertDialog open={deleteItemId === item._id} onOpenChange={(open) => {
+                                if (deleting) return
+                                setDeleteError('')
+                                setDeleteItemId(open ? item._id : null)
+                              }}>
                               <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="sm">
+                                <Button variant="destructive" size="sm" disabled={!canDelete} title={canDelete ? 'Delete item' : 'An editor or superadmin account is required'} aria-label={`Delete ${item.title || 'gallery item'}`}>
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </AlertDialogTrigger>
@@ -602,13 +690,15 @@ export default function AdminGalleryPage() {
                                     Are you sure you want to delete "{item.title}"? This action cannot be undone.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
+                                {deleteError && <p role="alert" className="text-sm text-red-600">{deleteError}</p>}
                                 <div className="flex gap-2 justify-end">
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    onClick={() => onDelete(item)}
+                                    disabled={deleting}
+                                      onClick={(event) => { event.preventDefault(); void onDelete(item) }}
                                   >
-                                    Delete
+                                    {deleting ? 'Deleting...' : 'Delete'}
                                   </AlertDialogAction>
                                 </div>
                               </AlertDialogContent>

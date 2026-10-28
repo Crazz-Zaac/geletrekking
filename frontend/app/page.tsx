@@ -1,8 +1,8 @@
 import Link from 'next/link'
+import { buildMetadata } from '@/lib/seo'
 import { HomepageGreetingWidget } from '@/components/homepage-greeting-widget'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
-import { HomepageAlertBanner } from '@/components/homepage-alert-banner'
 import { TrekCard } from '@/components/trek-card'
 import { treks } from '@/lib/data'
 import { getBlogs, getTreks } from '@/lib/api'
@@ -13,6 +13,13 @@ import { BookingCTA } from './home/booking-cta'
 import { StatsBar } from './home/stats-bar'
 import { TrustpilotWidget } from '@/components/trustpilot-widget'
 import { GoogleReviewsEmbed } from './home/google-reviews-embed'
+
+export const metadata = buildMetadata({
+  title: 'Gele Trekking — Nepal Trekking & Himalaya Tours',
+  description: 'Founded in 2024 by Gele, a guide with 15+ years in the Himalaya. Explore Nepal trekking packages, local guides, and private Himalayan adventures.',
+  path: '/',
+  keywords: ['Nepal trekking packages', 'guided Himalayan treks', 'local Nepal trekking agency'],
+})
 
 export default async function HomePage() {
   const [apiTreks, apiBlogs] = await Promise.all([
@@ -31,7 +38,6 @@ export default async function HomePage() {
     <>
       <Navbar />
       <div className="pt-16">
-        <HomepageAlertBanner />
         <main>
           <HeroSection />
           <StatsBar />

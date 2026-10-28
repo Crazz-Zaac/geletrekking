@@ -20,7 +20,7 @@ async function loadBlog(slug: string) {
     post = apiPost;
     allPosts = apiPosts;
   } catch {
-    // Keep the public route tied to backend-published content only.
+    // API helpers only return backend blog content.
   }
 
   return { post, allPosts };

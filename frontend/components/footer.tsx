@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { CookieSettingsButton } from '@/components/cookie-consent'
 import { useEffect, useState } from 'react'
 import { Mail, Phone, MapPin } from 'lucide-react'
 import { WhatsAppIcon } from '@/components/whatsapp-icon'
@@ -8,6 +9,8 @@ import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/compon
 import Image from 'next/image'
 import { useSiteSettings } from '@/hooks/use-site-settings'
 import { getTreks } from '@/lib/api'
+import { getTrekPath } from '@/lib/trek-path'
+import { COMPANY_FOUNDING_STORY } from '@/lib/site-metrics'
 
 const footerLinks = {
   destinations: [
@@ -51,7 +54,7 @@ export function Footer() {
         setDestinationLinks(
           trekList.map((trek) => ({
             label: trek.title.replace(/\s+Trek$/i, ''),
-            href: `/trek/${trek.slug}`,
+            href: getTrekPath(trek),
           }))
         )
       } catch {
@@ -95,8 +98,9 @@ export function Footer() {
               </div>
             </Link>
             <p className="text-white/60 text-sm leading-relaxed mb-6 max-w-xs">
-              Your trusted local trekking partner in Nepal since 2024. Licensed, insured and passionate about sharing the Himalayas with the world.
+              {COMPANY_FOUNDING_STORY} Your local trekking partner in Nepal. Licensed, insured and passionate about sharing the Himalayas with the world.
             </p>
+            <CookieSettingsButton className="mb-4 text-sm text-white/70 underline underline-offset-4 hover:text-white" />
             <div className="space-y-2 text-sm text-white/60">
               {contactEmail ? (
                 <a href={`mailto:${contactEmail}`} className="flex items-center gap-2 hover:text-white transition-colors">

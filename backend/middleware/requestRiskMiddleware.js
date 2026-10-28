@@ -1,4 +1,5 @@
 const { getProfile, saveProfile } = require("../config/riskStore");
+const { isTrustedContentRequest } = require('../utils/trustedContentRequest');
 
 const toBoolean = (value, fallback = true) => {
   if (typeof value === "boolean") return value;
@@ -71,6 +72,7 @@ const classifyPayload = (body = {}) => {
 };
 
 const requestRiskMiddleware = async (req, res, next) => {
+  if (isTrustedContentRequest(req)) return next();
   if (!config.enabled) return next();
 
   try {

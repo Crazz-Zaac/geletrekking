@@ -1,5 +1,7 @@
 'use client'
 
+import { useSiteSettings } from '@/hooks/use-site-settings'
+import { getContactLinks } from '@/lib/contact-links'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
@@ -15,6 +17,8 @@ interface BookingFormProps {
 }
 
 export function BookingForm({ trek, treks = [], requireTrek = false, packageOptions }: BookingFormProps) {
+  const { settings, social } = useSiteSettings()
+  const { whatsappUrl } = getContactLinks(settings.email, social.whatsapp, settings.phone)
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -306,7 +310,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
       </p>
       <p className="text-xs text-muted-foreground text-center">
         We typically reply within 24 hours. Or{' '}
-        <a href="https://wa.me/9779851234567" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline">
           WhatsApp us directly
         </a>
         .

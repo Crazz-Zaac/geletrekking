@@ -1,0 +1,29 @@
+.calendar { min-width: 0; scroll-margin-top: 9rem; color: #1d1d1d; }
+.eyebrow { margin: 0; font-family: inherit; font-size: 12px; line-height: 1.5; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; color: #5b5b5b; }
+.subtitle { margin: 4px 0 12px; font-size: 13px; line-height: 1.5; color: #5b5b5b; }
+.yearNavigation { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.yearButton { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid #cfcbc0; border-radius: 12px; background: #fff; color: #1d1d1d; cursor: pointer; }
+.yearButton:hover { background: #f9f7f3; }
+.yearButton:disabled { opacity: .4; cursor: default; }
+.year { font-size: 15px; font-weight: 700; }
+.monthGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.month { min-width: 0; padding: 6px; border: 1px solid #cfcbc0; border-radius: 12px; background: #fff; color: #1d1d1d; text-align: left; }
+.yearButton:focus-visible { outline: 2px solid #1f6b7a; outline-offset: 2px; }
+.monthHeading { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 4px; }
+.monthName { font-size: 12px; font-weight: 700; }
+.status { font-size: 10px; font-weight: 600; white-space: nowrap; }
+.available { color: #167343; }
+.limited { color: #9a5b00; }
+.booked, .noTrips { color: #767676; }
+.days, .weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.weekdays { margin-bottom: 2px; text-align: center; font-size: 9px; line-height: 14px; color: #767676; }
+.dayCell { display: flex; align-items: center; justify-content: center; min-width: 0; height: 27px; }
+.day { position: relative; padding-bottom: 7px; height: 25px; border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 100%; max-width: 20px; font-size: 10px; line-height: 1; color: #4a4a4a; }
+.departureDay { font-weight: 700; }
+.tick { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; }
+.availableDay { background: #e9f6ed; color: #167343; }
+.limitedDay { background: #fff3dd; color: #9a5b00; }
+.bookedDay { background: #ededed; color: #767676; }
+.legend { margin: 12px 0 0; font-size: 11px; line-height: 1.6; color: #5b5b5b; }
+.empty { margin-top: 12px; }
+.empty a { color: #1f6b7a; text-decoration: underline; text-underline-offset: 3px; }

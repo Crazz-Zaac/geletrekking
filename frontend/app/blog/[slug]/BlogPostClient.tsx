@@ -1,5 +1,6 @@
 'use client';
 
+import { CookieSettingsButton, useCookieConsent } from '@/components/cookie-consent';
 import { motion } from 'framer-motion';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
@@ -134,41 +135,32 @@ function getYouTubeId(value: string) {
   return null;
 }
 
-function renderYouTubeEmbeds(content: string) {
+function renderYouTubeEmbeds(content: string, allowExternalMedia: boolean) {
   return content.replace(
     /::youtube(?:\[([^\]]*)\])?\(([^)\s]+)\)/g,
     (match, title: string | undefined, url: string) => {
       const videoId = getYouTubeId(url);
       if (!videoId) return match;
       const safeTitle = escapeHtml(title?.trim() || 'YouTube video');
+      if (!allowExternalMedia) return `<p>Video: <a href="https://www.youtube.com/watch?v=${escapeHtml(videoId)}" target="_blank" rel="noopener noreferrer">${safeTitle}</a>. Enable optional external content in Cookie settings to watch it here.</p>`;
 
       return `<div class="blog-video-embed"><iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}" title="${safeTitle}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`;
     }
   );
 }
 
-function renderBlogMarkdown(content: string) {
-  return renderYouTubeEmbeds(renderSizedMarkdownImages(content));
+function renderBlogMarkdown(content: string, allowExternalMedia: boolean) {
+  const safeContent = allowExternalMedia ? content : content.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, '<p>Embedded media is off. Use Cookie settings to allow external content.</p>');
+  return renderYouTubeEmbeds(renderSizedMarkdownImages(safeContent), allowExternalMedia);
 }
 
 export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) {
-  const [renderedContent, setRenderedContent] = useState('');
+  const { externalMedia } = useCookieConsent();
+  const renderedContent = useMemo(() => marked.parse(renderBlogMarkdown(post.content || '', externalMedia), { async: false }), [post.content, externalMedia]);
   const [shareUrl, setShareUrl] = useState('');
   const [showCopiedToast, setShowCopiedToast] = useState(false);
 
-  useEffect(() => {
-    let isActive = true;
 
-    Promise.resolve(marked.parse(renderBlogMarkdown(post.content || ''))).then((html) => {
-      if (isActive) {
-        setRenderedContent(html);
-      }
-    });
-
-    return () => {
-      isActive = false;
-    };
-  }, [post.content]);
 
   useEffect(() => {
     setShareUrl(window.location.href);
@@ -229,10 +221,10 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
       <Navbar />
       <main className="min-h-screen bg-background pt-16">
         <motion.section
-          initial={{ opacity: 0 }}
+          initial={false}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
-          className="relative min-h-[520px] overflow-hidden"
+          className="relative flex min-h-[520px] items-end overflow-hidden"
         >
           <Image
             src={post.image}
@@ -244,9 +236,9 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/20" />
 
-          <div className="absolute inset-x-0 bottom-0 px-4 pb-10 md:px-6 md:pb-14">
+          <div className="relative z-10 w-full px-4 pt-12 pb-10 md:px-6 md:pt-20 md:pb-14">
             <motion.div
-              initial="hidden"
+              initial={false}
               animate="visible"
               variants={containerVariants}
               className="container mx-auto max-w-5xl space-y-6 text-white"
@@ -300,16 +292,17 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
 
         <div className="container mx-auto px-4 py-12 md:px-6 md:py-16">
           <motion.div
-            initial="hidden"
+            initial={false}
             animate="visible"
             variants={containerVariants}
             className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_320px]"
           >
-            <motion.article variants={itemVariants} className="mx-auto w-full max-w-3xl">
+            <motion.article variants={itemVariants} className="mx-auto min-w-0 w-full max-w-3xl">
               <div
                 className="markdown-content trekking-blog-content"
                 dangerouslySetInnerHTML={{ __html: renderedContent }}
               />
+              <CookieSettingsButton className="mt-4 text-sm text-primary underline underline-offset-4" />
 
               {(post.hashtags || []).length > 0 ? (
                 <div className="mt-12 border-t border-border pt-6">

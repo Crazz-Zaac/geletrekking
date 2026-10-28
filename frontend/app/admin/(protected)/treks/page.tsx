@@ -45,6 +45,8 @@ type TripEssentialForm = {
 type AvailabilityRangeForm = {
   start_date: string
   end_date: string
+  status: 'available' | 'limited' | 'booked'
+  note: string
 }
 
 type TrekForm = {
@@ -252,7 +254,7 @@ function formToPayload(form: TrekForm): Partial<AdminTrek> {
     best_season: form.best_season.trim() || undefined,
     availability: form.availability
       .filter((range) => range.start_date && range.end_date)
-      .map((range) => ({ start_date: range.start_date, end_date: range.end_date, status: 'available' as const })),
+      .map((range) => ({ start_date: range.start_date, end_date: range.end_date, status: range.status, note: range.note.trim() })),
     season_tag: form.season_tag.trim() || undefined,
     image_url: form.image_url.trim() || undefined,
     gallery_images: form.gallery_images
@@ -317,10 +319,12 @@ function trekToForm(item: AdminTrek): TrekForm {
     region_description: item.region_description || '',
     best_season: item.best_season || '',
     availability: (item.availability || [])
-      .filter((range) => range.start_date && range.end_date && (range.status || 'available') === 'available')
+      .filter((range) => range.start_date && range.end_date)
       .map((range) => ({
         start_date: range.start_date.slice(0, 10),
         end_date: range.end_date.slice(0, 10),
+        status: range.status || 'available',
+        note: range.note || '',
       })),
     season_tag: item.season_tag || '',
     image_url: item.image_url || '',
@@ -514,7 +518,7 @@ export default function AdminTreksPage() {
     }
   }
 
-  const updateAvailabilityRange = (index: number, field: keyof AvailabilityRangeForm, value: string) => {
+  const updateAvailabilityRange = <Field extends keyof AvailabilityRangeForm>(index: number, field: Field, value: AvailabilityRangeForm[Field]) => {
     setForm((prev) => {
       const updated = [...prev.availability]
       updated[index] = { ...updated[index], [field]: value }
@@ -525,7 +529,7 @@ export default function AdminTreksPage() {
   const addAvailabilityRange = () => {
     setForm((prev) => ({
       ...prev,
-      availability: [...prev.availability, { start_date: '', end_date: '' }],
+      availability: [...prev.availability, { start_date: '', end_date: '', status: 'available', note: '' }],
     }))
   }
 
@@ -783,7 +787,7 @@ export default function AdminTreksPage() {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <h3 className="text-sm font-semibold text-foreground">Available date ranges</h3>
-                      <p className="text-xs text-muted-foreground">Add one or more booking windows across any month.</p>
+                      <p className="text-xs text-muted-foreground">Add departure and return dates. Status and notes appear in the public departure calendar.</p>
                     </div>
                     <Button type="button" variant="outline" size="sm" onClick={addAvailabilityRange}>
                       + Add range
@@ -794,7 +798,7 @@ export default function AdminTreksPage() {
                   ) : (
                     <div className="space-y-3">
                       {form.availability.map((range, index) => (
-                        <div key={index} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 rounded-md border border-border bg-background p-3">
+                        <div key={index} className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-md border border-border bg-background p-3">
                           {field("Start date", (
                             <Input
                               type="date"
@@ -809,7 +813,22 @@ export default function AdminTreksPage() {
                               onChange={(e) => updateAvailabilityRange(index, "end_date", e.target.value)}
                             />
                           ))}
-                          <Button type="button" variant="outline" size="sm" onClick={() => removeAvailabilityRange(index)} className="self-end">
+                          {field('Departure status', (
+                            <select
+                              aria-label={`Departure ${index + 1} status`}
+                              value={range.status}
+                              onChange={(e) => updateAvailabilityRange(index, 'status', e.target.value as AvailabilityRangeForm['status'])}
+                              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                            >
+                              <option value="available">Open</option>
+                              <option value="limited">Few left</option>
+                              <option value="booked">Full</option>
+                            </select>
+                          ))}
+                          {field('Departure note (optional)', (
+                            <Input value={range.note} onChange={(e) => updateAvailabilityRange(index, 'note', e.target.value)} placeholder="Details for this departure" />
+                          ))}
+                          <Button type="button" variant="outline" size="sm" onClick={() => removeAvailabilityRange(index)} className="self-end sm:col-span-2">
                             Remove
                           </Button>
                         </div>

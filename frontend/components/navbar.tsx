@@ -8,7 +8,9 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getTrekPath } from '@/lib/trek-path'
 import { treks as defaultTreks } from '@/lib/data'
+import { GlobalAlertBanner } from '@/components/global-alert-banner'
 import { WhatsAppIcon } from '@/components/whatsapp-icon'
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons'
 import Image from 'next/image'
@@ -147,16 +149,16 @@ export function Navbar() {
     const loadTreks = async () => {
       const fallbackChildren = sortDestinationChildren(defaultTreks.map((trek) => ({
         label: trek.title.replace(/\s+Trek$/i, ""),
-        href: '/trek/' + trek.slug,
+        href: getTrekPath(trek),
       })))
 
       try {
         const dbTreks = await getTreks()
         if (dbTreks && dbTreks.length > 0) {
           setDestinationChildren(
-            sortDestinationChildren(dbTreks.map((trek: any) => ({
-              label: trek.name || trek.title,
-              href: '/trek/' + (trek.id || trek.slug),
+            sortDestinationChildren(dbTreks.map((trek) => ({
+              label: trek.title,
+              href: getTrekPath(trek),
             })))
           )
         } else {
@@ -207,6 +209,7 @@ export function Navbar() {
   }, [])
 
   return (
+    <>
     <header
       className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
@@ -766,5 +769,10 @@ export function Navbar() {
         </div>
       )}
     </header>
+    {/* Offset the fixed header while retaining each page's existing top padding. */}
+    <div className="pt-16 -mb-16">
+      <GlobalAlertBanner />
+    </div>
+    </>
   )
 }

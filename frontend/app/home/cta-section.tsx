@@ -37,7 +37,7 @@ export default function CTASection() {
               Ready to start your Himalayan adventure?
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Join thousands of trekkers who have experienced the magic of Nepal's mountains with our expert guides
+              Experience the magic of Nepal's mountains with our expert local guides.
             </p>
           </motion.div>
 

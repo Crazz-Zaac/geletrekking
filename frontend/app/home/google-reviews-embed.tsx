@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react'
 const FEATURABLE_WIDGET_ID = 'featurable-d8cabeae-9e92-42e1-ab78-75f13b25aa45'
 const FEATURABLE_SCRIPT_SRC = 'https://featurable.com/assets/bundle.js'
 
-export function GoogleReviewsEmbed() {
+function ReviewsWidget() {
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -34,4 +34,8 @@ export function GoogleReviewsEmbed() {
   }, [])
 
   return <div ref={containerRef} />
+}
+
+export function GoogleReviewsEmbed() {
+  return <ReviewsWidget />
 }

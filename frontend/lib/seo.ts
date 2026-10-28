@@ -41,6 +41,7 @@ export function buildMetadata({
   publishedTime,
   modifiedTime,
   tags,
+  keywords,
 }: {
   title: string
   description: string
@@ -50,6 +51,7 @@ export function buildMetadata({
   publishedTime?: string
   modifiedTime?: string
   tags?: string[]
+  keywords?: string[]
 }): Metadata {
   const fullTitle = pageTitle(title)
   const url = absoluteUrl(path)
@@ -58,6 +60,7 @@ export function buildMetadata({
   return {
     title: fullTitle,
     description,
+    keywords: keywords || (tags?.length ? tags.map((tag) => tag.replace(/^#/, '')) : [title]),
     alternates: { canonical: path },
     openGraph: {
       title: fullTitle,

@@ -225,6 +225,7 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
               src={heroImageUrl}
               alt="Gallery hero"
               fill
+              sizes="100vw"
               priority
               className="object-cover"
             />
@@ -521,6 +522,7 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
                   src={selectedImage.image}
                   alt={selectedImage.trekTitle}
                   fill
+                  sizes="100vw"
                   className={selectedImageLoaded ? "object-contain rounded-lg transition-opacity duration-200 opacity-100" : "object-contain rounded-lg transition-opacity duration-200 opacity-0"}
                   priority
                   onLoadingComplete={() => {
@@ -559,6 +561,7 @@ export function GalleryContent({ initialItems, heroImageUrl }: GalleryContentPro
                         src={item.image}
                         alt={item.trekTitle}
                         fill
+                        sizes="100vw"
                         className="object-cover"
                       />
                     </button>

@@ -18,6 +18,7 @@ export function RegionCard({ name, image, description, trekCount }: RegionCardPr
             src={image}
             alt={name}
             fill
+            sizes="100vw"
             className="object-cover group-hover:scale-105 transition-transform"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />

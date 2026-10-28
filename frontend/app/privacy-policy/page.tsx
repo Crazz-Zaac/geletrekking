@@ -82,6 +82,13 @@ const getPolicySections = (contactEmail: string) => [
     icon: Globe,
   },
   {
+    id: 'cookies',
+    title: 'Cookies, Local Storage & External Content',
+    content:
+      'Essential storage supports administrative sign-in, security, saved notice dismissals, and your cookie choice. Your cookie preference is saved in this browser for up to 180 days. Google Maps and embedded videos remain disabled until you allow external content. The Google reviews widget is provided through Featurable and loads independently of your optional-content choice. These third-party providers may receive your IP address and use their own cookies or storage. You can accept, reject, or change this choice through Cookie settings in the footer. Withdrawing permission reloads the page to stop previously loaded optional content. Links to WhatsApp, Cal.com, and external review pages open those services only when you choose to visit them.',
+    icon: Lock,
+  },
+  {
     id: 'security',
     title: '8) Security Measures',
     content:

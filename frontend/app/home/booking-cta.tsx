@@ -48,7 +48,7 @@ export function BookingCTA() {
             variants={itemVariants}
             className="text-primary-foreground/80 text-base md:text-lg max-w-2xl mx-auto mb-6"
           >
-            Join thousands of adventurers who have discovered Nepal's magic with our expert guides. Book your dream trek today.
+            Discover Nepal's magic with our expert local guides. Book your dream trek today.
           </motion.p>
           <motion.div
             variants={itemVariants}

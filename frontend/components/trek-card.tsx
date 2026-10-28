@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { Clock, Mountain, Users, ArrowRight, Check } from 'lucide-react'
 import type { Trek } from '@/lib/data'
 import { cn } from '@/lib/utils'
+import { getTrekPath } from '@/lib/trek-path'
 
 const difficultyColors: Record<Trek['difficulty'], string> = {
   Easy: 'bg-green-100 text-green-800',
@@ -25,7 +26,7 @@ export function TrekCard({ trek, className, isCompared = false, compareDisabled 
 
   return (
     <Link
-      href={`/trek/${trek.id}`}
+      href={getTrekPath(trek)}
       className={cn(
         'group relative flex flex-col bg-card rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300',
         hasActiveOffer && 'border-red-300/70 shadow-red-500/10',
@@ -42,7 +43,7 @@ export function TrekCard({ trek, className, isCompared = false, compareDisabled 
               width={140}
               height={140}
               className="object-contain drop-shadow-xl"
-              priority
+              loading="lazy"
             />
           </div>
 
@@ -68,7 +69,7 @@ export function TrekCard({ trek, className, isCompared = false, compareDisabled 
           fill
           loading="lazy"
           className="object-cover group-hover:scale-105 transition-transform duration-500"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1023px) calc(50vw - 32px), (max-width: 1279px) calc(33vw - 32px), 300px"
         />
         {onToggleCompare && (
           <button

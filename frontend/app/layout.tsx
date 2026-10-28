@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
-import Script from 'next/script'
 import { Inter, Playfair_Display } from 'next/font/google'
+import { CookieConsentProvider } from '@/components/cookie-consent'
+import { FloatingContact } from '@/components/floating-contact'
 import { ScrollToTop } from '@/components/scroll-to-top'
 import { JsonLd } from '@/components/json-ld'
 import { absoluteUrl, organizationJsonLd, SITE_URL, websiteJsonLd } from '@/lib/seo'
@@ -23,14 +24,6 @@ export const metadata: Metadata = {
   title: 'Gele Trekking — Premium Nepal Trekking & Himalaya Tours',
   description:
     'Discover the Himalayas with Gele Trekking. Expert-guided trekking packages in Nepal — Everest Base Camp, Annapurna Circuit, Langtang Valley and more. Book your dream adventure today.',
-  keywords: [
-    'Nepal trekking',
-    'Everest Base Camp trek',
-    'Annapurna Circuit',
-    'Himalaya tours',
-    'Nepal adventure',
-    'guided trekking',
-  ],
   icons: {
     icon: '/geletrekking.png',
   },
@@ -74,16 +67,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
-      <head>
-        <Script
-          src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js"
-          strategy="afterInteractive"
-        />
-      </head>
       <body className="font-sans antialiased">
+        <CookieConsentProvider>
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
         {children}
+        <FloatingContact />
         <ScrollToTop />
+        </CookieConsentProvider>
       </body>
     </html>
   )

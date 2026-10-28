@@ -1,23 +1,16 @@
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import type { Metadata } from 'next';
+import { buildMetadata } from '@/lib/seo';
 import { AboutPageClient } from './AboutPageClient';
 
-export const metadata: Metadata = {
-  title: 'About Us | Gele Trekking',
-  description:
-    'Learn about Gele Trekking, our local mountain team, safety standards, legal affiliations, and the values behind our Himalayan adventures.',
-  alternates: {
-    canonical: '/about',
-  },
-  openGraph: {
-    title: 'About Us | Gele Trekking',
-    description:
-      'Meet our local trekking team and see why travellers trust Gele Trekking for safe, authentic Himalayan experiences.',
-    type: 'website',
-    url: '/about',
-  },
-};
+export const metadata: Metadata = buildMetadata({
+  title: 'About Us',
+  description: 'Founded 2024 by Gele, a guide with 15+ years in the Himalaya. Meet our Nepal trekking team and explore our company registration and affiliations.',
+  path: '/about',
+  image: '/images/about-team.jpg',
+  keywords: ['Gele Trekking team', 'Gele Himalayan guide', 'Nepal trekking company registration'],
+});
 
 export default function AboutPage() {
   return (

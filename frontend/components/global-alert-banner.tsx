@@ -21,24 +21,10 @@ interface StoredDismissal {
   alertId: string
 }
 
-export function HomepageAlertBanner() {
+export function GlobalAlertBanner() {
   const [alerts, setAlerts] = useState<AdminAlert[]>([])
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual'
-    }
-
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-
-    return () => {
-      if ('scrollRestoration' in window.history) {
-        window.history.scrollRestoration = 'auto'
-      }
-    }
-  }, [])
 
   useEffect(() => {
     const loadAlerts = async () => {

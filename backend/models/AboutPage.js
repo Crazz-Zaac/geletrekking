@@ -24,12 +24,42 @@ const associationSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const socialUrlField = {
+  type: String,
+  default: "",
+  trim: true,
+  validate: {
+    validator: (value) => {
+      if (!value) return true;
+      try {
+        const url = new URL(value);
+        return ["https:", "http:"].includes(url.protocol) && Boolean(url.hostname) && !url.username && !url.password;
+      } catch {
+        return false;
+      }
+    },
+    message: "Social links must be complete HTTP or HTTPS URLs.",
+  },
+};
+
+const teamSocialSchema = new mongoose.Schema(
+  {
+    facebook: socialUrlField,
+    instagram: socialUrlField,
+    linkedin: socialUrlField,
+    youtube: socialUrlField,
+    whatsapp: socialUrlField,
+  },
+  { _id: false }
+);
+
 const teamMemberSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     role: { type: String, required: true, trim: true },
     description: { type: String, default: "", trim: true },
     imageUrl: { type: String, default: "", trim: true },
+    social: { type: teamSocialSchema, default: () => ({}) },
   },
   { _id: false }
 );
