@@ -78,7 +78,7 @@ docker compose down -v
 
 ### Prerequisites
 
-- **Node.js** v18+ and npm/pnpm
+- **Node.js** v22+ and npm
 - **MongoDB** running locally on port 27017
 
 ### 1. Install Dependencies

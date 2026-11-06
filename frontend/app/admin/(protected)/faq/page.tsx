@@ -1,55 +1,41 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowDown, ArrowUp, Bold, CheckCircle, ExternalLink, Heading2, Image as ImageIcon, Italic, Link as LinkIcon, List, ListOrdered, Loader2, Plus, Quote, Save, Trash2, X } from 'lucide-react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ArrowDown, ArrowUp, ChevronDown, ExternalLink, HelpCircle, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import {
+  AdminPageHeader,
+  EmptyState,
+  Field,
+  FormSection,
+  FormSkeleton,
+  ImageUrlField,
+  SaveBar,
+  StatusToasts,
+  TextArea,
+  useDirtyState,
+  useUnsavedChangesWarning,
+} from '@/components/admin/form-kit'
+import { MarkdownEditor } from '@/components/admin/markdown-editor'
+import { useConfirm } from '@/components/admin/use-confirm'
 import { getAdminFaq, updateAdminFaq, type AdminFaq, type AdminFaqItem } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
+import { cn } from '@/lib/utils'
 
 const emptyFaq = (order = 0): AdminFaqItem => ({ question: '', answer: '', order })
 
-const TextFormattingTools = ({ onFormat }: { onFormat: (before: string, after?: string, placeholder?: string) => void }) => (
-  <div className="mb-2 rounded-md border border-border bg-background p-1.5 shadow-xs">
-    <div className="flex flex-wrap items-center gap-1">
-      <Button type="button" variant="ghost" size="sm" onClick={() => onFormat('**', '**', 'bold text')} className="h-8 gap-1.5 px-2" title="Bold">
-        <Bold className="h-4 w-4" /><span className="text-xs">Bold</span>
-      </Button>
-      <Button type="button" variant="ghost" size="sm" onClick={() => onFormat('*', '*', 'italic text')} className="h-8 gap-1.5 px-2" title="Italic">
-        <Italic className="h-4 w-4" /><span className="text-xs">Italic</span>
-      </Button>
-      <Button type="button" variant="ghost" size="sm" onClick={() => onFormat('## ', '', 'Heading')} className="h-8 gap-1.5 px-2" title="Heading">
-        <Heading2 className="h-4 w-4" /><span className="text-xs">Heading</span>
-      </Button>
-      <Button type="button" variant="ghost" size="sm" onClick={() => onFormat('- ', '', 'List item')} className="h-8 gap-1.5 px-2" title="Bullet list">
-        <List className="h-4 w-4" /><span className="text-xs">Bullet</span>
-      </Button>
-      <Button type="button" variant="ghost" size="sm" onClick={() => onFormat('1. ', '', 'List item')} className="h-8 gap-1.5 px-2" title="Numbered list">
-        <ListOrdered className="h-4 w-4" /><span className="text-xs">Numbered</span>
-      </Button>
-      <Button type="button" variant="ghost" size="sm" onClick={() => onFormat('> ', '', 'Quote')} className="h-8 gap-1.5 px-2" title="Quote">
-        <Quote className="h-4 w-4" /><span className="text-xs">Quote</span>
-      </Button>
-      <Button type="button" variant="ghost" size="sm" onClick={() => onFormat('[', '](/contact)', 'link text')} className="h-8 gap-1.5 px-2" title="Link">
-        <LinkIcon className="h-4 w-4" /><span className="text-xs">Link</span>
-      </Button>
-    </div>
-  </div>
-)
-
 export default function AdminFaqPage() {
-  const [form, setForm] = useState<AdminFaq>({ heroTitle: '', heroSubtitle: '', heroImageUrl: '', faqs: [emptyFaq()] })
+  const [form, setForm] = useState<AdminFaq>({ heroTitle: '', heroSubtitle: '', heroImageUrl: '', faqs: [] })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
-  const [addDialogOpen, setAddDialogOpen] = useState(false)
-  const [draftFaq, setDraftFaq] = useState<AdminFaqItem>(() => emptyFaq())
-  const [addError, setAddError] = useState('')
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const [askConfirm, confirmDialog] = useConfirm()
+  const { dirty, markSaved, baseline } = useDirtyState(form)
+  useUnsavedChangesWarning(dirty)
   const token = getAdminToken()
 
   const refresh = async () => {
@@ -58,13 +44,15 @@ export default function AdminFaqPage() {
     try {
       const data = await getAdminFaq()
       const faqs = (data.faqs || []).sort((a, b) => (a.order || 0) - (b.order || 0))
-      setForm({
+      const next: AdminFaq = {
         heroTitle: data.heroTitle || 'Frequently Asked Questions',
         heroSubtitle: data.heroSubtitle || 'Helpful answers about trekking seasons, permits, difficulty, insurance, and planning your Himalayan adventure.',
         heroImageUrl: data.heroImageUrl || '',
-        faqs: faqs.length > 0 ? faqs.map((item, index) => ({ ...item, order: index })) : [emptyFaq()],
+        faqs: faqs.map((item, index) => ({ ...item, order: index })),
         updatedAt: data.updatedAt,
-      })
+      }
+      setForm(next)
+      markSaved(next)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load FAQ content')
     } finally {
@@ -72,48 +60,30 @@ export default function AdminFaqPage() {
     }
   }
 
-  useEffect(() => { void refresh() }, [])
+  useEffect(() => {
+    void refresh()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  const updateFaq = (index: number, next: Partial<AdminFaqItem>) => {
-    setForm((prev) => ({
-      ...prev,
-      faqs: (prev.faqs || []).map((item, itemIndex) => (itemIndex === index ? { ...item, ...next } : item)),
-    }))
-  }
+  const faqs = form.faqs || []
 
-  const openAddFaq = () => {
-    setDraftFaq(emptyFaq(form.faqs?.length || 0))
-    setAddError('')
-    setAddDialogOpen(true)
-  }
-
-  const closeAddFaq = () => {
-    setAddDialogOpen(false)
-    setDraftFaq(emptyFaq())
-    setAddError('')
-  }
+  const updateFaq = (index: number, next: Partial<AdminFaqItem>) =>
+    setForm((prev) => ({ ...prev, faqs: (prev.faqs || []).map((item, i) => (i === index ? { ...item, ...next } : item)) }))
 
   const addFaq = () => {
-    const question = draftFaq.question.trim()
-    const answer = draftFaq.answer.trim()
-
-    if (!question || !answer) {
-      setAddError('Please add both a question and an answer before adding the FAQ.')
-      return
-    }
-
-    setForm((prev) => {
-      const next = [...(prev.faqs || []), { question, answer, order: prev.faqs?.length || 0 }]
-      return { ...prev, faqs: next.map((item, itemIndex) => ({ ...item, order: itemIndex })) }
-    })
-    closeAddFaq()
+    setForm((prev) => ({ ...prev, faqs: [...(prev.faqs || []), emptyFaq(prev.faqs?.length || 0)] }))
+    setOpenIndex(faqs.length)
+    window.requestAnimationFrame(() => document.getElementById(`faq-question-${faqs.length}`)?.focus())
   }
 
-  const removeFaq = (index: number) => {
-    setForm((prev) => {
-      const next = (prev.faqs || []).filter((_, itemIndex) => itemIndex !== index).map((item, itemIndex) => ({ ...item, order: itemIndex }))
-      return { ...prev, faqs: next.length > 0 ? next : [emptyFaq()] }
-    })
+  const removeFaq = async (index: number) => {
+    const question = faqs[index]?.question.trim()
+    if (question && !(await askConfirm({ title: 'Delete this question?', description: `"${question}" will be removed when you save.` }))) return
+    setForm((prev) => ({
+      ...prev,
+      faqs: (prev.faqs || []).filter((_, i) => i !== index).map((item, i) => ({ ...item, order: i })),
+    }))
+    setOpenIndex(null)
   }
 
   const moveFaq = (index: number, direction: -1 | 1) => {
@@ -121,63 +91,23 @@ export default function AdminFaqPage() {
       const next = [...(prev.faqs || [])]
       const target = index + direction
       if (target < 0 || target >= next.length) return prev
-      const current = next[index]
-      next[index] = next[target]
-      next[target] = current
-      return { ...prev, faqs: next.map((item, itemIndex) => ({ ...item, order: itemIndex })) }
+      ;[next[index], next[target]] = [next[target], next[index]]
+      return { ...prev, faqs: next.map((item, i) => ({ ...item, order: i })) }
     })
-  }
-
-  const handleTextAreaInsert = (textareaId: string, beforeText: string, afterText = '', placeholder = 'text') => {
-    const textarea = document.getElementById(textareaId) as HTMLTextAreaElement | null
-    if (!textarea) return
-
-    const start = textarea.selectionStart || 0
-    const end = textarea.selectionEnd || 0
-    const value = textarea.value
-    const selectedText = value.substring(start, end)
-    const content = selectedText || placeholder
-    const insertion = `${beforeText}${content}${afterText}`
-    const newValue = value.substring(0, start) + insertion + value.substring(end)
-    const index = Number(textareaId.replace('faq-answer-', ''))
-
-    if (!Number.isNaN(index)) updateFaq(index, { answer: newValue })
-
-    setTimeout(() => {
-      textarea.focus()
-      const cursor = start + insertion.length
-      textarea.setSelectionRange(cursor, cursor)
-    }, 0)
-  }
-
-  const handleDraftTextAreaInsert = (beforeText: string, afterText = '', placeholder = 'text') => {
-    const textarea = document.getElementById('new-faq-answer') as HTMLTextAreaElement | null
-    if (!textarea) return
-
-    const start = textarea.selectionStart || 0
-    const end = textarea.selectionEnd || 0
-    const value = textarea.value
-    const selectedText = value.substring(start, end)
-    const content = selectedText || placeholder
-    const insertion = `${beforeText}${content}${afterText}`
-    const newValue = value.substring(0, start) + insertion + value.substring(end)
-
-    setDraftFaq((prev) => ({ ...prev, answer: newValue }))
-
-    setTimeout(() => {
-      textarea.focus()
-      const cursor = start + insertion.length
-      textarea.setSelectionRange(cursor, cursor)
-    }, 0)
+    setOpenIndex((current) => (current === index ? index + direction : current))
   }
 
   const onSave = async () => {
     if (!token) {
-      setError('Missing admin token. Please login again.')
+      setError('Your session has expired. Please log in again.')
       return
     }
-
-    const faqs = (form.faqs || [])
+    const incomplete = faqs.filter((item) => !!item.question.trim() !== !!item.answer.trim()).length
+    if (incomplete > 0) {
+      setError(`${incomplete} question(s) are missing a question or an answer. Complete or delete them before saving.`)
+      return
+    }
+    const cleaned = faqs
       .map((item, index) => ({ question: item.question.trim(), answer: item.answer.trim(), order: index }))
       .filter((item) => item.question && item.answer)
 
@@ -185,10 +115,11 @@ export default function AdminFaqPage() {
     setError('')
     setMessage('')
     try {
-      const saved = await updateAdminFaq(token, { ...form, faqs })
-      setForm((prev) => ({ ...prev, ...saved, faqs: saved.faqs && saved.faqs.length > 0 ? saved.faqs : [emptyFaq()] }))
-      setMessage('FAQ page updated successfully.')
-      setTimeout(() => setMessage(''), 5000)
+      const saved = await updateAdminFaq(token, { ...form, faqs: cleaned })
+      const next = { ...form, ...saved, faqs: saved.faqs || [] }
+      setForm(next)
+      markSaved(next)
+      setMessage('FAQ page saved.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save FAQ page')
     } finally {
@@ -196,233 +127,120 @@ export default function AdminFaqPage() {
     }
   }
 
-  const completeFaqCount = (form.faqs || []).filter((item) => item.question.trim() && item.answer.trim()).length
+  const onDiscard = () => {
+    const saved = baseline()
+    if (saved) setForm(saved)
+    setOpenIndex(null)
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Admin dashboard</p>
-          <h1 className="mt-1 text-3xl font-bold text-foreground">FAQ Management</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Create, update, delete, and reorder the general FAQ entries shown on the public FAQ page.</p>
-        </div>
-        <Button variant="outline" asChild className="gap-2 lg:self-center">
-          <a href="/faq" target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="h-4 w-4" /> Preview FAQ
-          </a>
-        </Button>
-      </div>
+    <div className="space-y-8">
+      {confirmDialog}
+      <StatusToasts error={error} message={message} />
+      <AdminPageHeader
+        title="FAQ"
+        description="Questions and answers shown on the public FAQ page."
+        actions={
+          <Button variant="outline" asChild className="gap-2">
+            <a href="/faq" target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4" /> View page
+            </a>
+          </Button>
+        }
+      />
 
-      {error ? (
-        <Alert className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950">
-          <AlertDescription className="text-red-800 dark:text-red-200">{error}</AlertDescription>
-        </Alert>
-      ) : null}
-      {message ? (
-        <Alert className="border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950">
-          <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-          <AlertDescription className="text-emerald-800 dark:text-emerald-200">{message}</AlertDescription>
-        </Alert>
-      ) : null}
+      {loading ? (
+        <FormSkeleton rows={2} />
+      ) : (
+        <>
+          <FormSection title="Page header" description="Title, intro text and background photo at the top of the FAQ page.">
+            <Field label="Title">
+              <Input className="h-10" value={form.heroTitle || ''} onChange={(e) => setForm((prev) => ({ ...prev, heroTitle: e.target.value }))} placeholder="Frequently Asked Questions" />
+            </Field>
+            <Field label="Intro text" count={{ value: form.heroSubtitle, max: 200, recommended: true }}>
+              <TextArea rows={2} value={form.heroSubtitle || ''} onChange={(e) => setForm((prev) => ({ ...prev, heroSubtitle: e.target.value }))} />
+            </Field>
+            <ImageUrlField
+              label="Background photo"
+              value={form.heroImageUrl}
+              onChange={(value) => setForm((prev) => ({ ...prev, heroImageUrl: value }))}
+              hint="Shown behind the heading with a dark overlay."
+            />
+          </FormSection>
 
-      <Card className="overflow-hidden border-border shadow-xs">
-        <CardHeader className="border-b border-border bg-muted/20">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <CardTitle>General FAQ Editor</CardTitle>
-              <CardDescription>Answers support Markdown formatting and links such as [Contact us](/contact).</CardDescription>
-            </div>
-            <div className="flex flex-wrap gap-2 text-xs">
-              <span className="rounded-md border border-border bg-background px-3 py-2 font-medium text-foreground">{completeFaqCount} complete</span>
-              <span className="rounded-md border border-border bg-background px-3 py-2 font-medium text-foreground">{form.faqs?.length || 0} total</span>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-5 p-4 md:p-5">
-          {loading ? (
-            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading FAQ content...
-            </div>
-          ) : (
-            <>
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="space-y-1.5 text-sm font-medium text-foreground">
-                  Page title
-                  <Input value={form.heroTitle || ''} onChange={(event) => setForm((prev) => ({ ...prev, heroTitle: event.target.value }))} placeholder="Frequently Asked Questions" />
-                </label>
-                <label className="space-y-1.5 text-sm font-medium text-foreground">
-                  Page subtitle
-                  <Textarea value={form.heroSubtitle || ''} onChange={(event) => setForm((prev) => ({ ...prev, heroSubtitle: event.target.value }))} rows={3} placeholder="Helpful answers about trekking..." />
-                </label>
-              </div>
-
-              <div className="space-y-3 rounded-lg border border-border bg-background p-4">
-                <label className="block space-y-1.5 text-sm font-medium text-foreground">
-                  Hero image URL
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <Input
-                      value={form.heroImageUrl || ''}
-                      onChange={(event) => setForm((prev) => ({ ...prev, heroImageUrl: event.target.value }))}
-                      placeholder="https://example.com/faq-hero.jpg"
-                    />
-                    {form.heroImageUrl ? (
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" asChild className="h-10 shrink-0">
-                          <a href={form.heroImageUrl} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-4 w-4" />
-                          </a>
-                        </Button>
-                        <Button
+          <FormSection
+            stacked
+            title={`Questions (${faqs.length})`}
+            description="Click a question to edit it. Answers support formatting and links such as [Contact us](/contact)."
+            actions={
+              <Button type="button" onClick={addFaq} className="gap-1.5">
+                <Plus className="h-4 w-4" /> Add question
+              </Button>
+            }
+          >
+            {faqs.length === 0 ? (
+              <EmptyState icon={<HelpCircle className="h-5 w-5" />} title="No questions yet" description="Add the questions trekkers ask most often." />
+            ) : (
+              <ol className="space-y-2">
+                {faqs.map((faq, index) => {
+                  const open = openIndex === index
+                  const incomplete = !faq.question.trim() || !faq.answer.trim()
+                  return (
+                    <li key={index} className={cn('rounded-lg border bg-background transition-shadow', open ? 'border-primary/40 shadow-sm' : 'border-border')}>
+                      <div className="flex items-center gap-2 p-2 pl-3">
+                        <button
                           type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-10 shrink-0 text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
-                          onClick={() => setForm((prev) => ({ ...prev, heroImageUrl: '' }))}
+                          onClick={() => setOpenIndex(open ? null : index)}
+                          aria-expanded={open}
+                          aria-controls={`faq-panel-${index}`}
+                          className="flex min-w-0 flex-1 items-center gap-3 rounded-md py-1.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                </label>
-                <p className="text-xs text-muted-foreground">This image appears behind the FAQ page heading with a dark overlay for readability.</p>
-                {form.heroImageUrl ? (
-                  <div className="overflow-hidden rounded-lg border border-border bg-muted/30">
-                    <div className="relative aspect-[16/7] w-full">
-                      <img src={form.heroImageUrl} alt="FAQ page hero preview" className="h-full w-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40" />
-                      <div className="absolute inset-x-0 bottom-0 p-4">
-                        <div className="inline-flex items-center gap-2 rounded-md bg-black/45 px-3 py-2 text-sm font-semibold text-white">
-                          <ImageIcon className="h-4 w-4" /> Hero image preview
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold tabular-nums text-muted-foreground">{index + 1}</span>
+                          <span className={cn('truncate text-sm font-medium', faq.question.trim() ? 'text-foreground' : 'italic text-muted-foreground')}>
+                            {faq.question.trim() || 'New question'}
+                          </span>
+                          {incomplete && <Badge variant="outline" className="shrink-0 border-amber-300 text-amber-700">Incomplete</Badge>}
+                          <ChevronDown className={cn('ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')} aria-hidden="true" />
+                        </button>
+                        <div className="flex shrink-0 items-center">
+                          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" disabled={index === 0} onClick={() => moveFaq(index, -1)} aria-label="Move up">
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
+                          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" disabled={index === faqs.length - 1} onClick={() => moveFaq(index, 1)} aria-label="Move down">
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => void removeFaq(index)} aria-label="Delete question">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="overflow-hidden rounded-lg border border-border bg-background">
-                <div className="flex flex-col gap-3 border-b border-border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h2 className="text-lg font-semibold text-foreground">FAQ Entries</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">Blank questions or answers are skipped when saving.</p>
-                  </div>
-                  <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={openAddFaq}>
-                    <Plus className="h-4 w-4" /> Add FAQ
-                  </Button>
-                </div>
-
-                <div className="divide-y divide-border">
-                  {(form.faqs || []).map((faq, index) => (
-                    <div key={index} className="grid gap-4 p-4 xl:grid-cols-[120px_1fr_auto] xl:items-start">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">FAQ {index + 1}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">Order {index + 1}</p>
-                      </div>
-                      <div className="space-y-3">
-                        <label className="space-y-1.5 text-sm font-medium text-foreground">
-                          Question
-                          <Input value={faq.question} onChange={(event) => updateFaq(index, { question: event.target.value })} placeholder="Enter a frequently asked question" />
-                        </label>
-                        <div>
-                          <label className="mb-1.5 block text-sm font-medium text-foreground">Answer</label>
-                          <TextFormattingTools onFormat={(before, after, placeholder) => handleTextAreaInsert(`faq-answer-${index}`, before, after, placeholder)} />
-                          <Textarea
-                            id={`faq-answer-${index}`}
-                            value={faq.answer}
-                            onChange={(event) => updateFaq(index, { answer: event.target.value })}
-                            placeholder="Write the answer. Use the link tool for redirects."
-                            rows={5}
-                            className="font-mono text-sm"
-                          />
+                      {open && (
+                        <div id={`faq-panel-${index}`} className="space-y-4 border-t border-border p-4">
+                          <Field label="Question" required>
+                            <Input id={`faq-question-${index}`} className="h-10" value={faq.question} onChange={(e) => updateFaq(index, { question: e.target.value })} placeholder="e.g. Do I need a permit for the Everest Base Camp trek?" />
+                          </Field>
+                          <Field label="Answer" required>
+                            <MarkdownEditor value={faq.answer} onChange={(answer) => updateFaq(index, { answer })} rows={6} placeholder="Write a clear, helpful answer…" />
+                          </Field>
                         </div>
-                      </div>
-                      <div className="flex gap-2 xl:flex-col">
-                        <Button type="button" variant="outline" size="sm" disabled={index === 0} onClick={() => moveFaq(index, -1)} title="Move up">
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                        <Button type="button" variant="outline" size="sm" disabled={index === (form.faqs?.length || 1) - 1} onClick={() => moveFaq(index, 1)} title="Move down">
-                          <ArrowDown className="h-4 w-4" />
-                        </Button>
-                        <Button type="button" variant="outline" size="sm" className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700" onClick={() => removeFaq(index)} title="Delete FAQ">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                      )}
+                    </li>
+                  )
+                })}
+              </ol>
+            )}
+          </FormSection>
 
-              <div className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Last updated: <span className="font-medium text-foreground">{form.updatedAt ? new Date(form.updatedAt).toLocaleString() : 'Not saved yet'}</span>
-                </p>
-                <Button onClick={onSave} disabled={saving} size="lg" className="gap-2">
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  {saving ? 'Saving...' : 'Save FAQ'}
-                </Button>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      <Dialog open={addDialogOpen} onOpenChange={(open) => (open ? setAddDialogOpen(true) : closeAddFaq())}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto border-primary/30 shadow-2xl sm:max-w-2xl">
-          <DialogHeader className="rounded-md border border-primary/15 bg-primary/5 p-4">
-            <DialogTitle>Add FAQ</DialogTitle>
-            <DialogDescription>
-              Create the new question here. It will be added to the FAQ list after you confirm it.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {addError ? (
-              <Alert className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950">
-                <AlertDescription className="text-red-800 dark:text-red-200">{addError}</AlertDescription>
-              </Alert>
-            ) : null}
-
-            <label className="space-y-1.5 text-sm font-medium text-foreground">
-              Question
-              <Input
-                autoFocus
-                value={draftFaq.question}
-                onChange={(event) => {
-                  setDraftFaq((prev) => ({ ...prev, question: event.target.value }))
-                  setAddError('')
-                }}
-                placeholder="Enter a frequently asked question"
-              />
-            </label>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-foreground">Answer</label>
-              <TextFormattingTools onFormat={handleDraftTextAreaInsert} />
-              <Textarea
-                id="new-faq-answer"
-                value={draftFaq.answer}
-                onChange={(event) => {
-                  setDraftFaq((prev) => ({ ...prev, answer: event.target.value }))
-                  setAddError('')
-                }}
-                placeholder="Write the answer. Use the link tool for redirects."
-                rows={7}
-                className="font-mono text-sm"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={closeAddFaq}>
-              Cancel
-            </Button>
-            <Button type="button" className="gap-1.5" onClick={addFaq}>
-              <Plus className="h-4 w-4" /> Add FAQ
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <SaveBar
+            dirty={dirty}
+            saving={saving}
+            onSave={onSave}
+            onDiscard={dirty ? onDiscard : undefined}
+            saveLabel="Save FAQ"
+            status={!dirty && !saving && form.updatedAt ? `Last saved ${new Date(form.updatedAt).toLocaleString()}` : undefined}
+          />
+        </>
+      )}
     </div>
   )
 }

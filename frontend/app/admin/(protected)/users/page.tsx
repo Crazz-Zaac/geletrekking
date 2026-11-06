@@ -1,9 +1,18 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { AdminPageHeader, EmptyState, Field, FormSection, StatusToasts } from '@/components/admin/form-kit'
+import { useConfirm } from '@/components/admin/use-confirm'
 import {
   createAdminInvite,
   disableAdminUser,
@@ -15,7 +24,7 @@ import {
   type AdminInvite,
 } from '@/lib/api'
 import { getAdminToken, getAdminUser } from '@/lib/admin-auth'
-import { Mail, Copy, Trash2, CheckCircle, Clock, AlertCircle } from 'lucide-react'
+import { AlertCircle, Ban, CheckCircle, Clock, Copy, Loader2, Mail, MoreHorizontal, PauseCircle, PlayCircle, Send, ShieldCheck, Trash2, UserPlus, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export default function AdminUsersPage() {
@@ -30,6 +39,7 @@ export default function AdminUsersPage() {
   const [token, setToken] = useState<string | null>(null)
   const [user, setUser] = useState<any>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [askConfirm, confirmDialog] = useConfirm()
 
   useEffect(() => {
     const t = getAdminToken()
@@ -81,7 +91,7 @@ export default function AdminUsersPage() {
 
     try {
       const result = await createAdminInvite(token, email.trim())
-      setMessage('Invite created successfully! The invitation email has been sent.')
+      setMessage(`Invitation sent to ${email.trim()}.${result.inviteUrl ? ' The link was also copied to your clipboard.' : ''}`)
       setEmail('')
 
       if (result.inviteUrl) {
@@ -178,258 +188,167 @@ export default function AdminUsersPage() {
     return new Date(expiresAt) < new Date()
   }
 
+  const initials = (value: string) => value.split(/[@.\s]+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('')
+
+  const STATUS_BADGE: Record<string, string> = {
+    active: 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300',
+    suspended: 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
+    disabled: 'border-border bg-muted text-muted-foreground',
+  }
+
+  const emailInvalid = email.trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())
+
+  const confirmStatus = async (target: AdminManagedUser, status: 'active' | 'suspended' | 'disabled') => {
+    if (status !== 'active') {
+      const ok = await askConfirm({
+        title: status === 'suspended' ? `Suspend ${target.email}?` : `Disable ${target.email}?`,
+        description:
+          status === 'suspended'
+            ? 'They will be signed out and cannot sign in until you reactivate them.'
+            : 'They lose access permanently unless reactivated.',
+        confirmLabel: status === 'suspended' ? 'Suspend' : 'Disable',
+      })
+      if (!ok) return
+    }
+    if (status === 'disabled') await onDisableUser(target._id)
+    else await onUpdateStatus(target._id, status)
+  }
+
+  const confirmRevoke = async (invite: AdminInvite) => {
+    if (!invite._id) return
+    if (!(await askConfirm({ title: `Revoke the invitation for ${invite.email}?`, description: 'The invitation link will stop working.', confirmLabel: 'Revoke' }))) return
+    await onRevokeInvite(invite._id)
+  }
+
   if (!user || user.role !== 'superadmin') {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground mt-1">Only superadmins can manage users.</p>
-        </div>
-        <Card className="border-yellow-200 dark:border-yellow-800 bg-yellow-50/50 dark:bg-yellow-950/20">
-          <CardContent className="pt-6">
-            <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              You don't have permission to access this page. Contact your superadmin for assistance.
-            </p>
-          </CardContent>
-        </Card>
+        <AdminPageHeader title="Users" description="Admin accounts and invitations." />
+        <EmptyState icon={<ShieldCheck className="h-5 w-5" />} title="Superadmins only" description="Ask a superadmin if you need to invite someone or change an account." />
       </div>
     )
   }
 
+  const pendingInvites = invites.filter((invite) => !invite.usedAt)
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">User Management</h1>
-        <p className="text-muted-foreground mt-1">Invite and manage admin users</p>
-      </div>
+    <div className="space-y-8">
+      {confirmDialog}
+      <StatusToasts error={error} message={message} />
+      <AdminPageHeader title="Users" description="Who can access the admin dashboard." />
 
-      {/* Error/Message */}
-      {error && (
-        <Card className="border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20">
-          <CardContent className="pt-6">
-            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
-          </CardContent>
-        </Card>
-      )}
-      {message && (
-        <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
-          <CardContent className="pt-6">
-            <p className="text-sm text-green-800 dark:text-green-200">{message}</p>
-          </CardContent>
-        </Card>
-      )}
+      <FormSection
+        title="Invite an editor"
+        description="Editors manage content (treks, blog, gallery, FAQ…). They can't change site settings, users or security. Invitations expire after 48 hours."
+      >
+        <form
+          className="flex flex-col gap-3 sm:flex-row sm:items-start"
+          onSubmit={(event) => {
+            event.preventDefault()
+            if (!creating && !emailInvalid) void onInvite()
+          }}
+        >
+          <Field label="Email address" error={emailInvalid ? 'Enter a valid email address.' : undefined} className="flex-1">
+            <Input className="h-10" type="email" autoComplete="off" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={creating} />
+          </Field>
+          <Button type="submit" disabled={creating || !email.trim() || emailInvalid} className="h-10 gap-2 sm:mt-7">
+            {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Send invitation
+          </Button>
+        </form>
+      </FormSection>
 
-      {/* Invite Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Invite New Editor</CardTitle>
-          <CardDescription>Send an invite to a new team member. They'll receive a link to set up their account.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="editor@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !creating) onInvite()
-              }}
-              type="email"
-              disabled={creating}
-            />
-            <Button onClick={onInvite} disabled={creating}>
-              {creating ? 'Sending...' : 'Send Invite'}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Invites expire in 48 hours. The editor can only manage content, not settings or other users.
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Existing Admin Users */}
-      {loading ? null : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Existing Admin Users</CardTitle>
-            <CardDescription>Manage active, suspended, and disabled admin users.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {adminUsers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No admin users found.</p>
-            ) : (
-              <div className="space-y-2">
-                {adminUsers.map((adminUser) => {
-                  const isSuperadmin = adminUser.role === 'superadmin'
-                  const currentStatus = adminUser.status || 'active'
-                  return (
-                    <div
-                      key={adminUser._id}
-                      className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between rounded-lg border p-4"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{adminUser.email}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Role: {adminUser.role} • Status: {currentStatus} • Created: {formatDate(adminUser.createdAt)}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {!isSuperadmin && currentStatus !== 'active' ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={actioningId === adminUser._id}
-                            onClick={() => onUpdateStatus(adminUser._id, 'active')}
-                          >
-                            Activate
-                          </Button>
-                        ) : null}
-                        {!isSuperadmin && currentStatus === 'active' ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={actioningId === adminUser._id}
-                            onClick={() => onUpdateStatus(adminUser._id, 'suspended')}
-                          >
-                            Suspend
-                          </Button>
-                        ) : null}
-                        {!isSuperadmin && currentStatus !== 'disabled' ? (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            disabled={actioningId === adminUser._id}
-                            onClick={() => onDisableUser(adminUser._id)}
-                          >
-                            Disable
-                          </Button>
-                        ) : null}
-                        {isSuperadmin ? (
-                          <span className="text-xs text-muted-foreground">Protected account</span>
-                        ) : null}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Invites List */}
-      {loading ? (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">Loading invites...</p>
-          </CardContent>
-        </Card>
-      ) : invites.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">No invites yet. Create one above to get started.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending Invites</CardTitle>
-            <CardDescription>Active and expired invites</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {invites.map((invite) => {
-                const expired = isExpired(invite.expiresAt)
-                const accepted = !!invite.usedAt
-                const status = accepted ? 'accepted' : expired ? 'expired' : 'pending'
-
-                return (
-                  <div
-                    key={invite._id}
-                    className={cn(
-                      'flex items-center justify-between p-4 rounded-lg border',
-                      accepted && 'border-green-200 bg-green-50/30 dark:border-green-800 dark:bg-green-950/10',
-                      expired && !accepted && 'border-red-200 bg-red-50/30 dark:border-red-800 dark:bg-red-950/10',
-                      !expired && !accepted && 'border-border'
-                    )}
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <Mail className="w-4 h-4 shrink-0 text-muted-foreground" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{invite.email}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {accepted ? (
-                            <span className="flex items-center gap-1">
-                              <CheckCircle className="w-3 h-3" />
-                              Accepted {formatDate(invite.usedAt)}
-                            </span>
-                          ) : expired ? (
-                            <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
-                              <AlertCircle className="w-3 h-3" />
-                              Expired {formatDate(invite.expiresAt)}
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                              <Clock className="w-3 h-3" />
-                              Expires {formatDate(invite.expiresAt)}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    {!accepted && !expired && invite.inviteUrl ? (
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-2"
-                          onClick={() => onCopy(invite.inviteUrl || '', invite._id || invite.inviteUrl || '')}
-                        >
-                          <Copy className="w-4 h-4" />
-                          {copied === invite._id ? 'Copied!' : 'Copy Link'}
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="gap-2"
-                          disabled={!invite._id || actioningId === invite._id}
-                          onClick={() => invite._id && onRevokeInvite(invite._id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Revoke
-                        </Button>
-                      </div>
-                    ) : !accepted && !expired ? (
-                      <span className="text-xs text-muted-foreground shrink-0">Sent via email</span>
-                    ) : null}
+      <FormSection stacked title={`Team (${adminUsers.length})`} description="Suspend someone temporarily, or disable an account that should no longer have access.">
+        {loading ? (
+          <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />)}</div>
+        ) : adminUsers.length === 0 ? (
+          <EmptyState icon={<Users className="h-5 w-5" />} title="No admin users found" />
+        ) : (
+          <ul className="divide-y divide-border">
+            {adminUsers.map((adminUser) => {
+              const isSuperadmin = adminUser.role === 'superadmin'
+              const status = adminUser.status || 'active'
+              const busy = actioningId === adminUser._id
+              return (
+                <li key={adminUser._id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">{initials(adminUser.email)}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{adminUser.email}</p>
+                    <p className="text-xs text-muted-foreground">Added {formatDate(adminUser.createdAt)}</p>
                   </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                  <Badge variant="outline" className="hidden capitalize sm:inline-flex">{adminUser.role === 'admin' ? 'editor' : adminUser.role}</Badge>
+                  <Badge variant="outline" className={cn('capitalize', STATUS_BADGE[status])}>{status}</Badge>
+                  {isSuperadmin ? (
+                    <span className="flex w-8 justify-center" title="Superadmin accounts are protected"><ShieldCheck className="h-4 w-4 text-muted-foreground" aria-label="Protected account" /></span>
+                  ) : (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" disabled={busy} aria-label={`Actions for ${adminUser.email}`}>
+                          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {status !== 'active' && (
+                          <DropdownMenuItem onSelect={() => void confirmStatus(adminUser, 'active')}><PlayCircle className="h-4 w-4" /> Reactivate</DropdownMenuItem>
+                        )}
+                        {status === 'active' && (
+                          <DropdownMenuItem onSelect={() => void confirmStatus(adminUser, 'suspended')}><PauseCircle className="h-4 w-4" /> Suspend</DropdownMenuItem>
+                        )}
+                        {status !== 'disabled' && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => void confirmStatus(adminUser, 'disabled')}><Ban className="h-4 w-4" /> Disable</DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </FormSection>
 
-      {/* Info Card */}
-      <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            ℹ️ About Editors
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <p>
-            <strong>What editors can do:</strong> Create, edit, and delete treks, blogs, activities, gallery items, and other content.
-          </p>
-          <p>
-            <strong>What editors cannot do:</strong> Access site settings, security settings, manage users, or view audit logs.
-          </p>
-          <p>
-            <strong>2FA:</strong> Editors can optionally enable two-factor authentication for their account.
-          </p>
-        </CardContent>
-      </Card>
+      <FormSection stacked title={`Invitations (${pendingInvites.length} open)`} description="Invitation emails include a link to set a password. You can also copy the link and send it yourself.">
+        {loading ? (
+          <div className="h-16 animate-pulse rounded-lg bg-muted" />
+        ) : invites.length === 0 ? (
+          <EmptyState icon={<UserPlus className="h-5 w-5" />} title="No invitations yet" description="Invite an editor above." />
+        ) : (
+          <ul className="divide-y divide-border">
+            {invites.map((invite) => {
+              const expired = isExpired(invite.expiresAt)
+              const accepted = !!invite.usedAt
+              return (
+                <li key={invite._id || invite.email} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <Mail className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{invite.email}</p>
+                    <p className={cn('flex items-center gap-1 text-xs', accepted ? 'text-emerald-700 dark:text-emerald-300' : expired ? 'text-muted-foreground' : 'text-amber-700 dark:text-amber-300')}>
+                      {accepted ? <CheckCircle className="h-3 w-3" /> : expired ? <AlertCircle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                      {accepted ? `Accepted ${formatDate(invite.usedAt)}` : expired ? `Expired ${formatDate(invite.expiresAt)}` : `Expires ${formatDate(invite.expiresAt)}`}
+                    </p>
+                  </div>
+                  {!accepted && !expired && (
+                    <div className="flex gap-1.5">
+                      {invite.inviteUrl && (
+                        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => onCopy(invite.inviteUrl || '', invite._id || invite.inviteUrl || '')}>
+                          {copied === invite._id ? <CheckCircle className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                          {copied === invite._id ? 'Copied' : 'Copy link'}
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-destructive" disabled={!invite._id || actioningId === invite._id} onClick={() => void confirmRevoke(invite)}>
+                        <Trash2 className="h-4 w-4" /> Revoke
+                      </Button>
+                    </div>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </FormSection>
     </div>
   )
 }

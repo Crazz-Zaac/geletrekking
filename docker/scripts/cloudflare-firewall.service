@@ -1,0 +1,18 @@
+# Re-applies the Cloudflare-only HTTPS rule after Docker starts (Docker does
+# not persist custom DOCKER-USER rules across restarts/reboots).
+# Install:
+#   sudo cp cloudflare-firewall.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now cloudflare-firewall
+[Unit]
+Description=Allow HTTPS to Docker only from Cloudflare
+After=docker.service
+Requires=docker.service
+PartOf=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/home/blackphoenix/geletrekking/docker/scripts/cloudflare-firewall.sh apply-ipv4
+
+[Install]
+WantedBy=multi-user.target docker.service

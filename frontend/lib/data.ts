@@ -20,6 +20,7 @@ export interface TripEssential {
 
 export interface Trek {
   id: string
+  updatedAt?: string
   slug: string
   title: string
   region: 'Everest' | 'Annapurna' | 'Langtang' | 'Mustang' | 'Manaslu' | 'Other'

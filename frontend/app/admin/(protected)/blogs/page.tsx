@@ -1,9 +1,25 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useConfirm } from '@/components/admin/use-confirm'
+import { useEffect, useMemo, useState } from 'react'
+import { ArrowLeft, ExternalLink, FileText, Newspaper, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import {
+  AdminPageHeader,
+  EmptyState,
+  Field,
+  ImageUrlField,
+  SaveBar,
+  StatusToasts,
+  TextArea,
+  ToggleField,
+  useDirtyState,
+  useUnsavedChangesWarning,
+} from '@/components/admin/form-kit'
+import { MarkdownEditor } from '@/components/admin/markdown-editor'
+import { cn } from '@/lib/utils'
 import {
   AdminBlog,
   createAdminBlog,
@@ -34,6 +50,7 @@ const initialForm: BlogForm = {
 }
 
 export default function AdminBlogsPage() {
+  const [askConfirm, confirmDialog] = useConfirm()
   const [items, setItems] = useState<AdminBlog[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -42,10 +59,11 @@ export default function AdminBlogsPage() {
   const [form, setForm] = useState<BlogForm>(initialForm)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
-  const [excerptRef, setExcerptRef] = useState<HTMLTextAreaElement | null>(null)
-  const [contentRef, setContentRef] = useState<HTMLTextAreaElement | null>(null)
-  const [imageUrl, setImageUrl] = useState('')
-  const [imageAlt, setImageAlt] = useState('')
+  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all')
+  const [submitted, setSubmitted] = useState(false)
+  const { dirty, markSaved, baseline } = useDirtyState(form)
+  useUnsavedChangesWarning(showForm && dirty)
 
   const token = getAdminToken()
 
@@ -74,7 +92,7 @@ export default function AdminBlogsPage() {
 
   const onEdit = (item: AdminBlog) => {
     setEditingId(item._id)
-    setForm({
+    const next = {
       title: item.title || '',
       excerpt: item.excerpt || '',
       content: item.content || '',
@@ -82,8 +100,12 @@ export default function AdminBlogsPage() {
       author: item.author || '',
       hashtags: (item.hashtags || []).join(', '),
       isPublished: !!item.isPublished,
-    })
+    }
+    setForm(next)
+    markSaved(next)
+    setSubmitted(false)
     setShowForm(true)
+    window.scrollTo({ top: 0 })
     setMessage('')
     setError('')
   }
@@ -91,17 +113,19 @@ export default function AdminBlogsPage() {
   const onCreateNew = () => {
     setEditingId(null)
     setForm(initialForm)
+    markSaved(initialForm)
+    setSubmitted(false)
     setShowForm(true)
     setMessage('')
     setError('')
+    window.scrollTo({ top: 0 })
   }
 
   const onReset = () => {
     setShowForm(false)
     setEditingId(null)
     setForm(initialForm)
-    setImageUrl('')
-    setImageAlt('')
+    markSaved(initialForm)
   }
 
   const onSave = async () => {
@@ -110,8 +134,9 @@ export default function AdminBlogsPage() {
       return
     }
 
+    setSubmitted(true)
     if (!form.title.trim() || !form.content.trim()) {
-      setError('Title and content are required.')
+      setError('Add a title and the post content before saving.')
       return
     }
 
@@ -132,10 +157,10 @@ export default function AdminBlogsPage() {
 
       if (editingId) {
         await updateAdminBlog(token, editingId, payload)
-        setMessage('Blog updated successfully.')
+        setMessage(form.isPublished ? 'Post updated and live.' : 'Draft saved.')
       } else {
         await createAdminBlog(token, payload)
-        setMessage('Blog created successfully.')
+        setMessage(form.isPublished ? 'Post published.' : 'Draft created.')
       }
       onReset()
       await refresh()
@@ -152,541 +177,211 @@ export default function AdminBlogsPage() {
       return
     }
 
-    if (!window.confirm(`Delete blog "${item.title}"?`)) return
+    if (!(await askConfirm({ title: `Delete blog "${item.title}"?` }))) return
 
     try {
       await deleteAdminBlog(token, item._id)
-      setMessage('Blog deleted successfully.')
+      setMessage('Post deleted.')
       await refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Delete failed. (Only superadmin can delete posts.)')
     }
   }
 
-  // Generic text insertion utility
-  const insertText = (ref: HTMLTextAreaElement | null, fieldName: 'excerpt' | 'content', before: string, after: string = '', placeholder: string = '') => {
-    if (!ref) return
-    const textarea = ref
-    const currentValue = fieldName === 'excerpt' ? form.excerpt : form.content
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-    const selectedText = currentValue.substring(start, end) || placeholder
-    const newContent = currentValue.substring(0, start) + before + selectedText + after + currentValue.substring(end)
-
-    setForm((prev) => ({ ...prev, [fieldName]: newContent }))
-
-    setTimeout(() => {
-      const cursorPos = start + before.length + selectedText.length
-      textarea.focus()
-      textarea.setSelectionRange(cursorPos, cursorPos)
-    }, 0)
+  const leaveEditor = async () => {
+    if (dirty && !(await askConfirm({ title: 'Discard unsaved changes?', description: 'Your edits to this post will be lost.', confirmLabel: 'Discard' }))) return
+    onReset()
   }
 
-  const insertHeading = (ref: HTMLTextAreaElement | null, fieldName: 'excerpt' | 'content', level: number) => {
-    const prefix = '#'.repeat(level) + ' '
-    insertText(ref, fieldName, prefix, '', 'Heading')
-  }
-
-  const insertQuote = (ref: HTMLTextAreaElement | null, fieldName: 'excerpt' | 'content') => {
-    if (!ref) return
-
-    const textarea = ref
-    const currentValue = fieldName === 'excerpt' ? form.excerpt : form.content
-    const selectionStart = textarea.selectionStart
-    const selectionEnd = textarea.selectionEnd
-    const blockStart = currentValue.lastIndexOf('\n', Math.max(0, selectionStart - 1)) + 1
-    const nextLineBreak = currentValue.indexOf('\n', selectionEnd)
-    const blockEnd = nextLineBreak === -1 ? currentValue.length : nextLineBreak
-    const selectedBlock = currentValue.slice(blockStart, blockEnd) || 'Quote'
-    const quotedBlock = selectedBlock
-      .split('\n')
-      .map((line) => line.startsWith('> ') ? line : `> ${line.replace(/^> ?/, '')}`)
-      .join('\n')
-    const prefix = blockStart > 0 && currentValue[blockStart - 1] !== '\n' ? '\n' : ''
-    const suffix = blockEnd < currentValue.length && currentValue[blockEnd] !== '\n' ? '\n' : ''
-    const newContent = currentValue.slice(0, blockStart) + prefix + quotedBlock + suffix + currentValue.slice(blockEnd)
-    const nextStart = blockStart + prefix.length
-    const nextEnd = nextStart + quotedBlock.length
-
-    setForm((prev) => ({ ...prev, [fieldName]: newContent }))
-
-    setTimeout(() => {
-      textarea.focus()
-      textarea.setSelectionRange(nextStart, nextEnd)
-    }, 0)
-  }
-
-  const formatImageMarkdown = (url: string, alt: string, width?: string | null, height?: string | null) => {
-    const imageSize = [
-      width?.trim() ? `width=${width.trim()}` : '',
-      height?.trim() ? `height=${height.trim()}` : '',
-    ].filter(Boolean).join(' ')
-
-    return `![${alt || 'Image'}](${url})${imageSize ? `{${imageSize}}` : ''}`
-  }
-
-  const formatYouTubeEmbed = (url: string, title?: string | null) => {
-    return `::youtube${title?.trim() ? `[${title.trim()}]` : ''}(${url.trim()})`
-  }
-
-  const insertYouTubeEmbed = () => {
-    const url = prompt('Enter YouTube URL:')
-    if (!url?.trim()) return
-
-    const title = prompt('Video title (optional):')
-    insertText(contentRef, 'content', formatYouTubeEmbed(url, title), '', '')
-  }
-
-  const insertImage = () => {
-    if (!imageUrl.trim()) {
-      alert('Please enter an image URL')
-      return
-    }
-    const markdown = formatImageMarkdown(imageUrl, imageAlt || 'Image')
-    insertText(contentRef, 'content', markdown, '', '')
-    setImageUrl('')
-    setImageAlt('')
-  }
-
-  // Excerpt toolbar component
-  const ExcerptToolbar = () => (
-    <div className="border border-input rounded-t-md bg-muted/30 p-2 flex flex-wrap gap-1">
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => insertText(excerptRef, 'excerpt', '**', '**', 'bold text')}
-        title="Bold"
-        className="h-8 w-8 p-0"
-      >
-        <strong>B</strong>
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => insertText(excerptRef, 'excerpt', '_', '_', 'italic text')}
-        title="Italic"
-        className="h-8 w-8 p-0"
-      >
-        <em>I</em>
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => insertText(excerptRef, 'excerpt', '~~', '~~', 'strikethrough')}
-        title="Strikethrough"
-        className="h-8 w-8 p-0"
-      >
-        <s>S</s>
-      </Button>
-      
-      <div className="w-px bg-border mx-1" />
-      
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => insertHeading(excerptRef, 'excerpt', 1)}
-        title="Heading 1"
-        className="h-8 px-2 text-xs"
-      >
-        H1
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => insertHeading(excerptRef, 'excerpt', 2)}
-        title="Heading 2"
-        className="h-8 px-2 text-xs"
-      >
-        H2
-      </Button>
-
-      <div className="w-px bg-border mx-1" />
-
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => insertText(excerptRef, 'excerpt', '[', '](url)', 'link text')}
-        title="Link"
-        className="h-8 px-2 text-xs"
-      >
-        🔗 Link
-      </Button>
-    </div>
+  const counts = useMemo(
+    () => ({ all: items.length, published: items.filter((item) => item.isPublished).length, draft: items.filter((item) => !item.isPublished).length }),
+    [items]
   )
+
+  const visibleItems = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return items.filter((item) => {
+      if (filter === 'published' && !item.isPublished) return false
+      if (filter === 'draft' && item.isPublished) return false
+      if (!q) return true
+      return [item.title, item.slug, ...(item.hashtags || [])].some((value) => (value || '').toLowerCase().includes(q))
+    })
+  }, [items, filter, query])
+
+  const editingItem = editingId ? items.find((item) => item._id === editingId) : null
+  const tags = form.hashtags.split(/[\s,]+/).map((tag) => tag.trim()).filter(Boolean)
+  const seoDescription = (form.excerpt || form.content).replace(/[#*_>`~\[\]()!-]/g, '').replace(/\s+/g, ' ').trim()
+
+  if (showForm) {
+    return (
+      <div className="space-y-6">
+        {confirmDialog}
+        <StatusToasts error={error} message={message} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Button variant="ghost" className="-ml-2 gap-1.5 text-muted-foreground" onClick={() => void leaveEditor()}>
+            <ArrowLeft className="h-4 w-4" /> All posts
+          </Button>
+          {editingItem?.isPublished && editingItem.slug && (
+            <Button variant="outline" size="sm" asChild className="gap-1.5">
+              <a href={`/blog/${editingItem.slug}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" /> View live post</a>
+            </Button>
+          )}
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+          {/* Writing area */}
+          <div className="min-w-0 space-y-6 rounded-xl border border-border bg-card p-5 shadow-sm md:p-6">
+            <Field label="Title" required error={submitted && !form.title.trim() ? 'Add a title.' : undefined} count={{ value: form.title, max: 70, recommended: true }}>
+              <Input
+                className="h-12 text-lg font-semibold"
+                placeholder="e.g. Everest Base Camp in October: what to expect"
+                value={form.title}
+                onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+              />
+            </Field>
+            <Field label="Summary" hint="Shown on the blog list and in search results." count={{ value: form.excerpt, max: 160, recommended: true }}>
+              <TextArea rows={2} className="min-h-0" placeholder="One or two sentences that make people want to read the post." value={form.excerpt} onChange={(e) => setForm((prev) => ({ ...prev, excerpt: e.target.value }))} />
+            </Field>
+            <Field label="Post" required error={submitted && !form.content.trim() ? 'Write the post content.' : undefined}>
+              <MarkdownEditor
+                extended
+                value={form.content}
+                onChange={(content) => setForm((prev) => ({ ...prev, content }))}
+                rows={22}
+                placeholder="Start writing… Use the toolbar for headings, lists, links, images and videos."
+              />
+            </Field>
+          </div>
+
+          {/* Sidebar */}
+          <aside className="space-y-4 xl:sticky xl:top-20 xl:self-start">
+            <div className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-sm">
+              <ToggleField
+                label={form.isPublished ? 'Published' : 'Draft'}
+                description={form.isPublished ? 'Visible on the blog after saving.' : 'Only visible in the admin.'}
+                checked={form.isPublished}
+                onCheckedChange={(isPublished) => setForm((prev) => ({ ...prev, isPublished }))}
+              />
+              <Field label="Author">
+                <Input className="h-10" placeholder="e.g. Gele Bishokarma" value={form.author} onChange={(e) => setForm((prev) => ({ ...prev, author: e.target.value }))} />
+              </Field>
+              <Field label="Tags" hint="Separate with commas.">
+                <Input className="h-10" placeholder="everest, autumn, packing" value={form.hashtags} onChange={(e) => setForm((prev) => ({ ...prev, hashtags: e.target.value }))} />
+              </Field>
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="font-normal">#{tag.replace(/^#/, '')}</Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <ImageUrlField label="Cover image" value={form.coverImage} onChange={(coverImage) => setForm((prev) => ({ ...prev, coverImage }))} hint="Landscape, at least 1200 × 630 px." />
+            </div>
+
+            <div className="space-y-2 rounded-xl border border-border bg-card p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Search preview</p>
+              <div className="space-y-0.5">
+                <p className="truncate text-xs text-emerald-700 dark:text-emerald-400">geletrekking.com › blog › {editingItem?.slug || 'new-post'}</p>
+                <p className="line-clamp-1 text-base text-[#1a0dab] dark:text-[#8ab4f8]">{form.title || 'Post title'} | Gele Trekking</p>
+                <p className="line-clamp-2 text-xs text-muted-foreground">{seoDescription || 'The summary appears here.'}</p>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <SaveBar
+          dirty={dirty || !editingId}
+          saving={saving}
+          onSave={onSave}
+          onDiscard={() => void leaveEditor()}
+          discardLabel="Cancel"
+          saveLabel={editingId ? (form.isPublished ? 'Update post' : 'Save draft') : form.isPublished ? 'Publish post' : 'Save draft'}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header with Create Button */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Blog Management</h1>
-          <p className="text-muted-foreground mt-1">Create, edit, and manage your blog posts</p>
-        </div>
-        {!showForm && (
-          <Button onClick={onCreateNew} size="lg" className="gap-2">
-            ✨ Create New Blog Post
+      {confirmDialog}
+      <StatusToasts error={error} message={message} />
+      <AdminPageHeader
+        title="Blog"
+        description="Stories, guides and news. Regular posts help your site rank in search."
+        actions={
+          <Button onClick={onCreateNew} className="gap-2">
+            <Plus className="h-4 w-4" /> New post
           </Button>
-        )}
+        }
+      />
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex rounded-lg border border-border bg-card p-1" role="tablist" aria-label="Filter posts">
+          {(['all', 'published', 'draft'] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={filter === key}
+              onClick={() => setFilter(key)}
+              className={cn('rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors', filter === key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}
+            >
+              {key === 'draft' ? 'Drafts' : key} <span className="ml-1 tabular-nums opacity-70">{counts[key]}</span>
+            </button>
+          ))}
+        </div>
+        <div className="relative sm:w-72">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input type="search" className="h-10 pl-9" placeholder="Search posts…" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search posts" />
+        </div>
       </div>
 
-      {/* Error/Message Display */}
-      {error ? (
-        <div className="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 p-3 text-sm text-red-700 dark:text-red-300">
-          {error}
-        </div>
-      ) : null}
-      {message ? (
-        <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 p-3 text-sm text-emerald-700 dark:text-emerald-300">
-          {message}
-        </div>
-      ) : null}
-
-      {/* Create/Edit Form */}
-      {showForm && (
-        <Card className="border-border">
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent border-b border-border">
-            <CardTitle className="text-2xl">{editingId ? '✏️ Edit Blog Post' : '✨ Create New Blog Post'}</CardTitle>
-            <CardDescription>
-              {editingId 
-                ? 'Update your blog post content, metadata, and publication status.'
-                : 'Create a new blog post with rich content, images, and hashtags.'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="space-y-6">
-              {/* Basic Info Section */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Basic Information</h3>
-                <Input 
-                  placeholder="Blog Post Title" 
-                  value={form.title} 
-                  onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                  className="text-lg font-semibold"
-                />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Input 
-                    placeholder="Author Name" 
-                    value={form.author} 
-                    onChange={(e) => setForm((prev) => ({ ...prev, author: e.target.value }))}
-                  />
-                  <Input 
-                    placeholder="Hashtags (comma or space separated)" 
-                    value={form.hashtags} 
-                    onChange={(e) => setForm((prev) => ({ ...prev, hashtags: e.target.value }))}
-                  />
+      {loading ? (
+        <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-xl border border-border bg-card" />)}</div>
+      ) : items.length === 0 ? (
+        <EmptyState icon={<Newspaper className="h-5 w-5" />} title="No posts yet" description="Write your first trekking story or guide." action={<Button onClick={onCreateNew} className="gap-2"><Plus className="h-4 w-4" /> New post</Button>} />
+      ) : visibleItems.length === 0 ? (
+        <EmptyState icon={<Search className="h-5 w-5" />} title="No matching posts" description="Try another search or filter." />
+      ) : (
+        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          {visibleItems.map((item) => (
+            <li key={item._id} className="flex items-center gap-4 p-3 transition-colors hover:bg-muted/40 sm:p-4">
+              <div className="hidden h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-muted sm:block">
+                {item.coverImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.coverImage} alt="" className="h-full w-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-muted-foreground"><FileText className="h-5 w-5" /></div>
+                )}
+              </div>
+              <button type="button" onClick={() => onEdit(item)} className="min-w-0 flex-1 text-left">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="truncate font-medium text-foreground">{item.title}</p>
+                  <Badge variant="outline" className={item.isPublished ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'}>
+                    {item.isPublished ? 'Published' : 'Draft'}
+                  </Badge>
                 </div>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  /blog/{item.slug}
+                  {item.createdAt ? ` · ${new Date(item.createdAt).toLocaleDateString()}` : ''}
+                  {item.hashtags?.length ? ` · ${item.hashtags.slice(0, 3).map((tag) => `#${tag.replace(/^#/, '')}`).join(' ')}` : ''}
+                </p>
+              </button>
+              <div className="flex shrink-0 items-center gap-1">
+                {item.isPublished && (
+                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                    <a href={`/blog/${item.slug}`} target="_blank" rel="noopener noreferrer" aria-label={`View ${item.title}`}><ExternalLink className="h-4 w-4" /></a>
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(item)} aria-label={`Edit ${item.title}`}><Pencil className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => void onDelete(item)} aria-label={`Delete ${item.title}`}><Trash2 className="h-4 w-4" /></Button>
               </div>
-
-              {/* Media Section */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Media</h3>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground block mb-2">Cover Image URL</label>
-                  <Input 
-                    placeholder="https://example.com/image.jpg" 
-                    value={form.coverImage} 
-                    onChange={(e) => setForm((prev) => ({ ...prev, coverImage: e.target.value }))}
-                  />
-                  {form.coverImage && (
-                    <div className="mt-2 rounded-lg overflow-hidden border border-border h-40">
-                      <img src={form.coverImage} alt="Cover preview" className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Content Section */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Content</h3>
-                
-                {/* Excerpt */}
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground block mb-2">Excerpt (Summary)</label>
-                  <ExcerptToolbar />
-                  <textarea
-                    ref={setExcerptRef}
-                    value={form.excerpt}
-                    onChange={(e) => setForm((prev) => ({ ...prev, excerpt: e.target.value }))}
-                    rows={3}
-                    placeholder="Write a brief summary of your post (shown in listings)..."
-                    className="w-full rounded-b-md border border-t-0 border-input bg-background px-3 py-2 text-sm resize-vertical"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">{form.excerpt.length} characters</p>
-                </div>
-
-                {/* Full Content */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-medium text-muted-foreground block">Full Content *</label>
-                    <span className="text-xs text-muted-foreground">{form.content.length} characters</span>
-                  </div>
-
-                  {/* Text Formatting Toolbar */}
-                  <div className="border border-input rounded-t-md bg-muted/30 p-2 flex flex-wrap gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => insertText(contentRef, 'content', '**', '**', 'bold text')}
-                      title="Bold"
-                      className="h-8 w-8 p-0"
-                    >
-                      <strong>B</strong>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => insertText(contentRef, 'content', '_', '_', 'italic text')}
-                      title="Italic"
-                      className="h-8 w-8 p-0"
-                    >
-                      <em>I</em>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => insertText(contentRef, 'content', '~~', '~~', 'strikethrough')}
-                      title="Strikethrough"
-                      className="h-8 w-8 p-0"
-                    >
-                      <s>S</s>
-                    </Button>
-                    
-                    <div className="w-px bg-border mx-1" />
-                    
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => insertHeading(contentRef, 'content', 1)}
-                      title="Heading 1"
-                      className="h-8 px-2 text-xs"
-                    >
-                      H1
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => insertHeading(contentRef, 'content', 2)}
-                      title="Heading 2"
-                      className="h-8 px-2 text-xs"
-                    >
-                      H2
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => insertHeading(contentRef, 'content', 3)}
-                      title="Heading 3"
-                      className="h-8 px-2 text-xs"
-                    >
-                      H3
-                    </Button>
-
-                    <div className="w-px bg-border mx-1" />
-
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => insertText(contentRef, 'content', '- ', '', 'List item')}
-                      title="Bullet List"
-                      className="h-8 px-2 text-xs"
-                    >
-                      • List
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => insertText(contentRef, 'content', '1. ', '', 'List item')}
-                      title="Numbered List"
-                      className="h-8 px-2 text-xs"
-                    >
-                      1. List
-                    </Button>
-
-                    <div className="w-px bg-border mx-1" />
-
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => insertText(contentRef, 'content', '[', '](url)', 'link text')}
-                      title="Link"
-                      className="h-8 px-2 text-xs"
-                    >
-                      🔗 Link
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => insertQuote(contentRef, 'content')}
-                      title="Quote"
-                      className="h-8 px-2 text-xs"
-                    >
-                      ❝ Quote
-                    </Button>
-
-                    <div className="w-px bg-border mx-1" />
-
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => insertText(contentRef, 'content', '```\n', '\n```', 'code')}
-                      title="Code Block"
-                      className="h-8 px-2 text-xs"
-                    >
-                      {'<>'} Code
-                    </Button>
-
-                    <div className="w-px bg-border mx-1" />
-
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        const url = prompt('Enter image URL:')
-                        if (url) {
-                          const alt = prompt('Enter alt text (optional):') || 'Image'
-                          const width = prompt('Width in pixels (optional, e.g. 640):')
-                          const height = prompt('Height in pixels (optional, e.g. 360):')
-                          setImageUrl(url)
-                          setImageAlt(alt)
-                          insertText(contentRef, 'content', formatImageMarkdown(url, alt, width, height), '', '')
-                        }
-                      }}
-                      title="Insert Image"
-                      className="h-8 px-2 text-xs"
-                    >
-                      🖼️ Image
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={insertYouTubeEmbed}
-                      title="Embed YouTube Video"
-                      className="h-8 px-2 text-xs"
-                    >
-                      ▶ Video
-                    </Button>
-                  </div>
-
-                  <textarea
-                    ref={setContentRef}
-                    value={form.content}
-                    onChange={(e) => setForm((prev) => ({ ...prev, content: e.target.value }))}
-                    rows={24}
-                    placeholder="Write your full blog post content here... Use the toolbar above for formatting or write plain text/markdown. Images: ![alt text](image-url){width=640 height=360}. YouTube: ::youtube[Video title](youtube-url)"
-                    className="w-full rounded-b-md border border-t-0 border-input bg-background px-3 py-2 text-sm font-mono resize-vertical min-h-96"
-                  />
-                </div>
-              </div>
-
-              {/* Publishing Section */}
-              <div className="bg-muted/30 rounded-lg p-4 space-y-3 border border-border">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Publishing</h3>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={form.isPublished} 
-                    onChange={(e) => setForm((prev) => ({ ...prev, isPublished: e.target.checked }))}
-                    className="rounded border-input"
-                  />
-                  <span className="text-sm font-medium">
-                    {form.isPublished ? '🟢 Published' : '🔴 Draft'} - Make this post visible to readers
-                  </span>
-                </label>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t border-border">
-                <Button 
-                  onClick={onSave} 
-                  disabled={saving}
-                  size="lg"
-                  className="flex-1"
-                >
-                  {saving ? 'Saving...' : editingId ? 'Update Post' : 'Create Post'}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={onReset}
-                  size="lg"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Posts List Section */}
-      {!showForm && (
-        <Card className="border-border">
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent border-b border-border">
-            <CardTitle>Your Blog Posts</CardTitle>
-            <CardDescription>Manage and organize your published and draft posts</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            {loading ? (
-              <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground">Loading posts...</p>
-              </div>
-            ) : items.length === 0 ? (
-              <div className="text-center py-8 bg-muted/30 rounded-lg border border-dashed border-border">
-                <p className="text-sm text-muted-foreground mb-4">No posts yet. Create one to get started!</p>
-                <Button onClick={onCreateNew} variant="outline">Create Your First Blog Post</Button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {items.map((item) => (
-                  <div key={item._id} className="rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-sm truncate">{item.title}</p>
-                          <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${
-                            item.isPublished 
-                              ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300' 
-                              : 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300'
-                          }`}>
-                            {item.isPublished ? '📢 Published' : '📝 Draft'}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Slug: <code className="bg-muted px-1 rounded">{item.slug}</code></p>
-                        {item.hashtags && item.hashtags.length > 0 ? (
-                          <p className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-1">
-                            {item.hashtags.map((tag, idx) => (
-                              <span key={idx} className="bg-primary/10 text-primary px-2 py-0.5 rounded">
-                                {tag}
-                              </span>
-                            ))}
-                          </p>
-                        ) : null}
-                      </div>
-                      <div className="flex gap-2 flex-shrink-0">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => onEdit(item)}
-                          className="whitespace-nowrap"
-                        >
-                          Edit
-                        </Button>
-                        <Button 
-                          variant="destructive" 
-                          size="sm" 
-                          onClick={() => onDelete(item)}
-                          className="whitespace-nowrap"
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   )

@@ -1,9 +1,31 @@
 'use client'
 
+import { useConfirm } from '@/components/admin/use-confirm'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
+import {
+  AdminPageHeader,
+  EmptyState,
+  Field,
+  FieldGrid,
+  FormSection,
+  ImageListField,
+  ImageUrlField,
+  ListEditor,
+  SaveBar,
+  SectionNav,
+  SelectInput,
+  StatusToasts,
+  TextArea,
+  ToggleField,
+  useDirtyState,
+  useUnsavedChangesWarning,
+} from '@/components/admin/form-kit'
+import { MarkdownEditor } from '@/components/admin/markdown-editor'
+import { cn } from '@/lib/utils'
 import {
   AdminActivity,
   AdminSiteSettings,
@@ -15,8 +37,7 @@ import {
   updateAdminSettings,
 } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
-import { AlertCircle, CalendarDays, Plus, X, Trash2 } from 'lucide-react'
-import { marked } from 'marked'
+import { Activity as ActivityIcon, ArrowLeft, ExternalLink, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react'
 
 type ActivityForm = {
   title: string
@@ -93,6 +114,7 @@ function slugify(value: string): string {
 }
 
 export default function AdminActivitiesPage() {
+  const [askConfirm, confirmDialog] = useConfirm()
   const [items, setItems] = useState<AdminActivity[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -110,6 +132,9 @@ export default function AdminActivitiesPage() {
   const [galleryInputValue, setGalleryInputValue] = useState('')
   const [includesInput, setIncludesInput] = useState('')
   const [excludesInput, setExcludesInput] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+  const { dirty, markSaved } = useDirtyState(form)
+  useUnsavedChangesWarning(!!editingId && dirty)
 
   const token = getAdminToken()
 
@@ -139,7 +164,7 @@ export default function AdminActivitiesPage() {
 
   const startEdit = (item: AdminActivity) => {
     setEditingId(item._id)
-    setForm({
+    const next: ActivityForm = {
       title: item.title,
       slug: item.slug || slugify(item.title),
       category: item.category || 'Day Tour',
@@ -171,7 +196,11 @@ export default function AdminActivitiesPage() {
       description: item.description || item.shortDescription || '',
       date: item.date ? new Date(item.date).toISOString().split('T')[0] : '',
       image: item.image || item.mainImage || '',
-    })
+    }
+    setForm(next)
+    markSaved(next)
+    setSubmitted(false)
+    window.scrollTo({ top: 0 })
     setGalleryInputValue('')
     setIncludesInput('')
     setExcludesInput('')
@@ -180,6 +209,9 @@ export default function AdminActivitiesPage() {
   const startCreate = () => {
     setEditingId('new')
     setForm(initialForm)
+    markSaved(initialForm)
+    setSubmitted(false)
+    window.scrollTo({ top: 0 })
     setGalleryInputValue('')
     setIncludesInput('')
     setExcludesInput('')
@@ -192,8 +224,9 @@ export default function AdminActivitiesPage() {
       return
     }
 
+    setSubmitted(true)
     if (!form.title.trim() || !form.fullDescription.trim()) {
-      setError('Title and full description are required.')
+      setError('Add a title and the full description before saving.')
       return
     }
 
@@ -205,7 +238,7 @@ export default function AdminActivitiesPage() {
       title: form.title.trim(),
       slug: form.slug.trim() || slugify(form.title),
       category: form.category,
-      shortDescription: form.title.trim(),
+      shortDescription: form.shortDescription.trim() || form.title.trim(),
       fullDescription: form.fullDescription.trim(),
       price: form.price || 0,
       currency: form.currency.trim() || 'USD',
@@ -241,10 +274,10 @@ export default function AdminActivitiesPage() {
     try {
       if (editingId && editingId !== 'new') {
         await updateAdminActivity(token, editingId, payload)
-        setMessage('Activity updated successfully.')
+        setMessage('Activity saved.')
       } else {
         await createAdminActivity(token, payload)
-        setMessage('Activity created successfully.')
+        setMessage('Activity created.')
       }
       setEditingId(null)
       setForm(initialForm)
@@ -261,7 +294,7 @@ export default function AdminActivitiesPage() {
 
   const onDelete = async (item: AdminActivity) => {
     if (!token) return
-    if (!window.confirm('Delete this activity?')) return
+    if (!(await askConfirm({ title: `Delete "${item.title}"?`, description: 'The activity page will be removed from the website.' }))) return
 
     try {
       await deleteAdminActivity(token, item._id)
@@ -293,7 +326,7 @@ export default function AdminActivitiesPage() {
       }
       const updated = await updateAdminSettings(token, payload)
       setSiteSettings(updated)
-      setMessage('Navigation updated successfully.')
+      setMessage(nextValue ? 'Activities now appear in the site menu.' : 'Activities hidden from the site menu.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update navigation setting')
     } finally {
@@ -394,458 +427,264 @@ export default function AdminActivitiesPage() {
     }))
   }
 
-  const insertMarkdown = (before: string, after = '', placeholder = '') => {
-    const fieldSelector = 'activity-full-description'
-    const textarea = document.querySelector<HTMLTextAreaElement>(`textarea[data-field='${fieldSelector}']`)
-    if (!textarea) return
-
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-    const current = form.fullDescription || ''
-    const selected = current.slice(start, end) || placeholder
-    const nextValue = `${current.slice(0, start)}${before}${selected}${after}${current.slice(end)}`
-
-    setForm((prev) => ({ ...prev, fullDescription: nextValue }))
-
-    requestAnimationFrame(() => {
-      textarea.focus()
-      const selectionStart = start + before.length
-      const selectionEnd = selectionStart + selected.length
-      textarea.setSelectionRange(selectionStart, selectionEnd)
-    })
+  const closeEditor = async () => {
+    if (dirty && !(await askConfirm({ title: 'Discard unsaved changes?', description: 'Your edits to this activity will be lost.', confirmLabel: 'Discard' }))) return
+    setEditingId(null)
   }
 
-  const renderDescriptionPreview = async () => {
-    const html = await marked(form.fullDescription || '')
-    setDescriptionPreviewHtml(html as string)
+  const set = <K extends keyof ActivityForm>(key: K, value: ActivityForm[K]) => setForm((prev) => ({ ...prev, [key]: value }))
+  const titleError = submitted && !form.title.trim() ? 'Add a title.' : undefined
+  const descriptionError = submitted && !form.fullDescription.trim() ? 'Write the full description.' : undefined
+  const editingItem = editingId && editingId !== 'new' ? items.find((item) => item._id === editingId) : null
+  const navEnabled = siteSettings?.navigation?.activitiesEnabled ?? true
+
+  if (editingId) {
+    return (
+      <div className="space-y-6">
+        {confirmDialog}
+        <StatusToasts error={error} message={message} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Button variant="ghost" className="-ml-2 gap-1.5 text-muted-foreground" onClick={() => void closeEditor()}>
+            <ArrowLeft className="h-4 w-4" /> All activities
+          </Button>
+          {editingItem?.slug && (editingItem.isActive || editingItem.isPublished) && (
+            <Button variant="outline" size="sm" asChild className="gap-1.5">
+              <a href={`/activities/${editingItem.slug}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" /> View live</a>
+            </Button>
+          )}
+        </div>
+        <AdminPageHeader title={editingId === 'new' ? 'New activity' : form.title || 'Edit activity'} />
+
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_12rem]">
+          <div className="min-w-0 space-y-8">
+            <FormSection id="basics" title="Basics" description="Name, category and the description visitors read.">
+              <Field label="Title" required error={titleError}>
+                <Input className="h-11 text-base font-medium" placeholder="e.g. Kathmandu Valley day tour" value={form.title} onChange={(e) => set('title', e.target.value)} />
+              </Field>
+              <FieldGrid>
+                <Field label="Web address" hint="Leave empty to create it from the title.">
+                  <div className="flex items-center overflow-hidden rounded-lg border border-input bg-background focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/20">
+                    <span className="shrink-0 border-r border-border bg-muted px-2.5 py-2.5 text-xs text-muted-foreground">/activities/</span>
+                    <input value={form.slug} onChange={(e) => set('slug', slugify(e.target.value))} placeholder={slugify(form.title) || 'activity-name'} style={{ border: 0, boxShadow: 'none' }} className="h-10 min-w-0 flex-1 bg-transparent px-2.5 text-sm outline-none" />
+                  </div>
+                </Field>
+                <Field label="Category" required>
+                  <SelectInput value={form.category} onChange={(e) => set('category', e.target.value as ActivityForm['category'])}>
+                    {CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+                  </SelectInput>
+                </Field>
+              </FieldGrid>
+              <Field label="Short description" hint="One sentence for the activity card." count={{ value: form.shortDescription, max: 140, recommended: true }}>
+                <TextArea rows={2} className="min-h-0" placeholder="e.g. Explore three UNESCO heritage sites in one day with a local guide." value={form.shortDescription} onChange={(e) => set('shortDescription', e.target.value)} />
+              </Field>
+              <Field label="Full description" required error={descriptionError}>
+                <MarkdownEditor value={form.fullDescription} onChange={(value) => set('fullDescription', value)} rows={12} placeholder="Describe the experience, highlights and what to expect…" />
+              </Field>
+            </FormSection>
+
+            <FormSection id="logistics" title="Price & logistics" description="Shown in the activity's key facts.">
+              <FieldGrid cols={3}>
+                <Field label="Price">
+                  <div className="flex">
+                    <input value={form.currency} onChange={(e) => set('currency', e.target.value.toUpperCase().slice(0, 3))} aria-label="Currency" className="h-10 w-16 rounded-l-lg rounded-r-none border border-r-0 border-input bg-muted px-2 text-center text-sm" />
+                    <Input type="number" min={0} inputMode="decimal" className="h-10 rounded-l-none" value={form.price || ''} placeholder="0" onChange={(e) => set('price', Number(e.target.value) || 0)} />
+                  </div>
+                </Field>
+                <Field label="Duration">
+                  <Input className="h-10" placeholder="e.g. 6 hours" value={form.duration} onChange={(e) => set('duration', e.target.value)} />
+                </Field>
+                <Field label="Max altitude">
+                  <Input className="h-10" placeholder="e.g. 2,175 m" value={form.maxAltitude} onChange={(e) => set('maxAltitude', e.target.value)} />
+                </Field>
+                <Field label="Difficulty">
+                  <SelectInput value={form.difficultyLevel} onChange={(e) => set('difficultyLevel', e.target.value as ActivityForm['difficultyLevel'])}>
+                    {DIFFICULTIES.map((difficulty) => <option key={difficulty} value={difficulty}>{difficulty}</option>)}
+                  </SelectInput>
+                </Field>
+                <Field label="Group size" error={form.groupSizeMin > form.groupSizeMax ? 'Minimum is larger than maximum.' : undefined}>
+                  <div className="flex items-center gap-2">
+                    <Input type="number" min={1} className="h-10" aria-label="Minimum group size" value={form.groupSizeMin} onChange={(e) => set('groupSizeMin', Number(e.target.value) || 1)} />
+                    <span className="text-sm text-muted-foreground">to</span>
+                    <Input type="number" min={1} className="h-10" aria-label="Maximum group size" value={form.groupSizeMax} onChange={(e) => set('groupSizeMax', Number(e.target.value) || 1)} />
+                  </div>
+                </Field>
+                <Field label="Sort order" hint="Lower numbers appear first.">
+                  <Input type="number" className="h-10" value={form.displayOrder} onChange={(e) => set('displayOrder', Number(e.target.value) || 0)} />
+                </Field>
+              </FieldGrid>
+            </FormSection>
+
+            <FormSection
+              id="itinerary"
+              title="Itinerary"
+              description="Optional day-by-day or step-by-step plan. Steps without a title are skipped."
+            >
+              <ol className="space-y-3">
+                {form.itinerary.map((entry, index) => (
+                  <li key={index} className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+                    <div className="flex items-center gap-3">
+                      <span className="shrink-0 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">Day {entry.day}</span>
+                      <Input className="h-10 flex-1 font-medium" placeholder="Title of this day / step" value={entry.title} onChange={(e) => updateItinerary(index, 'title', e.target.value)} aria-label={`Day ${entry.day} title`} />
+                      {form.itinerary.length > 1 && (
+                        <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => removeItineraryDay(index)} aria-label={`Remove day ${entry.day}`}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <TextArea rows={3} placeholder="What happens on this day…" value={entry.description} onChange={(e) => updateItinerary(index, 'description', e.target.value)} aria-label={`Day ${entry.day} description`} />
+                  </li>
+                ))}
+              </ol>
+              <Button type="button" variant="outline" onClick={addItineraryDay} className="w-full gap-1.5"><Plus className="h-4 w-4" /> Add day</Button>
+            </FormSection>
+
+            <FormSection id="includes" title="Included / excluded" description="Paste a list to add several items at once.">
+              <Field label="What's included">
+                <ListEditor items={form.includes} onChange={(includes) => set('includes', includes)} placeholder="e.g. Licensed guide" emptyText="Nothing listed yet." />
+              </Field>
+              <Field label="What's not included">
+                <ListEditor items={form.excludes} onChange={(excludes) => set('excludes', excludes)} placeholder="e.g. Entrance fees" emptyText="Nothing listed yet." />
+              </Field>
+            </FormSection>
+
+            <FormSection id="media" title="Photos & video">
+              <ImageUrlField label="Main photo" value={form.mainImage} onChange={(value) => set('mainImage', value)} hint="Shown at the top of the activity page and on its card." />
+              <Field label="More photos">
+                <ImageListField images={form.galleryImages} onChange={(galleryImages) => set('galleryImages', galleryImages)} />
+              </Field>
+              <Field label="YouTube video" hint="Embed link, e.g. https://www.youtube.com/embed/…">
+                <Input className="h-10" type="url" placeholder="https://www.youtube.com/embed/…" value={form.videoUrl} onChange={(e) => set('videoUrl', e.target.value)} />
+              </Field>
+            </FormSection>
+
+            <FormSection id="seo" title="Search engines" description="How the page appears in Google. Leave empty to use the title and short description.">
+              <Field label="Search title" count={{ value: form.metaTitle, max: 60, recommended: true }}>
+                <Input className="h-10" placeholder={form.title} value={form.metaTitle} onChange={(e) => set('metaTitle', e.target.value)} />
+              </Field>
+              <Field label="Search description" count={{ value: form.metaDescription, max: 160, recommended: true }}>
+                <TextArea rows={2} className="min-h-0" placeholder={form.shortDescription} value={form.metaDescription} onChange={(e) => set('metaDescription', e.target.value)} />
+              </Field>
+              <div className="space-y-0.5 rounded-lg border border-border bg-background p-3">
+                <p className="truncate text-xs text-emerald-700 dark:text-emerald-400">geletrekking.com › activities › {form.slug || slugify(form.title) || '…'}</p>
+                <p className="line-clamp-1 text-base text-[#1a0dab] dark:text-[#8ab4f8]">{form.metaTitle || form.title || 'Activity title'}</p>
+                <p className="line-clamp-2 text-xs text-muted-foreground">{form.metaDescription || form.shortDescription || 'Description shown in search results.'}</p>
+              </div>
+              <Field label="Tags" hint="Separate with commas; used for search and filters.">
+                <Input className="h-10" placeholder="culture, heritage, kathmandu" value={form.tags} onChange={(e) => set('tags', e.target.value)} />
+              </Field>
+            </FormSection>
+
+            <FormSection id="visibility" title="Visibility">
+              <ToggleField
+                label="Show on the website"
+                description="Hidden activities stay here as drafts."
+                checked={form.isActive}
+                onCheckedChange={(isActive) => setForm((prev) => ({ ...prev, isActive, isFeatured: isActive ? prev.isFeatured : false }))}
+              />
+              <ToggleField
+                label="Featured"
+                description={form.isActive ? 'Highlighted in the Top picks section.' : 'Show the activity first to feature it.'}
+                checked={form.isFeatured}
+                disabled={!form.isActive}
+                onCheckedChange={(isFeatured) => set('isFeatured', isFeatured)}
+              />
+            </FormSection>
+          </div>
+
+          <div className="xl:sticky xl:top-20 xl:self-start">
+            <SectionNav
+              sections={[
+                { id: 'basics', label: 'Basics', invalid: !!(titleError || descriptionError) },
+                { id: 'logistics', label: 'Price & logistics' },
+                { id: 'itinerary', label: 'Itinerary' },
+                { id: 'includes', label: 'Included' },
+                { id: 'media', label: 'Photos & video' },
+                { id: 'seo', label: 'Search engines' },
+                { id: 'visibility', label: 'Visibility' },
+              ]}
+            />
+          </div>
+        </div>
+
+        <SaveBar
+          dirty={dirty || editingId === 'new'}
+          saving={saving}
+          onSave={() => void onSave()}
+          onDiscard={() => void closeEditor()}
+          discardLabel="Cancel"
+          saveLabel={editingId === 'new' ? 'Create activity' : 'Save activity'}
+        />
+      </div>
+    )
   }
-
-  useEffect(() => {
-    if (!showDescriptionPreview) return
-    void renderDescriptionPreview()
-  }, [showDescriptionPreview, form.fullDescription])
-
-  useEffect(() => {
-    if (!message) return
-    const timer = setTimeout(() => setMessage(''), 3000)
-    return () => clearTimeout(timer)
-  }, [message])
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      {confirmDialog}
+      <StatusToasts error={error} message={message} />
+      <AdminPageHeader
+        title="Activities"
+        description="Day tours and add-on experiences on the Activities page."
+        actions={<Button onClick={startCreate} className="gap-2"><Plus className="h-4 w-4" /> New activity</Button>}
+      />
+
+      <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 shadow-sm">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Activities</h1>
-          <p className="text-muted-foreground mt-1">Manage and organize all activity offerings</p>
+          <p className="text-sm font-medium text-foreground">Show “Activities” in the site menu</p>
+          <p className="text-xs text-muted-foreground">Turn off while you have no activities to offer.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-3 text-sm rounded-md border border-input px-3 py-2.5 bg-muted/20">
-            <input
-              type="checkbox"
-              checked={siteSettings?.navigation?.activitiesEnabled ?? true}
-              onChange={(e) => onToggleActivitiesNav(e.target.checked)}
-              disabled={navSaving}
-            />
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="font-medium text-foreground">Show Activities tab</p>
-                {navSaving ? <span className="text-xs text-muted-foreground">Saving...</span> : null}
-              </div>
-              <p className="text-xs text-muted-foreground">Toggle visibility in the website navbar.</p>
-            </div>
-          </label>
-          <Button onClick={startCreate} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Add Activity
-          </Button>
+        <Switch checked={navEnabled} disabled={navSaving || !siteSettings} onCheckedChange={(value) => void onToggleActivitiesNav(value)} aria-label="Show Activities in the site menu" />
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex rounded-lg border border-border bg-card p-1" role="tablist" aria-label="Filter activities">
+          {(['all', 'active', 'inactive'] as const).map((key) => (
+            <button key={key} type="button" role="tab" aria-selected={statusFilter === key} onClick={() => setStatusFilter(key)} className={cn('rounded-md px-3 py-1.5 text-sm font-medium transition-colors', statusFilter === key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}>
+              {key === 'all' ? 'All' : key === 'active' ? 'Visible' : 'Hidden'}
+            </button>
+          ))}
+        </div>
+        <div className="relative sm:w-72">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input type="search" className="h-10 pl-9" placeholder="Search activities…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search activities" />
         </div>
       </div>
 
-      {error ? (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-            <p className="text-red-700 text-sm">{error}</p>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {message ? (
-        <Card className="border-emerald-200 bg-emerald-50">
-          <CardContent className="pt-6">
-            <p className="text-emerald-700 text-sm">{message}</p>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {!editingId && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Activity Library</CardTitle>
-            <CardDescription>Search, filter and edit all activity entries.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-3">
-              <Input
-                placeholder="Search title, description or tags"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="md:col-span-2"
-              />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="all">All statuses</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-
-            {loading ? (
-              <p className="text-sm text-muted-foreground">Loading activities...</p>
-            ) : filteredItems.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No matching activities found.</p>
-            ) : (
-              <div className="space-y-2 max-h-[680px] overflow-auto pr-1">
-                {filteredItems.map((item) => (
-                  <div key={item._id} className="rounded-md border border-border p-3 hover:bg-muted/50 transition">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-sm truncate">{item.title}</p>
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
-                          <CalendarDays className="w-3.5 h-3.5" />
-                          {(item.date ? new Date(item.date).toLocaleDateString() : 'No date')} • {(item.isActive || item.isPublished) ? 'Active' : 'Hidden'}
-                          {item.isFeatured && <span className="ml-2 px-2 py-0.5 bg-orange-100 text-orange-600 text-xs rounded font-medium">Featured</span>}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.shortDescription || item.description}</p>
-                        {(item.tags || []).length > 0 ? (
-                          <p className="text-xs text-muted-foreground mt-1">Tags: {(item.tags || []).join(', ')}</p>
-                        ) : null}
-                      </div>
-                      <div className="flex gap-2 shrink-0">
-                        <Button variant="outline" size="sm" onClick={() => startEdit(item)}>Edit</Button>
-                        <Button variant="destructive" size="sm" onClick={() => onDelete(item)}>Delete</Button>
-                      </div>
-                    </div>
+      {loading ? (
+        <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-xl border border-border bg-card" />)}</div>
+      ) : items.length === 0 ? (
+        <EmptyState icon={<ActivityIcon className="h-5 w-5" />} title="No activities yet" description="Add day tours or experiences trekkers can book alongside a trek." action={<Button onClick={startCreate} className="gap-2"><Plus className="h-4 w-4" /> New activity</Button>} />
+      ) : filteredItems.length === 0 ? (
+        <EmptyState icon={<Search className="h-5 w-5" />} title="No matching activities" />
+      ) : (
+        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          {filteredItems.map((item) => {
+            const visible = !!(item.isActive || item.isPublished)
+            const image = item.mainImage || item.image
+            return (
+              <li key={item._id} className="flex items-center gap-4 p-3 transition-colors hover:bg-muted/40 sm:p-4">
+                <div className="hidden h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-muted sm:block">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {image ? <img src={image} alt="" className="h-full w-full object-cover" loading="lazy" /> : <div className="flex h-full items-center justify-center text-muted-foreground"><ActivityIcon className="h-5 w-5" /></div>}
+                </div>
+                <button type="button" className="min-w-0 flex-1 text-left" onClick={() => startEdit(item)}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate font-medium text-foreground">{item.title}</p>
+                    <Badge variant="outline" className={visible ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : ''}>{visible ? 'Visible' : 'Hidden'}</Badge>
+                    {item.isFeatured && <Badge variant="outline" className="gap-1 border-amber-300 bg-amber-50 text-amber-700"><Star className="h-3 w-3" /> Featured</Badge>}
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {editingId && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{editingId === 'new' ? 'Create Activity' : 'Edit Activity'}</CardTitle>
-            <CardDescription>Structured activity editor with rich text, logistics, media, SEO, and itinerary fields.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex flex-wrap gap-2 border-b border-border pb-3">
-              {[
-                { key: 'basic', label: 'Basic Information' },
-                { key: 'logistics', label: 'Logistics & Pricing' },
-                { key: 'media', label: 'Media & SEO' },
-                { key: 'controls', label: 'UI Controls' },
-                { key: 'itinerary', label: 'Itinerary & Inclusion' },
-              ].map((section) => (
-                <button
-                  key={section.key}
-                  type="button"
-                  onClick={() => setEditorSection(section.key as EditorSection)}
-                  className={`px-3 py-1.5 text-sm rounded-md font-medium transition-colors ${
-                    editorSection === section.key ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
-                >
-                  {section.label}
+                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                    {[item.category, item.duration, item.price ? `${item.currency || 'USD'} ${item.price}` : null].filter(Boolean).join(' · ')}
+                  </p>
                 </button>
-              ))}
-            </div>
-
-            {editorSection === 'basic' && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Activity Title *</label>
-                  <Input placeholder="e.g., Everest Base Camp Trek" value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} />
+                <div className="flex shrink-0 gap-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(item)} aria-label={`Edit ${item.title}`}><Pencil className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => void onDelete(item)} aria-label={`Delete ${item.title}`}><Trash2 className="h-4 w-4" /></Button>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">URL Slug</label>
-                    <div className="flex gap-2">
-                      <Input placeholder="everest-base-camp" value={form.slug} onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))} />
-                      <Button type="button" variant="outline" onClick={() => setForm((prev) => ({ ...prev, slug: slugify(prev.title) }))} className="shrink-0">Generate</Button>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Category *</label>
-                    <select value={form.category} onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value as ActivityForm['category'] }))} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                      {CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Full Description *</label>
-                  <p className="text-xs text-muted-foreground mb-2">Rich content in markdown format</p>
-                  <div className="rounded-md border border-input overflow-hidden h-96 flex flex-col">
-                    <div className="flex flex-wrap items-center gap-1 border-b border-input bg-muted/50 px-2 py-2">
-                      <Button type="button" size="sm" variant="ghost" onClick={() => insertMarkdown('**', '**', 'bold text')} title="Bold">B</Button>
-                      <Button type="button" size="sm" variant="ghost" onClick={() => insertMarkdown('*', '*', 'italic text')} title="Italic">I</Button>
-                      <Button type="button" size="sm" variant="ghost" onClick={() => insertMarkdown('## ', '', 'Heading')} title="Heading">H2</Button>
-                      <Button type="button" size="sm" variant="ghost" onClick={() => insertMarkdown('- ', '', 'List item')} title="List">List</Button>
-                      <Button type="button" size="sm" variant="ghost" onClick={() => insertMarkdown('[', '](https://)', 'Link text')} title="Link">Link</Button>
-                      <Button type="button" size="sm" variant={showDescriptionPreview ? "default" : "ghost"} onClick={() => setShowDescriptionPreview((value) => !value)} className="ml-auto">
-                        {showDescriptionPreview ? '👁️ Preview On' : '👁️ Preview Off'}
-                      </Button>
-                    </div>
-                    <textarea
-                      data-field="activity-full-description"
-                      value={form.fullDescription}
-                      onChange={(e) => setForm((prev) => ({ ...prev, fullDescription: e.target.value }))}
-                      placeholder="Detailed description with markdown support..."
-                      className="flex-1 px-3 py-2 text-sm bg-background resize-none"
-                    />
-                  </div>
-                </div>
-
-                {showDescriptionPreview && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Preview</label>
-                    <div className="rounded-md border border-input bg-background p-4 h-96 overflow-auto text-sm">
-                      <div className="markdown-content prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: descriptionPreviewHtml }} />
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {editorSection === 'logistics' && (
-              <div className="space-y-6">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-50/50 dark:from-blue-950/20 dark:to-blue-950/10 p-5 rounded-lg border border-blue-200/50 dark:border-blue-800/30 space-y-4">
-                  <h3 className="font-semibold text-sm text-foreground">💰 Pricing</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Price</label>
-                      <Input type="number" value={form.price} onChange={(e) => setForm((prev) => ({ ...prev, price: Number(e.target.value) || 0 }))} placeholder="500" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Currency</label>
-                      <Input value={form.currency} onChange={(e) => setForm((prev) => ({ ...prev, currency: e.target.value.toUpperCase() }))} placeholder="USD" maxLength={3} />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Display Order</label>
-                      <Input type="number" value={form.displayOrder} onChange={(e) => setForm((prev) => ({ ...prev, displayOrder: Number(e.target.value) || 0 }))} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-br from-amber-50 to-amber-50/50 dark:from-amber-950/20 dark:to-amber-950/10 p-5 rounded-lg border border-amber-200/50 dark:border-amber-800/30 space-y-4">
-                  <h3 className="font-semibold text-sm text-foreground">⏱️ Duration & Physical</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Duration</label>
-                      <Input value={form.duration} onChange={(e) => setForm((prev) => ({ ...prev, duration: e.target.value }))} placeholder="e.g., 5 Days" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Max Altitude</label>
-                      <Input value={form.maxAltitude} onChange={(e) => setForm((prev) => ({ ...prev, maxAltitude: e.target.value }))} placeholder="e.g., 5,364m" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-50/50 dark:from-emerald-950/20 dark:to-emerald-950/10 p-5 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30 space-y-4">
-                  <h3 className="font-semibold text-sm text-foreground">👥 Difficulty & Group Size</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Difficulty</label>
-                      <select value={form.difficultyLevel} onChange={(e) => setForm((prev) => ({ ...prev, difficultyLevel: e.target.value as ActivityForm['difficultyLevel'] }))} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                        {DIFFICULTIES.map((difficulty) => <option key={difficulty} value={difficulty}>{difficulty}</option>)}
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Min Size</label>
-                      <Input type="number" value={form.groupSizeMin} onChange={(e) => setForm((prev) => ({ ...prev, groupSizeMin: Number(e.target.value) || 1 }))} min="1" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Max Size</label>
-                      <Input type="number" value={form.groupSizeMax} onChange={(e) => setForm((prev) => ({ ...prev, groupSizeMax: Number(e.target.value) || 1 }))} min="1" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {editorSection === 'media' && (
-              <div className="space-y-6">
-                <div className="bg-gradient-to-br from-purple-50 to-purple-50/50 dark:from-purple-950/20 dark:to-purple-950/10 p-5 rounded-lg border border-purple-200/50 dark:border-purple-800/30 space-y-4">
-                  <h3 className="font-semibold text-sm text-foreground">🎬 Hero Image</h3>
-                  <p className="text-xs text-muted-foreground">Appears as full-width image on activity detail page</p>
-                  <Input value={form.mainImage} onChange={(e) => setForm((prev) => ({ ...prev, mainImage: e.target.value }))} placeholder="https://example.com/image.jpg" />
-                  {form.mainImage && (
-                    <div className="rounded-lg overflow-hidden border border-border h-48">
-                      <img src={form.mainImage} alt="Hero" className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                </div>
-
-                <div className="bg-gradient-to-br from-cyan-50 to-cyan-50/50 dark:from-cyan-950/20 dark:to-cyan-950/10 p-5 rounded-lg border border-cyan-200/50 dark:border-cyan-800/30 space-y-4">
-                  <h3 className="font-semibold text-sm text-foreground">🖼️ Gallery Images</h3>
-                  <p className="text-xs text-muted-foreground">Additional images for the detail page</p>
-                  <div className="flex gap-2">
-                    <Input
-                      value={galleryInputValue}
-                      onChange={(e) => setGalleryInputValue(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { addGalleryImage(); e.preventDefault() } }}
-                      placeholder="https://example.com/image.jpg"
-                    />
-                    <Button onClick={addGalleryImage} type="button" variant="outline">Add</Button>
-                  </div>
-                  {form.galleryImages.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {form.galleryImages.map((img, index) => (
-                        <div key={index} className="relative group rounded-lg overflow-hidden border border-border h-40">
-                          <img src={img} alt={`Gallery ${index + 1}`} className="w-full h-full object-cover" />
-                          <button onClick={() => removeGalleryImage(index)} className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <X className="w-5 h-5 text-white" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="bg-gradient-to-br from-red-50 to-red-50/50 dark:from-red-950/20 dark:to-red-950/10 p-5 rounded-lg border border-red-200/50 dark:border-red-800/30 space-y-4">
-                  <h3 className="font-semibold text-sm text-foreground">🎥 Video</h3>
-                  <Input value={form.videoUrl} onChange={(e) => setForm((prev) => ({ ...prev, videoUrl: e.target.value }))} placeholder="https://www.youtube.com/embed/..." />
-                </div>
-
-                <div className="bg-gradient-to-br from-green-50 to-green-50/50 dark:from-green-950/20 dark:to-green-950/10 p-5 rounded-lg border border-green-200/50 dark:border-green-800/30 space-y-4">
-                  <h3 className="font-semibold text-sm text-foreground">🔍 SEO Metadata</h3>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Meta Title (50-60 chars)</label>
-                    <Input value={form.metaTitle} onChange={(e) => setForm((prev) => ({ ...prev, metaTitle: e.target.value }))} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Meta Description (150-160 chars)</label>
-                    <textarea rows={3} value={form.metaDescription} onChange={(e) => setForm((prev) => ({ ...prev, metaDescription: e.target.value }))} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {editorSection === 'controls' && (
-              <div className="space-y-6">
-                <div className="bg-gradient-to-br from-indigo-50 to-indigo-50/50 dark:from-indigo-950/20 dark:to-indigo-950/10 p-5 rounded-lg border border-indigo-200/50 dark:border-indigo-800/30 space-y-4">
-                  <h3 className="font-semibold text-sm text-foreground">🏷️ Organization</h3>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Tags</label>
-                    <Input value={form.tags} onChange={(e) => setForm((prev) => ({ ...prev, tags: e.target.value }))} placeholder="trek, hiking, mountain" />
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-br from-violet-50 to-violet-50/50 dark:from-violet-950/20 dark:to-violet-950/10 p-5 rounded-lg border border-violet-200/50 dark:border-violet-800/30 space-y-4">
-                  <h3 className="font-semibold text-sm text-foreground">👁️ Visibility</h3>
-                  <label className="flex items-center gap-3 p-3 rounded-md border border-input hover:bg-muted/50 cursor-pointer">
-                    <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((prev) => ({ ...prev, isActive: e.target.checked, isFeatured: e.target.checked ? prev.isFeatured : false }))} className="w-4 h-4" />
-                    <div>
-                      <p className="text-sm font-medium">Show Activity</p>
-                      <p className="text-xs text-muted-foreground">Display on public Activities page</p>
-                    </div>
-                  </label>
-                  <label className={`flex items-center gap-3 p-3 rounded-md border border-input transition-all ${
-                    form.isActive
-                      ? 'hover:bg-muted/50 cursor-pointer'
-                      : 'opacity-50 cursor-not-allowed bg-muted/30'
-                  }`}>
-                    <input
-                      type="checkbox"
-                      checked={form.isFeatured}
-                      onChange={(e) => setForm((prev) => ({ ...prev, isFeatured: e.target.checked }))}
-                      disabled={!form.isActive}
-                      className="w-4 h-4"
-                    />
-                    <div>
-                      <p className="text-sm font-medium">Mark as Featured</p>
-                      <p className="text-xs text-muted-foreground">
-                        {form.isActive ? 'Highlight as premium/recommended' : 'Enable "Show Activity" to use this'}
-                      </p>
-                    </div>
-                  </label>
-                </div>
-              </div>
-            )}
-
-            {editorSection === 'itinerary' && (
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-sm">📅 Itinerary</h3>
-                  <div className="space-y-3">
-                    {form.itinerary.map((entry, index) => (
-                      <div key={index} className="rounded-lg border border-border bg-gradient-to-r from-background to-muted/30 p-4 space-y-3">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-bold text-primary shrink-0 px-3 py-2 bg-primary/10 rounded">Day {entry.day}</span>
-                          <Input value={entry.title} onChange={(e) => updateItinerary(index, 'title', e.target.value)} placeholder="Day title" className="font-medium flex-1" />
-                          {form.itinerary.length > 1 && (
-                            <Button type="button" size="sm" variant="ghost" onClick={() => removeItineraryDay(index)} className="h-8 w-8 p-0 shrink-0">
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          )}
-                        </div>
-                        <textarea rows={5} value={entry.description} onChange={(e) => updateItinerary(index, 'description', e.target.value)} placeholder="Description..." className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                      </div>
-                    ))}
-                    <Button type="button" variant="outline" onClick={addItineraryDay} className="w-full">+ Add Day</Button>
-                  </div>
-                </div>
-
-                <div className="bg-emerald-50/50 dark:bg-emerald-950/20 p-5 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30 space-y-3">
-                  <h3 className="font-semibold text-sm">✅ What's Included</h3>
-                  <div className="space-y-2">
-                    {form.includes.map((item, index) => (
-                      <div key={index} className="flex items-center gap-2 bg-background p-3 rounded-lg border border-border group">
-                        <span className="flex-1 text-sm">{item}</span>
-                        <Button type="button" size="sm" variant="ghost" onClick={() => removeIncludeItem(index)} className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100">
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <div className="flex gap-2">
-                      <Input value={includesInput} onChange={(e) => setIncludesInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { addIncludeItem(); e.preventDefault() } }} placeholder="Add item..." />
-                      <Button type="button" variant="outline" onClick={addIncludeItem}>Add</Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-red-50/50 dark:bg-red-950/20 p-5 rounded-lg border border-red-200/50 dark:border-red-800/30 space-y-3">
-                  <h3 className="font-semibold text-sm">❌ What's Excluded</h3>
-                  <div className="space-y-2">
-                    {form.excludes.map((item, index) => (
-                      <div key={index} className="flex items-center gap-2 bg-background p-3 rounded-lg border border-border group">
-                        <span className="flex-1 text-sm">{item}</span>
-                        <Button type="button" size="sm" variant="ghost" onClick={() => removeExcludeItem(index)} className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100">
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <div className="flex gap-2">
-                      <Input value={excludesInput} onChange={(e) => setExcludesInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { addExcludeItem(); e.preventDefault() } }} placeholder="Add item..." />
-                      <Button type="button" variant="outline" onClick={addExcludeItem}>Add</Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-2 pt-4 border-t border-border">
-              <Button onClick={onSave} disabled={saving}>{saving ? '⏳ Saving...' : editingId === 'new' ? '➕ Create' : '💾 Update'}</Button>
-              <Button variant="outline" onClick={() => setEditingId(null)}>Cancel</Button>
-            </div>
-          </CardContent>
-        </Card>
+              </li>
+            )
+          })}
+        </ul>
       )}
     </div>
   )

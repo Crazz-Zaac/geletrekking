@@ -6,8 +6,9 @@ ARG NEXT_PUBLIC_API_URL=http://backend:5000
 ARG INTERNAL_API_URL=http://backend:5000
 ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY=
 
+# Install exactly what the lockfile pins
 COPY frontend/package*.json ./
-RUN npm install
+RUN npm ci && npm cache clean --force
 
 COPY frontend/. ./
 
@@ -17,7 +18,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN set -a \
 	&& [ -f .env.local ] && . ./.env.local || true \
 	&& set +a \
-	&& npm run build
+	&& npm run build \
+	&& chown -R node:node /usr/src/app/.next
+
+# Run as the unprivileged "node" user instead of root
+USER node
 
 EXPOSE 3000
 

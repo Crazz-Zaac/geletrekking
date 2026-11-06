@@ -83,7 +83,6 @@ app.use("/api", apiLimiter);
 ========================================================= */
 const adminRoutes = require("./routes/Admin/adminRoutes");
 const protectedRoutes = require("./routes/protectedRoutes");
-const superadminAuthRoutes = require("./routes/superadmin/auth");
 const superadminRoutes = require("./routes/superadmin/superadmin");
 const trekRoutes = require("./routes/trekroutes");
 const authRoutes = require("./routes/authroutes");
@@ -92,7 +91,6 @@ const activityRoutes = require("./routes/activityRoutes");
 
 // Content routes
 const blogRoutes = require("./routes/blogRoutes");
-const reviewRoutes = require("./routes/reviewRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const bookingSubmissionRoutes = require("./routes/bookingSubmissionRoutes");
@@ -113,7 +111,6 @@ const heroRoutes = require("./routes/heroRoutes");
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin/analytics", adminAnalyticsRoutes);
 app.use("/api/protected", protectedRoutes);
-app.use("/api/superadmin/auth", superadminAuthRoutes);
 app.use("/api/superadmin", superadminRoutes);
 app.use("/api/treks", trekRoutes);
 app.use("/api/auth", authRoutes);
@@ -122,7 +119,6 @@ app.use("/api/activities", activityRoutes);
 
 // Mount new content routes
 app.use("/api/blogs", blogRoutes);
-app.use("/api/reviews", reviewRoutes);
 app.use("/api/gallery", galleryRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/booking-submissions", bookingSubmissionRoutes);
@@ -136,19 +132,6 @@ app.use("/api/settings", settingsRoutes);
 app.use("/api/hero", heroRoutes);
 // app.use("/api/uploads", uploadRoutes);
 
-
-/* =========================================================
-   6. SERVE FRONTEND IN PRODUCTION
-========================================================= */
-if (process.env.NODE_ENV === "production") {
-  const distPath = path.join(__dirname, "..", "frontend", "dist");
-  app.use(express.static(distPath));
-
-  // SPA fallback
-  app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
-  });
-}
 
 /* =========================================================
    7. TEST ROUTES
@@ -166,8 +149,13 @@ app.get("/health", (req, res) => {
    7. ERROR HANDLING
 ========================================================= */
 app.use((err, req, res, next) => {
+  if (err && err.message === "CORS not allowed") {
+    return res.status(403).json({ error: "Origin not allowed" });
+  }
   console.error("ERROR:", err.stack);
-  res.status(500).json({ error: err.message || "Internal server error" });
+  const status = Number(err.status || err.statusCode) || 500;
+  // Body-parser and similar client errors (4xx) are safe to describe; hide 5xx details.
+  res.status(status).json({ error: status < 500 ? err.message : "Internal server error" });
 });
 
 /* =========================================================
@@ -208,6 +196,9 @@ const startServer = async () => {
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`Backend running on port ${PORT}`);
     });
+
+    // Daily SSL expiry check with email alerts.
+    require("./cron/sslMonitor").startSslMonitor();
   } catch (err) {
     console.error(" MongoDB Connection Error:", err.message);
     process.exit(1);

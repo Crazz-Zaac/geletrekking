@@ -1,5 +1,31 @@
+// Baseline directives (also part of the full policy below).
+const baseCsp = [
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'self'",
+  "upgrade-insecure-requests",
+].join("; ");
+
+// Enforced Content-Security-Policy. Verified in report-only mode first; the
+// only console errors were from Cloudflare Turnstile's own iframe policy.
+// If a new third-party widget is added, allow its host here.
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://featurable.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https://featurable.com https://challenges.cloudflare.com",
+  "frame-src 'self' https://challenges.cloudflare.com https://www.youtube-nocookie.com https://www.youtube.com https://maps.google.com https://www.google.com https:",
+  "media-src 'self' https:",
+  "worker-src 'self' blob:",
+  baseCsp,
+].join("; ");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  poweredByHeader: false,
   async redirects() {
     return [
       {
@@ -197,6 +223,12 @@ const nextConfig = {
   },
   async headers() {
     return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Content-Security-Policy", value: contentSecurityPolicy },
+        ],
+      },
       {
         source: "/private-booking/:path*",
         headers: [

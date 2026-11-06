@@ -43,20 +43,32 @@ For first-time testing against Let's Encrypt staging:
 
 ---
 
-## 3) Renewal workflow (production)
+## 3) Production: Cloudflare Origin Certificate (current setup)
 
-Run on demand:
+All traffic reaches the server through Cloudflare, so the origin uses a
+**Cloudflare Origin Certificate** (valid up to 15 years, trusted only by
+Cloudflare). No renewal jobs are needed.
 
-```bash
-cd /home/blackphoenix/Documents/projects/geletrekking/docker
-./scripts/renew-production-cert.sh geletrekking.com
-```
+Install or replace it:
 
-Suggested cron (daily at 03:17):
+1. Cloudflare → **SSL/TLS → Origin Server → Create Certificate**
+   (RSA 2048; hostnames `geletrekking.com`, `*.geletrekking.com`; 15 years).
+2. Save the two PEM blocks on the server, e.g. `~/origin-cert.pem` and `~/origin-key.pem`.
+3. `cd ~/geletrekking/docker && sudo ./scripts/install-origin-cert.sh ~/origin-cert.pem ~/origin-key.pem`
+   (validates the pair, backs up the old one, reloads nginx with zero downtime, rolls back on error).
+4. Cloudflare → **SSL/TLS → Overview → Full (strict)**.
+5. Delete the copies in your home directory (`shred -u ~/origin-*.pem`).
 
-```bash
-17 3 * * * cd /home/blackphoenix/Documents/projects/geletrekking/docker && ./scripts/renew-production-cert.sh geletrekking.com >> /var/log/geletrekking-cert-renew.log 2>&1
-```
+Monitoring: `backend/cron/sslMonitor.js` checks the certificate nginx serves
+daily at 09:00 Nepal time and emails `SSL_ALERT_EMAIL` (default
+`SUPERADMIN_EMAIL`) when 21 days or fewer remain. The admin dashboard shows the
+same status. nginx also reloads by itself within 5 minutes if `ssl/fullchain.pem`
+changes (`nginx/40-cert-reload-watcher.sh`).
+
+**Important:** an Origin Certificate only works while Cloudflare proxying
+(orange cloud) is on. If you ever turn proxying off, switch back to Let's
+Encrypt first (section 2 and `scripts/renew-production-cert.sh`) and remove the
+Cloudflare-only firewall rule (`scripts/cloudflare-firewall.sh remove`).
 
 ---
 

@@ -27,6 +27,7 @@ export default function AdminMessagesPage() {
   const [items, setItems] = useState<AdminContactMessage[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all')
+  const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<AdminContactMessage | null>(null)
@@ -55,10 +56,12 @@ export default function AdminMessagesPage() {
   useEffect(() => { void refresh() }, [])
 
   const filtered = useMemo(() => {
-    if (filter === 'unread') return items.filter((i) => !i.isRead)
-    if (filter === 'read') return items.filter((i) => i.isRead)
-    return items
-  }, [filter, items])
+    const byStatus =
+      filter === 'unread' ? items.filter((i) => !i.isRead) : filter === 'read' ? items.filter((i) => i.isRead) : items
+    const q = query.trim().toLowerCase()
+    if (!q) return byStatus
+    return byStatus.filter((i) => [i.name, i.email, i.message].some((v) => (v || '').toLowerCase().includes(q)))
+  }, [filter, items, query])
 
   const selected = useMemo(() => items.find((i) => i._id === selectedId) ?? null, [items, selectedId])
 
@@ -108,6 +111,14 @@ export default function AdminMessagesPage() {
               ))}
               <Button variant="outline" size="sm" onClick={() => void refresh()}>Refresh</Button>
             </div>
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search name, email or message"
+              aria-label="Search messages"
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
 
             {loading ? (
               <p className="text-sm text-muted-foreground">Loading messages...</p>

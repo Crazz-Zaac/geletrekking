@@ -22,6 +22,7 @@ import {
   Trophy,
 } from 'lucide-react'
 import { marked } from 'marked'
+import { sanitizeHtml } from '@/lib/sanitize-html'
 
 interface ActivityDetailPageProps {
   params: Promise<{ slug: string }>
@@ -244,7 +245,7 @@ function ActivityDetailTabs({ activity }: { activity: PublicActivity }) {
     const renderMarkdown = async () => {
       if (activity.fullDescription) {
         const html = await marked(activity.fullDescription)
-        setDescriptionHtml(html as string)
+        setDescriptionHtml(sanitizeHtml(html as string))
       }
     }
     renderMarkdown()

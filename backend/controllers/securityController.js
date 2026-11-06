@@ -3,7 +3,9 @@ const { X509Certificate } = require("crypto");
 const { getRiskStoreHealth } = require("../config/riskStore");
 
 const SSL_CERT_PATH = process.env.SSL_CERT_PATH || "/etc/nginx/certs/fullchain.pem";
-const SSL_WARNING_DAYS = Number(process.env.SSL_WARNING_DAYS || 30);
+// Renewal runs automatically at 30 days left; warn only if it has been
+// failing for a while.
+const SSL_WARNING_DAYS = Number(process.env.SSL_WARNING_DAYS || 21);
 
 exports.getRiskHealth = async (req, res) => {
   try {

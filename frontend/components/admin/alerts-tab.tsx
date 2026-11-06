@@ -1,10 +1,13 @@
 'use client'
 
+import { useConfirm } from '@/components/admin/use-confirm'
 import { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, Edit2, Trash2, AlertCircle } from 'lucide-react'
+import { Plus, Edit2, Trash2, AlertCircle, ExternalLink } from 'lucide-react'
+import { toast } from 'sonner'
+import { Field, FieldGrid, SelectInput, TextArea, ToggleField } from '@/components/admin/form-kit'
 import { getAdminToken } from '@/lib/admin-auth'
 import { getAdminAlerts, createAlert, updateAlert, deleteAlert, type AdminAlert } from '@/lib/api'
 import { ALERT_COLOR_PRESETS, ALERT_ICON_LABELS, alertIconOptions, getAlertColorPreset } from '@/lib/alert-color-presets'
@@ -45,6 +48,7 @@ function applyPresetToForm(formData: Partial<AdminAlert>, icon: AdminAlert['icon
 }
 
 export function AlertsTab() {
+  const [askConfirm, confirmDialog] = useConfirm()
   const [alerts, setAlerts] = useState<AdminAlert[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -72,8 +76,8 @@ export function AlertsTab() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.title || !formData.message) {
-      alert('Please fill in all required fields')
+    if (!formData.title?.trim() || !formData.message?.trim()) {
+      toast.error('Add a title and a message.')
       return
     }
 
@@ -90,6 +94,7 @@ export function AlertsTab() {
         await createAlert(token, preparedPayload)
       }
 
+      toast.success(editingId ? 'Alert saved.' : 'Alert created.')
       setShowForm(false)
       setEditingId(null)
       setFormData(getInitialFormData())
@@ -97,7 +102,7 @@ export function AlertsTab() {
       await loadAlerts()
     } catch (err) {
       console.error('Failed to save alert:', err)
-      alert('Failed to save alert')
+      toast.error(err instanceof Error ? err.message : 'Failed to save alert')
     }
   }
 
@@ -109,17 +114,18 @@ export function AlertsTab() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this alert?')) return
+    if (!(await askConfirm({ title: 'Delete this alert?', description: 'It will disappear from the website immediately.' }))) return
 
     try {
       const token = getAdminToken()
       if (!token) return
 
       await deleteAlert(token, id)
+      toast.success('Alert deleted.')
       await loadAlerts()
     } catch (err) {
       console.error('Failed to delete alert:', err)
-      alert('Failed to delete alert')
+      toast.error(err instanceof Error ? err.message : 'Failed to delete alert')
     }
   }
 
@@ -214,144 +220,86 @@ export function AlertsTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Alerts & Announcements</h2>
-          <p className="text-muted-foreground text-sm mt-1">Manage important notices and announcements</p>
-        </div>
-        {!showForm && (
+      {confirmDialog}
+      {!showForm && (
+        <div className="flex justify-end">
           <Button onClick={() => setShowForm(true)} className="gap-2">
             <Plus className="h-4 w-4" />
-            Create Alert
+            New alert
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {showForm ? (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
           <Card className="border-border p-6 xl:col-span-7">
-            <h3 className="text-lg font-bold text-foreground mb-4">
-              {editingId ? 'Edit Alert' : 'Create New Alert'}
+            <h3 className="mb-5 text-base font-semibold text-foreground">
+              {editingId ? 'Edit alert' : 'New alert'}
             </h3>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Title *</label>
-                <Input
-                  type="text"
-                  placeholder="e.g., Monsoon Season Warning"
-                  value={formData.title || ''}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Message *</label>
-                <textarea
-                  placeholder="Enter your message here"
-                  value={formData.message || ''}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm"
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Icon</label>
-                  <select
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <Field label="Title" required count={{ value: formData.title, max: 60, recommended: true }}>
+                <Input className="h-10" placeholder="e.g. Monsoon season: trail conditions" value={formData.title || ''} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
+              </Field>
+              <Field label="Message" required count={{ value: formData.message, max: 280, recommended: true }}>
+                <TextArea rows={3} placeholder="What visitors need to know, in one or two sentences." value={formData.message || ''} onChange={(e) => setFormData({ ...formData, message: e.target.value })} />
+              </Field>
+              <FieldGrid>
+                <Field label="Style" hint="Sets the icon and colours.">
+                  <SelectInput
                     value={formData.icon || 'info'}
                     onChange={(e) => {
                       const nextIcon = e.target.value as AdminAlert['icon']
                       setFormData((prev) => applyPresetToForm(prev, nextIcon))
                     }}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm"
                   >
                     {alertIconOptions.map((icon) => (
                       <option key={icon} value={icon}>{ALERT_ICON_LABELS[icon]}</option>
                     ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Type</label>
-                  <select
-                    value={formData.type || 'global'}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value as AdminAlert['type'] })}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm"
-                  >
+                  </SelectInput>
+                </Field>
+                <Field label="Where to show">
+                  <SelectInput value={formData.type || 'global'} onChange={(e) => setFormData({ ...formData, type: e.target.value as AdminAlert['type'] })}>
                     {typeOptions.map((type) => (
-                      <option key={type} value={type}>{type === 'global' ? 'Global (All Pages)' : 'Destinations Only'}</option>
+                      <option key={type} value={type}>{type === 'global' ? 'Every page' : 'Destination pages only'}</option>
                     ))}
-                  </select>
-                </div>
-              </div>
-
+                  </SelectInput>
+                </Field>
+              </FieldGrid>
               {formData.type === 'global' && (
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Global CTA URL</label>
-                  <Input
-                    type="url"
-                    placeholder="https://example.com/updates"
-                    value={formData.ctaUrl || ''}
-                    onChange={(e) => setFormData({ ...formData, ctaUrl: e.target.value })}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    This link appears as “View full details here →” on the global alert.
-                  </p>
-                </div>
+                <Field label="“Full details” link" hint="Optional. Shown as “View full details here →”.">
+                  <Input className="h-10" type="url" placeholder="https://… or /blog/…" value={formData.ctaUrl || ''} onChange={(e) => setFormData({ ...formData, ctaUrl: e.target.value })} />
+                </Field>
               )}
+              <FieldGrid>
+                <Field label="Priority" hint="0–10. Higher shows first.">
+                  <Input className="h-10" type="number" min={0} max={10} value={formData.priority ?? 0} onChange={(e) => setFormData({ ...formData, priority: Math.min(10, Math.max(0, parseInt(e.target.value) || 0)) })} />
+                </Field>
+                <ToggleField className="self-end" label="Active" description="Visible on the website." checked={formData.isActive !== false} onCheckedChange={(isActive) => setFormData({ ...formData, isActive })} />
+              </FieldGrid>
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Auto-applied color theme</label>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 rounded-md border border-border p-3">
-                  {Object.entries(selectedPreset).map(([key, value]) => (
-                    <div key={key} className="flex items-center gap-2">
-                      <span className="h-4 w-4 rounded border border-border" style={{ backgroundColor: value }} />
-                      <div>
-                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{key.replace('Color', '')}</p>
-                        <p className="text-xs font-mono text-foreground">{value}</p>
-                      </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">Preview</p>
+                <div
+                  className="rounded-lg border border-l-4 p-4"
+                  style={{ backgroundColor: selectedPreset.backgroundColor, borderColor: selectedPreset.borderColor, borderLeftColor: selectedPreset.accentColor }}
+                >
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" style={{ color: selectedPreset.accentColor }} aria-hidden="true" />
+                    <div className="min-w-0">
+                      <p className="font-semibold" style={{ color: selectedPreset.titleColor }}>{formData.title || 'Alert title'}</p>
+                      <p className="mt-1 text-sm" style={{ color: selectedPreset.bodyColor }}>{formData.message || 'Your message appears here.'}</p>
+                      {formData.type === 'global' && formData.ctaUrl && (
+                        <p className="mt-2 inline-flex items-center gap-1 text-sm font-medium" style={{ color: selectedPreset.accentColor }}>View full details here <ExternalLink className="h-3.5 w-3.5" /></p>
+                      )}
                     </div>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Colors are set automatically from icon type.</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Priority (0-10)</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={formData.priority || 0}
-                    onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) })}
-                  />
-                </div>
-
-                <div className="flex items-end">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.isActive !== false}
-                      onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                      className="rounded"
-                    />
-                    <span className="text-sm font-medium text-foreground">Active</span>
-                  </label>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <Button type="submit" className="flex-1">
-                  {editingId ? 'Update' : 'Create'}
-                </Button>
-                <Button type="button" variant="outline" onClick={handleCancel} className="flex-1">
-                  Cancel
-                </Button>
+              <div className="flex justify-end gap-2 border-t border-border pt-4">
+                <Button type="button" variant="ghost" onClick={handleCancel}>Cancel</Button>
+                <Button type="submit" className="min-w-28">{editingId ? 'Save alert' : 'Create alert'}</Button>
               </div>
             </form>
           </Card>

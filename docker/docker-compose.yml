@@ -28,13 +28,16 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./ssl:/etc/nginx/certs:ro
       - certbot_www:/var/www/certbot:ro
+      # Reloads nginx automatically when the certificate is renewed.
+      - ./nginx/40-cert-reload-watcher.sh:/docker-entrypoint.d/40-cert-reload-watcher.sh:ro
     restart: unless-stopped
     networks:
       - geletrekking-network
 
-  # Certbot (run manually via scripts for production SSL issuance/renewal)
+  # Certbot for manual Let's Encrypt use only (fallback if Cloudflare proxying is
+  # ever turned off). Production uses a Cloudflare Origin Certificate.
   certbot:
-    image: certbot/certbot:latest
+    image: certbot/certbot:v3.0.1
     container_name: geletrekking-certbot
     profiles:
       - prod
@@ -66,6 +69,10 @@ services:
   redis:
     image: redis:7-alpine
     container_name: geletrekking-redis
+    env_file:
+      - ../backend/.env
+    # Require a password; REDIS_PASSWORD comes from backend/.env
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\""]
     restart: unless-stopped
     networks:
       - geletrekking-network
@@ -83,9 +90,13 @@ services:
       - geletrekking-network
 
   # Mongo Express - Database Admin UI
+  # Not started by default. Start on demand with: docker compose --profile tools up -d mongo-express
+  # and reach it through an SSH tunnel (see docker-compose.dev.yml for a localhost-bound port).
   mongo-express:
-    image: mongo-express:latest
+    image: mongo-express:1.0.2-20-alpine3.19
     container_name: geletrekking-mongo-express
+    profiles:
+      - tools
     env_file:
       - ../backend/.env
     depends_on:

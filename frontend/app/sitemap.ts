@@ -21,12 +21,13 @@ const staticRoutes = [
   '/disclaimer',
 ]
 
-function route(path: string, priority = 0.7, changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] = 'weekly') {
+// Google ignores priority/changefreq but uses lastModified when it is accurate,
+// so only send a date when the record has a real one.
+function route(path: string, updatedAt?: string) {
+  const date = updatedAt ? new Date(updatedAt) : null
   return {
     url: `${SITE_URL}${path}`,
-    lastModified: new Date(),
-    changeFrequency,
-    priority,
+    ...(date && !Number.isNaN(date.getTime()) ? { lastModified: date } : {}),
   }
 }
 
@@ -39,10 +40,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ])
 
   return [
-    ...staticRoutes.map((path) => route(path, path === '' ? 1 : 0.75, path === '' ? 'daily' : 'weekly')),
-    ...treks.map((trek) => route(getTrekPath(trek), 0.9, 'weekly')),
-    ...blogs.map((post) => route(`/blog/${post.slug}`, 0.8, 'weekly')),
-    ...(guidesData.guides || []).map((guide) => route(`/guides/${guide.slug}`, 0.75, 'weekly')),
-    ...activities.map((activity) => route(`/activities/${activity.slug}`, 0.7, 'weekly')),
+    ...staticRoutes.map((path) => route(path)),
+    ...treks.map((trek) => route(getTrekPath(trek), trek.updatedAt)),
+    ...blogs.map((post) => route(`/blog/${post.slug}`, post.updatedAt)),
+    ...(guidesData.guides || []).map((guide) => route(`/guides/${guide.slug}`, guide.updatedAt)),
+    ...activities.map((activity) => route(`/activities/${activity.slug}`, activity.updatedAt)),
   ]
 }

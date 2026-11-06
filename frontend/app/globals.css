@@ -252,3 +252,80 @@
 .trekking-blog-content td {
   @apply border-t border-border px-4 py-3 text-muted-foreground;
 }
+
+/* ------------------------------------------------------------------
+ Admin form controls: one consistent, modern look for every input,
+ textarea and select inside the admin (.admin-ui), including raw
+ elements styled ad hoc in individual pages. Sizes are left to each
+ control; this only unifies surface, border, radius and focus.
+ Deliberately unlayered so it wins over per-page utility classes.
+------------------------------------------------------------------- */
+.admin-ui :is(input:not([type='checkbox'], [type='radio'], [type='file'], [type='range'], [type='color'], [cmdk-input]), textarea, select) {
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid var(--border);
+  background-color: var(--background);
+  color: var(--foreground);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.admin-ui :is(input:not([type='checkbox'], [type='radio'], [type='file'], [type='range'], [type='color'], [cmdk-input]), textarea, select):hover:not(:disabled):not(:focus) {
+  border-color: color-mix(in oklch, var(--foreground) 22%, var(--border));
+}
+.admin-ui :is(input:not([type='checkbox'], [type='radio'], [type='file'], [type='range'], [type='color'], [cmdk-input]), textarea, select):focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary) 18%, transparent);
+}
+.admin-ui :is(input, textarea, select)[aria-invalid='true'] {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--destructive) 15%, transparent);
+}
+.admin-ui :is(input, textarea, select):disabled {
+  background-color: var(--muted);
+  cursor: not-allowed;
+}
+.admin-ui textarea {
+  line-height: 1.6;
+  resize: vertical;
+}
+.admin-ui select:not([multiple]) {
+  appearance: none;
+  padding-right: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  background-size: 1rem;
+}
+.admin-ui :is(input[type='checkbox'], input[type='radio']) {
+  accent-color: var(--primary);
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+.admin-ui input[type='file']::file-selector-button {
+  margin-right: 0.75rem;
+  border: 0;
+  border-radius: calc(var(--radius) - 4px);
+  background: var(--muted);
+  padding: 0.4rem 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.admin-ui ::placeholder {
+  color: color-mix(in oklch, var(--muted-foreground) 75%, transparent);
+}
+
+/* Markdown preview inside the admin editor */
+.md-preview { font-size: 0.9rem; line-height: 1.7; color: var(--foreground); }
+.md-preview > * + * { margin-top: 0.75em; }
+.md-preview h1, .md-preview h2 { font-size: 1.25rem; font-weight: 600; margin-top: 1.25em; }
+.md-preview h3, .md-preview h4 { font-size: 1.05rem; font-weight: 600; margin-top: 1em; }
+.md-preview ul { list-style: disc; padding-left: 1.4em; }
+.md-preview ol { list-style: decimal; padding-left: 1.4em; }
+.md-preview li + li { margin-top: 0.25em; }
+.md-preview a { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
+.md-preview blockquote { border-left: 3px solid var(--border); padding-left: 1em; color: var(--muted-foreground); }
+.md-preview code { background: var(--muted); border-radius: 4px; padding: 0.1em 0.35em; font-size: 0.85em; }
+.md-preview table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.md-preview th, .md-preview td { border: 1px solid var(--border); padding: 0.4em 0.6em; text-align: left; }
+.md-preview img { border-radius: 8px; max-width: 100%; }

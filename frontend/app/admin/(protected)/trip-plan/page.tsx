@@ -1,15 +1,39 @@
 'use client'
 
+import { useConfirm } from '@/components/admin/use-confirm'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowDown, ArrowUp, Bold, BookOpen, CheckCircle, ExternalLink, FileText, Heading2, Italic, Link as LinkIcon, List, ListOrdered, Loader2, Pencil, Plus, Quote, Save, Trash2 } from 'lucide-react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertCircle, ArrowDown, ArrowUp, BookOpen, ExternalLink, Eye, Heart, Loader2, Phone, Plus, ShieldCheck, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import {
+  AdminPageHeader,
+  EmptyState,
+  Field,
+  FieldGrid,
+  SaveBar,
+  SelectInput,
+  StatusToasts,
+  TextArea,
+  ToggleField,
+  useDirtyState,
+  useUnsavedChangesWarning,
+} from '@/components/admin/form-kit'
+import { MarkdownEditor } from '@/components/admin/markdown-editor'
+import { cn } from '@/lib/utils'
 import { createGuide, deleteGuide, getAdminGuides, updateGuide, type TravelGuide } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
+
+// Icon names the public guides menu understands (lib/guide-menu.ts).
+const GUIDE_ICONS = [
+  { name: 'BookOpen', icon: BookOpen },
+  { name: 'Heart', icon: Heart },
+  { name: 'AlertCircle', icon: AlertCircle },
+  { name: 'Shield', icon: ShieldCheck },
+  { name: 'Phone', icon: Phone },
+  { name: 'Eye', icon: Eye },
+]
 
 const categories = ['Logistics', 'Health & Safety', 'Preparation', 'Guidelines', 'Legal', 'Communication', 'Safety']
 const regions = ['General', 'Everest', 'Annapurna', 'Langtang', 'Mustang']
@@ -60,35 +84,8 @@ const toGuideForm = (guide: TravelGuide): GuideForm => ({
   isActive: typeof guide.isActive === 'boolean' ? guide.isActive : true,
 })
 
-const TextFormattingTools = ({ disabled = false, onFormat }: { disabled?: boolean; onFormat: (before: string, after?: string, placeholder?: string) => void }) => (
-  <div className="rounded-md border border-border bg-background p-1.5 shadow-xs">
-    <div className="flex flex-wrap items-center gap-1">
-      <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={() => onFormat('**', '**', 'bold text')} className="h-8 gap-1.5 px-2" title="Bold">
-        <Bold className="h-4 w-4" /><span className="text-xs">Bold</span>
-      </Button>
-      <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={() => onFormat('*', '*', 'italic text')} className="h-8 gap-1.5 px-2" title="Italic">
-        <Italic className="h-4 w-4" /><span className="text-xs">Italic</span>
-      </Button>
-      <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={() => onFormat('## ', '', 'Heading')} className="h-8 gap-1.5 px-2" title="Heading">
-        <Heading2 className="h-4 w-4" /><span className="text-xs">Heading</span>
-      </Button>
-      <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={() => onFormat('- ', '', 'List item')} className="h-8 gap-1.5 px-2" title="Bullet list">
-        <List className="h-4 w-4" /><span className="text-xs">Bullet</span>
-      </Button>
-      <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={() => onFormat('1. ', '', 'List item')} className="h-8 gap-1.5 px-2" title="Numbered list">
-        <ListOrdered className="h-4 w-4" /><span className="text-xs">Numbered</span>
-      </Button>
-      <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={() => onFormat('> ', '', 'Quote')} className="h-8 gap-1.5 px-2" title="Quote">
-        <Quote className="h-4 w-4" /><span className="text-xs">Quote</span>
-      </Button>
-      <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={() => onFormat('[', '](/contact)', 'link text')} className="h-8 gap-1.5 px-2" title="Link">
-        <LinkIcon className="h-4 w-4" /><span className="text-xs">Link</span>
-      </Button>
-    </div>
-  </div>
-)
-
 export default function AdminTripPlanPage() {
+  const [askConfirm, confirmDialog] = useConfirm()
   const [guides, setGuides] = useState<TravelGuide[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [form, setForm] = useState<GuideForm>(() => emptyGuide())
@@ -98,15 +95,13 @@ export default function AdminTripPlanPage() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [isEditing, setIsEditing] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const { dirty, markSaved, baseline } = useDirtyState(form)
+  useUnsavedChangesWarning(dirty)
   const token = getAdminToken()
 
   const selectedGuide = useMemo(() => guides.find((guide) => guide._id === selectedId), [guides, selectedId])
-  const isReadOnly = !!selectedId && !isEditing
   const activeCount = guides.filter((guide) => guide.isActive).length
-  const groupedCounts = categories.map((category) => ({
-    category,
-    count: guides.filter((guide) => guide.category === category).length,
-  })).filter((item) => item.count > 0)
 
   const refreshGuides = async (preferredId?: string) => {
     if (!token) {
@@ -125,11 +120,14 @@ export default function AdminTripPlanPage() {
       const nextSelected = sorted.find((guide) => guide._id === preferredId) || sorted[0]
       if (nextSelected) {
         setSelectedId(nextSelected._id || null)
-        setForm(toGuideForm(nextSelected))
+        const next = toGuideForm(nextSelected)
+        setForm(next)
+        markSaved(next)
         setIsEditing(false)
       } else {
         setSelectedId(null)
         setForm(emptyGuide())
+        markSaved(emptyGuide())
         setIsEditing(true)
       }
     } catch (err) {
@@ -147,17 +145,29 @@ export default function AdminTripPlanPage() {
     setError('')
   }
 
-  const startNewGuide = () => {
+  const confirmLeave = async () =>
+    !dirty || (await askConfirm({ title: 'Discard unsaved changes?', description: 'Your edits to this guide will be lost.', confirmLabel: 'Discard' }))
+
+  const startNewGuide = async () => {
+    if (!(await confirmLeave())) return
+    const next = emptyGuide((guides.length || 0) + 1)
     setSelectedId(null)
-    setForm(emptyGuide((guides.length || 0) + 1))
+    setForm(next)
+    markSaved(next)
+    setSubmitted(false)
     setIsEditing(true)
     setError('')
     setMessage('')
   }
 
-  const selectGuide = (guide: TravelGuide) => {
+  const selectGuide = async (guide: TravelGuide) => {
+    if (guide._id === selectedId) return
+    if (!(await confirmLeave())) return
+    const next = toGuideForm(guide)
     setSelectedId(guide._id || null)
-    setForm(toGuideForm(guide))
+    setForm(next)
+    markSaved(next)
+    setSubmitted(false)
     setIsEditing(false)
     setError('')
     setMessage('')
@@ -184,27 +194,6 @@ export default function AdminTripPlanPage() {
     }
   }
 
-  const handleTextAreaInsert = (beforeText: string, afterText = '', placeholder = 'text') => {
-    const textarea = document.getElementById('guide-content') as HTMLTextAreaElement | null
-    if (isReadOnly || !textarea) return
-
-    const start = textarea.selectionStart || 0
-    const end = textarea.selectionEnd || 0
-    const value = textarea.value
-    const selectedText = value.substring(start, end)
-    const content = selectedText || placeholder
-    const insertion = `${beforeText}${content}${afterText}`
-    const newValue = value.substring(0, start) + insertion + value.substring(end)
-
-    updateForm({ content: newValue })
-
-    setTimeout(() => {
-      textarea.focus()
-      const cursor = start + insertion.length
-      textarea.setSelectionRange(cursor, cursor)
-    }, 0)
-  }
-
   const handleSave = async () => {
     if (!token) {
       setError('Missing admin token. Please login again.')
@@ -222,8 +211,9 @@ export default function AdminTripPlanPage() {
       order: Number(form.order) || 0,
     }
 
+    setSubmitted(true)
     if (!payload.title || !payload.slug || !payload.content) {
-      setError('Title, slug, and content are required before saving.')
+      setError('Add a title and the guide content before saving.')
       return
     }
 
@@ -234,8 +224,7 @@ export default function AdminTripPlanPage() {
       const saved = selectedId ? await updateGuide(token, selectedId, payload) : await createGuide(token, payload)
       await refreshGuides(saved._id)
       setIsEditing(false)
-      setMessage(selectedId ? 'Trip guide updated successfully.' : 'Trip guide created successfully.')
-      setTimeout(() => setMessage(''), 5000)
+      setMessage(selectedId ? 'Guide saved.' : 'Guide created.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save guide')
     } finally {
@@ -245,7 +234,7 @@ export default function AdminTripPlanPage() {
 
   const handleDelete = async () => {
     if (!token || !selectedId || !selectedGuide) return
-    if (!window.confirm(`Delete "${selectedGuide.title}"? This cannot be undone.`)) return
+    if (!(await askConfirm({ title: `Delete "${selectedGuide.title}"?`, description: 'The guide page will be removed from the website.' }))) return
 
     setDeleting(true)
     setError('')
@@ -253,8 +242,7 @@ export default function AdminTripPlanPage() {
     try {
       await deleteGuide(token, selectedId)
       await refreshGuides()
-      setMessage('Trip guide deleted successfully.')
-      setTimeout(() => setMessage(''), 5000)
+      setMessage('Guide deleted.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete guide')
     } finally {
@@ -262,216 +250,178 @@ export default function AdminTripPlanPage() {
     }
   }
 
+  const onDiscard = () => {
+    const saved = baseline()
+    if (saved) setForm(saved)
+  }
+
+  const words = form.content.trim() ? form.content.trim().split(/\s+/).length : 0
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Admin dashboard</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight text-foreground">Trip Planning Guides</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Manage the Make Trip Plan content shown on the Guides page and guide detail pages.</p>
-        </div>
-        <Button variant="outline" asChild className="gap-2 lg:self-center">
-          <Link href="/guides" target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="h-4 w-4" /> Preview Guides
-          </Link>
-        </Button>
-      </div>
+      {confirmDialog}
+      <StatusToasts error={error} message={message} />
+      <AdminPageHeader
+        title="Travel guides"
+        description="Planning guides on the Guides page: permits, visas, gear, seasons, health and more."
+        actions={
+          <>
+            <Button variant="outline" asChild className="gap-2">
+              <Link href="/guides" target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" /> View page</Link>
+            </Button>
+            <Button onClick={() => void startNewGuide()} className="gap-2"><Plus className="h-4 w-4" /> New guide</Button>
+          </>
+        }
+      />
 
-      {error ? (
-        <Alert className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950">
-          <AlertDescription className="text-red-800 dark:text-red-200">{error}</AlertDescription>
-        </Alert>
-      ) : null}
-      {message ? (
-        <Alert className="border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950">
-          <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-          <AlertDescription className="text-emerald-800 dark:text-emerald-200">{message}</AlertDescription>
-        </Alert>
-      ) : null}
-
-      <div className="grid items-start gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
-        <Card className="flex max-h-[calc(100vh-8rem)] min-h-0 flex-col overflow-hidden border-border shadow-xs xl:sticky xl:top-24">
-          <CardHeader className="border-b border-border bg-muted/20">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <CardTitle>Guide Library</CardTitle>
-                <CardDescription>{guides.length} total, {activeCount} visible on the website</CardDescription>
-              </div>
-              <Button type="button" size="sm" className="gap-1.5" onClick={startNewGuide}>
-                <Plus className="h-4 w-4" /> New
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="min-h-0 flex-1 overflow-hidden p-0">
-            {loading ? (
-              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading guides...
-              </div>
-            ) : guides.length === 0 ? (
-              <div className="p-5 text-sm text-muted-foreground">No guides yet. Create the first guide to start building the Guides page.</div>
-            ) : (
-              <div className="max-h-[calc(100vh-15rem)] divide-y divide-border overflow-y-auto">
-                {guides.map((guide, index) => {
-                  const isSelected = guide._id === selectedId
-                  return (
-                    <div key={guide._id || guide.slug} className={`p-4 transition-colors ${isSelected ? 'bg-primary/10' : 'hover:bg-muted/30'}`}>
-                      <button type="button" className="w-full text-left" onClick={() => selectGuide(guide)}>
-                        <div className="flex items-start gap-3">
-                          <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background text-xs font-semibold text-muted-foreground">
-                            {index + 1}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="truncate text-sm font-semibold text-foreground">{guide.title}</p>
-                              <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${guide.isActive ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-muted text-muted-foreground'}`}>
-                                {guide.isActive ? 'Active' : 'Hidden'}
-                              </span>
-                            </div>
-                            <p className="mt-1 text-xs text-muted-foreground">{guide.category} · {guide.slug}</p>
-                          </div>
-                        </div>
+      <div className="grid items-start gap-6 xl:grid-cols-[20rem_minmax(0,1fr)]">
+        {/* Library */}
+        <nav aria-label="Guides" className="overflow-hidden rounded-xl border border-border bg-card shadow-sm xl:sticky xl:top-20">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <p className="text-sm font-semibold text-foreground">Guides</p>
+            <p className="text-xs text-muted-foreground">{activeCount} of {guides.length} visible</p>
+          </div>
+          {loading ? (
+            <div className="space-y-2 p-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />)}</div>
+          ) : guides.length === 0 ? (
+            <p className="p-4 text-sm text-muted-foreground">No guides yet.</p>
+          ) : (
+            <ul className="max-h-[calc(100dvh-14rem)] overflow-y-auto p-2">
+              {guides.map((guide, index) => {
+                const selected = guide._id === selectedId
+                return (
+                  <li key={guide._id || guide.slug} className="group flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => void selectGuide(guide)}
+                      aria-current={selected ? 'true' : undefined}
+                      className={cn(
+                        'flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        selected ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                      )}
+                    >
+                      <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-xs font-semibold tabular-nums', selected ? 'bg-primary-foreground/15' : 'bg-muted text-muted-foreground')}>{index + 1}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">{guide.title}</span>
+                        <span className={cn('block truncate text-xs', selected ? 'text-primary-foreground/75' : 'text-muted-foreground')}>
+                          {guide.category}{guide.isActive ? '' : ' · hidden'}
+                        </span>
+                      </span>
+                    </button>
+                    <div className={cn('flex flex-col opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100', selected && 'opacity-100')}>
+                      <button type="button" disabled={index === 0 || saving || dirty} onClick={() => void moveGuide(guide, -1)} className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30" aria-label={`Move ${guide.title} up`} title={dirty ? 'Save your changes first' : 'Move up'}>
+                        <ArrowUp className="h-3.5 w-3.5" />
                       </button>
-                      <div className="mt-3 flex gap-2 pl-12">
-                        <Button type="button" variant="outline" size="sm" disabled={!isEditing || selectedId !== guide._id || index === 0 || saving} onClick={() => moveGuide(guide, -1)} title="Move up">
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                        <Button type="button" variant="outline" size="sm" disabled={!isEditing || selectedId !== guide._id || index === guides.length - 1 || saving} onClick={() => moveGuide(guide, 1)} title="Move down">
-                          <ArrowDown className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <button type="button" disabled={index === guides.length - 1 || saving || dirty} onClick={() => void moveGuide(guide, 1)} className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30" aria-label={`Move ${guide.title} down`} title={dirty ? 'Save your changes first' : 'Move down'}>
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </button>
                     </div>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </nav>
 
-        <Card className="overflow-hidden border-border shadow-xs">
-          <CardHeader className="border-b border-border bg-muted/20">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <CardTitle>{selectedId ? (isEditing ? 'Edit Guide' : 'Guide Details') : 'Create Guide'}</CardTitle>
-                <CardDescription>{isReadOnly ? 'Select Edit to make changes to this guide.' : 'Use Markdown formatting for headings, lists, emphasis, quotes, and links.'}</CardDescription>
+        {/* Editor */}
+        {loading ? (
+          <div className="h-96 animate-pulse rounded-xl border border-border bg-card" />
+        ) : (
+          <div className="min-w-0 space-y-6">
+            <div className="space-y-5 rounded-xl border border-border bg-card p-5 shadow-sm md:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-semibold text-foreground">{selectedId ? 'Edit guide' : 'New guide'}</h2>
+                  {selectedId && <Badge variant="outline" className={form.isActive ? 'border-emerald-300 text-emerald-700' : ''}>{form.isActive ? 'Visible' : 'Hidden'}</Badge>}
+                </div>
+                <div className="flex gap-1">
+                  {selectedId && form.slug && (
+                    <Button variant="ghost" size="sm" asChild className="gap-1.5">
+                      <Link href={`/guides/${form.slug}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" /> View</Link>
+                    </Button>
+                  )}
+                  {selectedId && (
+                    <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-destructive" onClick={() => void handleDelete()} disabled={deleting || saving}>
+                      {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Delete
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                {selectedId && !isEditing ? (
-                  <Button type="button" size="sm" className="gap-1.5" onClick={() => setIsEditing(true)}>
-                    <Pencil className="h-4 w-4" /> Edit
-                  </Button>
-                ) : selectedId ? (
-                  <Button type="button" variant="outline" size="sm" onClick={() => selectedGuide && selectGuide(selectedGuide)}>
-                    Cancel
-                  </Button>
-                ) : null}
-                {groupedCounts.slice(0, 2).map((item) => (
-                  <span key={item.category} className="rounded-md border border-border bg-background px-3 py-2 font-medium text-foreground">
-                    {item.category}: {item.count}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-5 p-4 md:p-5">
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <label className="space-y-1.5 text-sm font-medium text-foreground xl:col-span-2">
-                Title
+
+              <Field label="Title" required error={submitted && !form.title.trim() ? 'Add a title.' : undefined}>
                 <Input
-                  disabled={isReadOnly}
+                  className="h-11 text-base font-medium"
                   value={form.title}
                   onChange={(event) => updateForm({ title: event.target.value, slug: selectedId ? form.slug : slugifyGuide(event.target.value) })}
-                  placeholder="Visa Information"
+                  placeholder="e.g. Visa information"
                 />
-              </label>
-              <label className="space-y-1.5 text-sm font-medium text-foreground">
-                Slug
-                <Input disabled={isReadOnly} value={form.slug} onChange={(event) => updateForm({ slug: slugifyGuide(event.target.value) })} placeholder="visa-information" />
-              </label>
-              <label className="space-y-1.5 text-sm font-medium text-foreground">
-                Category
-                <select disabled={isReadOnly} value={form.category} onChange={(event) => updateForm({ category: event.target.value })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]">
-                  {categories.map((category) => <option key={category} value={category}>{category}</option>)}
-                </select>
-              </label>
-              <label className="space-y-1.5 text-sm font-medium text-foreground">
-                Section
-                <Input disabled={isReadOnly} value={form.section} onChange={(event) => updateForm({ section: event.target.value })} placeholder="Planning" />
-              </label>
-              <label className="space-y-1.5 text-sm font-medium text-foreground">
-                Region
-                <select disabled={isReadOnly} value={form.region} onChange={(event) => updateForm({ region: event.target.value })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]">
-                  {regions.map((region) => <option key={region} value={region}>{region}</option>)}
-                </select>
-              </label>
-              <label className="space-y-1.5 text-sm font-medium text-foreground">
-                Icon name
-                <Input disabled={isReadOnly} value={form.icon} onChange={(event) => updateForm({ icon: event.target.value })} placeholder="BookOpen" />
-              </label>
-              <label className="space-y-1.5 text-sm font-medium text-foreground">
-                Order
-                <Input disabled={isReadOnly} type="number" value={form.order} onChange={(event) => updateForm({ order: Number(event.target.value) || 0 })} />
-              </label>
-              <label className="flex items-center gap-2 rounded-md border border-border bg-muted/20 px-3 py-2 text-sm font-medium text-foreground">
-                <input disabled={isReadOnly} type="checkbox" checked={form.isActive} onChange={(event) => updateForm({ isActive: event.target.checked })} className="h-4 w-4 rounded border-border" />
-                Visible on website
-              </label>
-            </div>
-
-            <label className="space-y-1.5 text-sm font-medium text-foreground">
-              Description
-              <Textarea disabled={isReadOnly} value={form.description} onChange={(event) => updateForm({ description: event.target.value })} rows={3} placeholder="Short summary shown on the Guides page" />
-            </label>
-
-            <div className="space-y-2">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <label className="text-sm font-medium text-foreground">Guide content</label>
-                  <p className="mt-1 text-xs text-muted-foreground">Markdown is supported and rendered on the public guide detail page.</p>
+              </Field>
+              <Field label="Web address" hint={selectedId ? 'Changing this breaks existing links to the guide.' : 'Filled in from the title.'}>
+                <div className="flex items-center overflow-hidden rounded-lg border border-input bg-background focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/20">
+                  <span className="shrink-0 border-r border-border bg-muted px-3 py-2.5 text-sm text-muted-foreground">/guides/</span>
+                  <input value={form.slug} onChange={(event) => updateForm({ slug: slugifyGuide(event.target.value) })} placeholder="visa-information" style={{ border: 0, boxShadow: 'none' }} className="h-10 min-w-0 flex-1 bg-transparent px-3 text-sm outline-none" />
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <FileText className="h-4 w-4" /> {form.content.trim().split(/\s+/).filter(Boolean).length} words
-                </div>
-              </div>
-              <TextFormattingTools disabled={isReadOnly} onFormat={handleTextAreaInsert} />
-              <Textarea
-                id="guide-content"
-                disabled={isReadOnly}
-                value={form.content}
-                onChange={(event) => updateForm({ content: event.target.value })}
-                placeholder="# Guide title\n\nWrite the complete guide here..."
-                rows={18}
-                className="font-mono text-sm leading-relaxed"
-              />
+              </Field>
+              <Field label="Summary" hint="Shown on the Guides page card." count={{ value: form.description, max: 160, recommended: true }}>
+                <TextArea rows={2} className="min-h-0" value={form.description} onChange={(event) => updateForm({ description: event.target.value })} placeholder="What trekkers will learn from this guide." />
+              </Field>
+              <Field label="Guide content" required error={submitted && !form.content.trim() ? 'Write the guide content.' : undefined} hint={`${words} words`}>
+                <MarkdownEditor value={form.content} onChange={(content) => updateForm({ content })} rows={18} placeholder="Write the complete guide…" />
+              </Field>
             </div>
 
-            <div className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <BookOpen className="h-4 w-4" />
-                {selectedId && form.slug ? (
-                  <Link href={`/guides/${form.slug}`} target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline underline-offset-4">
-                    Preview this guide
-                  </Link>
-                ) : (
-                  <span>New guide draft</span>
-                )}
-              </div>
-              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                {selectedId && isEditing ? (
-                  <Button type="button" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={handleDelete} disabled={deleting || saving}>
-                    {deleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                    Delete
-                  </Button>
-                ) : null}
-                {!isReadOnly ? (
-                  <Button type="button" onClick={handleSave} disabled={saving || deleting} size="lg" className="gap-2">
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                    {saving ? 'Saving...' : selectedId ? 'Save Guide' : 'Create Guide'}
-                  </Button>
-                ) : null}
+            <div className="space-y-5 rounded-xl border border-border bg-card p-5 shadow-sm md:p-6">
+              <h3 className="text-sm font-semibold text-foreground">Placement</h3>
+              <ToggleField label="Visible on the website" description="Hidden guides stay here as drafts." checked={form.isActive} onCheckedChange={(isActive) => updateForm({ isActive })} />
+              <FieldGrid cols={3}>
+                <Field label="Category">
+                  <SelectInput value={form.category} onChange={(event) => updateForm({ category: event.target.value })}>
+                    {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+                  </SelectInput>
+                </Field>
+                <Field label="Region">
+                  <SelectInput value={form.region} onChange={(event) => updateForm({ region: event.target.value })}>
+                    {regions.map((region) => <option key={region} value={region}>{region}</option>)}
+                  </SelectInput>
+                </Field>
+                <Field label="Section" hint="Optional group label.">
+                  <Input className="h-10" value={form.section} onChange={(event) => updateForm({ section: event.target.value })} placeholder="e.g. Planning" />
+                </Field>
+              </FieldGrid>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">Menu icon</p>
+                <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Menu icon">
+                  {GUIDE_ICONS.map(({ name, icon: Icon }) => {
+                    const selected = form.icon === name
+                    return (
+                      <button
+                        key={name}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        aria-label={name}
+                        title={name}
+                        onClick={() => updateForm({ icon: name })}
+                        className={cn('flex h-10 w-10 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground')}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">Some well-known guides (visa, permits, weather…) use a fixed icon automatically.</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+
+            <SaveBar
+              dirty={dirty || !selectedId}
+              saving={saving}
+              onSave={() => void handleSave()}
+              onDiscard={dirty && selectedId ? onDiscard : undefined}
+              saveLabel={selectedId ? 'Save guide' : 'Create guide'}
+            />
+          </div>
+        )}
       </div>
     </div>
   )

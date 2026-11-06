@@ -17,7 +17,7 @@ router.get("/", getSettings);
 router.get("/registrations-affiliations", getRegistrationsAffiliations);
 
 // Admin/Superadmin
-router.put("/", authMiddleware, updateSettings);
+router.put("/", authMiddleware, requirePermission('manage_settings'), updateSettings);
 
 // Registrations & Affiliations Management
 router.post(

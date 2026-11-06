@@ -37,6 +37,8 @@ import {
   type BookingFormFieldConfig,
 } from '@/lib/booking-form-config'
 import { getAdminToken } from '@/lib/admin-auth'
+import { AdminPageHeader, Field, FieldGrid, StatusToasts, TextArea } from '@/components/admin/form-kit'
+import { Input } from '@/components/ui/input'
 
 const consentLabels: Record<string, string> = {
   agreeTerms: 'Terms accepted',
@@ -56,6 +58,7 @@ export default function AdminBookingsPage() {
   const [links, setLinks] = useState<AdminBookingFormLink[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all')
+  const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -95,10 +98,14 @@ export default function AdminBookingsPage() {
   useEffect(() => { void refresh() }, [])
 
   const filtered = useMemo(() => {
-    if (filter === 'unread') return items.filter((item) => !item.isRead)
-    if (filter === 'read') return items.filter((item) => item.isRead)
-    return items
-  }, [filter, items])
+    const byStatus =
+      filter === 'unread' ? items.filter((item) => !item.isRead) : filter === 'read' ? items.filter((item) => item.isRead) : items
+    const q = query.trim().toLowerCase()
+    if (!q) return byStatus
+    return byStatus.filter((item) =>
+      [item.firstName, item.lastName, item.email, item.mobileWhatsapp, item.trekPackage].some((v) => (v || '').toLowerCase().includes(q))
+    )
+  }, [filter, items, query])
 
   const selected = useMemo(() => items.find((item) => item._id === selectedId) ?? null, [items, selectedId])
   const unreadCount = items.filter((item) => !item.isRead).length
@@ -222,13 +229,18 @@ export default function AdminBookingsPage() {
 
   const resetFormConfig = () => setFormConfig(normalizeBookingFormConfig(defaultBookingFormConfig))
   const formatFieldName = (key: string) => key.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase())
-  const inputClass = 'w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring'
   const compactInputClass = 'w-full rounded-md border border-input bg-background px-2.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted/50 disabled:text-muted-foreground'
   const totalFields = formConfig.reduce((sum, section) => sum + section.fields.length, 0)
   const requiredFields = formConfig.reduce((sum, section) => sum + section.fields.filter((field) => field.required).length, 0)
 
   return (
     <>
+      <StatusToasts error={error} message={notice} />
+      <AdminPageHeader
+        className="mb-6"
+        title="Bookings"
+        description="Send clients a private booking form, choose which fields it asks for, and review submitted forms."
+      />
       <Tabs defaultValue="links" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3 lg:w-fit">
           <TabsTrigger value="links">Private Links</TabsTrigger>
@@ -244,18 +256,26 @@ export default function AdminBookingsPage() {
                 <CardDescription>Create a client link. It expires after the number of days you set below.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {error && <p className="text-sm text-red-600">{error}</p>}
-                {notice && <p className="text-sm text-emerald-700">{notice}</p>}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input className={inputClass} placeholder="Client name" value={linkForm.clientName} onChange={(event) => setLinkForm((prev) => ({ ...prev, clientName: event.target.value }))} />
-                  <input className={inputClass} placeholder="Client email" value={linkForm.clientEmail} onChange={(event) => setLinkForm((prev) => ({ ...prev, clientEmail: event.target.value }))} />
-                  <input className={inputClass} placeholder="Trek package" value={linkForm.trekPackage} onChange={(event) => setLinkForm((prev) => ({ ...prev, trekPackage: event.target.value }))} />
-                  <label className="space-y-1 text-xs font-medium text-muted-foreground">
-                    Link expires after days
-                    <input className={inputClass} type="number" min={1} max={60} value={linkForm.ttlDays} onChange={(event) => setLinkForm((prev) => ({ ...prev, ttlDays: Number(event.target.value) || 14 }))} />
-                  </label>
-                  <textarea className={`${inputClass} sm:col-span-2 resize-none`} rows={2} placeholder="Internal notes" value={linkForm.notes} onChange={(event) => setLinkForm((prev) => ({ ...prev, notes: event.target.value }))} />
-                </div>
+                <FieldGrid>
+                  <Field label="Client name">
+                    <Input className="h-10" autoComplete="off" placeholder="e.g. Anna Müller" value={linkForm.clientName} onChange={(event) => setLinkForm((prev) => ({ ...prev, clientName: event.target.value }))} />
+                  </Field>
+                  <Field label="Client email" error={linkForm.clientEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(linkForm.clientEmail.trim()) ? 'Enter a valid email address.' : undefined}>
+                    <Input className="h-10" type="email" autoComplete="off" placeholder="client@example.com" value={linkForm.clientEmail} onChange={(event) => setLinkForm((prev) => ({ ...prev, clientEmail: event.target.value }))} />
+                  </Field>
+                  <Field label="Trek">
+                    <Input className="h-10" placeholder="e.g. Everest Base Camp, 15 days" value={linkForm.trekPackage} onChange={(event) => setLinkForm((prev) => ({ ...prev, trekPackage: event.target.value }))} />
+                  </Field>
+                  <Field label="Link valid for" hint="1–60 days.">
+                    <div className="flex items-center gap-2">
+                      <Input className="h-10 w-24" type="number" min={1} max={60} value={linkForm.ttlDays} onChange={(event) => setLinkForm((prev) => ({ ...prev, ttlDays: Math.min(60, Math.max(1, Number(event.target.value) || 14)) }))} />
+                      <span className="text-sm text-muted-foreground">days</span>
+                    </div>
+                  </Field>
+                </FieldGrid>
+                <Field label="Internal notes" hint="Only visible to admins.">
+                  <TextArea rows={2} className="min-h-0" placeholder="e.g. Group of 4, private departure on 12 Oct" value={linkForm.notes} onChange={(event) => setLinkForm((prev) => ({ ...prev, notes: event.target.value }))} />
+                </Field>
                 <Button onClick={createLink} disabled={creatingLink} className="gap-1.5">
                   <LinkIcon className="w-3.5 h-3.5" />
                   {creatingLink ? 'Activating...' : 'Activate Link'}
@@ -428,7 +448,6 @@ export default function AdminBookingsPage() {
                 <CardDescription>{unreadCount} unread submission(s)</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {error && <p className="text-sm text-red-600">{error}</p>}
                 <div className="flex gap-2 flex-wrap">
                   {(['all', 'unread', 'read'] as const).map((item) => (
                     <Button key={item} variant={filter === item ? 'default' : 'outline'} size="sm" onClick={() => setFilter(item)}>
@@ -437,6 +456,14 @@ export default function AdminBookingsPage() {
                   ))}
                   <Button variant="outline" size="sm" onClick={() => void refresh()}>Refresh</Button>
                 </div>
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search name, email, phone or trek"
+                  aria-label="Search bookings"
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
 
                 {loading ? (
                   <p className="text-sm text-muted-foreground">Loading booking forms...</p>

@@ -129,7 +129,7 @@ exports.getRegistrationsAffiliations = async (req, res) => {
 exports.updateRegistrationDocument = async (req, res) => {
   try {
     const { code } = req.params;
-    const { documentUrl, documentType, status } = req.body;
+    const { title, description, documentUrl, documentType, status } = req.body;
 
     const doc = await getSingleton();
     const docIndex = doc.registrationsAffiliations.findIndex((d) => d.code === code);
@@ -138,10 +138,17 @@ exports.updateRegistrationDocument = async (req, res) => {
       return res.status(404).json({ message: "Document not found" });
     }
 
-    if (documentUrl) doc.registrationsAffiliations[docIndex].documentUrl = documentUrl;
-    if (documentType) doc.registrationsAffiliations[docIndex].documentType = documentType;
-    if (status) doc.registrationsAffiliations[docIndex].status = status;
-    doc.registrationsAffiliations[docIndex].uploadedAt = new Date();
+    const entry = doc.registrationsAffiliations[docIndex];
+    if (typeof title === "string") {
+      if (!title.trim()) return res.status(400).json({ message: "Title is required" });
+      entry.title = title.trim();
+    }
+    if (typeof description === "string") entry.description = description.trim();
+    // Allow clearing the URL with an empty string.
+    if (typeof documentUrl === "string") entry.documentUrl = documentUrl.trim();
+    if (DOCUMENT_TYPES.has(documentType)) entry.documentType = documentType;
+    if (DOCUMENT_STATUSES.has(status)) entry.status = status;
+    entry.uploadedAt = new Date();
 
     await doc.save();
     res.json(doc.registrationsAffiliations[docIndex]);
@@ -152,9 +159,12 @@ exports.updateRegistrationDocument = async (req, res) => {
 };
 
 // Admin/Superadmin - Add new document
+const DOCUMENT_TYPES = new Set(["image", "pdf"]);
+const DOCUMENT_STATUSES = new Set(["placeholder", "pending", "uploaded"]);
+
 exports.addRegistrationDocument = async (req, res) => {
   try {
-    const { title, code, description } = req.body;
+    const { title, code, description, documentUrl, documentType, status } = req.body;
 
     if (!title || !code) {
       return res.status(400).json({ message: "Title and code are required" });
@@ -171,10 +181,10 @@ exports.addRegistrationDocument = async (req, res) => {
       title,
       code,
       description: description || "",
-      documentUrl: "",
-      documentType: "image",
-      status: "placeholder",
-      uploadedAt: null,
+      documentUrl: typeof documentUrl === "string" ? documentUrl.trim() : "",
+      documentType: DOCUMENT_TYPES.has(documentType) ? documentType : "image",
+      status: DOCUMENT_STATUSES.has(status) ? status : "placeholder",
+      uploadedAt: documentUrl ? new Date() : null,
     });
 
     await doc.save();

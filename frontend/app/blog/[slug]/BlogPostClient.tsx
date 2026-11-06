@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useEffect, useMemo, useState } from 'react';
 import type { UiBlogPost } from '@/lib/api';
 import { marked } from 'marked';
+import { sanitizeHtml } from '@/lib/sanitize-html'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -156,7 +157,7 @@ function renderBlogMarkdown(content: string, allowExternalMedia: boolean) {
 
 export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) {
   const { externalMedia } = useCookieConsent();
-  const renderedContent = useMemo(() => marked.parse(renderBlogMarkdown(post.content || '', externalMedia), { async: false }), [post.content, externalMedia]);
+  const renderedContent = useMemo(() => sanitizeHtml(marked.parse(renderBlogMarkdown(post.content || '', externalMedia), { async: false }) as string), [post.content, externalMedia]);
   const [shareUrl, setShareUrl] = useState('');
   const [showCopiedToast, setShowCopiedToast] = useState(false);
 

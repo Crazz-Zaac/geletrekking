@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require("../../models/user");
 const {
   login,
+  logout,
   beginTwoFactorSetup,
   verifyTwoFactorSetup,
   disableTwoFactor,
@@ -28,6 +29,9 @@ const { authLoginLimiter } = require("../../middleware/rateLimitMiddleware");
   POST /api/admin/login
 --------------------------------*/
 router.post("/login", authLoginLimiter, login);
+
+// Clears the httpOnly session cookie. No auth needed: it only removes a cookie.
+router.post("/logout", logout);
 
 router.post(
   "/2fa/setup",

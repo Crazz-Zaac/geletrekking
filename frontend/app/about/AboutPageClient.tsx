@@ -21,7 +21,7 @@ import {
 import { WhatsAppIcon } from '@/components/whatsapp-icon';
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { getAdminAbout, getGoogleReviews, type AdminAbout, type AdminAboutStat, type UiGoogleReview } from '@/lib/api';
+import { getAdminAbout, type AdminAbout, type AdminAboutStat } from '@/lib/api';
 import { COMPANY_FOUNDING_STORY, SITE_METRICS } from '@/lib/site-metrics';
 import { TEAM_SOCIAL_FIELDS, isValidSocialUrl } from '@/lib/team-social-links';
 import { useSiteSettings } from '@/hooks/use-site-settings';
@@ -184,26 +184,6 @@ const MarkdownText = ({ value, className = '' }: { value: string; className?: st
   );
 };
 
-type CombinedReview = {
-  id: string
-  name: string
-  subtitle: string
-  rating: number
-  text: string
-  badge: string
-  source: 'google'
-};
-
-const mapGoogleReview = (review: UiGoogleReview): CombinedReview => ({
-  id: review.id,
-  name: review.authorName,
-  subtitle: review.relativeTime || 'Google review',
-  rating: Math.max(1, Math.min(5, Math.round(review.rating || 5))),
-  text: review.text,
-  badge: 'Google',
-  source: 'google',
-});
-
 function toReadableBullets(text: string): string[] {
   return text
     .split(/(?<=[.!?])\s+/)
@@ -237,11 +217,8 @@ function LoadingSkeleton() {
 export function AboutPageClient() {
   const shouldReduceMotion = useReducedMotion();
   const [about, setAbout] = useState<AdminAbout | null>(null);
-  const [reviews, setReviews] = useState<CombinedReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [aboutFetchFailed, setAboutFetchFailed] = useState(false);
-  const [reviewsFetchFailed, setReviewsFetchFailed] = useState(false);
-  const [expandedReviews, setExpandedReviews] = useState<Record<string, boolean>>({});
   const { settings, social } = useSiteSettings();
 
   const containerVariants = shouldReduceMotion
@@ -300,10 +277,7 @@ export function AboutPageClient() {
   useEffect(() => {
     const loadPageData = async () => {
       setIsLoading(true);
-      const [aboutResult, googleReviews] = await Promise.allSettled([
-        getAdminAbout(),
-        getGoogleReviews(),
-      ]);
+      const [aboutResult] = await Promise.allSettled([getAdminAbout()]);
 
       if (aboutResult.status === 'fulfilled') {
         setAbout(aboutResult.value);
@@ -313,13 +287,6 @@ export function AboutPageClient() {
         setAboutFetchFailed(true);
       }
 
-      const normalizedGoogle =
-        googleReviews.status === 'fulfilled'
-          ? googleReviews.value.map(mapGoogleReview).filter((item) => item.text.trim().length > 0)
-          : [];
-
-      setReviewsFetchFailed(googleReviews.status === 'rejected');
-      setReviews(normalizedGoogle.slice(0, 6));
       setIsLoading(false);
     };
 
@@ -369,9 +336,6 @@ export function AboutPageClient() {
     return fromApi.length > 0 ? fromApi : defaultAssociations;
   }, [about]);
 
-  const toggleReview = (id: string) => {
-    setExpandedReviews((previous) => ({ ...previous, [id]: !previous[id] }));
-  };
 
 
   return (
@@ -418,7 +382,7 @@ export function AboutPageClient() {
 
       <section className="py-10 md:py-14">
         <div className="container mx-auto px-4 md:px-6">
-          {(aboutFetchFailed || reviewsFetchFailed) && (
+          {aboutFetchFailed && (
             <Card className="mb-6 border-amber-300/40 bg-amber-50/70 dark:bg-amber-500/10 p-4">
               <p className="text-sm text-amber-800 dark:text-amber-200">
                 Some live About content is temporarily unavailable. Showing the latest safe fallback content.

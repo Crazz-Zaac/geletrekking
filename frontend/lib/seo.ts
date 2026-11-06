@@ -81,7 +81,28 @@ export function buildMetadata({
   }
 }
 
-export function organizationJsonLd() {
+type OrganizationSettings = {
+  phone?: string
+  email?: string
+  address?: string
+  social?: Record<string, string | undefined>
+} | null | undefined
+
+// Official company profiles only (personal profiles and chat links are not "sameAs").
+function companyProfiles(social: Record<string, string | undefined> = {}) {
+  const urls = ['facebook', 'instagram', 'youtube', 'twitter', 'tripadvisor']
+    .map((key) => (social[key] || '').trim())
+    .filter((url) => /^https:\/\//.test(url))
+  // LinkedIn only when it is the company page, not a personal profile (/in/...).
+  const linkedin = (social.linkedin || '').trim()
+  if (/^https:\/\/([a-z]{2,3}\.)?linkedin\.com\/company\//i.test(linkedin)) urls.push(linkedin)
+  return Array.from(new Set([...urls, 'https://www.trustpilot.com/review/geletrekking.com']))
+}
+
+export function organizationJsonLd(settings?: OrganizationSettings) {
+  const phone = settings?.phone?.trim()
+  const email = settings?.email?.trim()
+  const address = settings?.address?.trim()
   return {
     '@context': 'https://schema.org',
     '@type': 'TravelAgency',
@@ -93,9 +114,23 @@ export function organizationJsonLd() {
     description: 'Nepal-based trekking agency offering guided Himalayan treks, tours, and travel planning.',
     areaServed: ['Nepal', 'Himalayas', 'Everest Region', 'Annapurna Region', 'Langtang Region'],
     knowsAbout: ['Nepal trekking', 'Everest Base Camp Trek', 'Annapurna trekking', 'Himalayan travel planning'],
-    sameAs: [
-      'https://geletrekking.com',
-    ],
+    ...(phone ? { telephone: phone } : {}),
+    ...(email ? { email } : {}),
+    ...(address
+      ? { address: { '@type': 'PostalAddress', streetAddress: address, addressCountry: 'NP' } }
+      : {}),
+    ...(phone || email
+      ? {
+          contactPoint: {
+            '@type': 'ContactPoint',
+            contactType: 'customer service',
+            ...(phone ? { telephone: phone } : {}),
+            ...(email ? { email } : {}),
+            availableLanguage: ['English', 'Nepali'],
+          },
+        }
+      : {}),
+    sameAs: companyProfiles(settings?.social),
   }
 }
 

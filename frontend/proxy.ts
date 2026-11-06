@@ -56,7 +56,8 @@ export function proxy(request: NextRequest) {
       return NextResponse.next()
     }
 
-    const token = request.cookies.get('gele_admin_token')?.value
+    // httpOnly session cookie set by the backend at login (validated by the API).
+    const token = request.cookies.get('gele_admin_session')?.value
 
     if (!token) {
       const loginUrl = new URL('/admin/login', request.url)

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useId, useState, type ReactNode } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { COOKIE_CONSENT_KEY, parseCookiePreference } from '@/lib/cookie-consent'
 
 const CookieContext = createContext({ externalMedia: false, openPreferences: () => {} })
@@ -12,6 +13,9 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
   const [showBanner, setShowBanner] = useState(false)
   const [allowMedia, setAllowMedia] = useState(false)
   const headingId = useId()
+  // The admin has no optional third-party content, and the banner would cover its save bar.
+  const pathname = usePathname() || ''
+  const isAdmin = pathname === '/admin' || pathname.startsWith('/admin/')
 
   useEffect(() => {
     const restore = () => {
@@ -39,7 +43,7 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
   return (
     <CookieContext.Provider value={{ externalMedia, openPreferences: () => { setAllowMedia(externalMedia); setShowBanner(true) } }}>
       {children}
-      {showBanner && (
+      {showBanner && !isAdmin && (
         <section role="region" aria-labelledby={headingId} className="fixed inset-x-0 bottom-0 z-[100000] max-h-[85dvh] overflow-y-auto border-t border-border bg-background px-4 py-5 text-foreground shadow-2xl md:px-8">
           <div className="mx-auto flex max-w-7xl flex-col gap-4 lg:flex-row lg:items-center lg:gap-8">
             <div className="flex-1 space-y-2">

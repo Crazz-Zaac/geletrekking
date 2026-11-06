@@ -1,9 +1,27 @@
 'use client'
 
+import { useConfirm } from '@/components/admin/use-confirm'
 import { useEffect, useMemo, useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { ArrowLeft, ExternalLink, Mountain, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react'
+import {
+  AdminPageHeader,
+  EmptyState,
+  Field,
+  ImageListField,
+  ImageUrlField,
+  ListEditor,
+  SaveBar,
+  StatusToasts,
+  TextArea,
+  ToggleField,
+  useDirtyState,
+  useUnsavedChangesWarning,
+} from '@/components/admin/form-kit'
+import { MarkdownEditor } from '@/components/admin/markdown-editor'
+import { cn } from '@/lib/utils'
 import {
   AdminTrek,
   createAdminTrek,
@@ -397,6 +415,11 @@ function trekToForm(item: AdminTrek): TrekForm {
   }
 }
 
+// Lists stored as one item per line (bullets optional) <-> array for ListEditor.
+// Keep inner/trailing spaces so items stay editable while typing; only drop empty lines.
+const linesToList = (value: string) => (value || '').split(/\r?\n/).map((line) => line.replace(/^\s*(?:[-•*]|\d+[.)])\s+/, '')).filter((line) => line.trim() !== '')
+const listToLines = (items: string[]) => items.join('\n')
+
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'basic', label: 'Basic Info' },
   { key: 'details', label: 'Trek Details' },
@@ -410,6 +433,7 @@ const TABS: { key: TabKey; label: string }[] = [
 ]
 
 export default function AdminTreksPage() {
+  const [askConfirm, confirmDialog] = useConfirm()
   const [items, setItems] = useState<AdminTrek[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -419,6 +443,10 @@ export default function AdminTreksPage() {
   const [form, setForm] = useState<TrekForm>(initialForm)
   const [activeTab, setActiveTab] = useState<TabKey>('basic')
   const [showForm, setShowForm] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [query, setQuery] = useState('')
+  const { dirty, markSaved } = useDirtyState(form)
+  useUnsavedChangesWarning(showForm && dirty)
 
   const token = getAdminToken()
 
@@ -454,7 +482,10 @@ export default function AdminTreksPage() {
 
   const onEdit = (item: AdminTrek) => {
     setEditingId(item._id)
-    setForm(trekToForm(item))
+    const next = trekToForm(item)
+    setForm(next)
+    markSaved(next)
+    setSubmitted(false)
     setActiveTab('basic')
     setShowForm(true)
     setMessage('')
@@ -471,8 +502,9 @@ export default function AdminTreksPage() {
 
   const onSave = async () => {
     if (!token) { setError('Missing admin token. Please login again.'); return }
+    setSubmitted(true)
     if (!form.name.trim() || !form.description.trim()) {
-      setError('Name and description are required.')
+      setError('Add the trek name and description (Basic info tab).')
       setActiveTab('basic')
       return
     }
@@ -491,10 +523,10 @@ export default function AdminTreksPage() {
       const payload = formToPayload(form)
       if (editingId) {
         await updateAdminTrek(token, editingId, payload)
-        setMessage('Trek updated successfully.')
+        setMessage('Trek saved.')
       } else {
         await createAdminTrek(token, payload)
-        setMessage('Trek created successfully.')
+        setMessage('Trek created.')
       }
       onReset()
       await refresh()
@@ -507,7 +539,7 @@ export default function AdminTreksPage() {
 
   const onDelete = async (item: AdminTrek) => {
     if (!token) { setError('Missing admin token. Please login again.'); return }
-    const confirmed = window.confirm(`Delete trek "${item.name}"?`)
+    const confirmed = await askConfirm({ title: `Delete "${item.name}"?`, description: 'The trek page will be removed from the website.' })
     if (!confirmed) return
     try {
       await deleteAdminTrek(token, item._id)
@@ -588,160 +620,80 @@ export default function AdminTreksPage() {
     value: string,
     onChange: (v: string) => void,
     rows = 3
-  ) => (
-    <textarea
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      rows={rows}
-      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
-    />
-  )
+  ) => <TextArea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={rows} />
 
-  const field = (label: string, input: React.ReactNode) => (
-    <div className="space-y-1">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      {input}
-    </div>
+  const field = (label: string, input: React.ReactNode, hint?: string) => (
+    <Field label={label} hint={hint}>{input}</Field>
   )
 
 
-  // Text editing utilities for textareas
-  const insertMarkdown = (fieldName: 'dayDescription' | 'includes' | 'excludes' | 'whatToPack' | 'dayAltitude', index: number | null, before: string, after: string = '', placeholder: string = '') => {
-    let currentValue = ''
-    let setter: (v: string) => void = () => {}
-
-    if (fieldName === 'dayDescription' && index !== null) {
-      currentValue = form.itinerary[index]?.description || ''
-      setter = (v) => updateDay(index, 'description', v)
-    } else if (fieldName === 'includes') {
-      currentValue = form.includes
-      setter = (v) => setForm((p) => ({ ...p, includes: v }))
-    } else if (fieldName === 'excludes') {
-      currentValue = form.excludes
-      setter = (v) => setForm((p) => ({ ...p, excludes: v }))
-    } else if (fieldName === 'whatToPack') {
-      currentValue = form.what_to_pack
-      setter = (v) => setForm((p) => ({ ...p, what_to_pack: v }))
-    }
-
-    const textarea = document.querySelector(`textarea[data-field="${fieldName}-${index}"]`) as HTMLTextAreaElement
-    if (!textarea) return
-
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-    const selectedText = currentValue.substring(start, end) || placeholder
-    const newValue = currentValue.substring(0, start) + before + selectedText + after + currentValue.substring(end)
-
-    setter(newValue)
-
-    setTimeout(() => {
-      textarea.focus()
-      textarea.setSelectionRange(start + before.length + selectedText.length, start + before.length + selectedText.length)
-    }, 0)
+  const closeEditor = async () => {
+    if (dirty && !(await askConfirm({ title: 'Discard unsaved changes?', description: 'Your edits to this trek will be lost.', confirmLabel: 'Discard' }))) return
+    onReset()
   }
 
-  const TextToolbar = ({ fieldName, index }: { fieldName: 'dayDescription' | 'includes' | 'excludes' | 'whatToPack', index?: number }) => (
-    <div className="border border-input rounded-t-md bg-muted/30 p-2 flex flex-wrap gap-1">
-      <Button
-        type="button"
-        size="sm"
-        variant="ghost"
-        onClick={() => insertMarkdown(fieldName, index ?? null, '**', '**', 'bold text')}
-        className="h-7 w-7 p-0"
-        title="Bold"
-      >
-        <strong>B</strong>
-      </Button>
-      <Button
-        type="button"
-        size="sm"
-        variant="ghost"
-        onClick={() => insertMarkdown(fieldName, index ?? null, '_', '_', 'italic text')}
-        className="h-7 w-7 p-0"
-        title="Italic"
-      >
-        <em>I</em>
-      </Button>
-      <div className="w-px bg-border mx-1" />
-      <Button
-        type="button"
-        size="sm"
-        variant="ghost"
-        onClick={() => insertMarkdown(fieldName, index ?? null, '- ', '', 'List item')}
-        className="h-7 px-2 text-xs"
-        title="Bullet List"
-      >
-        • List
-      </Button>
-      <Button
-        type="button"
-        size="sm"
-        variant="ghost"
-        onClick={() => insertMarkdown(fieldName, index ?? null, '1. ', '', 'Item')}
-        className="h-7 px-2 text-xs"
-        title="Numbered List"
-      >
-        1. List
-      </Button>
-    </div>
-  )
-
+  const editingItem = editingId ? items.find((item) => item._id === editingId) : null
+  const visibleItems = items.filter((item) => {
+    const q = query.trim().toLowerCase()
+    return !q || [item.name, item.region, item.slug].some((value) => (value || '').toLowerCase().includes(q))
+  })
 
   return (
     <div className="space-y-6">
+      {confirmDialog}
 
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: 'Total', value: stats.total },
-          { label: 'Destinations', value: stats.destinations },
-          { label: 'Optional', value: stats.optional },
-          { label: 'Active', value: stats.active },
-        ].map((s) => (
-          <Card key={s.label} className="border-border">
-            <CardContent className="pt-3 pb-3">
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-              <p className="text-xl font-bold">{s.value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </section>
-
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
-
+      <StatusToasts error={error} message={message} />
       {!showForm && (
-        <Button onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm) }}>
-          + New Trek
-        </Button>
+        <AdminPageHeader
+          title="Treks"
+          description={`${stats.total} treks · ${stats.active} visible · ${stats.optional} also under Activities`}
+          actions={
+            <Button onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); markSaved(initialForm); setSubmitted(false); setActiveTab('basic') }} className="gap-2">
+              <Plus className="h-4 w-4" /> New trek
+            </Button>
+          }
+        />
       )}
 
       {showForm && (
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle>{editingId ? 'Edit Trek' : 'Create Trek'}</CardTitle>
-            <CardDescription>
-              Fill in all tabs before saving. Only name and description are required.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
+        <div className="space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Button variant="ghost" className="-ml-2 gap-1.5 text-muted-foreground" onClick={() => void closeEditor()}>
+              <ArrowLeft className="h-4 w-4" /> All treks
+            </Button>
+            {editingItem?.is_active && (editingItem.slug || editingItem._id) && (
+              <Button variant="outline" size="sm" asChild className="gap-1.5">
+                <a href={`/trek/${editingItem.slug || editingItem._id}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" /> View live</a>
+              </Button>
+            )}
+          </div>
+          <AdminPageHeader title={editingId ? form.name || 'Edit trek' : 'New trek'} description="Only the name and description are required. Everything else can be filled in later." />
 
-            <div className="flex flex-wrap gap-2 border-b border-border pb-3">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`px-3 py-1.5 text-sm rounded-md font-medium transition-colors ${
-                    activeTab === tab.key
-                      ? 'bg-primary text-white'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+          <div className="sticky z-10 -mx-4 overflow-x-auto border-b border-border bg-muted/30 px-4 backdrop-blur md:-mx-6 md:px-6 lg:-mx-8 lg:px-8" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 4rem)' }}>
+            <div className="flex min-w-max gap-1" role="tablist" aria-label="Trek sections">
+              {TABS.map((tab) => {
+                const invalid = tab.key === 'basic' && submitted && (!form.name.trim() || !form.description.trim())
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={cn(
+                      'relative flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                      activeTab === tab.key ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {tab.label}
+                    {invalid && <span className="h-2 w-2 rounded-full bg-destructive" aria-label="has errors" />}
+                  </button>
+                )
+              })}
             </div>
+          </div>
+
+          <div className="space-y-5 rounded-xl border border-border bg-card p-5 shadow-sm md:p-6" role="tabpanel">
 
             {/* basic info tab */}
             {activeTab === 'basic' && (
@@ -843,19 +795,10 @@ export default function AdminTreksPage() {
                   (v) => setForm((p) => ({ ...p, region_description: v })),
                   3
                 ))}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm pt-1">
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={form.is_active} onChange={(e) => setForm((p) => ({ ...p, is_active: e.target.checked }))} />
-                    Active — visible to users
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={form.is_optional} onChange={(e) => setForm((p) => ({ ...p, is_optional: e.target.checked }))} />
-                    Add to activities
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={form.is_featured} onChange={(e) => setForm((p) => ({ ...p, is_featured: e.target.checked }))} />
-                    Featured on homepage
-                  </label>
+                <div className="grid grid-cols-1 gap-3 pt-1 lg:grid-cols-3">
+                  <ToggleField label="Visible on website" description="Hidden treks stay here as drafts." checked={form.is_active} onCheckedChange={(is_active) => setForm((p) => ({ ...p, is_active }))} />
+                  <ToggleField label="Featured" description="Shown on the homepage." checked={form.is_featured} onCheckedChange={(is_featured) => setForm((p) => ({ ...p, is_featured }))} />
+                  <ToggleField label="Also list under Activities" description="For short or optional treks." checked={form.is_optional} onCheckedChange={(is_optional) => setForm((p) => ({ ...p, is_optional }))} />
                 </div>
 
                 <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
@@ -986,14 +929,8 @@ export default function AdminTreksPage() {
                               />
                             ))}
                           </div>
-                          {field(tier.name + ' includes - one item per line; bullets optional', (
-                            <textarea
-                              value={tier.includes}
-                              onChange={(e) => updatePricingTier(index, 'includes', e.target.value)}
-                              rows={5}
-                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
-                              placeholder={"Guide service\nAccommodation\nMeals during trek"}
-                            />
+                          {field(`${tier.name} includes`, (
+                            <ListEditor items={linesToList(tier.includes)} onChange={(items) => updatePricingTier(index, 'includes', listToLines(items))} placeholder="e.g. Guide service" />
                           ))}
                         </div>
                       ))}
@@ -1043,13 +980,7 @@ export default function AdminTreksPage() {
                     <h3 className="text-sm font-semibold text-foreground">Highlights</h3>
                     <p className="text-xs text-muted-foreground">Add one highlight per line. Bullets or numbers are optional and will be cleaned on save.</p>
                   </div>
-                  <textarea
-                    placeholder="Stand at Everest Base Camp\nSunrise views from Kala Patthar\nVisit Tengboche Monastery"
-                    value={form.highlights}
-                    onChange={(e) => setForm((p) => ({ ...p, highlights: e.target.value }))}
-                    rows={6}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed"
-                  />
+                  <ListEditor items={linesToList(form.highlights)} onChange={(items) => setForm((p) => ({ ...p, highlights: listToLines(items) }))} placeholder="e.g. Sunrise views from Kala Patthar" emptyText="No highlights yet." />
                 </div>
               </div>
             )}
@@ -1057,22 +988,11 @@ export default function AdminTreksPage() {
             {/* media tab */}
             {activeTab === 'media' && (
               <div className="space-y-3">
-                {field('Main cover image URL', (
-                  <Input
-                    placeholder="https://..."
-                    value={form.image_url}
-                    onChange={(e) => setForm((p) => ({ ...p, image_url: e.target.value }))}
-                  />
+                <ImageUrlField label="Cover photo" value={form.image_url} onChange={(image_url) => setForm((p) => ({ ...p, image_url }))} hint="Used on the trek page header and trek cards. Landscape, at least 1600 px wide." />
+                {field('More photos', (
+                  <ImageListField images={linesToList(form.gallery_images)} onChange={(images) => setForm((p) => ({ ...p, gallery_images: listToLines(images) }))} />
                 ))}
-                {field('Gallery image URLs — one per line', textarea('https://image1.jpg\nhttps://image2.jpg', form.gallery_images, (v) => setForm((p) => ({ ...p, gallery_images: v })), 5))}
-                {field('Route map image URL', (
-                  <Input
-                    placeholder="https://.../manaslu-circuit-route-map.jpg"
-                    value={form.map_image_url}
-                    onChange={(e) => setForm((p) => ({ ...p, map_image_url: e.target.value }))}
-                  />
-                ))}
-                <p className="text-xs text-muted-foreground">Upload or paste a direct image URL for this trek route map. Wide, tall, or square images are all displayed without cropping.</p>
+                <ImageUrlField label="Route map" value={form.map_image_url} onChange={(map_image_url) => setForm((p) => ({ ...p, map_image_url }))} hint="Shown uncropped, so wide, tall or square maps all work." />
               </div>
             )}
 
@@ -1100,17 +1020,7 @@ export default function AdminTreksPage() {
                       )}
                     </div>
                     {field('Day description', (
-                      <>
-                        <TextToolbar fieldName="dayDescription" index={index} />
-                        <textarea
-                          data-field={`dayDescription-${index}`}
-                          placeholder="Describe the day. Use - item or 1. item for lists."
-                          value={day.description}
-                          onChange={(e) => updateDay(index, 'description', e.target.value)}
-                          rows={3}
-                          className="w-full rounded-b-md border border-t-0 border-input bg-background px-3 py-2 text-sm resize-vertical"
-                        />
-                      </>
+                      <MarkdownEditor value={day.description} onChange={(value) => updateDay(index, 'description', value)} rows={4} placeholder="Describe the day: route, highlights, overnight stop…" />
                     ))}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       {field('Altitude', (
@@ -1228,32 +1138,12 @@ export default function AdminTreksPage() {
             {/* includes and excludes tab */}
             {activeTab === 'includes' && (
               <div className="space-y-4">
-                {field('What is included in the price — one item per line; bullets optional', (
-                <>
-                  <TextToolbar fieldName="includes" />
-                  <textarea
-                    data-field="includes-null"
-                    placeholder="e.g. All airport transfers"
-                    value={form.includes}
-                    onChange={(e) => setForm((p) => ({ ...p, includes: e.target.value }))}
-                    rows={6}
-                    className="w-full rounded-b-md border border-t-0 border-input bg-background px-3 py-2 text-sm resize-vertical"
-                  />
-                </>
-              ))}
-                {field('What the trekker pays separately — one item per line; bullets optional', (
-                <>
-                  <TextToolbar fieldName="excludes" />
-                  <textarea
-                    data-field="excludes-null"
-                    placeholder="e.g. International flights"
-                    value={form.excludes}
-                    onChange={(e) => setForm((p) => ({ ...p, excludes: e.target.value }))}
-                    rows={6}
-                    className="w-full rounded-b-md border border-t-0 border-input bg-background px-3 py-2 text-sm resize-vertical"
-                  />
-                </>
-              ))}
+                {field('Included in the price', (
+                  <ListEditor items={linesToList(form.includes)} onChange={(items) => setForm((p) => ({ ...p, includes: listToLines(items) }))} placeholder="e.g. All airport transfers" />
+                ), 'Tip: paste a list to add several items at once.')}
+                {field('Not included (paid separately)', (
+                  <ListEditor items={linesToList(form.excludes)} onChange={(items) => setForm((p) => ({ ...p, excludes: listToLines(items) }))} placeholder="e.g. International flights" />
+                ))}
               </div>
             )}
 
@@ -1275,19 +1165,9 @@ export default function AdminTreksPage() {
                     .
                   </p>
                 </div>
-                {field('Special equipment items — one item per line; bullets optional', (
-                <>
-                  <TextToolbar fieldName="whatToPack" />
-                  <textarea
-                    data-field="whatToPack-null"
-                    placeholder="e.g. Microspikes for icy sections\nSleeping bag rated to -15C\nGaiters for snow crossings"
-                    value={form.what_to_pack}
-                    onChange={(e) => setForm((p) => ({ ...p, what_to_pack: e.target.value }))}
-                    rows={10}
-                    className="w-full rounded-b-md border border-t-0 border-input bg-background px-3 py-2 text-sm resize-vertical"
-                  />
-                </>
-              ))}
+                {field('Special equipment', (
+                  <ListEditor items={linesToList(form.what_to_pack)} onChange={(items) => setForm((p) => ({ ...p, what_to_pack: listToLines(items) }))} placeholder="e.g. Microspikes for icy sections" emptyText="No special equipment listed." />
+                ))}
               </div>
             )}
 
@@ -1326,14 +1206,7 @@ export default function AdminTreksPage() {
             {/* offers tab */}
             {activeTab === 'offers' && (
               <div className="space-y-3">
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={form.has_offer}
-                    onChange={(e) => setForm((p) => ({ ...p, has_offer: e.target.checked }))}
-                  />
-                  This trek has an active offer or discount
-                </label>
+                <ToggleField label="Special offer" description="Show a discount badge and offer details on this trek." checked={form.has_offer} onCheckedChange={(has_offer) => setForm((p) => ({ ...p, has_offer }))} />
                 {form.has_offer && (
                   <div className="space-y-3">
                     {field('Offer type', (
@@ -1388,58 +1261,59 @@ export default function AdminTreksPage() {
               </div>
             )}
 
-            <div className="flex gap-2 pt-2 border-t border-border">
-              <Button onClick={onSave} disabled={saving}>
-                {saving ? 'Saving...' : editingId ? 'Update Trek' : 'Create Trek'}
-              </Button>
-              <Button variant="outline" onClick={onReset}>Cancel</Button>
-            </div>
+          </div>
 
-          </CardContent>
-        </Card>
+          <SaveBar
+            dirty={dirty || !editingId}
+            saving={saving}
+            onSave={() => void onSave()}
+            onDiscard={() => void closeEditor()}
+            discardLabel="Cancel"
+            saveLabel={editingId ? 'Save trek' : 'Create trek'}
+          />
+        </div>
       )}
 
       {!showForm && (
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle>All Treks</CardTitle>
-            <CardDescription>Click Edit to load a trek into the form above.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <p className="text-sm text-muted-foreground">Loading treks...</p>
-            ) : items.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No treks yet.</p>
-            ) : (
-              <div className="space-y-2 max-h-[600px] overflow-auto pr-1">
-                {items.map((item) => (
-                  <div key={item._id} className="rounded-md border border-border p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-sm">{item.name}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {item.duration_days || 0} days •
-                          ${item.price_usd || 0} USD •
-                          {item.difficulty || 'Moderate'} •
-                          {item.region || 'No region'} •
-                          {item.is_active ? 'Active' : 'Inactive'}
-                          {item.is_featured ? ' • Featured' : ''}
-                          {item.is_optional ? ' • Optional' : ''}
-                        </p>
-                      </div>
-                      <div className="flex gap-2 shrink-0">
-                        <Button variant="outline" size="sm" onClick={() => onEdit(item)}>Edit</Button>
-                        <Button variant="destructive" size="sm" onClick={() => onDelete(item)}>Delete</Button>
-                      </div>
-                    </div>
+        <div className="space-y-4">
+          <div className="relative sm:w-80">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input type="search" className="h-10 pl-9" placeholder="Search treks or regions…" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search treks" />
+          </div>
+          {loading ? (
+            <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-xl border border-border bg-card" />)}</div>
+          ) : items.length === 0 ? (
+            <EmptyState icon={<Mountain className="h-5 w-5" />} title="No treks yet" description="Add your first trekking package." />
+          ) : visibleItems.length === 0 ? (
+            <EmptyState icon={<Search className="h-5 w-5" />} title="No matching treks" />
+          ) : (
+            <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+              {visibleItems.map((item) => (
+                <li key={item._id} className="flex items-center gap-4 p-3 transition-colors hover:bg-muted/40 sm:p-4">
+                  <div className="hidden h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-muted sm:block">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {item.image_url ? <img src={item.image_url} alt="" className="h-full w-full object-cover" loading="lazy" /> : <div className="flex h-full items-center justify-center text-muted-foreground"><Mountain className="h-5 w-5" /></div>}
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  <button type="button" className="min-w-0 flex-1 text-left" onClick={() => onEdit(item)}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="truncate font-medium text-foreground">{item.name}</p>
+                      <Badge variant="outline" className={item.is_active ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : ''}>{item.is_active ? 'Visible' : 'Hidden'}</Badge>
+                      {item.is_featured && <Badge variant="outline" className="gap-1 border-amber-300 bg-amber-50 text-amber-700"><Star className="h-3 w-3" /> Featured</Badge>}
+                    </div>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                      {[item.region, item.duration_days ? `${item.duration_days} days` : null, item.difficulty, item.price_usd ? `$${item.price_usd}` : null].filter(Boolean).join(' · ')}
+                    </p>
+                  </button>
+                  <div className="flex shrink-0 gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(item)} aria-label={`Edit ${item.name}`}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => void onDelete(item)} aria-label={`Delete ${item.name}`}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
-
     </div>
   )
 }

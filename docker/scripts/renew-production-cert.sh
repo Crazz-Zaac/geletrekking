@@ -14,12 +14,14 @@ DOCKER_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$DOCKER_DIR"
 
 echo "[1/3] Running certbot renew"
-docker compose --profile prod run --rm certbot renew --webroot -w /var/www/certbot
+# --cert-name: renew only this certificate (other, stale lineages in the volume
+# would otherwise fail the run before the new cert is exported).
+docker compose --profile prod run --rm -T certbot renew --cert-name "$PRIMARY_DOMAIN" --webroot -w /var/www/certbot
 
 echo "[2/3] Exporting latest certificate for nginx"
-docker compose --profile prod run --rm --entrypoint sh certbot -lc "cp /etc/letsencrypt/live/$PRIMARY_DOMAIN/fullchain.pem /etc/nginx/certs/fullchain.pem && cp /etc/letsencrypt/live/$PRIMARY_DOMAIN/privkey.pem /etc/nginx/certs/privkey.pem"
+docker compose --profile prod run --rm -T --entrypoint sh certbot -lc "cp /etc/letsencrypt/live/$PRIMARY_DOMAIN/fullchain.pem /etc/nginx/certs/fullchain.pem && cp /etc/letsencrypt/live/$PRIMARY_DOMAIN/privkey.pem /etc/nginx/certs/privkey.pem"
 
 echo "[3/3] Reloading nginx"
-docker compose exec nginx nginx -s reload
+docker compose exec -T nginx nginx -s reload
 
 echo "Renewal flow completed for: $PRIMARY_DOMAIN"

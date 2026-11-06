@@ -3,6 +3,7 @@ import { treks as fallbackTreks } from '@/lib/data'
 import type { Trek } from '@/lib/data'
 export interface UiBlogPost {
   id: string
+  updatedAt?: string
   slug: string
   title: string
   excerpt: string
@@ -14,18 +15,9 @@ export interface UiBlogPost {
   readTime: string
   content: string
 }
-export interface UiGoogleReview {
-  id: string
-  authorName: string
-  authorPhoto?: string
-  rating: number
-  text: string
-  relativeTime?: string
-  time?: number | null
-  source: 'google'
-}
 export interface AdminUser {
   email: string
+  name?: string
   role: 'editor' | 'superadmin'
   twoFactorEnabled?: boolean
   requiresTwoFactorSetup?: boolean
@@ -37,10 +29,9 @@ export interface AdminTwoFactorSetupResponse {
   qrUrl: string
 }
 interface AdminLoginResponse {
-  token?: string
-  role: 'editor' | 'superadmin'
   user?: {
     email: string
+    name?: string
     role: 'editor' | 'superadmin'
     twoFactorEnabled?: boolean
     requiresTwoFactorSetup?: boolean
@@ -51,6 +42,7 @@ interface AdminLoginResponse {
 interface AuthMeResponse {
   user?: {
     email?: string
+    name?: string
     role?: string
     twoFactorEnabled?: boolean
     requiresTwoFactorSetup?: boolean
@@ -414,6 +406,7 @@ export interface AdminActivity {
 }
 export interface PublicActivity {
   _id: string
+  updatedAt?: string
   title: string
   slug: string
   category: 'Day Tour' | 'Adrenaline' | 'Wildlife' | 'Water Sports'
@@ -512,6 +505,7 @@ export interface AdminSslHealthResponse {
   checkedAt: string
 }
 interface BackendTrek {
+  updatedAt?: string
   _id: string
   name: string
   slug?: string
@@ -575,6 +569,7 @@ interface BackendTrek {
   location_name?: string
 }
 interface BackendBlogPost {
+  updatedAt?: string
   _id: string
   slug: string
   title: string
@@ -629,6 +624,9 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
       ...(internalToken ? { 'x-internal-api-token': internalToken } : {}),
       ...(init?.headers || {}),
     },
+    // Send the httpOnly admin session cookie (also when the API is on another
+    // origin in local development).
+    credentials: 'include',
     cache: 'no-store',
   })
   if (!response.ok) {
@@ -643,14 +641,11 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return response.json() as Promise<T>
 }
-async function fetchAdminJson<T>(path: string, token: string, init?: RequestInit): Promise<T> {
-  return fetchJson<T>(path, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(init?.headers || {}),
-    },
-  })
+// Admin requests authenticate with the httpOnly session cookie that fetchJson
+// sends. `_session` is kept so existing callers need no changes; it is only a
+// "logged in" marker, never a credential.
+async function fetchAdminJson<T>(path: string, _session: string, init?: RequestInit): Promise<T> {
+  return fetchJson<T>(path, init)
 }
 function slugify(value: string): string {
   return value
@@ -753,6 +748,7 @@ function mapTrek(trek: BackendTrek): Trek {
       ? trek.discounted_price_usd
       : tierFromPrice || trek.price_usd || 0
   return {
+    updatedAt: trek.updatedAt,
     id: trek._id,
     slug,
     title,
@@ -825,6 +821,7 @@ function mapTrek(trek: BackendTrek): Trek {
 function mapBlog(post: BackendBlogPost): UiBlogPost {
   return {
     id: post._id,
+    updatedAt: post.updatedAt || post.createdAt,
     slug: post.slug,
     title: post.title,
     excerpt: post.excerpt || '',
@@ -869,14 +866,6 @@ export async function getBlogBySlug(slug: string): Promise<UiBlogPost | null> {
     return mapBlog(data)
   } catch {
     return null
-  }
-}
-export async function getGoogleReviews(): Promise<UiGoogleReview[]> {
-  try {
-    const data = await fetchJson<{ reviews?: UiGoogleReview[] }>('/api/reviews/google')
-    return data.reviews || []
-  } catch {
-    return []
   }
 }
 export async function submitContactMessage(payload: {
@@ -950,7 +939,7 @@ export async function submitPrivateBookingSubmission(token: string, payload: {
   }
 }
 
-export async function adminLogin(payload: { email: string; password: string; twoFactorCode?: string }): Promise<{ success: boolean; token?: string; user?: AdminUser; message?: string; need2FA?: boolean }> {
+export async function adminLogin(payload: { email: string; password: string; twoFactorCode?: string }): Promise<{ success: boolean; user?: AdminUser; message?: string; need2FA?: boolean }> {
   try {
     const response = await fetchJson<AdminLoginResponse>('/api/admin/login', {
       method: 'POST',
@@ -963,18 +952,19 @@ export async function adminLogin(payload: { email: string; password: string; two
         message: response.message || 'Enter your 2FA code to continue.',
       }
     }
-    if (!response.token) {
+    // The session itself arrives as an httpOnly cookie on this response.
+    if (!response.user?.role) {
       return { success: false, message: 'Invalid login response' }
     }
     const user: AdminUser = {
       email: response.user?.email || payload.email,
-      role: response.user?.role || response.role,
+      name: response.user?.name,
+      role: response.user.role,
       twoFactorEnabled: response.user?.twoFactorEnabled,
       requiresTwoFactorSetup: response.user?.requiresTwoFactorSetup,
     }
     return {
       success: true,
-      token: response.token,
       user,
       message: response.message,
     }
@@ -983,14 +973,16 @@ export async function adminLogin(payload: { email: string; password: string; two
     return { success: false, message }
   }
 }
-export async function getCurrentAdmin(token: string): Promise<AdminUser | null> {
+export async function adminLogout(): Promise<void> {
   try {
-    const response = await fetchJson<AuthMeResponse>('/api/auth/me', {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    await fetchJson<{ message: string }>('/api/admin/logout', { method: 'POST' })
+  } catch {
+    // The local session is cleared regardless.
+  }
+}
+export async function getCurrentAdmin(): Promise<AdminUser | null> {
+  try {
+    const response = await fetchJson<AuthMeResponse>('/api/auth/me', { method: 'GET' })
     const role = response.user?.role
     const email = response.user?.email
     if (!email || (role !== 'editor' && role !== 'superadmin')) {
@@ -998,6 +990,7 @@ export async function getCurrentAdmin(token: string): Promise<AdminUser | null> 
     }
     return {
       email,
+      name: response.user?.name,
       role,
       twoFactorEnabled: response.user?.twoFactorEnabled,
       requiresTwoFactorSetup: response.user?.requiresTwoFactorSetup,
@@ -1120,9 +1113,9 @@ export async function deleteAdminBookingSubmission(token: string, id: string): P
   await fetchAdminJson<{ message: string }>("/api/booking-submissions/admin/" + id, token, { method: "DELETE" })
 }
 
-export async function downloadAdminBookingPdf(token: string, id: string): Promise<Blob> {
+export async function downloadAdminBookingPdf(_session: string, id: string): Promise<Blob> {
   const response = await fetch(getApiUrl("/api/booking-submissions/admin/" + id + "/pdf"), {
-    headers: { Authorization: "Bearer " + token },
+    credentials: "include",
     cache: "no-store",
   })
   if (!response.ok) throw new Error("PDF download failed: " + response.status + " " + response.statusText)
@@ -1151,6 +1144,21 @@ export async function getAdminRiskHealth(token: string): Promise<AdminRiskHealth
 }
 export async function getAdminSslHealth(token: string): Promise<AdminSslHealthResponse> {
   return fetchAdminJson<AdminSslHealthResponse>('/api/security/ssl-health', token)
+}
+// Cached copy for site-wide server rendering (structured data). Revalidated
+// hourly so it does not force every page into dynamic rendering.
+export async function getCachedPublicSettings(): Promise<AdminSiteSettings | null> {
+  try {
+    const internalToken = typeof window === 'undefined' ? process.env.INTERNAL_API_TOKEN : undefined
+    const response = await fetch(getApiUrl('/api/settings'), {
+      headers: internalToken ? { 'x-internal-api-token': internalToken } : {},
+      next: { revalidate: 3600 },
+    })
+    if (!response.ok) return null
+    return (await response.json()) as AdminSiteSettings
+  } catch {
+    return null
+  }
 }
 export async function getAdminSettings(): Promise<AdminSiteSettings> {
   return fetchJson<AdminSiteSettings>('/api/settings')
@@ -1184,7 +1192,7 @@ export async function getRegistrationsAffiliations(): Promise<RegistrationDocume
 export async function updateRegistrationDocument(
   token: string,
   code: string,
-  payload: { documentUrl: string; documentType: 'image' | 'pdf'; status: string }
+  payload: { title?: string; description?: string; documentUrl: string; documentType: 'image' | 'pdf'; status: string }
 ): Promise<RegistrationDocument> {
   return fetchAdminJson<RegistrationDocument>(
     `/api/settings/registrations-affiliations/${code}`,
@@ -1197,7 +1205,7 @@ export async function updateRegistrationDocument(
 }
 export async function addRegistrationDocument(
   token: string,
-  payload: { title: string; code: string; description: string }
+  payload: { title: string; code: string; description: string; documentUrl?: string; documentType?: 'image' | 'pdf'; status?: string }
 ): Promise<RegistrationDocument> {
   return fetchAdminJson<RegistrationDocument>('/api/settings/registrations-affiliations', token, {
     method: 'POST',

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { AdminPageHeader, Field, FormSection, ImageUrlField, StatusToasts, ToggleField } from '@/components/admin/form-kit'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -263,46 +264,22 @@ export default function AdminGalleryPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Gallery Manager</h1>
-          <p className="text-muted-foreground mt-1">Manage your gallery hero image and photo collections.</p>
-          {!canDelete && <p className="text-sm text-muted-foreground mt-2">Sign in with an editor or superadmin account to delete gallery items.</p>}
-        </div>
-        <Button
-          onClick={() => {
-            onReset()
-            setOpenDialog(true)
-          }}
-          className="gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Gallery Item
-        </Button>
-      </div>
-
-      {/* Status Messages */}
-      {error && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      {message && (
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="pt-4">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-green-800">{message}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <StatusToasts error={error} message={message} />
+      <AdminPageHeader
+        title="Gallery"
+        description={canDelete ? 'Photos on the public Gallery page, grouped by category.' : 'Photos on the public Gallery page. Sign in as an editor or superadmin to delete photos.'}
+        actions={
+          <Button
+            onClick={() => {
+              onReset()
+              setOpenDialog(true)
+            }}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" /> Add photo
+          </Button>
+        }
+      />
 
       <Tabs defaultValue="items" className="w-full">
         <TabsList className="grid w-full grid-cols-2 lg:w-fit">
@@ -352,65 +329,30 @@ export default function AdminGalleryPage() {
                     </DialogTrigger>
                     <DialogContent className="max-w-lg">
                       <DialogHeader>
-                        <DialogTitle>{editingId ? 'Edit Gallery Item' : 'Create Gallery Item'}</DialogTitle>
+                        <DialogTitle>{editingId ? 'Edit photo' : 'Add photo'}</DialogTitle>
                         <DialogDescription>
-                          {editingId ? 'Update the gallery item details below.' : 'Add a new image to your gallery collection.'}
+                          {editingId ? 'Update the photo details.' : 'Add a photo to the public gallery.'}
                         </DialogDescription>
                       </DialogHeader>
 
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Title *</label>
-                          <Input
-                            placeholder="e.g., Everest Base Camp Trek"
-                            value={form.title}
-                            onChange={(e) => setForm({ ...form, title: e.target.value })}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Image URL *</label>
-                          <p className="text-xs text-muted-foreground">Paste a public image URL from Cloudinary, S3, or CDN.</p>
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="https://example.com/image.jpg or S3 URL"
-                              value={form.imageUrl}
-                              onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                            />
-                            {form.imageUrl && (
-                              <Button variant="outline" size="sm" asChild>
-                                <a href={form.imageUrl} target="_blank" rel="noopener noreferrer">
-                                  <LinkIcon className="w-4 h-4" />
-                                </a>
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Category</label>
-                          <Input
-                            placeholder="e.g., Mountains, Culture, Adventure"
-                            value={form.category}
-                            onChange={(e) => setForm({ ...form, category: e.target.value })}
-                          />
-                        </div>
-
-                        <label className="flex items-center gap-2 cursor-pointer p-2.5 rounded-lg border border-border hover:bg-muted/50 transition">
-                          <input
-                            type="checkbox"
-                            checked={form.isFeatured}
-                            onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })}
-                            className="w-4 h-4 rounded"
-                          />
-                          <span className="text-sm font-medium">Featured</span>
-                        </label>
-
-                        {form.imageUrl && (
-                          <div className="rounded-lg overflow-hidden border border-border">
-                            <img src={form.imageUrl} alt="Preview" className="w-full h-40 object-cover" />
-                          </div>
-                        )}
+                      <div className="space-y-5">
+                        <ImageUrlField
+                          label="Image"
+                          required
+                          value={form.imageUrl}
+                          onChange={(imageUrl) => setForm({ ...form, imageUrl })}
+                          hint="Public link from ImageKit, Backblaze or Cloudinary."
+                        />
+                        <Field label="Caption" required hint="Also used as the image description for screen readers and search engines.">
+                          <Input className="h-10" placeholder="e.g. Sunrise over Ama Dablam" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                        </Field>
+                        <Field label="Category" hint={categories.length ? 'Pick an existing category or type a new one.' : undefined}>
+                          <Input className="h-10" list="gallery-category-options" placeholder="e.g. Mountains" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+                        </Field>
+                        <datalist id="gallery-category-options">
+                          {categories.map((category) => <option key={category} value={category} />)}
+                        </datalist>
+                        <ToggleField label="Featured" description="Featured photos are shown first." checked={form.isFeatured} onCheckedChange={(isFeatured) => setForm({ ...form, isFeatured })} />
                       </div>
 
                       <div className="flex gap-2 justify-end mt-6">
@@ -716,41 +658,14 @@ export default function AdminGalleryPage() {
 
         {/* Hero Image Tab */}
         <TabsContent value="hero" className="space-y-6 mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Gallery Hero Image</CardTitle>
-              <CardDescription>The image displayed at the top of the public gallery page</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <label className="text-sm font-medium">Image URL</label>
-                <div className="flex gap-2">
-                  <Input
-                    value={heroImageUrl}
-                    onChange={(e) => setHeroImageUrl(e.target.value)}
-                    placeholder="https://example.com/image.jpg or S3 URL"
-                  />
-                  {heroImageUrl && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={heroImageUrl} target="_blank" rel="noopener noreferrer">
-                        <LinkIcon className="w-4 h-4" />
-                      </a>
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {heroImageUrl && (
-                <div className="rounded-lg overflow-hidden border border-border">
-                  <img src={heroImageUrl} alt="Hero preview" className="w-full h-96 object-cover" />
-                </div>
-              )}
-
-              <Button onClick={onSaveHero} disabled={heroSaving} size="lg" className="w-full">
-                {heroSaving ? 'Saving...' : 'Save Hero Image'}
+          <FormSection title="Page header photo" description="The large photo at the top of the public Gallery page.">
+            <ImageUrlField label="Header photo" value={heroImageUrl} onChange={setHeroImageUrl} hint="Wide landscape photo, at least 1920 px." />
+            <div className="flex justify-end">
+              <Button onClick={onSaveHero} disabled={heroSaving} className="min-w-32">
+                {heroSaving ? 'Saving…' : 'Save header photo'}
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </FormSection>
         </TabsContent>
       </Tabs>
     </div>

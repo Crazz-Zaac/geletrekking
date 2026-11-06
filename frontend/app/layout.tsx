@@ -5,6 +5,7 @@ import { FloatingContact } from '@/components/floating-contact'
 import { ScrollToTop } from '@/components/scroll-to-top'
 import { JsonLd } from '@/components/json-ld'
 import { absoluteUrl, organizationJsonLd, SITE_URL, websiteJsonLd } from '@/lib/seo'
+import { getCachedPublicSettings } from '@/lib/api'
 import './globals.css'
 
 const inter = Inter({
@@ -60,16 +61,19 @@ export const metadata: Metadata = {
   generator: 'Next.js',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // Company contact details for structured data; the page still renders if this fails.
+  const settings = await getCachedPublicSettings()
+
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <body className="font-sans antialiased">
         <CookieConsentProvider>
-        <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
+        <JsonLd data={[organizationJsonLd(settings), websiteJsonLd()]} />
         {children}
         <FloatingContact />
         <ScrollToTop />

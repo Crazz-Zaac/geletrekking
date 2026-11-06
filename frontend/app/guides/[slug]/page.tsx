@@ -13,6 +13,7 @@ import { calculateReadingTime } from '@/lib/guide-utils'
 import { GuideHero } from '@/components/guide-hero'
 import { GuideContentClient } from '@/components/guide-content-client'
 import { marked } from 'marked'
+import { sanitizeHtml } from '@/lib/sanitize-html'
 import GuideContent from '@/components/guide-content'
 import { JsonLd } from '@/components/json-ld'
 import { breadcrumbJsonLd, buildMetadata, guideArticleJsonLd, truncateDescription } from '@/lib/seo'
@@ -66,7 +67,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
 
   guide = await loadGuide(slug)
   if (guide?.content) {
-    contentHtml = (await marked(guide.content)) as string
+    contentHtml = sanitizeHtml((await marked(guide.content)) as string)
     readingTime = calculateReadingTime(guide.content)
   }
 
