@@ -1,5 +1,8 @@
 'use client';
 
+import { TrustBadges } from '@/components/trust-badges';
+import { PackingListCta } from '@/components/packing-list-cta';
+import type { TrustSummary } from '@/lib/api';
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -48,6 +51,7 @@ import {
 
 interface TrekDetailClientProps {
   trek: Trek;
+  trust?: TrustSummary | null;
 }
 
 function getAltitudeLabel(maxAltitude: number) {
@@ -173,6 +177,7 @@ function FormattedText({ value }: { value: string }) {
 
 export default function TrekDetailClient({
   trek,
+  trust = null,
 }: TrekDetailClientProps) {
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [downloadingItinerary, setDownloadingItinerary] = useState(false);
@@ -1106,6 +1111,7 @@ export default function TrekDetailClient({
                     </div>
                   )}
                 </Card>
+                <PackingListCta />
               </motion.div>
 
               <motion.div id="trek-gallery" variants={itemVariants} className="space-y-4 scroll-mt-36">
@@ -1225,6 +1231,13 @@ export default function TrekDetailClient({
                 </div>
 
                 <div className="my-5 h-px bg-border" />
+
+                {trust && (
+                  <>
+                    <TrustBadges trust={trust} />
+                    <div className="my-5 h-px bg-border" />
+                  </>
+                )}
 
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3 text-xs text-muted-foreground">

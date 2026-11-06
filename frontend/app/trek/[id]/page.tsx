@@ -6,8 +6,9 @@ import { Footer } from '@/components/footer';
 import { getTrekByIdentifier } from '@/lib/api';
 import { getTrekPath } from '@/lib/trek-path';
 import TrekDetailClient from './TrekDetailClient';
+import { getTrustSummary } from '@/lib/api';
 import { JsonLd } from '@/components/json-ld';
-import { breadcrumbJsonLd, buildMetadata, faqJsonLd, trekJsonLd, truncateDescription } from '@/lib/seo';
+import { breadcrumbJsonLd, buildMetadata, faqJsonLd, trekJsonLd, trekSeoDescription, trekSeoTitle } from '@/lib/seo';
 
 interface TrekDetailPageProps {
   params: Promise<{ id: string }>
@@ -28,8 +29,8 @@ export async function generateMetadata({ params }: TrekDetailPageProps): Promise
   }
 
   return buildMetadata({
-    title: `${trek.title} - ${trek.duration} Days Itinerary, Cost & Guide`,
-    description: truncateDescription(trek.shortDescription || trek.fullDescription, `${trek.title} guided trek in Nepal with Gele Trekking.`),
+    title: trekSeoTitle(trek),
+    description: trekSeoDescription(trek),
     path: getTrekPath(trek),
     image: trek.image,
   });
@@ -45,6 +46,7 @@ export default async function TrekDetailPage({ params }: TrekDetailPageProps) {
   }
 
   const canonicalPath = getTrekPath(trek);
+  const trust = await getTrustSummary();
 
   if (`/trek/${encodeURIComponent(trekId)}` !== canonicalPath) {
     permanentRedirect(canonicalPath);
@@ -62,7 +64,7 @@ export default async function TrekDetailPage({ params }: TrekDetailPageProps) {
         ]),
       ].filter(Boolean) as Record<string, unknown>[]} />
       <Navbar />
-      <TrekDetailClient trek={trek} />
+      <TrekDetailClient trek={trek} trust={trust} />
       <Footer />
     </>
   );

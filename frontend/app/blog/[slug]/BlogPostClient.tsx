@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { UiBlogPost } from '@/lib/api';
 import { marked } from 'marked';
 import { sanitizeHtml } from '@/lib/sanitize-html'
+import { PackingListCta } from '@/components/packing-list-cta'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -379,6 +380,8 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
                   </div>
                 </div>
               </div>
+
+              <PackingListCta />
 
               {relatedPosts.length > 0 ? (
                 <div className="rounded-lg border border-border bg-card p-5 shadow-sm">

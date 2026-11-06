@@ -38,6 +38,7 @@ import {
 } from '@/lib/booking-form-config'
 import { getAdminToken } from '@/lib/admin-auth'
 import { AdminPageHeader, Field, FieldGrid, StatusToasts, TextArea } from '@/components/admin/form-kit'
+import { ReviewRequestPanel } from '@/components/admin/review-request-panel'
 import { Input } from '@/components/ui/input'
 
 const consentLabels: Record<string, string> = {
@@ -526,6 +527,8 @@ export default function AdminBookingsPage() {
                         <p className="font-medium">{selected.mobileWhatsapp || 'Not provided'}</p>
                       </div>
                     </div>
+
+                    {token && <ReviewRequestPanel token={token} bookingId={selected._id} email={selected.email} />}
 
                     <div className="rounded-md border border-border p-3 bg-muted/20 text-sm max-h-[340px] overflow-auto">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">

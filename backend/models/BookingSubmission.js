@@ -17,6 +17,10 @@ const bookingSubmissionSchema = new mongoose.Schema(
       data: { type: Buffer, required: true },
     },
     isRead: { type: Boolean, default: false },
+    // Post-trek Google review request (see utils/reviewRequests.js).
+    reviewRequestStatus: { type: String, enum: ["pending", "sent", "skipped", "failed"], default: "pending" },
+    reviewRequestSentAt: { type: Date, default: null },
+    reviewRequestError: { type: String, default: "" },
   },
   { timestamps: true }
 );

@@ -1,7 +1,7 @@
 const { timingSafeEqual } = require('node:crypto');
 
 // Only public content reads from the frontend's server may use this credential.
-const publicContentPath = /^\/(?:treks|about|activities|blogs|reviews|gallery|guides|faq|alerts|settings|hero)(?:\/|$)/;
+const publicContentPath = /^\/(?:treks|about|activities|blogs|reviews|trust|gallery|guides|faq|alerts|settings|hero)(?:\/|$)/;
 
 const isTrustedContentRequest = (req) => {
   if (req.method !== 'GET' || !publicContentPath.test(req.path) || /\/admin(?:\/|$)/.test(req.path)) return false;

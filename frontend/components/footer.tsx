@@ -10,6 +10,7 @@ import Image from 'next/image'
 import { useSiteSettings } from '@/hooks/use-site-settings'
 import { getTreks } from '@/lib/api'
 import { getTrekPath } from '@/lib/trek-path'
+import { FooterTrustRow } from '@/components/trust-badges'
 import { COMPANY_FOUNDING_STORY } from '@/lib/site-metrics'
 
 const footerLinks = {
@@ -32,6 +33,7 @@ const footerLinks = {
   ],
   usefulLinks: [
     { label: 'Visa Office Nepal', href: 'https://nepaliport.immigration.gov.np/', external: true },
+    { label: 'Safety & Trekking with Confidence', href: '/safety' },
     { label: 'Terms and Conditions', href: '/terms-and-conditions' },
     { label: 'Privacy Policy', href: '/privacy-policy' },
     { label: 'Disclaimer', href: '/disclaimer' },
@@ -206,6 +208,10 @@ export function Footer() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <FooterTrustRow />
       </div>
 
       {/* Bottom bar */}

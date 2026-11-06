@@ -152,6 +152,8 @@ const listSummary = (submission) => ({
   trekEndDate: submission.trekEndDate,
   formData: submission.formData,
   isRead: submission.isRead,
+  reviewRequestStatus: submission.reviewRequestStatus || "pending",
+  reviewRequestSentAt: submission.reviewRequestSentAt || null,
   createdAt: submission.createdAt,
   updatedAt: submission.updatedAt,
   pdfFilename: submission.pdf?.filename,

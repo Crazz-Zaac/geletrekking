@@ -127,6 +127,7 @@ const requestRiskMiddleware = async (req, res, next) => {
 
     const isPublicFormSubmission = req.method === "POST" && (
       req.path === "/contact" ||
+      req.path === "/leads" ||
       req.path === "/booking-submissions/pre-booking" ||
       /^\/booking-submissions\/link\/[^/]+\/submit$/.test(req.path)
     );

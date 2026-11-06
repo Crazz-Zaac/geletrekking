@@ -1160,6 +1160,67 @@ export async function getCachedPublicSettings(): Promise<AdminSiteSettings | nul
     return null
   }
 }
+export interface AdminLead {
+  _id: string
+  email: string
+  name?: string
+  source: string
+  marketingConsent: boolean
+  marketingConsentAt?: string | null
+  signupCount: number
+  lastSignupAt: string
+  createdAt: string
+}
+export async function submitLead(payload: { email: string; name?: string; marketingConsent: boolean; source?: string; website?: string }): Promise<void> {
+  await fetchJson<{ ok: boolean }>('/api/leads', { method: 'POST', body: JSON.stringify({ source: 'packing-list', ...payload }) })
+}
+export async function getAdminLeads(token: string): Promise<AdminLead[]> {
+  return fetchAdminJson<AdminLead[]>('/api/leads/admin', token)
+}
+export async function deleteAdminLead(token: string, id: string): Promise<void> {
+  await fetchAdminJson<{ ok: boolean }>(`/api/leads/admin/${id}`, token, { method: 'DELETE' })
+}
+export function adminLeadsExportUrl(onlyConsented = false) {
+  return getApiUrl(`/api/leads/admin/export.csv${onlyConsented ? '?consent=1' : ''}`)
+}
+export interface ReviewRequestInfo {
+  status: 'pending' | 'sent' | 'skipped' | 'failed'
+  sentAt: string | null
+  error: string
+  automaticSendingEnabled: boolean
+  scheduledFor: string | null
+  preview: { subject: string; text: string }
+}
+export async function getReviewRequest(token: string, bookingId: string): Promise<ReviewRequestInfo> {
+  return fetchAdminJson<ReviewRequestInfo>(`/api/booking-submissions/admin/${bookingId}/review-request`, token)
+}
+export async function sendReviewRequestNow(token: string, bookingId: string): Promise<void> {
+  await fetchAdminJson(`/api/booking-submissions/admin/${bookingId}/review-request/send`, token, { method: 'POST' })
+}
+export async function setReviewRequestStatus(token: string, bookingId: string, status: 'skipped' | 'pending'): Promise<void> {
+  await fetchAdminJson(`/api/booking-submissions/admin/${bookingId}/review-request`, token, { method: 'PATCH', body: JSON.stringify({ status }) })
+}
+export interface TrustSummary {
+  rating: number | null
+  reviewCount: number | null
+  writeReviewUrl: string | null
+  associations: Array<{ name: string; logoUrl: string }>
+  verifiedRegistrations: string[]
+}
+// Trust signals (Google rating, memberships, verified registrations) from admin data.
+export async function getTrustSummary(): Promise<TrustSummary | null> {
+  try {
+    const internalToken = typeof window === 'undefined' ? process.env.INTERNAL_API_TOKEN : undefined
+    const response = await fetch(getApiUrl('/api/trust'), {
+      headers: internalToken ? { 'x-internal-api-token': internalToken } : {},
+      ...(typeof window === 'undefined' ? { next: { revalidate: 1800 } } : {}),
+    })
+    if (!response.ok) return null
+    return (await response.json()) as TrustSummary
+  } catch {
+    return null
+  }
+}
 export interface SiteReview {
   id: string
   name: string

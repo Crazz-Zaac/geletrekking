@@ -16,7 +16,10 @@ export function stripMarkdown(value = '') {
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/!\[[^\]]*\]\([^)]*\)(?:\{[^}]*\})?/g, ' ')
     .replace(/\[[^\]]+\]\([^)]*\)/g, (match) => match.replace(/^\[([^\]]+)\].*$/, '$1'))
-    .replace(/[#>*_`~\-]+/g, ' ')
+    // List bullets and horizontal rules; keep hyphens inside words ("15-day").
+    .replace(/^\s*(?:[-*+]|\d+\.)\s+/gm, ' ')
+    .replace(/^\s*-{3,}\s*$/gm, ' ')
+    .replace(/[#>*_`~]+/g, ' ')
     .replace(/::youtube(?:\[[^\]]*\])?\([^)]*\)/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
@@ -26,6 +29,41 @@ export function truncateDescription(value: string, fallback: string, maxLength =
   const clean = stripMarkdown(value) || fallback
   if (clean.length <= maxLength) return clean
   return `${clean.slice(0, maxLength - 1).replace(/\s+\S*$/, '')}…`
+}
+
+type TrekSeoInput = {
+  title: string
+  duration?: number
+  price?: number
+  difficulty?: string
+  maxAltitude?: number
+  offerDiscountPercent?: number
+  shortDescription?: string
+  fullDescription?: string
+}
+
+const formatNumber = (value: number) => value.toLocaleString('en-US')
+
+/** Search-result title with the facts trekkers compare: days and starting price. */
+export function trekSeoTitle(trek: TrekSeoInput) {
+  const parts: string[] = []
+  if (trek.duration) parts.push(`${trek.duration} Days`)
+  if (trek.price) parts.push(`from US$${formatNumber(trek.price)}`)
+  return parts.length ? `${trek.title} – ${parts.join(' ')}` : trek.title
+}
+
+/** Search-result description led by concrete facts, then the trek summary. */
+export function trekSeoDescription(trek: TrekSeoInput) {
+  const facts: string[] = []
+  const lead = [trek.duration ? `${trek.duration}-day` : null, trek.difficulty ? trek.difficulty.toLowerCase() : null, 'guided trek in Nepal']
+    .filter(Boolean)
+    .join(' ')
+  facts.push(trek.maxAltitude ? `${lead} reaching ${formatNumber(trek.maxAltitude)} m` : lead)
+  if (trek.price) facts.push(`from US$${formatNumber(trek.price)} per person${trek.offerDiscountPercent ? ` (save ${trek.offerDiscountPercent}% now)` : ''}`)
+  const summary = stripMarkdown(trek.shortDescription || trek.fullDescription || '')
+  const text = `${facts.join(', ')}.${summary ? ` ${summary}` : ''}`
+  const capitalized = text.charAt(0).toUpperCase() + text.slice(1)
+  return truncateDescription(capitalized, `${trek.title}: guided trek in Nepal with Gele Trekking.`)
 }
 
 export function pageTitle(title: string) {

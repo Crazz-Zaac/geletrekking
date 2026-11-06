@@ -10,6 +10,7 @@ import {
   Info,
   LayoutDashboard,
   Mail,
+  MailCheck,
   Megaphone,
   Mountain,
   Newspaper,
@@ -53,6 +54,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     items: [
       { label: 'Bookings', href: '/admin/bookings', icon: CalendarCheck, description: 'Booking forms and private booking links', keywords: ['booking form', 'private link', 'pdf', 'reservation'], badge: 'bookings' },
       { label: 'Messages', href: '/admin/messages', icon: Mail, description: 'Contact form enquiries', keywords: ['contact', 'enquiry', 'inquiry', 'email'], badge: 'messages' },
+      { label: 'Subscribers', href: '/admin/subscribers', icon: MailCheck, description: 'Packing-list sign-ups and email opt-ins', keywords: ['leads', 'newsletter', 'emails', 'export', 'csv', 'packing list'] },
     ],
   },
   {
