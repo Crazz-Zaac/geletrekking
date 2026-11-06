@@ -51,11 +51,14 @@ function ContactAction({ href, external, icon, tileClass, title, subtitle, onCli
   )
 }
 
+const HINT_SEEN_KEY = 'gele_contact_hint_seen'
+
 export function FloatingContact() {
   const pathname = usePathname()
   const { settings, social } = useSiteSettings()
   const links = getContactLinks(settings.email, social.whatsapp, settings.phone)
   const [open, setOpen] = useState(false)
+  const [showHint, setShowHint] = useState(false)
   const [time, setTime] = useState('')
   const containerRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -83,6 +86,36 @@ export function FloatingContact() {
       document.removeEventListener('pointerdown', handlePointerDown)
     }
   }, [open])
+
+  // Show the hint once per visitor, ~12 s in, and only when nothing else is
+  // asking for attention (cookie banner unanswered, a dialog or panel open).
+  useEffect(() => {
+    if (pathname === '/admin' || pathname.startsWith('/admin/')) return
+    let seen = true
+    try {
+      seen = localStorage.getItem(HINT_SEEN_KEY) === '1'
+    } catch {}
+    if (seen) return
+    const showTimer = window.setTimeout(() => {
+      let cookieChoiceMade = false
+      try {
+        cookieChoiceMade = localStorage.getItem('gele-cookie-consent') !== null
+      } catch {}
+      if (!cookieChoiceMade || document.querySelector('[role="dialog"]')) return
+      setShowHint(true)
+      try {
+        localStorage.setItem(HINT_SEEN_KEY, '1')
+      } catch {}
+    }, 12000)
+    return () => window.clearTimeout(showTimer)
+  }, [pathname])
+
+  // Hide the hint again after a while if it is ignored.
+  useEffect(() => {
+    if (!showHint) return
+    const hideTimer = window.setTimeout(() => setShowHint(false), 15000)
+    return () => window.clearTimeout(hideTimer)
+  }, [showHint])
 
   const closePanel = () => {
     setOpen(false)
@@ -208,45 +241,83 @@ export function FloatingContact() {
         )}
       </AnimatePresence>
 
+      {/* One-time hint so visitors know there are three ways to reach us */}
+      <AnimatePresence>
+        {showHint && !open && (
+          <motion.div
+            key="hint"
+            role="status"
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ transformOrigin: 'bottom left' }}
+            className="absolute bottom-full left-0 mb-3 w-[min(17rem,calc(100vw-2rem))] rounded-2xl border border-border bg-background p-3.5 pr-9 text-sm text-foreground shadow-xl"
+          >
+            <button type="button" onClick={() => { setShowHint(false); setOpen(true) }} className="text-left">
+              <span className="block font-semibold">Questions about a trek?</span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">Chat on WhatsApp, email us, or book a free 15-minute call.</span>
+            </button>
+            <button type="button" onClick={() => setShowHint(false)} aria-label="Dismiss" className="absolute right-2 top-2 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+            <span className="absolute -bottom-1.5 left-6 h-3 w-3 rotate-45 border-b border-r border-border bg-background" aria-hidden="true" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <button
         ref={triggerRef}
         type="button"
-        aria-label={open ? 'Close contact options' : 'Contact us: WhatsApp, email, or book a call'}
+        aria-label={open ? 'Close contact options' : 'Contact us: WhatsApp, email, or book a free call'}
         aria-expanded={open}
         aria-controls={panelId}
-        onClick={() => setOpen((value) => !value)}
-        className={`group relative h-14 w-14 items-center justify-center rounded-full ${open ? 'hidden sm:flex' : 'flex'}  bg-gradient-to-br from-[#25D366] to-[#128C4A] text-white shadow-[0_10px_30px_-6px_rgba(18,140,74,0.6)] transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#25D366]/40 motion-reduce:transition-none motion-reduce:hover:scale-100`}
+        onClick={() => {
+          setShowHint(false)
+          setOpen((value) => !value)
+        }}
+        className={`group relative items-center rounded-full bg-gradient-to-br from-[#25D366] to-[#128C4A] text-white shadow-[0_10px_30px_-6px_rgba(18,140,74,0.6)] transition-transform hover:scale-[1.03] active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#25D366]/40 motion-reduce:transition-none motion-reduce:hover:scale-100 ${
+          open ? 'hidden h-14 w-14 justify-center sm:flex' : 'flex h-14 w-14 justify-center md:w-auto md:justify-start md:gap-3 md:py-2 md:pl-2 md:pr-5'
+        }`}
       >
-        <AnimatePresence initial={false} mode="wait">
-          {open ? (
-            <motion.span
-              key="close"
-              initial={reduceMotion ? false : { rotate: -90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={reduceMotion ? undefined : { rotate: 90, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <X className="h-6 w-6" aria-hidden="true" />
-            </motion.span>
-          ) : (
-            <motion.span
-              key="open"
-              initial={reduceMotion ? false : { rotate: 90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={reduceMotion ? undefined : { rotate: -90, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <MessageCircle className="h-6 w-6" aria-hidden="true" />
-            </motion.span>
-          )}
-        </AnimatePresence>
+        <span className={`relative flex h-14 w-14 shrink-0 items-center justify-center ${open ? '' : 'md:h-10 md:w-10 md:rounded-full md:bg-white/20'}`}>
+          <AnimatePresence initial={false} mode="wait">
+            {open ? (
+              <motion.span
+                key="close"
+                initial={reduceMotion ? false : { rotate: -90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={reduceMotion ? undefined : { rotate: 90, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <X className="h-6 w-6" aria-hidden="true" />
+              </motion.span>
+            ) : (
+              <motion.span
+                key="open"
+                initial={reduceMotion ? false : { rotate: 90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={reduceMotion ? undefined : { rotate: -90, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <MessageCircle className="h-6 w-6 md:h-5 md:w-5" aria-hidden="true" />
+              </motion.span>
+            )}
+          </AnimatePresence>
+          {!open && <span className="absolute right-0.5 top-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-300 md:right-0 md:top-0 md:h-3 md:w-3" aria-hidden="true" />}
+        </span>
+        {/* Desktop: spell out the options */}
         {!open && (
-          <>
-            <span className="absolute right-0.5 top-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-300" aria-hidden="true" />
-            <span className="pointer-events-none absolute left-full ml-3 hidden whitespace-nowrap rounded-full bg-foreground px-3 py-1.5 text-xs font-medium text-background opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 md:block">
-              Need help planning?
+          <span className="hidden text-left leading-tight md:block">
+            <span className="block text-sm font-semibold">Questions? Let&apos;s talk</span>
+            <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/90">
+              <WhatsAppIcon className="h-3 w-3" /> WhatsApp
+              <span aria-hidden="true">·</span>
+              <Mail className="h-3 w-3" aria-hidden="true" /> Email
+              <span aria-hidden="true">·</span>
+              <CalendarDays className="h-3 w-3" aria-hidden="true" /> Free call
             </span>
-          </>
+          </span>
         )}
       </button>
     </div>

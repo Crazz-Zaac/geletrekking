@@ -109,13 +109,23 @@ export function FooterTrustRow() {
         </div>
       )}
       {trust.rating !== null && trust.reviewCount ? (
-        <a href={GOOGLE_REVIEWS_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl bg-white/5 px-4 py-3 text-white transition-colors hover:bg-white/10">
-          <span className="text-2xl font-bold">{trust.rating.toFixed(1)}</span>
-          <span>
-            <RatingStars rating={trust.rating} />
-            <span className="block text-xs text-white/70">{trust.reviewCount} reviews on Google</span>
-          </span>
-        </a>
+        <div className="flex flex-col items-center gap-2 md:items-end">
+          <a href={GOOGLE_REVIEWS_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl bg-white/5 px-4 py-3 text-white transition-colors hover:bg-white/10">
+            <span className="text-2xl font-bold">{trust.rating.toFixed(1)}</span>
+            <span>
+              <RatingStars rating={trust.rating} />
+              <span className="block text-xs text-white/70">{trust.reviewCount} reviews on Google</span>
+            </span>
+          </a>
+          <a
+            href={trust.writeReviewUrl || 'https://search.google.com/local/writereview?placeid=ChIJR_d6frYf6zkR0HAm4EnYRkI'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-white/70 underline underline-offset-4 hover:text-white"
+          >
+            Trekked with us? Write a review
+          </a>
+        </div>
       ) : null}
     </div>
   )

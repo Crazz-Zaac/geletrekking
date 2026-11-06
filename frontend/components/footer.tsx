@@ -33,6 +33,7 @@ const footerLinks = {
   ],
   usefulLinks: [
     { label: 'Visa Office Nepal', href: 'https://nepaliport.immigration.gov.np/', external: true },
+    { label: 'Leave us a review on Google', href: 'https://search.google.com/local/writereview?placeid=ChIJR_d6frYf6zkR0HAm4EnYRkI', external: true },
     { label: 'Safety & Trekking with Confidence', href: '/safety' },
     { label: 'Terms and Conditions', href: '/terms-and-conditions' },
     { label: 'Privacy Policy', href: '/privacy-policy' },
