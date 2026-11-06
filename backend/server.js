@@ -91,6 +91,7 @@ const activityRoutes = require("./routes/activityRoutes");
 
 // Content routes
 const blogRoutes = require("./routes/blogRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const bookingSubmissionRoutes = require("./routes/bookingSubmissionRoutes");
@@ -119,6 +120,7 @@ app.use("/api/activities", activityRoutes);
 
 // Mount new content routes
 app.use("/api/blogs", blogRoutes);
+app.use("/api/reviews", reviewRoutes);
 app.use("/api/gallery", galleryRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/booking-submissions", bookingSubmissionRoutes);

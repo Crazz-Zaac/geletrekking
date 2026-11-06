@@ -12,11 +12,11 @@ const baseCsp = [
 // If a new third-party widget is added, allow its host here.
 const contentSecurityPolicy = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://featurable.com",
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://featurable.com https://challenges.cloudflare.com",
+  "connect-src 'self' https://challenges.cloudflare.com",
   "frame-src 'self' https://challenges.cloudflare.com https://www.youtube-nocookie.com https://www.youtube.com https://maps.google.com https://www.google.com https:",
   "media-src 'self' https:",
   "worker-src 'self' blob:",

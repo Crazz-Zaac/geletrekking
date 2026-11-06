@@ -143,7 +143,7 @@ function renderYouTubeEmbeds(content: string, allowExternalMedia: boolean) {
       const videoId = getYouTubeId(url);
       if (!videoId) return match;
       const safeTitle = escapeHtml(title?.trim() || 'YouTube video');
-      if (!allowExternalMedia) return `<p>Video: <a href="https://www.youtube.com/watch?v=${escapeHtml(videoId)}" target="_blank" rel="noopener noreferrer">${safeTitle}</a>. Enable optional external content in Cookie settings to watch it here.</p>`;
+      if (!allowExternalMedia) return `<p>Video: <a href="https://www.youtube.com/watch?v=${escapeHtml(videoId)}" target="_blank" rel="noopener noreferrer">${safeTitle}</a>. Allow “Maps &amp; videos” in Cookie settings to watch it here.</p>`;
 
       return `<div class="blog-video-embed"><iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}" title="${safeTitle}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`;
     }
@@ -151,7 +151,7 @@ function renderYouTubeEmbeds(content: string, allowExternalMedia: boolean) {
 }
 
 function renderBlogMarkdown(content: string, allowExternalMedia: boolean) {
-  const safeContent = allowExternalMedia ? content : content.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, '<p>Embedded media is off. Use Cookie settings to allow external content.</p>');
+  const safeContent = allowExternalMedia ? content : content.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, '<p>Embedded media is off. Allow “Maps &amp; videos” in Cookie settings to show it.</p>');
   return renderYouTubeEmbeds(renderSizedMarkdownImages(safeContent), allowExternalMedia);
 }
 

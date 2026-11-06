@@ -14,7 +14,6 @@ import { Mail, Phone, CalendarDays, MapPin, Clock3, MessageCircle, ShieldCheck, 
 import { WhatsAppIcon } from '@/components/whatsapp-icon';
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons';
 import { TurnstileWidget } from '@/components/turnstile-widget';
-import { TrustpilotWidget } from '@/components/trustpilot-widget';
 import { submitContactMessage } from '@/lib/api';
 import { GELE_CALL_URL } from '@/lib/contact-links';
 import { useSiteSettings } from '@/hooks/use-site-settings';
@@ -222,12 +221,6 @@ export default function ContactPage() {
                 Contact Us
               </motion.h1>
             </motion.div>
-          </div>
-        </section>
-
-        <section className="py-6 md:py-8 bg-background">
-          <div className="container mx-auto px-4 md:px-6">
-            <TrustpilotWidget className="rounded-xl border border-border bg-card p-4" />
           </div>
         </section>
 
@@ -497,7 +490,7 @@ export default function ContactPage() {
                 </Card>
 
                 <Card className="border-border overflow-hidden">
-                  <ConsentGate label="Kathmandu office map" externalUrl="https://maps.google.com/maps?q=Kathmandu%2C%20Nepal">
+                  <ConsentGate label="Office map" loadLabel="Load map" externalUrl="https://maps.google.com/maps?q=Kathmandu%2C%20Nepal" externalLabel="Open in Google Maps" className="min-h-[280px] rounded-none border-0">
                   <iframe
                     title="Kathmandu office map"
                     src={settings.mapEmbedUrl || 'https://maps.google.com/maps?q=Kathmandu%2C%20Nepal&t=&z=12&ie=UTF8&iwloc=&output=embed'}

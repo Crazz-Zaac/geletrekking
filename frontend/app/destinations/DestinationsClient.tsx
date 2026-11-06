@@ -14,7 +14,6 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { getTreks } from '@/lib/api';
 import type { Trek } from '@/lib/data';
 import { SlidersHorizontal, X, Scale } from 'lucide-react';
-import { TrustpilotWidget } from '@/components/trustpilot-widget';
 
 const containerVariants = {
   hidden: { opacity: 0 },

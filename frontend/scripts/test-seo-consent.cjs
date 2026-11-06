@@ -14,14 +14,31 @@ function loadSource(relativePath) {
 const consent = loadSource('lib/cookie-consent.ts')
 const { buildMetadata } = loadSource('lib/seo.ts')
 
-test('cookie preference expires and rejects corrupt, future, or unexpected settings', () => {
+test('cookie preference expires and rejects corrupt, future, outdated, or unexpected settings', () => {
   const now = Date.now()
-  const valid = { version: 1, externalMedia: false, savedAt: now }
+  const valid = { version: consent.CONSENT_VERSION, media: false, savedAt: now }
   assert.deepEqual(consent.parseCookiePreference(JSON.stringify(valid), now), valid)
-  assert.equal(consent.parseCookiePreference(JSON.stringify({ ...valid, externalMedia: true }), now).externalMedia, true)
-  for (const input of [null, 'invalid', '{}', JSON.stringify({ ...valid, version: 2 }), JSON.stringify({ ...valid, externalMedia: 'yes' }), JSON.stringify({ ...valid, savedAt: now + 1 }), JSON.stringify({ ...valid, savedAt: now - consent.CONSENT_MAX_AGE_MS })]) {
+  assert.equal(consent.parseCookiePreference(JSON.stringify({ ...valid, media: true }), now).media, true)
+  for (const input of [
+    null,
+    'invalid',
+    '{}',
+    JSON.stringify({ version: 1, externalMedia: true, savedAt: now }),
+    JSON.stringify({ ...valid, version: consent.CONSENT_VERSION + 1 }),
+    JSON.stringify({ ...valid, media: 'yes' }),
+    JSON.stringify({ ...valid, savedAt: now + 1 }),
+    JSON.stringify({ ...valid, savedAt: now - consent.CONSENT_MAX_AGE_MS }),
+  ]) {
     assert.equal(consent.parseCookiePreference(input, now), null)
   }
+})
+
+test('new preferences default every optional category from explicit choices only', () => {
+  const now = Date.now()
+  assert.deepEqual(consent.createCookiePreference({ media: false }, now), { version: consent.CONSENT_VERSION, media: false, savedAt: now })
+  const categories = consent.CONSENT_CATEGORIES.map((category) => category.id)
+  assert.deepEqual(categories, ['necessary', 'media'])
+  assert.equal(consent.CONSENT_CATEGORIES.filter((category) => category.required).length, 1)
 })
 
 test('metadata has page-specific keywords and images on both social platforms', () => {

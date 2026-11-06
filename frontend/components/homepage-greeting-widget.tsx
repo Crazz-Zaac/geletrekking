@@ -70,12 +70,15 @@ export function HomepageGreetingWidget() {
   // on phones, where it would cover the page.
   useEffect(() => {
     let seen = false
+    let cookieChoiceMade = false
     try {
       seen = localStorage.getItem(SEEN_KEY) === '1'
+      // Don't stack two prompts: wait until the visitor has answered the cookie banner.
+      cookieChoiceMade = localStorage.getItem('gele-cookie-consent') !== null
     } catch {
       seen = true
     }
-    if (seen || !window.matchMedia('(min-width: 640px)').matches) return
+    if (seen || !cookieChoiceMade || !window.matchMedia('(min-width: 640px)').matches) return
     const timer = window.setTimeout(() => {
       setOpen(true)
       markSeen()

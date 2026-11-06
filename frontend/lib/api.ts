@@ -1160,6 +1160,38 @@ export async function getCachedPublicSettings(): Promise<AdminSiteSettings | nul
     return null
   }
 }
+export interface SiteReview {
+  id: string
+  name: string
+  rating: number
+  text: string
+  date: string | null
+  url: string | null
+  avatar: string | null
+}
+export interface SiteReviews {
+  available: boolean
+  averageRating: number | null
+  totalReviewCount: number | null
+  writeReviewUrl: string | null
+  showBranding: boolean
+  reviews: SiteReview[]
+}
+// Google reviews, fetched and cached by our backend (no third-party calls from
+// the visitor's browser). Revalidated every 30 minutes.
+export async function getSiteReviews(): Promise<SiteReviews | null> {
+  try {
+    const internalToken = typeof window === 'undefined' ? process.env.INTERNAL_API_TOKEN : undefined
+    const response = await fetch(getApiUrl('/api/reviews'), {
+      headers: internalToken ? { 'x-internal-api-token': internalToken } : {},
+      next: { revalidate: 1800 },
+    })
+    if (!response.ok) return null
+    return (await response.json()) as SiteReviews
+  } catch {
+    return null
+  }
+}
 export async function getAdminSettings(): Promise<AdminSiteSettings> {
   return fetchJson<AdminSiteSettings>('/api/settings')
 }

@@ -5,14 +5,13 @@ import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { TrekCard } from '@/components/trek-card'
 import { treks } from '@/lib/data'
-import { getBlogs, getTreks } from '@/lib/api'
+import { getBlogs, getTreks, getSiteReviews } from '@/lib/api'
 import { HeroSection } from './home/hero-section'
 import { WhyUsSection } from './home/why-us-section'
 import { BlogHighlights } from './home/blog-highlights'
 import { BookingCTA } from './home/booking-cta'
 import { StatsBar } from './home/stats-bar'
-import { TrustpilotWidget } from '@/components/trustpilot-widget'
-import { GoogleReviewsEmbed } from './home/google-reviews-embed'
+import { GoogleReviews } from '@/components/google-reviews'
 
 export const metadata = buildMetadata({
   title: 'Gele Trekking — Nepal Trekking & Himalaya Tours',
@@ -22,9 +21,10 @@ export const metadata = buildMetadata({
 })
 
 export default async function HomePage() {
-  const [apiTreks, apiBlogs] = await Promise.all([
+  const [apiTreks, apiBlogs, reviews] = await Promise.all([
     getTreks(),
     getBlogs(),
+    getSiteReviews(),
   ])
 
   const activeTreks = apiTreks.length > 0 ? apiTreks : treks
@@ -102,12 +102,7 @@ export default async function HomePage() {
                 Stories from the Trail
               </h2>
             </div>
-            <GoogleReviewsEmbed />
-          </div>
-        </section>
-        <section className="py-6 md:py-8 bg-background">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <TrustpilotWidget variant="plain" />
+            <GoogleReviews data={reviews} />
           </div>
         </section>
         <BlogHighlights posts={activeBlogs} />
