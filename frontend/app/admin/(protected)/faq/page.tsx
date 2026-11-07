@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowDown, ArrowUp, ChevronDown, ExternalLink, HelpCircle, Plus, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronDown, ExternalLink, HelpCircle, Plus, Sparkles, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -23,8 +23,11 @@ import { useConfirm } from '@/components/admin/use-confirm'
 import { getAdminFaq, updateAdminFaq, type AdminFaq, type AdminFaqItem } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
 import { cn } from '@/lib/utils'
+import { FAQ_TOPICS, SUGGESTED_FAQS, faqTopicOf } from '@/lib/faq-topics'
 
-const emptyFaq = (order = 0): AdminFaqItem => ({ question: '', answer: '', order })
+const topicLabel = (id: string) => FAQ_TOPICS.find((topic) => topic.id === id)?.label ?? id
+
+const emptyFaq = (order = 0): AdminFaqItem => ({ question: '', answer: '', order, category: '' })
 
 export default function AdminFaqPage() {
   const [form, setForm] = useState<AdminFaq>({ heroTitle: '', heroSubtitle: '', heroImageUrl: '', faqs: [] })
@@ -86,6 +89,22 @@ export default function AdminFaqPage() {
     setOpenIndex(null)
   }
 
+  const normalise = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+  const missingSuggestions = SUGGESTED_FAQS.filter(
+    (suggestion) => !faqs.some((item) => normalise(item.question) === normalise(suggestion.question))
+  )
+
+  const addSuggestions = () => {
+    if (missingSuggestions.length === 0) return
+    setForm((prev) => {
+      const current = prev.faqs || []
+      const added = missingSuggestions.map((item, i) => ({ ...item, order: current.length + i }))
+      return { ...prev, faqs: [...current, ...added] }
+    })
+    setOpenIndex(null)
+    setMessage(`${missingSuggestions.length} suggested questions added at the end of the list. Review them, then click Save FAQ to publish.`)
+  }
+
   const moveFaq = (index: number, direction: -1 | 1) => {
     setForm((prev) => {
       const next = [...(prev.faqs || [])]
@@ -108,7 +127,7 @@ export default function AdminFaqPage() {
       return
     }
     const cleaned = faqs
-      .map((item, index) => ({ question: item.question.trim(), answer: item.answer.trim(), order: index }))
+      .map((item, index) => ({ question: item.question.trim(), answer: item.answer.trim(), order: index, category: item.category || '' }))
       .filter((item) => item.question && item.answer)
 
     setSaving(true)
@@ -173,9 +192,16 @@ export default function AdminFaqPage() {
             title={`Questions (${faqs.length})`}
             description="Click a question to edit it. Answers support formatting and links such as [Contact us](/contact)."
             actions={
-              <Button type="button" onClick={addFaq} className="gap-1.5">
-                <Plus className="h-4 w-4" /> Add question
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                {missingSuggestions.length > 0 ? (
+                  <Button type="button" variant="outline" onClick={addSuggestions} className="gap-1.5">
+                    <Sparkles className="h-4 w-4" /> Add {missingSuggestions.length} suggested questions
+                  </Button>
+                ) : null}
+                <Button type="button" onClick={addFaq} className="gap-1.5">
+                  <Plus className="h-4 w-4" /> Add question
+                </Button>
+              </div>
             }
           >
             {faqs.length === 0 ? (
@@ -199,6 +225,12 @@ export default function AdminFaqPage() {
                           <span className={cn('truncate text-sm font-medium', faq.question.trim() ? 'text-foreground' : 'italic text-muted-foreground')}>
                             {faq.question.trim() || 'New question'}
                           </span>
+                          {faq.question.trim() ? (
+                            <Badge variant="secondary" className="hidden shrink-0 font-normal sm:inline-flex">
+                              {topicLabel(faqTopicOf(faq))}
+                              {!faq.category ? ' (auto)' : ''}
+                            </Badge>
+                          ) : null}
                           {incomplete && <Badge variant="outline" className="shrink-0 border-amber-300 text-amber-700">Incomplete</Badge>}
                           <ChevronDown className={cn('ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')} aria-hidden="true" />
                         </button>
@@ -218,6 +250,18 @@ export default function AdminFaqPage() {
                         <div id={`faq-panel-${index}`} className="space-y-4 border-t border-border p-4">
                           <Field label="Question" required>
                             <Input id={`faq-question-${index}`} className="h-10" value={faq.question} onChange={(e) => updateFaq(index, { question: e.target.value })} placeholder="e.g. Do I need a permit for the Everest Base Camp trek?" />
+                          </Field>
+                          <Field label="Topic" hint="The tab this question appears under on the FAQ page. Automatic picks one from the question text.">
+                            <select
+                              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-72"
+                              value={faq.category || ''}
+                              onChange={(e) => updateFaq(index, { category: e.target.value })}
+                            >
+                              <option value="">Automatic ({topicLabel(faqTopicOf({ question: faq.question }))})</option>
+                              {FAQ_TOPICS.map((topic) => (
+                                <option key={topic.id} value={topic.id}>{topic.label}</option>
+                              ))}
+                            </select>
                           </Field>
                           <Field label="Answer" required>
                             <MarkdownEditor value={faq.answer} onChange={(answer) => updateFaq(index, { answer })} rows={6} placeholder="Write a clear, helpful answer…" />

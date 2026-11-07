@@ -1,8 +1,8 @@
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata = buildMetadata({
-  title: 'Travel Disclaimer',
-  description: 'Read Gele Trekking travel information, website disclaimers, and Himalayan trip planning limitations.',
+  title: 'Health & Safety Disclaimer',
+  description: 'The risks of high-altitude trekking in Nepal, participant responsibilities and the travel insurance required before trekking with Gele Trekking.',
   path: '/disclaimer',
 })
 

@@ -1498,6 +1498,8 @@ export interface AdminFaqItem {
   question: string
   answer: string
   order: number
+  /** Topic tab on /faq ('' = guessed from the question). */
+  category?: string
 }
 export interface AdminFaq {
   heroTitle?: string

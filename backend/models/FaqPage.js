@@ -5,6 +5,12 @@ const faqItemSchema = new mongoose.Schema(
     question: { type: String, required: true, trim: true },
     answer: { type: String, required: true, trim: true },
     order: { type: Number, default: 0 },
+    // Topic shown as a tab on /faq. Empty = guessed from the question text.
+    category: {
+      type: String,
+      enum: ["", "before", "booking", "trail", "health", "team"],
+      default: "",
+    },
   },
   { _id: false }
 );

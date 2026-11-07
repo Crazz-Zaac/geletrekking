@@ -1,6 +1,8 @@
 const FaqPage = require("../models/FaqPage");
 const { generalFAQ } = require("../data/faq-data");
 
+const FAQ_CATEGORIES = ["", "before", "booking", "trail", "health", "team"];
+
 const fallbackFaqs = () => ({
   heroTitle: generalFAQ.heroTitle,
   heroSubtitle: generalFAQ.heroSubtitle,
@@ -22,6 +24,7 @@ const normalizeFaqPayload = (data = {}) => ({
           question: String(item?.question || "").trim(),
           answer: String(item?.answer || "").trim(),
           order: Number.isFinite(Number(item?.order)) ? Number(item.order) : index,
+          category: FAQ_CATEGORIES.includes(item?.category) ? item.category : "",
         }))
         .filter((item) => item.question && item.answer)
         .sort((a, b) => a.order - b.order)
