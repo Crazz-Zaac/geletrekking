@@ -157,6 +157,7 @@ const listSummary = (submission) => ({
   createdAt: submission.createdAt,
   updatedAt: submission.updatedAt,
   pdfFilename: submission.pdf?.filename,
+  pdfPurgedAt: submission.pdf?.purgedAt || null,
 });
 
 exports.createBookingFormLink = async (req, res) => {
@@ -330,9 +331,9 @@ exports.submitBooking = async (req, res) => {
     link.submission = submission._id;
     await link.save();
 
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    if (sendEmail.isConfigured() && sendEmail.notificationRecipient()) {
       const customerName = [firstName, lastName].filter(Boolean).join(" ") || "a customer";
-      const recipient = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.EMAIL_USER;
+      const recipient = sendEmail.notificationRecipient();
       const subject = "New private booking form submitted";
       const body = [
         `A new private booking form has been submitted by ${customerName}.`,
@@ -477,6 +478,9 @@ exports.downloadBookingPdf = async (req, res) => {
     noStore(res);
     const submission = await BookingSubmission.findById(req.params.id).select("pdf");
     if (!submission) return res.status(404).json({ message: "Booking submission not found" });
+    if (!submission.pdf?.data) {
+      return res.status(410).json({ message: "This PDF was removed under the data retention policy." });
+    }
 
     res.setHeader("Content-Type", submission.pdf.contentType || "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${submission.pdf.filename}"`);

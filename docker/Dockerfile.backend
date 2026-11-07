@@ -4,7 +4,8 @@ ENV NODE_ENV=production
 WORKDIR /usr/src/app
 
 # dos2unix fixes CRLF line endings in entrypoint.sh
-RUN apk add --no-cache dos2unix
+# fontconfig + DejaVu fonts let sharp draw the watermark text on certificate images
+RUN apk add --no-cache dos2unix fontconfig ttf-dejavu
 
 # Install exactly what the lockfile pins, without dev dependencies
 COPY package*.json ./

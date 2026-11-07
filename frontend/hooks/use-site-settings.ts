@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getAdminSettings, type AdminSiteSettings } from '@/lib/api'
-import { CONTACT_EMAIL, CONTACT_PHONE, WHATSAPP_URL } from '@/lib/contact-links'
+import { CONTACT_EMAIL, CONTACT_PHONE, DEFAULT_CONTACT_EMAILS, WHATSAPP_URL } from '@/lib/contact-links'
 
 type SocialKey = 'facebook' | 'instagram' | 'twitter' | 'linkedin' | 'youtube' | 'whatsapp'
 
@@ -11,6 +11,7 @@ const defaultSettings: Required<AdminSiteSettings> = {
   bookingHeroImageUrl: '',
   phone: CONTACT_PHONE,
   email: CONTACT_EMAIL,
+  contactEmails: DEFAULT_CONTACT_EMAILS,
   address: 'Thamel, Kathmandu 44600, Nepal',
   officeHoursWeekdays: 'Sunday – Friday: 9:00 AM – 6:00 PM',
   officeHoursWeekend: 'Saturday: By appointment only',
@@ -78,6 +79,7 @@ export function useSiteSettings() {
           logoUrl: (data.logoUrl || '').trim() || defaultSettings.logoUrl,
           email: (data.email || '').trim() || CONTACT_EMAIL,
           phone: (data.phone || '').trim() || CONTACT_PHONE,
+          contactEmails: Array.isArray(data.contactEmails) ? data.contactEmails : DEFAULT_CONTACT_EMAILS,
           navigation: {
             ...defaultSettings.navigation,
             ...(data.navigation || {}),

@@ -10,6 +10,7 @@ import {
   Info,
   LayoutDashboard,
   Mail,
+  AtSign,
   MailCheck,
   Megaphone,
   Mountain,
@@ -18,8 +19,7 @@ import {
   ShieldCheck,
   TrendingUp,
   Users,
-  type LucideIcon,
-} from 'lucide-react'
+  type LucideIcon, CalendarClock } from 'lucide-react'
 
 export type AdminRole = 'editor' | 'superadmin'
 
@@ -34,6 +34,8 @@ export type AdminNavItem = {
   roles?: AdminRole[]
   /** Show an unread counter from the notification summary. */
   badge?: 'messages' | 'bookings'
+  /** Opens an outside site (e.g. the mailbox) in a new tab. */
+  external?: boolean
 }
 
 export type AdminNavGroup = {
@@ -54,6 +56,8 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     items: [
       { label: 'Bookings', href: '/admin/bookings', icon: CalendarCheck, description: 'Booking forms and private booking links', keywords: ['booking form', 'private link', 'pdf', 'reservation'], badge: 'bookings' },
       { label: 'Messages', href: '/admin/messages', icon: Mail, description: 'Contact form enquiries', keywords: ['contact', 'enquiry', 'inquiry', 'email'], badge: 'messages' },
+      { label: 'Email inbox (Zoho)', href: 'https://mail.zoho.com', icon: AtSign, description: 'info@geletrekking.com on Zoho Mail (opens in a new tab)', keywords: ['zoho', 'mail', 'email', 'inbox', 'info@', 'webmail'], external: true },
+      { label: 'Call bookings (Cal.com)', href: 'https://app.cal.com/bookings/upcoming', icon: CalendarClock, description: 'Free 15-min calls visitors booked (opens in a new tab)', keywords: ['cal', 'cal.com', 'call', 'meeting', 'appointment', 'calendar', '15 min'], external: true },
       { label: 'Subscribers', href: '/admin/subscribers', icon: MailCheck, description: 'Packing-list sign-ups and email opt-ins', keywords: ['leads', 'newsletter', 'emails', 'export', 'csv', 'packing list'] },
     ],
   },

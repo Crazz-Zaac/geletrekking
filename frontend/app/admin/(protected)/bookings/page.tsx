@@ -548,10 +548,16 @@ export default function AdminBookingsPage() {
 
                     <div className="flex gap-2 flex-wrap">
                       <Button variant="outline" onClick={toggleRead}>{selected.isRead ? 'Mark as Unread' : 'Mark as Read'}</Button>
-                      <Button onClick={() => void handleDownload(selected)} disabled={downloadingId === selected._id} className="gap-1.5">
-                        <Download className="w-3.5 h-3.5" />
-                        {downloadingId === selected._id ? 'Downloading...' : 'Download PDF'}
-                      </Button>
+                      {selected.pdfPurgedAt ? (
+                        <span className="inline-flex items-center rounded-md border border-dashed border-border px-3 text-xs text-muted-foreground">
+                          PDF removed {new Date(selected.pdfPurgedAt).toLocaleDateString()} (retention policy)
+                        </span>
+                      ) : (
+                        <Button onClick={() => void handleDownload(selected)} disabled={downloadingId === selected._id} className="gap-1.5">
+                          <Download className="w-3.5 h-3.5" />
+                          {downloadingId === selected._id ? 'Downloading...' : 'Download PDF'}
+                        </Button>
+                      )}
                       <Button variant="outline" className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 gap-1.5" onClick={() => setDeleteTarget(selected)}>
                         <Trash2 className="w-3.5 h-3.5" /> Delete
                       </Button>

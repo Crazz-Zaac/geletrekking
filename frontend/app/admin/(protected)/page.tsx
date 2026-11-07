@@ -367,6 +367,7 @@ export default function AdminDashboardPage() {
                         <li key={item.href}>
                           <Link
                             href={item.href}
+                            {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                             className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">

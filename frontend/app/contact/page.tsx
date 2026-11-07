@@ -10,12 +10,13 @@ import { Footer } from '@/components/footer';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Mail, Phone, CalendarDays, MapPin, Clock3, MessageCircle, ShieldCheck, Loader2 } from 'lucide-react';
+import { Mail, Phone, CalendarDays, MapPin, Clock3, MessageCircle, ShieldCheck, Loader2, ArrowUpRight } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/whatsapp-icon';
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons';
 import { TurnstileWidget } from '@/components/turnstile-widget';
 import { submitContactMessage } from '@/lib/api';
-import { GELE_CALL_URL } from '@/lib/contact-links';
+import { GELE_CALL_URL, getContactLinks } from '@/lib/contact-links';
+import { CopyButton } from '@/components/copy-button';
 import { useSiteSettings } from '@/hooks/use-site-settings';
 
 const containerVariants = {
@@ -38,6 +39,41 @@ export default function ContactPage() {
   const officeHoursWeekdays = settings.officeHoursWeekdays || 'Sunday – Friday: 9:00 AM – 6:00 PM';
   const officeHoursWeekend = settings.officeHoursWeekend || 'Saturday: By appointment only';
 
+  const links = getContactLinks(settings.email, social.whatsapp, settings.phone);
+  // Same three options as the floating contact button, shown up front.
+  const quickContacts = [
+    {
+      icon: WhatsAppIcon,
+      tile: 'bg-[#25D366]/15 text-[#128C4A]',
+      title: 'Chat on WhatsApp',
+      text: 'The fastest way to get an answer.',
+      cta: 'Start a chat',
+      href: links.whatsappUrl,
+      external: true,
+      highlight: false,
+    },
+    {
+      icon: CalendarDays,
+      tile: 'bg-primary text-primary-foreground',
+      title: 'Book a free 15-min call',
+      text: 'Talk through routes, dates and fitness with Gele. Pick a time that suits you.',
+      cta: 'Choose a time',
+      href: GELE_CALL_URL,
+      external: true,
+      highlight: true,
+    },
+    {
+      icon: Mail,
+      tile: 'bg-accent/15 text-[oklch(0.55_0.16_55)]',
+      title: 'Email us',
+      text: 'Best for detailed itineraries and custom quotes.',
+      cta: links.email,
+      href: links.emailUrl,
+      external: false,
+      highlight: false,
+    },
+  ];
+
   const contactInfo = [
     {
       icon: Mail,
@@ -45,20 +81,25 @@ export default function ContactPage() {
       value: contactEmail,
       href: contactEmail ? `mailto:${contactEmail}` : '#',
       description: 'Best for itinerary planning and custom quotes',
+      copy: contactEmail,
     },
+    // Extra addresses managed in Admin -> Site settings.
+    ...(settings.contactEmails || [])
+      .filter((item) => item.email && item.email.toLowerCase() !== contactEmail.toLowerCase())
+      .map((item) => ({
+        icon: Mail,
+        label: item.label || 'Email',
+        value: item.email,
+        href: `mailto:${item.email}`,
+        description: item.note || '',
+        copy: item.email,
+      })),
     {
       icon: Phone,
       label: 'Phone',
       value: settings.phone || '+977 985 123 4567',
       href: `tel:${(settings.phone || '+9779851234567').replace(/\s+/g, '')}`,
       description: `${officeHoursWeekdays}; ${officeHoursWeekend} (NPT).`,
-    },
-    {
-      icon: CalendarDays,
-      label: '15-minute call with Gele',
-      value: 'Choose a time on Cal.com',
-      href: GELE_CALL_URL,
-      description: 'Discuss your route, dates, and trekking plans with Gele',
     },
     {
       icon: MapPin,
@@ -221,6 +262,39 @@ export default function ContactPage() {
                 Contact Us
               </motion.h1>
             </motion.div>
+          </div>
+        </section>
+
+        <section className="pt-10 md:pt-14" aria-labelledby="quick-contact-heading">
+          <div className="container mx-auto px-4 md:px-6">
+            <h2 id="quick-contact-heading" className="text-center text-lg font-semibold text-foreground md:text-xl">Choose how you&apos;d like to reach us</h2>
+            <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+              {quickContacts.map(({ icon: Icon, tile, title, text, cta, href, external, highlight }) => (
+                <div key={title} className="relative">
+                <a
+                  href={href}
+                  {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  aria-label={href.startsWith('mailto:') ? `${title}: ${links.email}` : undefined}
+                  className={`group relative flex h-full flex-col rounded-2xl border bg-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${highlight ? 'border-primary shadow-md ring-1 ring-primary/20' : 'border-border shadow-sm'}`}
+                >
+                  {highlight && (
+                    <span className="absolute -top-2.5 right-4 rounded-full bg-accent px-2.5 py-0.5 text-[11px] font-semibold text-white">Free</span>
+                  )}
+                  <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${tile}`}>
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <span className="mt-4 text-base font-semibold text-foreground">{title}</span>
+                  <span className="mt-1 flex-1 text-sm text-muted-foreground">{text}</span>
+                  <span className="mt-4 inline-flex items-center gap-1 break-all text-sm font-semibold text-primary">
+                    {cta}
+                    <ArrowUpRight className="h-4 w-4 shrink-0 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+                  </span>
+                </a>
+                {/* Copy sits beside the link (a button can't be inside a link). */}
+                {href.startsWith('mailto:') && <CopyButton value={links.email} className="absolute right-4 top-5" />}
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -469,10 +543,13 @@ export default function ContactPage() {
                           </div>
                           <div className="space-y-1">
                             <p className="text-sm text-muted-foreground font-semibold">{info.label}</p>
-                            <a href={info.href} target={info.href.startsWith('https://') ? '_blank' : undefined} rel={info.href.startsWith('https://') ? 'noopener noreferrer' : undefined} className="text-base font-bold text-foreground hover:text-primary transition-colors">
-                              {info.value}
-                            </a>
-                            <p className="text-sm text-muted-foreground">{info.description}</p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <a href={info.href} target={info.href.startsWith('https://') ? '_blank' : undefined} rel={info.href.startsWith('https://') ? 'noopener noreferrer' : undefined} className="break-all text-base font-bold text-foreground hover:text-primary transition-colors">
+                                {info.value}
+                              </a>
+                              {'copy' in info && info.copy ? <CopyButton value={info.copy} /> : null}
+                            </div>
+                            {info.description ? <p className="text-sm text-muted-foreground">{info.description}</p> : null}
                           </div>
                         </div>
                       </Card>

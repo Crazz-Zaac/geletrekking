@@ -14,7 +14,10 @@ import {
   useDirtyState,
   useUnsavedChangesWarning,
 } from '@/components/admin/form-kit'
-import { AdminSiteSettings, getAdminSettings, updateAdminSettings } from '@/lib/api'
+import { AdminSiteSettings, getAdminSettings, updateAdminSettings, type ContactEmail } from '@/lib/api'
+import { DEFAULT_CONTACT_EMAILS } from '@/lib/contact-links'
+import { Button } from '@/components/ui/button'
+import { Plus, Trash2 } from 'lucide-react'
 import { getAdminToken } from '@/lib/admin-auth'
 
 const defaultSettings: AdminSiteSettings = {
@@ -57,6 +60,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 function validate(form: AdminSiteSettings) {
   const errors: Record<string, string> = {}
   if (form.email && !EMAIL_RE.test(form.email.trim())) errors.email = 'Enter a valid email address.'
+  ;(form.contactEmails || []).forEach((item, index) => {
+    if (item.email.trim() && !EMAIL_RE.test(item.email.trim())) errors[`contactEmails.${index}`] = 'Enter a valid email address.'
+  })
   const map = (form.mapEmbedUrl || '').trim()
   if (map && !/^https:\/\/(www\.)?google\.[a-z.]+\/maps\/embed/.test(map)) {
     errors.mapEmbedUrl = 'Use the embed link (https://www.google.com/maps/embed?pb=…), not a share link or iframe code.'
@@ -91,6 +97,8 @@ export default function AdminSettingsPage() {
         ...defaultSettings,
         ...data,
         social: { ...defaultSettings.social, ...(data.social || {}) },
+        // Show what the website currently displays until a list is saved.
+        contactEmails: Array.isArray(data.contactEmails) ? data.contactEmails : DEFAULT_CONTACT_EMAILS,
       }
       setForm(next)
       markSaved(next)
@@ -122,6 +130,13 @@ export default function AdminSettingsPage() {
 
   const set = <K extends keyof AdminSiteSettings>(key: K, value: AdminSiteSettings[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }))
+
+  const updateContactEmail = (index: number, patch: Partial<ContactEmail>) =>
+    setForm((prev) => ({ ...prev, contactEmails: (prev.contactEmails || []).map((item, i) => (i === index ? { ...item, ...patch } : item)) }))
+  const addContactEmail = () =>
+    setForm((prev) => ({ ...prev, contactEmails: [...(prev.contactEmails || []), { label: '', email: '', note: '' }] }))
+  const removeContactEmail = (index: number) =>
+    setForm((prev) => ({ ...prev, contactEmails: (prev.contactEmails || []).filter((_, i) => i !== index) }))
 
   const updateSocial = (key: SocialKey, value: string) =>
     setForm((prev) => ({ ...prev, social: { ...(prev.social || {}), [key]: value } }))
@@ -205,9 +220,41 @@ export default function AdminSettingsPage() {
                 <Input className="h-10" type="tel" inputMode="tel" placeholder="+977 98…" value={form.phone || ''} onChange={(e) => set('phone', e.target.value)} />
               </Field>
               <Field label="Email" error={visibleErrors.email}>
-                <Input className="h-10" type="email" inputMode="email" placeholder="hello@geletrekking.com" value={form.email || ''} onChange={(e) => set('email', e.target.value)} />
+                <Input className="h-10" type="email" inputMode="email" placeholder="info@geletrekking.com" value={form.email || ''} onChange={(e) => set('email', e.target.value)} />
               </Field>
             </FieldGrid>
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-medium text-foreground">Other email addresses</p>
+                <p className="text-xs text-muted-foreground">Listed on the Contact page below the main email, each with a copy button. Up to 5.</p>
+              </div>
+              {(form.contactEmails || []).map((item, index) => (
+                <div key={index} className="grid gap-2 rounded-lg border border-border bg-muted/30 p-3 sm:grid-cols-[9rem_1fr_auto]">
+                  <Input className="h-10" aria-label={`Label for address ${index + 1}`} placeholder="Label, e.g. Front desk" value={item.label} onChange={(e) => updateContactEmail(index, { label: e.target.value })} />
+                  <div className="space-y-1">
+                    <Input
+                      className="h-10"
+                      type="email"
+                      aria-label={`Email address ${index + 1}`}
+                      aria-invalid={visibleErrors[`contactEmails.${index}`] ? true : undefined}
+                      placeholder="name@example.com"
+                      value={item.email}
+                      onChange={(e) => updateContactEmail(index, { email: e.target.value })}
+                    />
+                    {visibleErrors[`contactEmails.${index}`] && <p className="text-xs text-destructive">{visibleErrors[`contactEmails.${index}`]}</p>}
+                  </div>
+                  <Button type="button" variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-destructive" onClick={() => removeContactEmail(index)} aria-label={`Remove ${item.email || 'address'}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <Input className="h-9 text-xs sm:col-span-3" aria-label={`Note for address ${index + 1}`} placeholder="Short note shown under the address (optional)" value={item.note || ''} onChange={(e) => updateContactEmail(index, { note: e.target.value })} />
+                </div>
+              ))}
+              {(form.contactEmails || []).length < 5 && (
+                <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={addContactEmail}>
+                  <Plus className="h-4 w-4" /> Add email address
+                </Button>
+              )}
+            </div>
             <Field label="Office address">
               <Input className="h-10" placeholder="Street, City, Postal code" value={form.address || ''} onChange={(e) => set('address', e.target.value)} />
             </Field>

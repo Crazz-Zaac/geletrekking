@@ -183,6 +183,9 @@ const trekPackageSchema = new mongoose.Schema(
     // whether this trek appears in the featured section on the homepage
     is_featured: { type: Boolean, default: false },
 
+    // position among featured treks on the homepage (1 = first; 0 = no preference)
+    featured_order: { type: Number, default: 0, min: 0, max: 999 },
+
     // whether this trek is visible to users on the site
     is_active: { type: Boolean, default: true },
 

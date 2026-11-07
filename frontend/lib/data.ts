@@ -61,6 +61,10 @@ export interface Trek {
   originalPrice?: number
   discountedPrice?: number
   isFeatured?: boolean
+  /** Homepage position among featured treks (1 = first, 0 = no preference) */
+  featuredOrder?: number
+  /** Last day of an active special offer (YYYY-MM-DD) */
+  offerValidTo?: string
   // used to fetch live weather from Open-Meteo on the trek detail page
   latitude?: number
   longitude?: number

@@ -7,13 +7,13 @@ import {
   Bell,
   ChevronsLeft,
   ChevronsRight,
+  AtSign,
   ExternalLink,
   LogOut,
   Menu,
   Mountain,
   Search,
-  ShieldCheck,
-} from 'lucide-react'
+  ShieldCheck, CalendarClock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
@@ -88,6 +88,7 @@ function SidebarNav({ role, pathname, collapsed, notifications, onNavigate }: Si
                   <Link
                     href={item.href}
                     onClick={onNavigate}
+                    {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                     aria-current={isActive ? 'page' : undefined}
                     title={collapsed ? `${item.label}${count ? ` (${count} unread)` : ''}` : undefined}
                     className={cn(
@@ -101,6 +102,7 @@ function SidebarNav({ role, pathname, collapsed, notifications, onNavigate }: Si
                   >
                     <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                     {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+                    {!collapsed && item.external && <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-60" aria-label="opens in a new tab" />}
                     {count > 0 && (
                       collapsed ? (
                         <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" aria-hidden="true" />
@@ -390,6 +392,12 @@ export default function ProtectedAdminLayout({ children }: { children: React.Rea
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <a href="/" target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />View website</a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href="https://mail.zoho.com" target="_blank" rel="noopener noreferrer"><AtSign className="h-4 w-4" />Email inbox (Zoho)</a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href="https://app.cal.com/bookings/upcoming" target="_blank" rel="noopener noreferrer"><CalendarClock className="h-4 w-4" />Call bookings (Cal.com)</a>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => void onLogout()} className="text-destructive focus:text-destructive">

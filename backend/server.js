@@ -208,6 +208,9 @@ const startServer = async () => {
 
     // Post-trek Google review request emails (off unless REVIEW_REQUESTS_ENABLED=true).
     require("./utils/reviewRequests").startReviewRequestJob();
+
+    // Daily removal of booking-form PDFs past the retention period.
+    require("./utils/bookingPdfRetention").startBookingPdfRetentionJob();
   } catch (err) {
     console.error(" MongoDB Connection Error:", err.message);
     process.exit(1);

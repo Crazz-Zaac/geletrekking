@@ -16,8 +16,8 @@ const contact = loadSource('lib/contact-links.ts')
 
 test('default contact links use the configured business details and exact Cal.com booking URL', () => {
   assert.deepEqual(contact.getContactLinks(), {
-    email: 'geletrekking@gmail.com',
-    emailUrl: 'mailto:geletrekking@gmail.com',
+    email: 'info@geletrekking.com',
+    emailUrl: 'mailto:info@geletrekking.com',
     whatsappUrl: 'https://wa.me/9779843988164',
     callUrl: 'https://cal.com/gele-trekking-d5slwj/15min',
   })
@@ -33,16 +33,17 @@ test('configured contacts override defaults and WhatsApp links normalize interna
 test('invalid email and unsafe WhatsApp targets fall back to usable business contacts', () => {
   for (const whatsapp of ['javascript:alert(1)', 'https://example.com/not-whatsapp', 'https://user:pass@wa.me/9771234567890', 'https://wa.me/invalid']) {
     const links = contact.getContactLinks('hello\nBcc:bad@example.com', whatsapp)
-    assert.equal(links.emailUrl, 'mailto:geletrekking@gmail.com')
+    assert.equal(links.emailUrl, 'mailto:info@geletrekking.com')
     assert.equal(links.whatsappUrl, contact.WHATSAPP_URL)
   }
 })
 
-test('floating contact renders on public pages, links all three contact channels, and stays off admin pages', () => {
+test('floating contact links all three channels on public pages and stays off admin pages', () => {
   let pathname = '/'
   const { FloatingContact } = loadSource('components/floating-contact.tsx', {
     '@/lib/contact-links': contact,
     '@/components/whatsapp-icon': loadSource('components/whatsapp-icon.tsx'),
+    '@/components/copy-button': { CopyButton: () => null },
     '@/hooks/use-site-settings': { useSiteSettings: () => ({ settings: { email: contact.CONTACT_EMAIL, phone: contact.CONTACT_PHONE }, social: { whatsapp: contact.WHATSAPP_URL } }) },
     'next/navigation': { usePathname: () => pathname },
   })
@@ -50,11 +51,13 @@ test('floating contact renders on public pages, links all three contact channels
   for (const route of ['/', '/contact', '/about', '/trek/sagarmatha-everest-base-camp-trek']) {
     pathname = route
     const html = render()
+    // Desktop rail: the three channels are always linked.
     assert.ok(html.includes(`href="${contact.WHATSAPP_URL}"`))
     assert.ok(html.includes(`href="mailto:${contact.CONTACT_EMAIL}"`))
     assert.ok(html.includes(`href="${contact.GELE_CALL_URL}"`))
+    // Phone launcher starts closed and is labelled.
     assert.ok(html.includes('aria-expanded="false"'))
-    assert.ok(html.includes('Open contact options: WhatsApp, email, or book a call'))
+    assert.ok(html.includes('Contact us: WhatsApp, email, or book a free call'))
   }
   for (const route of ['/admin', '/admin/about']) {
     pathname = route

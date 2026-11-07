@@ -100,9 +100,10 @@ export function FooterTrustRow() {
           <p className="text-xs uppercase tracking-widest text-white/50">Registered & affiliated with</p>
           <ul className="flex flex-wrap items-center justify-center gap-3">
             {trust.associations.map((association) => (
-              <li key={association.name} title={association.name} className="flex h-12 w-16 items-center justify-center rounded-lg bg-white p-1.5">
+              <li key={association.name} title={association.name} className="flex h-12 min-w-12 items-center justify-center rounded-lg bg-white px-2 py-1.5">
+                {/* Height-led sizing: wide logos (TAAN, NMA) get more width instead of shrinking into a square. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={association.logoUrl} alt={association.name} loading="lazy" className="max-h-full max-w-full object-contain" />
+                <img src={association.logoUrl} alt={association.name} loading="lazy" className="h-full w-auto max-w-[9rem] object-contain" />
               </li>
             ))}
           </ul>

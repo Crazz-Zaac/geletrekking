@@ -14,7 +14,9 @@ const bookingSubmissionSchema = new mongoose.Schema(
     pdf: {
       filename: { type: String, required: true },
       contentType: { type: String, default: "application/pdf" },
-      data: { type: Buffer, required: true },
+      // Removed by utils/bookingPdfRetention.js once the retention period has passed.
+      data: { type: Buffer },
+      purgedAt: { type: Date, default: null },
     },
     isRead: { type: Boolean, default: false },
     // Post-trek Google review request (see utils/reviewRequests.js).

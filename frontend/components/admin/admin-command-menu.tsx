@@ -38,7 +38,8 @@ export function AdminCommandMenu({ open, onOpenChange, role, onLogout }: AdminCo
 
   const go = (href: string) => {
     onOpenChange(false)
-    router.push(href)
+    if (/^https?:\/\//.test(href)) window.open(href, '_blank', 'noopener,noreferrer')
+    else router.push(href)
   }
 
   const groups = visibleNav(role)

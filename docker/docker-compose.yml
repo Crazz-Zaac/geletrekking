@@ -1,3 +1,10 @@
+# Cap Docker's container logs so they can't fill the disk (3 x 10 MB per container).
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   # Frontend - Next.js app
   frontend:
@@ -5,6 +12,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.frontend
     container_name: geletrekking-frontend
+    logging: *default-logging
     expose:
       - "3000"
     env_file:
@@ -19,6 +27,7 @@ services:
   nginx:
     image: nginx:1.27-alpine
     container_name: geletrekking-nginx
+    logging: *default-logging
     depends_on:
       - frontend
     ports:
@@ -39,6 +48,7 @@ services:
   certbot:
     image: certbot/certbot:v3.0.1
     container_name: geletrekking-certbot
+    logging: *default-logging
     profiles:
       - prod
     volumes:
@@ -54,6 +64,7 @@ services:
       context: ../backend
       dockerfile: ../docker/Dockerfile.backend
     container_name: geletrekking-backend
+    logging: *default-logging
     env_file:
       - ../backend/.env
     volumes:
@@ -69,6 +80,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: geletrekking-redis
+    logging: *default-logging
     env_file:
       - ../backend/.env
     # Require a password; REDIS_PASSWORD comes from backend/.env
@@ -81,6 +93,7 @@ services:
   mongo:
     image: mongo:7
     container_name: geletrekking-mongo
+    logging: *default-logging
     env_file:
       - ../backend/.env
     volumes:
@@ -95,6 +108,7 @@ services:
   mongo-express:
     image: mongo-express:1.0.2-20-alpine3.19
     container_name: geletrekking-mongo-express
+    logging: *default-logging
     profiles:
       - tools
     env_file:

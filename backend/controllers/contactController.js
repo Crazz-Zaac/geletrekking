@@ -162,7 +162,7 @@ exports.submitMessage = async (req, res) => {
 
     if (skipExternalEmail) {
       console.info("Pre-booking form stored in backend only; external email notification skipped.");
-    } else if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    } else if (sendEmail.isConfigured() && sendEmail.notificationRecipient()) {
       const subject = `${normalizedSource}: ${normalizedName}`;
       const body = [
         `Source: ${normalizedSource}`,
@@ -173,11 +173,11 @@ exports.submitMessage = async (req, res) => {
         normalizedMessage,
       ].join("\n");
 
-      sendEmail(process.env.EMAIL_USER, subject, body).catch((emailError) => {
+      sendEmail(sendEmail.notificationRecipient(), subject, body).catch((emailError) => {
         console.error("Contact notification email error:", emailError);
       });
     } else {
-      console.warn("Contact notification email skipped: EMAIL_USER or EMAIL_PASS is not configured.");
+      console.warn("Contact notification email skipped: email sending or ADMIN_NOTIFICATION_EMAIL is not configured.");
     }
 
     res.status(201).json({ message: "Thank you for contacting us!" });

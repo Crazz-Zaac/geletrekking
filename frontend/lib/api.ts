@@ -133,6 +133,7 @@ export interface AdminTrek {
     answer: string
   }>
   is_featured?: boolean
+  featured_order?: number
   is_active?: boolean
   is_optional?: boolean
   rating?: number
@@ -204,6 +205,7 @@ export interface AdminBookingSubmission {
   createdAt: string
   updatedAt?: string
   pdfFilename?: string
+  pdfPurgedAt?: string | null
 }
 export interface AdminNotificationItem {
   id: string
@@ -242,8 +244,15 @@ export interface PublicBookingFormLink {
   formConfig?: BookingFormConfig
   expiresAt: string
 }
+export interface ContactEmail {
+  label: string
+  email: string
+  note?: string
+}
 export interface AdminSiteSettings {
   siteName?: string
+  /** Extra addresses on the Contact page; undefined until first saved. */
+  contactEmails?: ContactEmail[]
   logoUrl?: string
   contactHeroImageUrl?: string
   bookingHeroImageUrl?: string
@@ -266,7 +275,18 @@ export interface AdminSiteSettings {
   }
   registrationsAffiliations?: RegistrationDocument[]
 }
-export interface RegistrationDocument {
+type RegistrationDetails = {
+  /** "registration" = government registration/licence, "membership" = association membership */
+  kind: 'registration' | 'membership'
+  issuer: string
+  referenceNumber: string
+  issuedOn: string
+  validUntil: string
+  verifyUrl: string
+  logoUrl: string
+}
+/** Full document as admins see it (includes the original file link). */
+export interface RegistrationDocument extends Partial<RegistrationDetails> {
   _id?: string
   title: string
   code: string
@@ -275,6 +295,26 @@ export interface RegistrationDocument {
   documentType: 'image' | 'pdf'
   uploadedAt: Date | null
   status: 'placeholder' | 'uploaded' | 'pending'
+}
+/** What visitors get: images only as watermarked previews, no original link. */
+export interface PublicRegistrationDocument extends RegistrationDetails {
+  code: string
+  title: string
+  description: string
+  status: 'uploaded' | 'pending'
+  documentType: 'image' | 'pdf'
+  hasFile: boolean
+  previewUrl: string
+  fullUrl: string
+  pdfUrl: string
+}
+export type RegistrationDocumentPayload = Partial<RegistrationDetails> & {
+  title?: string
+  code?: string
+  description?: string
+  documentUrl?: string
+  documentType?: 'image' | 'pdf'
+  status?: string
 }
 export interface AdminHero {
   title?: string
@@ -564,6 +604,7 @@ interface BackendTrek {
   itinerary_pdf_url?: string
   season_tag?: string
   is_featured?: boolean
+  featured_order?: number
   latitude?: number
   longitude?: number
   location_name?: string
@@ -813,6 +854,8 @@ function mapTrek(trek: BackendTrek): Trek {
     originalPrice,
     discountedPrice: trek.discounted_price_usd,
     isFeatured: trek.is_featured,
+    featuredOrder: trek.featured_order || 0,
+    offerValidTo: hasOffer && trek.offer_valid_to ? trek.offer_valid_to.slice(0, 10) : undefined,
     latitude: trek.latitude,
     longitude: trek.longitude,
     locationName: trek.location_name,
@@ -1118,7 +1161,10 @@ export async function downloadAdminBookingPdf(_session: string, id: string): Pro
     credentials: "include",
     cache: "no-store",
   })
-  if (!response.ok) throw new Error("PDF download failed: " + response.status + " " + response.statusText)
+  if (!response.ok) {
+    const body = await response.json().catch(() => null) as { message?: string } | null
+    throw new Error(body?.message || "PDF download failed: " + response.status + " " + response.statusText)
+  }
   return response.blob()
 }
 export async function markAdminMessageRead(token: string, id: string): Promise<AdminContactMessage> {
@@ -1279,13 +1325,16 @@ export async function updateAdminSettings(token: string, payload: AdminSiteSetti
     body: JSON.stringify(payload),
   })
 }
-export async function getRegistrationsAffiliations(): Promise<RegistrationDocument[]> {
-  return fetchJson<RegistrationDocument[]>('/api/settings/registrations-affiliations')
+export async function getRegistrationsAffiliations(): Promise<PublicRegistrationDocument[]> {
+  return fetchJson<PublicRegistrationDocument[]>('/api/settings/registrations-affiliations')
+}
+export async function getAdminRegistrationsAffiliations(token: string): Promise<RegistrationDocument[]> {
+  return fetchAdminJson<RegistrationDocument[]>('/api/settings/registrations-affiliations/admin', token)
 }
 export async function updateRegistrationDocument(
   token: string,
   code: string,
-  payload: { title?: string; description?: string; documentUrl: string; documentType: 'image' | 'pdf'; status: string }
+  payload: RegistrationDocumentPayload
 ): Promise<RegistrationDocument> {
   return fetchAdminJson<RegistrationDocument>(
     `/api/settings/registrations-affiliations/${code}`,
@@ -1298,7 +1347,7 @@ export async function updateRegistrationDocument(
 }
 export async function addRegistrationDocument(
   token: string,
-  payload: { title: string; code: string; description: string; documentUrl?: string; documentType?: 'image' | 'pdf'; status?: string }
+  payload: RegistrationDocumentPayload & { title: string; code: string }
 ): Promise<RegistrationDocument> {
   return fetchAdminJson<RegistrationDocument>('/api/settings/registrations-affiliations', token, {
     method: 'POST',

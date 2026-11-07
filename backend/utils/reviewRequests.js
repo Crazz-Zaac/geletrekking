@@ -16,6 +16,9 @@ const sendEmail = require('./sendEmail');
 const WRITE_REVIEW_URL = process.env.GOOGLE_WRITE_REVIEW_URL || 'https://search.google.com/local/writereview?placeid=ChIJR_d6frYf6zkR0HAm4EnYRkI';
 const MIN_DAYS_AFTER = 2;
 const MAX_DAYS_AFTER = 14;
+// Review requests always come from (and replies go to) the company inbox.
+const REVIEW_FROM = 'Gele Trekking <info@geletrekking.com>';
+const REVIEW_REPLY_TO = 'info@geletrekking.com';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 const isEnabled = () => process.env.REVIEW_REQUESTS_ENABLED === 'true';
@@ -38,7 +41,7 @@ const buildReviewRequestEmail = (booking) => {
     '',
     `Leave a review: ${WRITE_REVIEW_URL}`,
     '',
-    "If anything about your trip wasn't right, please just reply to this email. We read every message and would like to put it right.",
+    "If anything about your trip wasn't right, please just reply to this email (or write to info@geletrekking.com). We read every message and would like to put it right.",
     '',
     'Dhanyabad!',
     'The Gele Trekking team',
@@ -59,7 +62,7 @@ const sendReviewRequest = async (booking) => {
   }
   const { subject, text } = buildReviewRequestEmail(booking);
   try {
-    await sendEmail(booking.email.trim(), subject, text);
+    await sendEmail(booking.email.trim(), subject, text, { from: REVIEW_FROM, replyTo: REVIEW_REPLY_TO });
     booking.reviewRequestStatus = 'sent';
     booking.reviewRequestSentAt = new Date();
     booking.reviewRequestError = '';

@@ -7,6 +7,8 @@ const {
   getSettings,
   updateSettings,
   getRegistrationsAffiliations,
+  getRegistrationsAffiliationsAdmin,
+  getRegistrationPreview,
   updateRegistrationDocument,
   addRegistrationDocument,
   deleteRegistrationDocument,
@@ -15,6 +17,13 @@ const {
 // Public
 router.get("/", getSettings);
 router.get("/registrations-affiliations", getRegistrationsAffiliations);
+router.get(
+  "/registrations-affiliations/admin",
+  authMiddleware,
+  requirePermission('manage_settings'),
+  getRegistrationsAffiliationsAdmin
+);
+router.get("/registrations-affiliations/:code/preview", getRegistrationPreview);
 
 // Admin/Superadmin
 router.put("/", authMiddleware, requirePermission('manage_settings'), updateSettings);

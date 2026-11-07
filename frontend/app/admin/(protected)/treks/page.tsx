@@ -1,11 +1,12 @@
 'use client'
 
 import { useConfirm } from '@/components/admin/use-confirm'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Reorder, useDragControls } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { ArrowLeft, ExternalLink, Mountain, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react'
+import { ArrowLeft, ExternalLink, GripVertical, Home, Mountain, Pencil, Plus, Search, Star, Trash2, X } from 'lucide-react'
 import {
   AdminPageHeader,
   EmptyState,
@@ -118,6 +119,7 @@ type TrekForm = {
   is_optional: boolean
   is_active: boolean
   is_featured: boolean
+  featured_order: number
 }
 
 const DISTANCE_ACTIVITY_OPTIONS = [
@@ -251,6 +253,7 @@ const initialForm: TrekForm = {
   is_optional: false,
   is_active: true,
   is_featured: false,
+  featured_order: 0,
 }
 
 function formToPayload(form: TrekForm): Partial<AdminTrek> {
@@ -325,6 +328,7 @@ function formToPayload(form: TrekForm): Partial<AdminTrek> {
     is_optional: form.is_optional,
     is_active: form.is_active,
     is_featured: form.is_featured,
+    featured_order: form.is_featured ? Math.max(0, Math.round(Number(form.featured_order) || 0)) : 0,
   }
 }
 
@@ -412,6 +416,7 @@ function trekToForm(item: AdminTrek): TrekForm {
     is_optional: item.is_optional ?? false,
     is_active: item.is_active ?? true,
     is_featured: item.is_featured ?? false,
+    featured_order: item.featured_order ?? 0,
   }
 }
 
@@ -431,6 +436,63 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'faqs', label: 'FAQs' },
   { key: 'offers', label: 'Offers' },
 ]
+
+type LineupRowProps = {
+  item: AdminTrek
+  index: number
+  total: number
+  dimmed: boolean
+  busy: boolean
+  onMove: (index: number, direction: -1 | 1) => void
+  onRemove: (item: AdminTrek) => void
+  onDragEnd: () => void
+}
+
+/** One draggable row in the Homepage line-up. Drag by the grip (mouse or touch), or focus it and use ↑/↓. */
+function LineupRow({ item, index, total, dimmed, busy, onMove, onRemove, onDragEnd }: LineupRowProps) {
+  const controls = useDragControls()
+  return (
+    <Reorder.Item
+      as="li"
+      value={item}
+      dragListener={false}
+      dragControls={controls}
+      onDragEnd={onDragEnd}
+      whileDrag={{ scale: 1.02, boxShadow: '0 12px 28px -8px rgba(0,0,0,0.3)', zIndex: 10 }}
+      className={cn('relative flex items-center gap-2 rounded-lg border border-border bg-background px-1.5 py-1.5', dimmed && 'opacity-60')}
+    >
+      <button
+        type="button"
+        disabled={busy}
+        onPointerDown={(event) => {
+          if (busy) return
+          event.preventDefault()
+          controls.start(event)
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowUp' && index > 0) { event.preventDefault(); onMove(index, -1) }
+          if (event.key === 'ArrowDown' && index < total - 1) { event.preventDefault(); onMove(index, 1) }
+        }}
+        aria-label={`Reorder ${item.name}, position ${index + 1} of ${total}. Drag, or use the up and down arrow keys.`}
+        title="Drag to reorder"
+        className="flex h-8 w-7 shrink-0 cursor-grab touch-none items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:cursor-grabbing disabled:cursor-wait"
+      >
+        <GripVertical className="h-4 w-4" aria-hidden="true" />
+      </button>
+      <span className="w-5 text-center text-xs font-semibold text-muted-foreground">{index + 1}</span>
+      <div className="pointer-events-none h-8 w-11 shrink-0 overflow-hidden rounded bg-muted">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {item.image_url ? <img src={item.image_url} alt="" draggable={false} className="h-full w-full object-cover" loading="lazy" /> : null}
+      </div>
+      <p className="min-w-0 flex-1 select-none truncate text-sm text-foreground">
+        {item.name}
+        <span className="ml-2 text-xs text-muted-foreground">{[item.region, item.difficulty].filter(Boolean).join(' · ')}</span>
+        {!item.is_active && <Badge variant="outline" className="ml-2">Hidden: not shown</Badge>}
+      </p>
+      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive" disabled={busy} onClick={() => onRemove(item)} aria-label={`Remove ${item.name} from the homepage`}><X className="h-3.5 w-3.5" /></Button>
+    </Reorder.Item>
+  )
+}
 
 export default function AdminTreksPage() {
   const [askConfirm, confirmDialog] = useConfirm()
@@ -535,6 +597,73 @@ export default function AdminTreksPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  // ---- Homepage line-up (featured treks and their order) ----
+  const HOMEPAGE_SLOTS = 6
+  const featuredItems = useMemo(() => {
+    const position = (item: AdminTrek) => (item.featured_order && item.featured_order > 0 ? item.featured_order : Number.MAX_SAFE_INTEGER)
+    return items.filter((item) => item.is_featured).sort((a, b) => position(a) - position(b))
+  }, [items])
+  const [lineupBusy, setLineupBusy] = useState(false)
+
+  /** Save featured flags/positions for the given treks, numbering `ordered` 1..n. */
+  const saveLineup = async (ordered: AdminTrek[], removed?: AdminTrek) => {
+    if (!token) { setError('Missing admin token. Please login again.'); return }
+    setLineupBusy(true)
+    setError('')
+    setMessage('')
+    try {
+      const changes: Array<{ id: string; payload: Partial<AdminTrek> }> = []
+      ordered.forEach((item, index) => {
+        if (!item.is_featured || item.featured_order !== index + 1) {
+          changes.push({ id: item._id, payload: { is_featured: true, featured_order: index + 1 } })
+        }
+      })
+      if (removed) changes.push({ id: removed._id, payload: { is_featured: false, featured_order: 0 } })
+      for (const change of changes) await updateAdminTrek(token, change.id, change.payload)
+      // Update locally so the list doesn't flash a reload.
+      setItems((prev) => prev.map((item) => {
+        const change = changes.find((c) => c.id === item._id)
+        return change ? { ...item, ...change.payload } : item
+      }))
+      setMessage('Homepage line-up saved.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update the homepage line-up')
+      await refresh()
+    } finally {
+      setLineupBusy(false)
+    }
+  }
+
+  const toggleFeatured = (item: AdminTrek) =>
+    item.is_featured
+      ? saveLineup(featuredItems.filter((f) => f._id !== item._id), item)
+      : saveLineup([...featuredItems, item])
+
+  // Local copy that follows the pointer while dragging; saved when the drag ends.
+  const [lineupOrder, setLineupOrder] = useState<AdminTrek[]>([])
+  const lineupOrderRef = useRef<AdminTrek[]>([])
+  useEffect(() => {
+    setLineupOrder(featuredItems)
+    lineupOrderRef.current = featuredItems
+  }, [featuredItems])
+  const onLineupReorder = (next: AdminTrek[]) => {
+    lineupOrderRef.current = next
+    setLineupOrder(next)
+  }
+  const commitLineupDrag = () => {
+    const next = lineupOrderRef.current
+    const changed = next.some((item, index) => featuredItems[index]?._id !== item._id)
+    if (changed) void saveLineup(next)
+  }
+
+  const moveFeatured = (index: number, direction: -1 | 1) => {
+    const target = index + direction
+    if (target < 0 || target >= featuredItems.length) return
+    const next = [...featuredItems]
+    ;[next[index], next[target]] = [next[target], next[index]]
+    void saveLineup(next)
   }
 
   const onDelete = async (item: AdminTrek) => {
@@ -797,9 +926,21 @@ export default function AdminTreksPage() {
                 ))}
                 <div className="grid grid-cols-1 gap-3 pt-1 lg:grid-cols-3">
                   <ToggleField label="Visible on website" description="Hidden treks stay here as drafts." checked={form.is_active} onCheckedChange={(is_active) => setForm((p) => ({ ...p, is_active }))} />
-                  <ToggleField label="Featured" description="Shown on the homepage." checked={form.is_featured} onCheckedChange={(is_featured) => setForm((p) => ({ ...p, is_featured }))} />
+                  <ToggleField label="Featured on homepage" description="Shown first under Popular Trek Packages." checked={form.is_featured} onCheckedChange={(is_featured) => setForm((p) => ({ ...p, is_featured }))} />
                   <ToggleField label="Also list under Activities" description="For short or optional treks." checked={form.is_optional} onCheckedChange={(is_optional) => setForm((p) => ({ ...p, is_optional }))} />
                 </div>
+                {form.is_featured && (
+                  <Field label="Homepage position" hint="1 shows first. Leave 0 to place it after the numbered treks. You can also reorder from the trek list.">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={999}
+                      className="h-10 w-32"
+                      value={form.featured_order}
+                      onChange={(e) => setForm((p) => ({ ...p, featured_order: Number(e.target.value) || 0 }))}
+                    />
+                  </Field>
+                )}
 
                 <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
                   <div>
@@ -1276,6 +1417,61 @@ export default function AdminTreksPage() {
 
       {!showForm && (
         <div className="space-y-4">
+          {!loading && items.length > 0 && (
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm" aria-labelledby="homepage-lineup-heading">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h2 id="homepage-lineup-heading" className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <Home className="h-4 w-4 text-primary" aria-hidden="true" /> Homepage line-up
+                  </h2>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Popular Trek Packages shows {HOMEPAGE_SLOTS} treks. Starred treks come first in this order (drag <GripVertical className="inline h-3 w-3" aria-hidden="true" /> to reorder); empty spots are filled automatically.
+                    Treks with an active special offer also appear in the Special Offers band above it.
+                  </p>
+                </div>
+                <Badge variant="outline" className={featuredItems.length > HOMEPAGE_SLOTS ? 'border-amber-300 bg-amber-50 text-amber-700' : ''}>
+                  {Math.min(featuredItems.length, HOMEPAGE_SLOTS)} of {HOMEPAGE_SLOTS} picked{featuredItems.length > HOMEPAGE_SLOTS ? ` (+${featuredItems.length - HOMEPAGE_SLOTS} only under region filters)` : ''}
+                </Badge>
+              </div>
+              {featuredItems.length === 0 ? (
+                <p className="mt-3 rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
+                  No treks picked yet: the homepage shows the newest treks. Click the <Star className="inline h-3 w-3" aria-hidden="true" /> on a trek below to pick it.
+                </p>
+              ) : (
+                <>
+                {/* Shows the 6 homepage rows; any extra starred treks scroll inside the panel. */}
+                <Reorder.Group
+                  as="ol"
+                  axis="y"
+                  values={lineupOrder}
+                  onReorder={onLineupReorder}
+                  layoutScroll
+                  className="mt-3 flex max-h-[19.5rem] flex-col gap-1.5 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]"
+                  aria-label="Featured treks in homepage order"
+                >
+                  {lineupOrder.map((item, index) => (
+                    <LineupRow
+                      key={item._id}
+                      item={item}
+                      index={index}
+                      total={lineupOrder.length}
+                      dimmed={index >= HOMEPAGE_SLOTS}
+                      busy={lineupBusy}
+                      onMove={moveFeatured}
+                      onRemove={(row) => void toggleFeatured(row)}
+                      onDragEnd={commitLineupDrag}
+                    />
+                  ))}
+                </Reorder.Group>
+                {featuredItems.length > HOMEPAGE_SLOTS && (
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    Scroll for {featuredItems.length - HOMEPAGE_SLOTS} more. Treks after #{HOMEPAGE_SLOTS} only show when visitors pick their region.
+                  </p>
+                )}
+                </>
+              )}
+            </section>
+          )}
           <div className="relative sm:w-80">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input type="search" className="h-10 pl-9" placeholder="Search treks or regions…" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search treks" />
@@ -1305,6 +1501,18 @@ export default function AdminTreksPage() {
                     </p>
                   </button>
                   <div className="flex shrink-0 gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn('h-8 w-8', item.is_featured ? 'text-amber-500 hover:text-amber-600' : 'text-muted-foreground')}
+                      disabled={lineupBusy}
+                      onClick={() => void toggleFeatured(item)}
+                      aria-pressed={!!item.is_featured}
+                      aria-label={item.is_featured ? `Remove ${item.name} from the homepage` : `Feature ${item.name} on the homepage`}
+                      title={item.is_featured ? 'Featured on homepage (click to remove)' : 'Feature on homepage'}
+                    >
+                      <Star className={cn('h-4 w-4', item.is_featured && 'fill-current')} />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(item)} aria-label={`Edit ${item.name}`}><Pencil className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => void onDelete(item)} aria-label={`Delete ${item.name}`}><Trash2 className="h-4 w-4" /></Button>
                   </div>

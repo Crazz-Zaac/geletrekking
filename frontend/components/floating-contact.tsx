@@ -7,6 +7,7 @@ import { ArrowUpRight, CalendarDays, Clock, Mail, MessageCircle, X } from 'lucid
 import { useSiteSettings } from '@/hooks/use-site-settings'
 import { getContactLinks } from '@/lib/contact-links'
 import { WhatsAppIcon } from '@/components/whatsapp-icon'
+import { CopyButton } from '@/components/copy-button'
 
 function nepalTime() {
   try {
@@ -28,15 +29,17 @@ type ActionProps = {
   title: string
   subtitle: string
   onClick?: () => void
+  /** Leave room on the right for a button placed beside the link. */
+  reserveRight?: boolean
 }
 
-function ContactAction({ href, external, icon, tileClass, title, subtitle, onClick }: ActionProps) {
+function ContactAction({ href, external, icon, tileClass, title, subtitle, onClick, reserveRight }: ActionProps) {
   return (
     <a
       href={href}
       onClick={onClick}
       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-      className="group flex items-center gap-3.5 rounded-2xl border border-border/70 bg-card p-3 transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+      className={`group flex items-center gap-3.5 rounded-2xl border border-border/70 bg-card p-3 ${reserveRight ? 'pr-24' : ''} transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none motion-reduce:hover:translate-y-0`}
     >
       <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${tileClass}`}>{icon}</span>
       <span className="min-w-0 flex-1">
@@ -47,6 +50,40 @@ function ContactAction({ href, external, icon, tileClass, title, subtitle, onCli
         className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground motion-reduce:transition-none"
         aria-hidden="true"
       />
+    </a>
+  )
+}
+
+type RailItemProps = {
+  href: string
+  external?: boolean
+  icon: React.ReactNode
+  tileClass: string
+  title: string
+  subtitle: string
+}
+
+// Desktop: one-click icon button with a label that slides out on hover/focus.
+function RailItem({ href, external, icon, tileClass, title, subtitle }: RailItemProps) {
+  return (
+    <a
+      href={href}
+      aria-label={`${title}: ${subtitle}`}
+      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      className="group relative flex focus-visible:outline-none"
+    >
+      <span
+        className={`flex items-center justify-center rounded-xl transition-transform group-hover:scale-105 group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-background motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${tileClass}`}
+      >
+        {icon}
+      </span>
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute left-full top-1/2 ml-4 -translate-x-1 -translate-y-1/2 whitespace-nowrap rounded-xl border border-border bg-background px-3 py-2 text-left opacity-0 shadow-lg transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100 motion-reduce:transition-none"
+      >
+        <span className="block text-sm font-semibold text-foreground">{title}</span>
+        <span className="block text-xs text-muted-foreground">{subtitle}</span>
+      </span>
     </a>
   )
 }
@@ -101,6 +138,8 @@ export function FloatingContact() {
       try {
         cookieChoiceMade = localStorage.getItem('gele-cookie-consent') !== null
       } catch {}
+      // Desktop shows the always-visible rail, which needs no hint.
+      if (window.matchMedia('(min-width: 640px)').matches) return
       if (!cookieChoiceMade || document.querySelector('[role="dialog"]')) return
       setShowHint(true)
       try {
@@ -133,9 +172,44 @@ export function FloatingContact() {
       }
 
   return (
+    <>
+    {/* Desktop: collapsed-sidebar rail docked to the left edge */}
+    <nav
+      aria-label="Contact us"
+      className="fixed left-0 top-1/2 z-[60] hidden -translate-y-1/2 flex-col items-center gap-2 rounded-r-2xl border border-l-0 border-border bg-background/95 p-2 shadow-[0_10px_30px_-8px_rgba(0,0,0,0.25)] backdrop-blur sm:flex"
+    >
+      <RailItem
+        href={links.whatsappUrl}
+        external
+        icon={<WhatsAppIcon className="h-6 w-6" />}
+        tileClass="h-12 w-12 bg-gradient-to-br from-[#25D366] to-[#128C4A] text-white shadow-[0_6px_16px_-4px_rgba(18,140,74,0.6)]"
+        title="Chat on WhatsApp"
+        subtitle="Usually replies within a few hours"
+      />
+      <span className="h-px w-6 bg-border" aria-hidden="true" />
+      <RailItem
+        href={links.emailUrl}
+        icon={<Mail className="h-5 w-5" aria-hidden="true" />}
+        tileClass="h-10 w-10 bg-accent/15 text-[oklch(0.55_0.16_55)]"
+        title="Email us"
+        subtitle={links.email}
+      />
+      {/* For visitors whose computer has no email app set up */}
+      <CopyButton value={links.email} iconOnly className="h-7 w-10 justify-center border-0 bg-transparent px-0" />
+      <RailItem
+        href={links.callUrl}
+        external
+        icon={<CalendarDays className="h-5 w-5" aria-hidden="true" />}
+        tileClass="h-10 w-10 bg-primary/10 text-primary"
+        title="Book a free 15-min call"
+        subtitle="Pick a time that suits you"
+      />
+    </nav>
+
+    {/* Phones: single launcher with a bottom-sheet panel */}
     <div
       ref={containerRef}
-      className={`fixed left-4 md:left-6 ${open ? 'z-[80]' : 'z-[60]'}`}
+      className={`fixed left-4 sm:hidden ${open ? 'z-[80]' : 'z-[60]'}`}
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6rem)' }}
       onKeyDown={(event) => {
         if (event.key === 'Escape' && open) {
@@ -218,14 +292,19 @@ export function FloatingContact() {
                   subtitle="Fastest way to get an answer"
                   onClick={() => setOpen(false)}
                 />
-                <ContactAction
-                  href={links.emailUrl}
-                  icon={<Mail className="h-5 w-5" aria-hidden="true" />}
-                  tileClass="bg-accent/15 text-[oklch(0.55_0.16_55)]"
-                  title="Email us"
-                  subtitle={links.email}
-                  onClick={() => setOpen(false)}
-                />
+                <div className="relative">
+                  <ContactAction
+                    href={links.emailUrl}
+                    icon={<Mail className="h-5 w-5" aria-hidden="true" />}
+                    tileClass="bg-accent/15 text-[oklch(0.55_0.16_55)]"
+                    title="Email us"
+                    subtitle={links.email}
+                    onClick={() => setOpen(false)}
+                    reserveRight
+                  />
+                  {/* Copy sits beside the link (a button can't be inside a link). */}
+                  <CopyButton value={links.email} className="absolute right-10 top-1/2 -translate-y-1/2" />
+                </div>
                 <ContactAction
                   href={links.callUrl}
                   external
@@ -276,11 +355,11 @@ export function FloatingContact() {
           setShowHint(false)
           setOpen((value) => !value)
         }}
-        className={`group relative items-center rounded-full bg-gradient-to-br from-[#25D366] to-[#128C4A] text-white shadow-[0_10px_30px_-6px_rgba(18,140,74,0.6)] transition-transform hover:scale-[1.03] active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#25D366]/40 motion-reduce:transition-none motion-reduce:hover:scale-100 ${
-          open ? 'hidden h-14 w-14 justify-center sm:flex' : 'flex h-14 w-14 justify-center md:w-auto md:justify-start md:gap-3 md:py-2 md:pl-2 md:pr-5'
+        className={`group relative items-center rounded-full bg-gradient-to-br from-primary to-[oklch(0.45_0.11_195)] text-primary-foreground shadow-[0_10px_30px_-6px_rgba(0,0,0,0.35)] transition-transform hover:scale-[1.03] active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 motion-reduce:transition-none motion-reduce:hover:scale-100 ${
+          open ? 'hidden h-14 w-14 justify-center sm:flex' : 'flex h-14 w-14 justify-center'
         }`}
       >
-        <span className={`relative flex h-14 w-14 shrink-0 items-center justify-center ${open ? '' : 'md:h-10 md:w-10 md:rounded-full md:bg-white/20'}`}>
+        <span className="relative flex h-14 w-14 shrink-0 items-center justify-center">
           <AnimatePresence initial={false} mode="wait">
             {open ? (
               <motion.span
@@ -300,26 +379,21 @@ export function FloatingContact() {
                 exit={reduceMotion ? undefined : { rotate: -90, opacity: 0 }}
                 transition={{ duration: 0.15 }}
               >
-                <MessageCircle className="h-6 w-6 md:h-5 md:w-5" aria-hidden="true" />
+                <MessageCircle className="h-6 w-6" aria-hidden="true" />
               </motion.span>
             )}
           </AnimatePresence>
-          {!open && <span className="absolute right-0.5 top-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-300 md:right-0 md:top-0 md:h-3 md:w-3" aria-hidden="true" />}
-        </span>
-        {/* Desktop: spell out the options */}
-        {!open && (
-          <span className="hidden text-left leading-tight md:block">
-            <span className="block text-sm font-semibold">Questions? Let&apos;s talk</span>
-            <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/90">
-              <WhatsAppIcon className="h-3 w-3" /> WhatsApp
-              <span aria-hidden="true">·</span>
-              <Mail className="h-3 w-3" aria-hidden="true" /> Email
-              <span aria-hidden="true">·</span>
-              <CalendarDays className="h-3 w-3" aria-hidden="true" /> Free call
+          {!open && (
+            // Mini badge so the closed button reads as "several ways to reach us", not WhatsApp only
+            <span className="absolute -right-1.5 -top-1.5 flex items-center -space-x-1.5" aria-hidden="true">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-background bg-[#25D366] text-white"><WhatsAppIcon className="h-2.5 w-2.5" /></span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-background bg-accent text-white"><Mail className="h-2.5 w-2.5" /></span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-background bg-sky-600 text-white"><CalendarDays className="h-2.5 w-2.5" /></span>
             </span>
-          </span>
-        )}
+          )}
+        </span>
       </button>
     </div>
+    </>
   )
 }

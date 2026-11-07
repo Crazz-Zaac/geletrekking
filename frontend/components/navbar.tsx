@@ -561,7 +561,7 @@ export function Navbar() {
 
       {/* Mobile Nav */}
       {mobileOpen && (
-        <div className="xl:hidden bg-[oklch(0.15_0.02_240/0.98)] backdrop-blur-md border-t border-white/10">
+        <div className="xl:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain bg-[oklch(0.15_0.02_240/0.98)] backdrop-blur-md border-t border-white/10">
           <div className="px-4 py-4 space-y-1">
             <Link
               href="/"
@@ -583,6 +583,7 @@ export function Navbar() {
               <button
                 className="block w-full text-left px-3 py-2.5 text-white font-medium hover:bg-white/10 rounded-md transition-colors flex items-center justify-between"
                 onClick={() => toggleMobileMenu('destinations')}
+                aria-expanded={isMobileMenuExpanded('destinations')}
               >
                 Destinations
                 <ChevronDown
@@ -592,8 +593,19 @@ export function Navbar() {
                   )}
                 />
               </button>
-              {isMobileMenuExpanded('destinations') && destinationChildren.length > 0 && (
-                <div className="pl-4 space-y-1 mt-1 max-h-48 overflow-y-auto">
+              {isMobileMenuExpanded('destinations') && (
+                <div className="mt-1 space-y-1 pl-4">
+                  <Link
+                    href="/destinations"
+                    className="flex items-center justify-between rounded-md bg-white/10 px-3 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-white/15"
+                    onClick={() => {
+                      setMobileOpen(false)
+                      setExpandedMobileMenu(new Set())
+                    }}
+                  >
+                    View all destinations <span aria-hidden="true">→</span>
+                  </Link>
+
                   {destinationChildren.map((child: any) => (
                     <Link
                       key={child.label}
@@ -607,16 +619,6 @@ export function Navbar() {
                       {child.label}
                     </Link>
                   ))}
-                  <Link
-                    href="/destinations"
-                    className="block px-3 py-2 text-accent text-sm font-semibold hover:bg-white/10 rounded-md transition-colors"
-                    onClick={() => {
-                      setMobileOpen(false)
-                      setExpandedMobileMenu(new Set())
-                    }}
-                  >
-                    View All Destinations →
-                  </Link>
                 </div>
               )}
             </div>
@@ -627,6 +629,7 @@ export function Navbar() {
                 <button
                   className="block w-full text-left px-3 py-2.5 text-white font-medium hover:bg-white/10 rounded-md transition-colors flex items-center justify-between"
                   onClick={() => toggleMobileMenu('activities')}
+                aria-expanded={isMobileMenuExpanded('activities')}
                 >
                   Activities
                   <ChevronDown
@@ -636,8 +639,19 @@ export function Navbar() {
                     )}
                   />
                 </button>
-                {isMobileMenuExpanded('activities') && activityColumns.some((column) => column.items.length > 0) && (
-                  <div className="pl-4 space-y-1 mt-1 max-h-48 overflow-y-auto">
+                {isMobileMenuExpanded('activities') && (
+                  <div className="mt-1 space-y-1 pl-4">
+                    <Link
+                      href="/activities"
+                      className="flex items-center justify-between rounded-md bg-white/10 px-3 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-white/15"
+                      onClick={() => {
+                        setMobileOpen(false)
+                        setExpandedMobileMenu(new Set())
+                      }}
+                    >
+                      View all activities <span aria-hidden="true">→</span>
+                    </Link>
+
                     {activityColumns.flatMap((column) =>
                       column.items.map((activity) => (
                         <Link
@@ -653,16 +667,6 @@ export function Navbar() {
                         </Link>
                       ))
                     )}
-                    <Link
-                      href="/activities"
-                      className="block px-3 py-2 text-accent text-sm font-semibold hover:bg-white/10 rounded-md transition-colors"
-                      onClick={() => {
-                        setMobileOpen(false)
-                        setExpandedMobileMenu(new Set())
-                      }}
-                    >
-                      View All Activities →
-                    </Link>
                   </div>
                 )}
               </div>
@@ -673,6 +677,7 @@ export function Navbar() {
               <button
                 className="block w-full text-left px-3 py-2.5 text-white font-medium hover:bg-white/10 rounded-md transition-colors flex items-center justify-between"
                 onClick={() => toggleMobileMenu('guides')}
+                aria-expanded={isMobileMenuExpanded('guides')}
               >
                 Plan Your Trip
                 <ChevronDown
@@ -682,8 +687,19 @@ export function Navbar() {
                   )}
                 />
               </button>
-              {isMobileMenuExpanded('guides') && guideColumns.length > 0 && (
-                <div className="pl-4 space-y-1 mt-1 max-h-48 overflow-y-auto">
+              {isMobileMenuExpanded('guides') && (
+                <div className="mt-1 space-y-1 pl-4">
+                  <Link
+                    href="/guides"
+                    className="flex items-center justify-between rounded-md bg-white/10 px-3 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-white/15"
+                    onClick={() => {
+                      setMobileOpen(false)
+                      setExpandedMobileMenu(new Set())
+                    }}
+                  >
+                    View all planning guides <span aria-hidden="true">→</span>
+                  </Link>
+
                   {guideColumns.flatMap((column) =>
                     column.items.map((guide) => (
                       <Link
@@ -699,16 +715,6 @@ export function Navbar() {
                       </Link>
                     ))
                   )}
-                  <Link
-                    href="/guides"
-                    className="block px-3 py-2 text-accent text-sm font-semibold hover:bg-white/10 rounded-md transition-colors"
-                    onClick={() => {
-                      setMobileOpen(false)
-                      setExpandedMobileMenu(new Set())
-                    }}
-                  >
-                    View All Guides →
-                  </Link>
                 </div>
               )}
             </div>
