@@ -1,6 +1,7 @@
 'use client';
 
 import { TrustBadges } from '@/components/trust-badges';
+import { applyOfferToTier } from '@/lib/trek-offer'
 import { PackingListCta } from '@/components/packing-list-cta';
 import type { TrustSummary } from '@/lib/api';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -186,15 +187,21 @@ export default function TrekDetailClient({
   const { settings, social } = useSiteSettings()
   const fallbackFaqs = getTrekFAQBySlug(trek.slug)?.faqs || []
   const trekFaqs = trek.faqs && trek.faqs.length > 0 ? trek.faqs : fallbackFaqs
-  const pricingTiers = trek.pricingTiers && trek.pricingTiers.length > 0
-    ? trek.pricingTiers
-    : [
-        {
-          name: 'Economic',
-          priceUsd: trek.price,
-          includes: trek.includes || [],
-        },
-      ]
+  const offerPrices = { percent: trek.offerDiscountPercent, originalPrice: trek.originalPrice, salePrice: trek.price }
+  const pricingTiers: { name: string; priceUsd: number; wasPriceUsd?: number; includes: string[] }[] =
+    trek.pricingTiers && trek.pricingTiers.length > 0
+      ? trek.pricingTiers.map((tier) => {
+          const offer = applyOfferToTier(tier.priceUsd, offerPrices)
+          return { ...tier, priceUsd: offer.price, wasPriceUsd: offer.wasPrice }
+        })
+      : [
+          {
+            name: 'Economic',
+            priceUsd: trek.price,
+            wasPriceUsd: trek.originalPrice,
+            includes: trek.includes || [],
+          },
+        ]
   const pricingTierOrder: Record<string, number> = { Comfort: 0, Economic: 1 }
   const orderedPricingTiers = [...pricingTiers].sort((a, b) => {
     const orderDiff = (pricingTierOrder[a.name] ?? 2) - (pricingTierOrder[b.name] ?? 2)
@@ -739,7 +746,7 @@ export default function TrekDetailClient({
           pdf.text("PACKAGE OPTION", margin + 5, cursorY + 6)
           setText(13, "bold", [22, 31, 36])
           pdf.text(tier.name, margin + 5, cursorY + 14)
-          const priceText = "USD " + tier.priceUsd.toLocaleString()
+          const priceText = "USD " + tier.priceUsd.toLocaleString() + (tier.wasPriceUsd ? " (was " + tier.wasPriceUsd.toLocaleString() + ")" : "")
           pdf.text(priceText, pageWidth - margin - 5 - pdf.getTextWidth(priceText), cursorY + 14)
 
           setText(9, "normal", [43, 52, 57])
@@ -1173,7 +1180,10 @@ export default function TrekDetailClient({
                               <span className="block text-xs text-muted-foreground">Package tier</span>
                             </span>
                             <span className="flex shrink-0 items-center gap-3">
-                              <span className="text-lg font-bold text-foreground">USD {tier.priceUsd.toLocaleString()}</span>
+                              <span className="text-right leading-tight">
+                                {tier.wasPriceUsd ? <span className="block text-xs text-muted-foreground line-through">USD {tier.wasPriceUsd.toLocaleString()}</span> : null}
+                                <span className={tier.wasPriceUsd ? "text-lg font-bold text-red-600" : "text-lg font-bold text-foreground"}>USD {tier.priceUsd.toLocaleString()}</span>
+                              </span>
                               <ChevronDown className={isExpanded ? "h-4 w-4 text-muted-foreground transition-transform rotate-180" : "h-4 w-4 text-muted-foreground transition-transform"} />
                             </span>
                           </button>

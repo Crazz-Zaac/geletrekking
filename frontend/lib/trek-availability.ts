@@ -108,3 +108,42 @@ export function getNextDepartures<T extends { availabilityRanges?: TrekAvailabil
   }
   return found.sort((a, b) => a.startDate.localeCompare(b.startDate)).slice(0, limit)
 }
+
+export function addCalendarDays(date: string, days: number): string {
+  const parsed = parseCalendarDate(date)
+  return parsed ? new Date(parsed.getTime() + days * 86400000).toISOString().slice(0, 10) : ''
+}
+
+/** Length of a trip counting both the first and last day, as trek durations do. */
+export function tripDays(startDate: string, endDate: string): number {
+  const start = parseCalendarDate(startDate)
+  const end = parseCalendarDate(endDate)
+  return start && end ? Math.round((end.getTime() - start.getTime()) / 86400000) + 1 : 0
+}
+
+export type DepartureRepeat = 'once' | 'weekly' | 'fortnightly' | 'monthly'
+
+function addCalendarMonths(date: string, months: number): string {
+  const [year, month, day] = date.split('-').map(Number)
+  const lastDay = new Date(Date.UTC(year, month - 1 + months + 1, 0)).getUTCDate()
+  return new Date(Date.UTC(year, month - 1 + months, Math.min(day, lastDay))).toISOString().slice(0, 10)
+}
+
+/** Start and end dates for one departure or a repeating series, capped so a typo can't create thousands. */
+export function buildDepartures(
+  { start, days, repeat, until }: { start: string; days: number; repeat: DepartureRepeat; until?: string },
+  limit = 200
+): { start_date: string; end_date: string }[] {
+  if (!parseCalendarDate(start) || days < 1) return []
+  const starts = [start]
+  if (repeat !== 'once') {
+    if (!until || !parseCalendarDate(until)) return []
+    for (let step = 1; starts.length < limit; step++) {
+      const next =
+        repeat === 'monthly' ? addCalendarMonths(start, step) : addCalendarDays(start, step * (repeat === 'weekly' ? 7 : 14))
+      if (next > until) break
+      starts.push(next)
+    }
+  }
+  return starts.map((date) => ({ start_date: date, end_date: addCalendarDays(date, days - 1) }))
+}

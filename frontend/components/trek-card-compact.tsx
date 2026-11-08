@@ -24,6 +24,15 @@ export function DifficultyLabel({ difficulty, className }: { difficulty: Trek['d
   )
 }
 
+/** The red bow on the top-left corner of a card with an active offer. */
+export function OfferRibbon({ size = 140 }: { size?: number }) {
+  return (
+    <div className="pointer-events-none absolute -left-3 -top-3 z-40">
+      <Image src="/ribbon.png" alt="" width={size} height={size} className="object-contain drop-shadow-xl" loading="lazy" />
+    </div>
+  )
+}
+
 /** Homepage card: shorter photo, key facts at a glance, price and link on one line. */
 export function TrekCardCompact({ trek, className }: { trek: Trek; className?: string }) {
   const hasOffer = Boolean(trek.hasOffer)
@@ -32,10 +41,11 @@ export function TrekCardCompact({ trek, className }: { trek: Trek; className?: s
     <Link
       href={getTrekPath(trek)}
       className={cn(
-        'group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none motion-reduce:hover:translate-y-0',
+        'group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none motion-reduce:hover:translate-y-0',
         className
       )}
     >
+      {hasOffer ? <OfferRibbon /> : null}
       <div className="relative aspect-[16/10] overflow-hidden bg-muted">
         <Image
           src={trek.image}
@@ -46,7 +56,7 @@ export function TrekCardCompact({ trek, className }: { trek: Trek; className?: s
           sizes="(max-width: 639px) 80vw, (max-width: 1023px) 45vw, 400px"
         />
         <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 to-transparent" aria-hidden="true" />
-        <span className="absolute left-3 top-3 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+        <span className={cn('absolute rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm', hasOffer ? 'bottom-3 right-3' : 'left-3 top-3')}>
           {trek.region}
         </span>
         {hasOffer && trek.offerDiscountPercent ? (

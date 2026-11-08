@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { ArrowRight, CalendarClock, Clock, Tag } from 'lucide-react'
 import type { Trek } from '@/lib/data'
 import { getTrekPath } from '@/lib/trek-path'
-import { DifficultyLabel } from '@/components/trek-card-compact'
+import { DifficultyLabel, OfferRibbon } from '@/components/trek-card-compact'
 import { cn } from '@/lib/utils'
 
 function formatEndDate(value?: string) {
@@ -14,16 +14,17 @@ function formatEndDate(value?: string) {
 }
 
 /** Horizontal "deal" card: photo left, offer details right. About a third the height of a grid card. */
-function OfferCard({ trek, className }: { trek: Trek; className?: string }) {
+export function OfferCard({ trek, className }: { trek: Trek; className?: string }) {
   const ends = formatEndDate(trek.offerValidTo)
   return (
     <Link
       href={getTrekPath(trek)}
       className={cn(
-        'group flex overflow-hidden rounded-2xl border border-red-200/70 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-500/25 motion-reduce:transition-none motion-reduce:hover:translate-y-0',
+        'group relative flex overflow-hidden rounded-2xl border border-red-200/70 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-500/25 motion-reduce:transition-none motion-reduce:hover:translate-y-0',
         className
       )}
     >
+      <OfferRibbon size={100} />
       <div className="relative w-32 shrink-0 overflow-hidden bg-muted sm:w-44">
         <Image
           src={trek.image}
@@ -34,7 +35,7 @@ function OfferCard({ trek, className }: { trek: Trek; className?: string }) {
           sizes="(max-width: 639px) 128px, 176px"
         />
         {trek.offerDiscountPercent ? (
-          <span className="absolute left-2 top-2 rounded-md bg-red-600 px-2 py-1 text-xs font-extrabold leading-none text-white shadow">
+          <span className="absolute bottom-2 left-2 rounded-md bg-red-600 px-2 py-1 text-xs font-extrabold leading-none text-white shadow">
             -{trek.offerDiscountPercent}%
           </span>
         ) : null}
@@ -57,7 +58,7 @@ function OfferCard({ trek, className }: { trek: Trek; className?: string }) {
           )}
           <DifficultyLabel difficulty={trek.difficulty} />
         </div>
-        <div className="mt-auto flex items-end justify-between gap-2 pt-3">
+        <div className="mt-auto flex flex-wrap items-end justify-between gap-2 pt-3">
           <p className="leading-tight">
             {trek.originalPrice ? <span className="mr-1.5 text-xs text-muted-foreground line-through">${trek.originalPrice.toLocaleString()}</span> : null}
             <span className="text-lg font-bold text-red-600">${trek.price.toLocaleString()}</span>
@@ -73,7 +74,7 @@ function OfferCard({ trek, className }: { trek: Trek; className?: string }) {
   )
 }
 
-/** Compact special-offers band: two columns of horizontal deal cards. */
+/** Compact special-offers band: horizontal deal cards, 480px wide on tablet and up. */
 export function SpecialOffers({ treks }: { treks: Trek[] }) {
   if (treks.length === 0) return null
   return (
@@ -96,12 +97,7 @@ export function SpecialOffers({ treks }: { treks: Trek[] }) {
             Explore All Deals
           </Link>
         </div>
-        <div
-          className={cn(
-            '-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:gap-5 md:overflow-visible md:px-0 md:pb-0',
-            treks.length === 1 ? 'md:max-w-2xl md:grid-cols-1' : 'md:grid-cols-2'
-          )}
-        >
+        <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-[repeat(auto-fill,30rem)] md:gap-5 md:overflow-visible md:px-0 md:pb-0">
           {treks.map((trek) => (
             <OfferCard key={trek.id} trek={trek} className="min-h-[9.5rem] w-[90%] shrink-0 snap-start md:w-auto" />
           ))}

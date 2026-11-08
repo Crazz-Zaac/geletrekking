@@ -21,7 +21,10 @@ import {
   useDirtyState,
   useUnsavedChangesWarning,
 } from '@/components/admin/form-kit'
-import { MarkdownEditor } from '@/components/admin/markdown-editor'
+import { ItineraryEditor } from '@/components/admin/itinerary-editor'
+import { DepartureDatesEditor } from '@/components/admin/departure-dates-editor'
+import { OfferEditor } from '@/components/admin/offer-editor'
+import { offerProblem } from '@/lib/trek-offer'
 import { cn } from '@/lib/utils'
 import {
   AdminTrek,
@@ -122,46 +125,6 @@ type TrekForm = {
   featured_order: number
 }
 
-const DISTANCE_ACTIVITY_OPTIONS = [
-  "🥾 Hike",
-  "🚗 Drive",
-  "🚙 Jeep Drive",
-  "🚌 Bus",
-  "✈️ Flight",
-  "🚁 Helicopter",
-  "🚲 Bike",
-  "🚤 Boat",
-  "🚶 Walk",
-  "🐎 Horse",
-  "🛶 Raft / Canoe",
-] as const
-
-const parseDistanceActivity = (value: string) => {
-  const trimmed = value.trim()
-  const separatorIndex = trimmed.lastIndexOf(" - ")
-  const activityText = separatorIndex >= 0 ? trimmed.slice(0, separatorIndex) : trimmed
-  const activities = activityText
-    .split(" + ")
-    .map((item) => item.trim())
-    .filter((item) => DISTANCE_ACTIVITY_OPTIONS.includes(item as (typeof DISTANCE_ACTIVITY_OPTIONS)[number]))
-  const km = separatorIndex >= 0 ? trimmed.slice(separatorIndex + 3) : activities.length > 0 ? "" : trimmed
-
-  return {
-    activities,
-    km: km.replace(/\s*km$/i, "").trim(),
-  }
-}
-
-const formatDistanceActivity = (activities: string[], km: string) => {
-  const cleanedKm = km.replace(/\s*km$/i, "").trim()
-  const activityText = activities.join(" + ")
-
-  if (activityText && cleanedKm) return activityText + " - " + cleanedKm + " km"
-  if (activityText) return activityText
-  if (cleanedKm) return cleanedKm + " km"
-  return ""
-}
-
 const emptyDay = (): ItineraryDay => ({
   day: 1,
   title: '',
@@ -170,6 +133,12 @@ const emptyDay = (): ItineraryDay => ({
   distance: '',
   accommodation: '',
 })
+
+/** The "from" price: the lowest package price when packages are set, otherwise the trek price. */
+function regularPrice(form: { price_usd: number; price_gbp: number; pricing_tiers: { price_usd: number; price_gbp: number }[] }, key: 'price_usd' | 'price_gbp') {
+  const prices = form.pricing_tiers.map((tier) => tier[key]).filter((price) => price > 0)
+  return prices.length > 0 ? Math.min(...prices) : form[key]
+}
 
 const emptyFaq = (): FaqItem => ({ question: '', answer: '' })
 
@@ -347,7 +316,8 @@ function trekToForm(item: AdminTrek): TrekForm {
         end_date: range.end_date.slice(0, 10),
         status: range.status || 'available',
         note: range.note || '',
-      })),
+      }))
+      .sort((a, b) => a.start_date.localeCompare(b.start_date) || a.end_date.localeCompare(b.end_date)),
     season_tag: item.season_tag || '',
     image_url: item.image_url || '',
     gallery_images: (item.gallery_images || []).join('\n'),
@@ -366,8 +336,9 @@ function trekToForm(item: AdminTrek): TrekForm {
     transportation: item.transportation || '',
     start_point: item.start_point || '',
     end_point: item.end_point || '',
-    price_usd: item.price_usd || 0,
-    price_gbp: item.price_gbp || 0,
+    // During a live offer the API returns the sale price here; the form edits the regular price.
+    price_usd: item.original_price_usd || item.price_usd || 0,
+    price_gbp: item.original_price_gbp || item.price_gbp || 0,
     pricing_tiers: item.pricing_tiers && item.pricing_tiers.length > 0
       ? defaultPricingTiers().map((defaultTier) => {
           const savedTier = item.pricing_tiers?.find((tier) => tier.name === defaultTier.name)
@@ -379,7 +350,7 @@ function trekToForm(item: AdminTrek): TrekForm {
           }
         })
       : [
-          { name: 'Economic', price_usd: item.price_usd || 0, price_gbp: item.price_gbp || 0, includes: (item.includes || []).join('\n') },
+          { name: 'Economic', price_usd: item.original_price_usd || item.price_usd || 0, price_gbp: item.original_price_gbp || item.price_gbp || 0, includes: (item.includes || []).join('\n') },
           { name: 'Comfort', price_usd: 0, price_gbp: 0, includes: '' },
         ],
     latitude: item.latitude || 0,
@@ -578,6 +549,12 @@ export default function AdminTreksPage() {
       setActiveTab('basic')
       return
     }
+    const problemWithOffer = form.has_offer ? offerProblem(form, regularPrice(form, 'price_usd')) : null
+    if (problemWithOffer) {
+      setError(problemWithOffer)
+      setActiveTab('offers')
+      return
+    }
     setSaving(true)
     setError('')
     setMessage('')
@@ -679,48 +656,6 @@ export default function AdminTreksPage() {
     }
   }
 
-  const updateAvailabilityRange = <Field extends keyof AvailabilityRangeForm>(index: number, field: Field, value: AvailabilityRangeForm[Field]) => {
-    setForm((prev) => {
-      const updated = [...prev.availability]
-      updated[index] = { ...updated[index], [field]: value }
-      return { ...prev, availability: updated }
-    })
-  }
-
-  const addAvailabilityRange = () => {
-    setForm((prev) => ({
-      ...prev,
-      availability: [...prev.availability, { start_date: '', end_date: '', status: 'available', note: '' }],
-    }))
-  }
-
-  const removeAvailabilityRange = (index: number) => {
-    setForm((prev) => ({ ...prev, availability: prev.availability.filter((_, i) => i !== index) }))
-  }
-
-  const updateDay = (index: number, field: keyof ItineraryDay, value: string | number) => {
-    setForm((prev) => {
-      const updated = [...prev.itinerary]
-      updated[index] = { ...updated[index], [field]: value }
-      return { ...prev, itinerary: updated }
-    })
-  }
-
-  const addDay = () => {
-    setForm((prev) => ({
-      ...prev,
-      itinerary: [...prev.itinerary, { ...emptyDay(), day: prev.itinerary.length + 1 }],
-    }))
-  }
-
-  const removeDay = (index: number) => {
-    setForm((prev) => ({
-      ...prev,
-      itinerary: prev.itinerary
-        .filter((_, i) => i !== index)
-        .map((d, i) => ({ ...d, day: i + 1 })),
-    }))
-  }
 
   const updateFaq = (index: number, field: keyof FaqItem, value: string) => {
     setForm((prev) => {
@@ -864,59 +799,12 @@ export default function AdminTreksPage() {
                   ))}
                 </div>
 
-                <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground">Available date ranges</h3>
-                      <p className="text-xs text-muted-foreground">Add departure and return dates. Status and notes appear in the public departure calendar.</p>
-                    </div>
-                    <Button type="button" variant="outline" size="sm" onClick={addAvailabilityRange}>
-                      + Add range
-                    </Button>
-                  </div>
-                  {form.availability.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No availability ranges added yet.</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {form.availability.map((range, index) => (
-                        <div key={index} className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-md border border-border bg-background p-3">
-                          {field("Start date", (
-                            <Input
-                              type="date"
-                              value={range.start_date}
-                              onChange={(e) => updateAvailabilityRange(index, "start_date", e.target.value)}
-                            />
-                          ))}
-                          {field("End date", (
-                            <Input
-                              type="date"
-                              value={range.end_date}
-                              onChange={(e) => updateAvailabilityRange(index, "end_date", e.target.value)}
-                            />
-                          ))}
-                          {field('Departure status', (
-                            <select
-                              aria-label={`Departure ${index + 1} status`}
-                              value={range.status}
-                              onChange={(e) => updateAvailabilityRange(index, 'status', e.target.value as AvailabilityRangeForm['status'])}
-                              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                            >
-                              <option value="available">Open</option>
-                              <option value="limited">Few left</option>
-                              <option value="booked">Full</option>
-                            </select>
-                          ))}
-                          {field('Departure note (optional)', (
-                            <Input value={range.note} onChange={(e) => updateAvailabilityRange(index, 'note', e.target.value)} placeholder="Details for this departure" />
-                          ))}
-                          <Button type="button" variant="outline" size="sm" onClick={() => removeAvailabilityRange(index)} className="self-end sm:col-span-2">
-                            Remove
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <DepartureDatesEditor
+                  key={editingId ?? 'new'}
+                  ranges={form.availability}
+                  tripLength={form.duration_days}
+                  onChange={(availability) => setForm((prev) => ({ ...prev, availability }))}
+                />
 
                 {field('Region description (used on homepage region cards)', textarea(
                   'Short summary for this trekking region',
@@ -1139,98 +1027,18 @@ export default function AdminTreksPage() {
 
             {/* itinerary tab */}
             {activeTab === 'itinerary' && (
-              <div className="space-y-4">
-                {form.itinerary.map((day, index) => (
-                  <div key={index} className="rounded-md border border-border p-4 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-primary shrink-0 px-3 py-2 bg-primary/10 rounded">Day {day.day}</span>
-                      <Input
-                        placeholder="e.g. Arrive Kathmandu"
-                        value={day.title}
-                        onChange={(e) => updateDay(index, 'title', e.target.value)}
-                        className="flex-1"
-                      />
-                      {form.itinerary.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeDay(index)}
-                          className="text-xs text-red-500 hover:text-red-700 shrink-0"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                    {field('Day description', (
-                      <MarkdownEditor value={day.description} onChange={(value) => updateDay(index, 'description', value)} rows={4} placeholder="Describe the day: route, highlights, overnight stop…" />
-                    ))}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      {field('Altitude', (
-                        <Input
-                          placeholder="e.g. 3440m"
-                          value={day.altitude}
-                          onChange={(e) => updateDay(index, 'altitude', e.target.value)}
-                        />
-                      ))}
-                      {field('Distance', (() => {
-                        const distance = parseDistanceActivity(day.distance)
-
-                        return (
-                          <div className="space-y-2">
-                            <details className="group relative">
-                              <summary className="flex h-9 cursor-pointer list-none items-center justify-between rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-xs outline-none transition-colors hover:bg-muted/40 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] [&::-webkit-details-marker]:hidden">
-                                <span className={distance.activities.length ? "truncate" : "truncate text-muted-foreground"}>
-                                  {distance.activities.length ? distance.activities.join(" + ") : "Select travel modes"}
-                                </span>
-                                <span className="ml-2 text-xs text-muted-foreground group-open:rotate-180">⌄</span>
-                              </summary>
-                              <div className="absolute z-20 mt-1 grid max-h-56 w-full overflow-y-auto rounded-md border border-input bg-background p-2 shadow-md">
-                                {DISTANCE_ACTIVITY_OPTIONS.map((option) => {
-                                  const checked = distance.activities.includes(option)
-
-                                  return (
-                                    <label key={option} className="flex items-center gap-2 rounded px-2 py-1.5 text-sm text-foreground hover:bg-muted/50">
-                                      <input
-                                        type="checkbox"
-                                        checked={checked}
-                                        onChange={(e) => {
-                                          const activities = e.target.checked
-                                            ? [...distance.activities, option]
-                                            : distance.activities.filter((item) => item !== option)
-                                          updateDay(index, 'distance', formatDistanceActivity(activities, distance.km))
-                                        }}
-                                        className="h-4 w-4 rounded border-input"
-                                      />
-                                      <span className="truncate">{option}</span>
-                                    </label>
-                                  )
-                                })}
-                              </div>
-                            </details>
-                            <Input
-                              type="text"
-                              inputMode="decimal"
-                              pattern="[0-9.]*"
-                              placeholder="km"
-                              value={distance.km}
-                              onChange={(e) => updateDay(index, 'distance', formatDistanceActivity(distance.activities, e.target.value))}
-                            />
-                          </div>
-                        )
-                      })())}
-                      {field('Accommodation', (
-                        <Input
-                          placeholder="e.g. Teahouse in Namche"
-                          value={day.accommodation}
-                          onChange={(e) => updateDay(index, 'accommodation', e.target.value)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                <Button type="button" variant="outline" onClick={addDay}>
-                  + Add Day
-                </Button>
-              </div>
+              <ItineraryEditor
+                key={editingId ?? 'new'}
+                days={form.itinerary}
+                onChange={(itinerary) => setForm((prev) => ({ ...prev, itinerary }))}
+                confirmRemove={(day) =>
+                  askConfirm({
+                    title: `Remove day ${day.day}${day.title.trim() ? ` (${day.title.trim()})` : ''}?`,
+                    description: 'Later days will be renumbered. Nothing is permanent until you save the trek.',
+                    confirmLabel: 'Remove day',
+                  })
+                }
+              />
             )}
 
             {/* trip essentials tab */}
@@ -1346,58 +1154,22 @@ export default function AdminTreksPage() {
 
             {/* offers tab */}
             {activeTab === 'offers' && (
-              <div className="space-y-3">
-                <ToggleField label="Special offer" description="Show a discount badge and offer details on this trek." checked={form.has_offer} onCheckedChange={(has_offer) => setForm((p) => ({ ...p, has_offer }))} />
+              <div className="space-y-5">
+                <ToggleField
+                  label="Special offer"
+                  description="Shows a discount badge and sale price on this trek and in Special Offers on the homepage."
+                  checked={form.has_offer}
+                  onCheckedChange={(has_offer) => setForm((p) => ({ ...p, has_offer }))}
+                />
                 {form.has_offer && (
-                  <div className="space-y-3">
-                    {field('Offer type', (
-                      <Input
-                        placeholder="e.g. Summer Deal, Christmas Discount"
-                        value={form.offer_type}
-                        onChange={(e) => setForm((p) => ({ ...p, offer_type: e.target.value }))}
-                      />
-                    ))}
-                    {field('Offer description', textarea('Describe the offer', form.offer_description, (v) => setForm((p) => ({ ...p, offer_description: v })), 3))}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {field('Offer discount percent', (
-                        <Input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={form.offer_discount_percent}
-                          onChange={(e) => setForm((p) => ({ ...p, offer_discount_percent: Number(e.target.value) || 0 }))}
-                        />
-                      ))}
-                      {field('Discounted price USD', (
-                        <Input
-                          type="number"
-                          value={form.discounted_price_usd}
-                          onChange={(e) => setForm((p) => ({ ...p, discounted_price_usd: Number(e.target.value) || 0 }))}
-                        />
-                      ))}
-                      {field('Discounted price GBP', (
-                        <Input
-                          type="number"
-                          value={form.discounted_price_gbp}
-                          onChange={(e) => setForm((p) => ({ ...p, discounted_price_gbp: Number(e.target.value) || 0 }))}
-                        />
-                      ))}
-                      {field('Offer valid from', (
-                        <Input
-                          type="date"
-                          value={form.offer_valid_from}
-                          onChange={(e) => setForm((p) => ({ ...p, offer_valid_from: e.target.value }))}
-                        />
-                      ))}
-                      {field('Offer valid until', (
-                        <Input
-                          type="date"
-                          value={form.offer_valid_to}
-                          onChange={(e) => setForm((p) => ({ ...p, offer_valid_to: e.target.value }))}
-                        />
-                      ))}
-                    </div>
-                  </div>
+                  <OfferEditor
+                    value={form}
+                    onChange={(patch) => setForm((p) => ({ ...p, ...patch }))}
+                    regularUsd={regularPrice(form, 'price_usd')}
+                    regularGbp={regularPrice(form, 'price_gbp')}
+                    packages={form.pricing_tiers}
+                    trek={{ name: form.name, image: form.image_url, duration: form.duration_days, difficulty: form.difficulty }}
+                  />
                 )}
               </div>
             )}

@@ -61,3 +61,38 @@ test('a day with no altitude never counts as acclimatisation', () => {
   const rows = buildItineraryRows([day(1, 'Namche', undefined), day(2, 'Namche', undefined)])
   assert.equal(rows[1].isAcclimatisation, false)
 })
+
+test('parseAltitude reads the overnight figure from admin text', () => {
+  const { parseAltitude } = mod.exports
+  assert.equal(parseAltitude('Elevation overnight 4,810 meters, Summit 6,189 meters'), 4810)
+  assert.equal(parseAltitude('Elevation overnight 4,810 meters, Chukung-Ri 5,100 meters'), 4810)
+  assert.equal(parseAltitude('Summit 6,189 m, overnight 4,810 m'), 4810)
+  assert.equal(parseAltitude('Elevation: 1,860 meters (6,102 feet)'), 1860)
+  assert.equal(parseAltitude('Elevation 3440 meters '), 3440)
+  assert.equal(parseAltitude('1,250m'), 1250)
+  assert.equal(parseAltitude('3,440'), 3440)
+  assert.equal(parseAltitude(5180), 5180)
+  assert.equal(parseAltitude('6,102 feet'), undefined)
+  assert.equal(parseAltitude(''), undefined)
+  assert.equal(parseAltitude(undefined), undefined)
+  assert.equal(parseAltitude('48106189'), undefined)
+})
+
+test('the admin altitude fields keep notes and round-trip through saved text', () => {
+  const { splitAltitude, joinAltitude, parseAltitude, isImpossibleAltitude } = mod.exports
+  assert.deepEqual(splitAltitude('Elevation overnight 4,810 meters, Summit 6,189 meters'), { metres: '4810', note: 'Summit 6,189 meters' })
+  assert.deepEqual(splitAltitude('Summit 6,189 m, overnight 4,810 m'), { metres: '4810', note: 'Summit 6,189 m' })
+  assert.deepEqual(splitAltitude('Elevation: 1,860 meters (6,102 feet)'), { metres: '1860', note: '(6,102 feet)' })
+  assert.deepEqual(splitAltitude('s 3000 meters'), { metres: '3000', note: '' })
+  assert.deepEqual(splitAltitude('of 2,860 meters'), { metres: '2860', note: '' })
+  assert.deepEqual(splitAltitude(''), { metres: '', note: '' })
+  assert.equal(joinAltitude('', ''), '')
+  assert.equal(joinAltitude('4810', 'Summit 6,189 meters'), '4810 meters, Summit 6,189 meters')
+  assert.equal(parseAltitude(joinAltitude('4810', 'Summit 6,189 meters')), 4810)
+  // Typing a note, including spaces and a blank overnight figure, must survive each keystroke.
+  assert.deepEqual(splitAltitude(joinAltitude('4810', 'Summit ')), { metres: '4810', note: 'Summit ' })
+  assert.deepEqual(splitAltitude(joinAltitude('', 'Summit 6,189 meters')), { metres: '', note: 'Summit 6,189 meters' })
+  assert.equal(parseAltitude(joinAltitude('', 'Summit 6,189 meters')), undefined)
+  assert.equal(isImpossibleAltitude('9000'), true)
+  assert.equal(isImpossibleAltitude('8849'), false)
+})

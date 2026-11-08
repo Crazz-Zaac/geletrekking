@@ -5,6 +5,15 @@ const path = require('node:path')
 const vm = require('node:vm')
 const ts = require('typescript')
 
+function loadItineraryModule() {
+  const compiled = ts.transpileModule(fs.readFileSync(path.resolve(__dirname, '../lib/trek-itinerary.ts'), 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+  }).outputText
+  const mod = { exports: {} }
+  new Function('module', 'exports', compiled)(mod, mod.exports)
+  return mod.exports
+}
+
 const source = ts.transpileModule(fs.readFileSync(path.resolve(__dirname, '../lib/api.ts'), 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
 }).outputText
@@ -17,6 +26,7 @@ function loadApi(fetchImpl, browser = false) {
     fetch: fetchImpl,
     require: name => {
       if (name === '@/lib/data') return { treks: [] }
+      if (name === '@/lib/trek-itinerary') return loadItineraryModule()
       throw new Error(`Unexpected import: ${name}`)
     },
   }

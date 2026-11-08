@@ -182,3 +182,18 @@ test('next departures respect the booking deadline, skip full trips and show one
   assert.equal(getNextDepartures(treks, '2027-01-05', 1).length, 1)
   assert.deepEqual(getNextDepartures(treks, 'not-a-date'), [])
 })
+
+test('departure helpers fill the return date and build repeating series', () => {
+  const { addCalendarDays, tripDays, buildDepartures } = availabilityModule.exports
+  assert.equal(addCalendarDays('2027-01-17', 14), '2027-01-31')
+  assert.equal(tripDays('2027-01-17', '2027-01-31'), 15)
+  assert.equal(tripDays('', '2027-01-31'), 0)
+  assert.deepEqual(buildDepartures({ start: '2027-01-17', days: 15, repeat: 'once' }), [{ start_date: '2027-01-17', end_date: '2027-01-31' }])
+  assert.deepEqual(buildDepartures({ start: '2027-01-03', days: 3, repeat: 'weekly', until: '2027-01-17' }).map((item) => item.start_date), ['2027-01-03', '2027-01-10', '2027-01-17'])
+  assert.deepEqual(buildDepartures({ start: '2027-01-03', days: 3, repeat: 'fortnightly', until: '2027-01-30' }).map((item) => item.start_date), ['2027-01-03', '2027-01-17'])
+  assert.deepEqual(buildDepartures({ start: '2027-01-31', days: 3, repeat: 'monthly', until: '2027-04-30' }).map((item) => item.start_date), ['2027-01-31', '2027-02-28', '2027-03-31', '2027-04-30'])
+  assert.deepEqual(buildDepartures({ start: '2027-01-03', days: 3, repeat: 'weekly' }), [])
+  assert.deepEqual(buildDepartures({ start: 'bad', days: 3, repeat: 'once' }), [])
+  assert.deepEqual(buildDepartures({ start: '2027-01-03', days: 0, repeat: 'once' }), [])
+  assert.equal(buildDepartures({ start: '2027-01-03', days: 3, repeat: 'weekly', until: '2099-01-01' }).length, 200)
+})

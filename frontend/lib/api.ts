@@ -1,6 +1,7 @@
 import type { TeamSocialLinks } from '@/lib/team-social-links'
 import { treks as fallbackTreks } from '@/lib/data'
 import type { Trek } from '@/lib/data'
+import { parseAltitude } from '@/lib/trek-itinerary'
 export interface UiBlogPost {
   id: string
   updatedAt?: string
@@ -825,7 +826,7 @@ function mapTrek(trek: BackendTrek): Trek {
       day: day.day,
       title: day.title,
       description: day.description || '',
-      altitude: toNumber(day.altitude),
+      altitude: parseAltitude(day.altitude),
       distance: day.distance,
       accommodation: day.accommodation || 'Teahouse',
     })),

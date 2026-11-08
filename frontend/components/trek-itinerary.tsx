@@ -31,7 +31,7 @@ const FACT_ICONS: Record<DayFact['kind'], LucideIcon> = {
 
 const metres = (value: number) => `${value.toLocaleString('en-US')} m`
 
-function AltitudeChart({
+export function AltitudeChart({
   rows,
   selected,
   onSelect,

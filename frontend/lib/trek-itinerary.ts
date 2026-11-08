@@ -32,7 +32,7 @@ function modeOf(word: string) {
 }
 
 /** Compares place names despite spelling drift: "Lo-Manthang"/"Lo Manthang", "Machermo"/"Machhermo". */
-function samePlace(a: string, b: string) {
+export function samePlace(a: string, b: string) {
   const key = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '').replace(/(.)\1+/g, '$1')
   return key(a) === key(b)
 }
@@ -135,4 +135,55 @@ export function buildItineraryRows(days: ItineraryDay[]): ItineraryRow[] {
       body,
     }
   })
+}
+
+const NUMBER = String.raw`\d{1,3}(?:,\d{3})+|\d+`
+const UNIT = String.raw`\s*(?:m\b|met(?:er|re)s?\b)`
+const HIGHEST_POINT_ON_EARTH = 8849
+
+/** Where the overnight figure sits in admin text. A leading comma means "no overnight figure, only a note". */
+function locateAltitude(text: string) {
+  if (/^\s*,/.test(text)) return null
+  const match =
+    text.match(new RegExp(`overnight\\D*?(${NUMBER})(?:${UNIT})?`, 'i')) ??
+    text.match(new RegExp(`(${NUMBER})${UNIT}`, 'i')) ??
+    (/\b(?:ft|feet)\b/i.test(text) ? null : text.match(new RegExp(`(${NUMBER})`)))
+  if (!match || match.index === undefined) return null
+  return {
+    metres: Number(match[1].replace(/,/g, '')),
+    start: match.index,
+    end: match.index + match[0].length,
+  }
+}
+
+/**
+ * Reads the overnight altitude from what admins type, e.g. "Elevation: 1,860
+ * meters (6,102 feet)" or "Elevation overnight 4,810 meters, Summit 6,189
+ * meters". Prefers a figure labelled overnight, then the first in metres.
+ */
+export function parseAltitude(value?: string | number | null): number | undefined {
+  const found = locateAltitude(String(value ?? ''))
+  return found && found.metres > 0 && found.metres <= HIGHEST_POINT_ON_EARTH ? found.metres : undefined
+}
+
+export const isImpossibleAltitude = (metres: string) => Number(metres) > HIGHEST_POINT_ON_EARTH
+
+/** Splits stored altitude text into the overnight figure and anything else noted, for the admin form. */
+export function splitAltitude(value?: string | null): { metres: string; note: string } {
+  const text = value ?? ''
+  const found = locateAltitude(text)
+  if (!found) return { metres: '', note: text.replace(/^[\s,;:-]+/, '') }
+  const before = text
+    .slice(0, found.start)
+    .replace(/\b(?:elevation|altitude|overnight)\b|:/gi, '')
+    .replace(/^[\s,;-]+|[\s,;-]+$/g, '')
+  const after = text.slice(found.end).replace(/^[\s,;:-]+/, '')
+  // Stray letters before the number ("s 3000 meters") are typing slips, not notes.
+  const kept = /\d/.test(before) ? before : ''
+  return { metres: String(found.metres), note: [kept, after].filter(Boolean).join(', ') }
+}
+
+export function joinAltitude(metres: string, note: string): string {
+  if (!metres) return note ? `, ${note}` : ''
+  return note ? `${metres} meters, ${note}` : `${metres} meters`
 }
