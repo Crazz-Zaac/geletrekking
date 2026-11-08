@@ -1,12 +1,12 @@
 .calendar { min-width: 0; scroll-margin-top: 9rem; color: #1d1d1d; }
 .eyebrow { margin: 0; font-family: inherit; font-size: 12px; line-height: 1.5; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; color: #5b5b5b; }
 .subtitle { margin: 4px 0 12px; font-size: 13px; line-height: 1.5; color: #5b5b5b; }
-.yearNavigation { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.yearButton { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid #cfcbc0; border-radius: 12px; background: #fff; color: #1d1d1d; cursor: pointer; }
+.yearNavigation { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.yearButton { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid #cfcbc0; border-radius: 12px; background: #fff; color: #1d1d1d; cursor: pointer; }
 .yearButton:hover { background: #f9f7f3; }
 .yearButton:disabled { opacity: .4; cursor: default; }
 .year { font-size: 15px; font-weight: 700; }
-.monthGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.monthGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .month { min-width: 0; padding: 6px; border: 1px solid #cfcbc0; border-radius: 12px; background: #fff; color: #1d1d1d; text-align: left; }
 .yearButton:focus-visible { outline: 2px solid #1f6b7a; outline-offset: 2px; }
 .monthHeading { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 4px; }
@@ -16,9 +16,9 @@
 .limited { color: #9a5b00; }
 .booked, .noTrips { color: #767676; }
 .days, .weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
-.weekdays { margin-bottom: 2px; text-align: center; font-size: 9px; line-height: 14px; color: #767676; }
-.dayCell { display: flex; align-items: center; justify-content: center; min-width: 0; height: 27px; }
-.day { position: relative; padding-bottom: 7px; height: 25px; border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 100%; max-width: 20px; font-size: 10px; line-height: 1; color: #4a4a4a; }
+.weekdays { margin-bottom: 2px; text-align: center; font-size: 11px; line-height: 16px; color: #767676; }
+.dayCell { display: flex; align-items: center; justify-content: center; min-width: 0; height: 36px; }
+.day { position: relative; padding-bottom: 8px; height: 33px; border-radius: 6px; display: flex; align-items: center; justify-content: center; width: 100%; max-width: 34px; font-size: 12px; line-height: 1; color: #4a4a4a; }
 .departureDay { font-weight: 700; }
 .tick { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; }
 .availableDay { background: #e9f6ed; color: #167343; }
@@ -27,3 +27,11 @@
 .legend { margin: 12px 0 0; font-size: 11px; line-height: 1.6; color: #5b5b5b; }
 .empty { margin-top: 12px; }
 .empty a { color: #1f6b7a; text-decoration: underline; text-underline-offset: 3px; }
+.month[hidden] { display: none; }
+.nextOpen { margin: 10px 0 0; font-size: 13px; color: #5b5b5b; }
+.nextOpenButton { padding: 0; border: 0; background: none; color: #1f6b7a; font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.select { flex: none; min-width: 0; height: 44px; padding: 0 6px; border: 1px solid #cfcbc0; border-radius: 12px; background: #fff; color: #1d1d1d; font-size: 14px; font-weight: 600; cursor: pointer; }
+.monthSelect { flex: 1 1 0; }
+.select:focus-visible { outline: 2px solid #1f6b7a; outline-offset: 2px; }
+.tripFilter { display: flex; align-items: center; gap: 8px; min-height: 32px; margin-bottom: 8px; font-size: 13px; color: #1d1d1d; cursor: pointer; }
+.tripFilter input { width: 16px; height: 16px; accent-color: #1f6b7a; }

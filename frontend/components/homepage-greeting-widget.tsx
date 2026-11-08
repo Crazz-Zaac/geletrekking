@@ -4,12 +4,11 @@ import Link from 'next/link'
 import { useEffect, useId, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ArrowRight, ArrowUpRight, Star, X } from 'lucide-react'
+import { useScrolledPastHero } from '@/hooks/use-scrolled-past-hero'
 import styles from './homepage-greeting-widget.module.css'
 
 const GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJR_d6frYf6zkR0HAm4EnYRkI'
 const TRUSTPILOT_REVIEW_URL = 'https://www.trustpilot.com/review/geletrekking.com'
-// Remember that the visitor has seen (or dismissed) the prompt.
-const SEEN_KEY = 'gele_rate_prompt_seen'
 
 function GoogleLogo() {
   return (
@@ -57,34 +56,7 @@ export function HomepageGreetingWidget() {
   const panelId = useId()
   const titleId = useId()
   const reduceMotion = useReducedMotion()
-
-  const markSeen = () => {
-    try {
-      localStorage.setItem(SEEN_KEY, '1')
-    } catch {
-      // Storage unavailable: the prompt may show again next visit.
-    }
-  }
-
-  // Gently open once for first-time visitors on larger screens. Never auto-open
-  // on phones, where it would cover the page.
-  useEffect(() => {
-    let seen = false
-    let cookieChoiceMade = false
-    try {
-      seen = localStorage.getItem(SEEN_KEY) === '1'
-      // Don't stack two prompts: wait until the visitor has answered the cookie banner.
-      cookieChoiceMade = localStorage.getItem('gele-cookie-consent') !== null
-    } catch {
-      seen = true
-    }
-    if (seen || !cookieChoiceMade || !window.matchMedia('(min-width: 640px)').matches) return
-    const timer = window.setTimeout(() => {
-      setOpen(true)
-      markSeen()
-    }, 4000)
-    return () => window.clearTimeout(timer)
-  }, [])
+  const pastHero = useScrolledPastHero(true)
 
   useEffect(() => {
     if (!open) return
@@ -97,14 +69,12 @@ export function HomepageGreetingWidget() {
 
   const close = (returnFocus = true) => {
     setOpen(false)
-    markSeen()
     if (returnFocus) triggerRef.current?.focus()
   }
 
   const toggle = () => {
     setOpen((value) => {
       if (!value) {
-        markSeen()
         // Focus the first option when opened from the button.
         window.requestAnimationFrame(() => panelRef.current?.querySelector<HTMLAnchorElement>('a')?.focus({ preventScroll: true }))
       }
@@ -123,7 +93,7 @@ export function HomepageGreetingWidget() {
   return (
     <div
       ref={containerRef}
-      className={`${styles.widget} ${open ? 'open' : ''}`}
+      className={`${styles.widget} ${open ? 'open' : ''} ${pastHero || open ? '' : 'max-sm:invisible'}`}
       style={{ zIndex: open ? 80 : 60 }}
       onKeyDown={(event) => {
         if (event.key === 'Escape' && open) {

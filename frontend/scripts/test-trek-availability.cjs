@@ -10,7 +10,7 @@ const compiled = ts.transpileModule(fs.readFileSync(modulePath, 'utf8'), {
 }).outputText
 const availabilityModule = { exports: {} }
 new Function('module', 'exports', compiled)(availabilityModule, availabilityModule.exports)
-const { getCalendarRanges, getAvailabilityYears, getMonthDays, getRangesForDate, parseCalendarDate, getDepartureRanges, getMonthDepartures, getDepartureStatus } = availabilityModule.exports
+const { getCalendarRanges, getAvailabilityYears, getMonthDays, getRangesForDate, parseCalendarDate, getDepartureRanges, getMonthDepartures, getNextDepartures, getDepartureStatus } = availabilityModule.exports
 
 // The 15 EBC trip ranges supplied by the site owner.
 const ebcRanges = [
@@ -114,6 +114,15 @@ test('sidebar EBC calendar has 12 months and ticks every available backend date 
   assert.ok(html.includes('Nov 7, 2027 – Nov 21, 2027'))
 })
 
+test('calendar offers month and year pickers and a trips-only filter, using no extra buttons', () => {
+  const html = renderCalendar(ebcRanges)
+  assert.ok(html.includes('aria-label="Month"'))
+  assert.ok(html.includes('aria-label="Year"'))
+  assert.ok(html.includes('<option value="2027"'))
+  assert.ok(html.includes('Only show months with trips'))
+  assert.equal((html.match(/<button/g) || []).length, 2)
+})
+
 test('empty schedules still show 12 months and an honest contact prompt', () => {
   const html = renderCalendar([])
   assert.equal((html.match(/data-month=/g) || []).length, 12)
@@ -149,4 +158,27 @@ test('cross-year trips mark their start month and do not create a new departure 
   const ranges = getDepartureRanges([{ startDate: '2027-12-30', endDate: '2028-01-04', status: 'available' }])
   assert.equal(getMonthDepartures(ranges, 2027, 11).length, 1)
   assert.equal(getMonthDepartures(ranges, 2028, 0).length, 0)
+})
+
+test('next departures respect the booking deadline, skip full trips and show one per trek', () => {
+  const treks = [
+    { id: 'a', availabilityRanges: [
+      { startDate: '2027-01-10', endDate: '2027-01-20', status: 'available' },
+      { startDate: '2027-03-01', endDate: '2027-03-15', status: 'booked' },
+      { startDate: '2027-04-01', endDate: '2027-04-15', status: 'limited' },
+      { startDate: '2027-05-01', endDate: '2027-05-15', status: 'available' },
+    ] },
+    { id: 'b', availabilityRanges: [{ startDate: '2027-03-20', endDate: '2027-03-30', status: 'available' }] },
+    { id: 'c', availabilityRanges: [{ startDate: '2027-02-10', endDate: '2027-02-12', status: 'booked' }] },
+    { id: 'd' },
+    { id: 'e', availabilityRanges: [{ startDate: '2027-02-05', endDate: '2027-02-15' }] },
+  ]
+  const next = getNextDepartures(treks, '2027-01-05')
+  assert.deepEqual(next.map((item) => [item.trek.id, item.startDate, item.status]), [
+    ['e', '2027-02-05', 'available'],
+    ['b', '2027-03-20', 'available'],
+    ['a', '2027-04-01', 'limited'],
+  ])
+  assert.equal(getNextDepartures(treks, '2027-01-05', 1).length, 1)
+  assert.deepEqual(getNextDepartures(treks, 'not-a-date'), [])
 })

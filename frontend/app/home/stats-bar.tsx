@@ -1,18 +1,20 @@
-import { SITE_METRICS } from '@/lib/site-metrics'
+import { FOUNDER_LEADER_SINCE_YEAR, SITE_METRICS } from '@/lib/site-metrics'
 
-export function StatsBar() {
+export function StatsBar({ rating, reviewCount }: { rating: number | null; reviewCount: number | null }) {
   const stats = [
-    { value: SITE_METRICS.successfulTreks, label: 'Successful Treks' },
-    { value: SITE_METRICS.expertGuides, label: 'Expert Guides' },
-    { value: SITE_METRICS.countriesServed, label: 'Countries Served' },
-    { value: SITE_METRICS.founderYearsGuiding, label: 'Gele’s Years Guiding' },
-    { value: SITE_METRICS.googleReviewRating + '/5', label: 'Average Rating' },
+    { value: SITE_METRICS.trekkersGuided, label: 'Trekkers Guided by Gele' },
+    { value: SITE_METRICS.founderYearsGuiding, label: 'Years in the Himalaya' },
+    { value: String(FOUNDER_LEADER_SINCE_YEAR), label: 'Leading Treks Since' },
+    {
+      value: `${rating ? rating.toFixed(1) : SITE_METRICS.googleReviewRating}/5`,
+      label: reviewCount ? `From ${reviewCount} Google Reviews` : 'Google Rating',
+    },
   ]
 
   return (
     <div className="bg-primary text-primary-foreground py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 text-center">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center">
           {stats.map((stat) => (
             <div key={stat.label} className="flex flex-col items-center">
               <span className="font-serif text-3xl font-bold text-accent">{stat.value}</span>
@@ -20,6 +22,9 @@ export function StatsBar() {
             </div>
           ))}
         </div>
+        <p className="mt-4 text-center text-sm text-primary-foreground/75">
+          Gele’s trekkers have mostly come from Europe, the USA and Australia.
+        </p>
       </div>
     </div>
   )

@@ -103,7 +103,7 @@ export default function RegistrationsAffiliationsContent({ documents, associatio
             <p className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold tracking-wide text-primary">Company</p>
             <h1 className="text-3xl font-bold text-foreground md:text-4xl">Registrations & Affiliations</h1>
             <p className="text-muted-foreground">
-              Gele Trekking is a registered trekking company in Nepal. Below are our official registrations and memberships, with the numbers you need to check them yourself.
+              Gele Trekking is a registered trekking company in Nepal. Below are our official registrations and memberships, with registration numbers you can check yourself.
             </p>
           </div>
         </div>
@@ -117,8 +117,8 @@ export default function RegistrationsAffiliationsContent({ documents, associatio
           </h2>
           <ol className="mt-4 grid gap-4 md:grid-cols-3">
             {[
-              { icon: FileText, title: 'Note a number', text: 'Each registration and membership below lists its official number.' },
-              { icon: Search, title: 'Check it independently', text: 'Use the “Verify” links to look us up with the issuing authority or association.' },
+              { icon: FileText, title: 'Note a number', text: 'Each government registration and licence below lists its official number.' },
+              { icon: Search, title: 'Check it independently', text: 'Ask the issuing authority or association to confirm us, or use a “Verify” link where one is shown.' },
               { icon: Mail, title: 'Still unsure? Ask us', text: `Write to ${CONTACT_EMAIL} and we will send anything else you need.` },
             ].map((step, index) => (
               <li key={step.title} className="flex gap-3">

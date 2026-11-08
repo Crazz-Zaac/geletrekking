@@ -254,7 +254,7 @@ export function AboutContent({
 
   const stats = [
     { icon: Mountain, value: SITE_METRICS.founderYearsGuiding, label: `Years in the Himalaya (since ${FOUNDER_SINCE_YEAR})` },
-    { icon: Users, value: SITE_METRICS.successfulTreks, label: 'Successful treks' },
+    { icon: Users, value: SITE_METRICS.trekkersGuided, label: 'Trekkers guided by Gele' },
     {
       icon: Star,
       value: `${ratingLabel}/5`,

@@ -10,9 +10,8 @@ function yearsSince(year: number) {
 }
 
 export const SITE_METRICS = {
-  successfulTreks: '500+',
-  expertGuides: '20+',
-  countriesServed: '30+',
+  /** Gele's whole career, an estimate from the owner, so it is shown as approximate. */
+  trekkersGuided: '~500',
   founderYearsGuiding: yearsSince(FOUNDER_SINCE_YEAR),
   googleReviewRating: '4.8',
 } as const

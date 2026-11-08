@@ -25,6 +25,7 @@ export function GlobalAlertBanner() {
   const [alerts, setAlerts] = useState<AdminAlert[]>([])
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
+  const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
     const loadAlerts = async () => {
@@ -77,6 +78,9 @@ export function GlobalAlertBanner() {
   const bodyText = firstAlert.message ?? null
   const ctaUrl = firstAlert.ctaUrl?.trim()
   const ctaLabel = 'View full details here →'
+  // Long notices start as one line so they don't push the page down.
+  const collapsible = (bodyText?.length ?? 0) > 100
+  const showDetails = !collapsible || expanded
 
   return (
     <div
@@ -102,11 +106,12 @@ export function GlobalAlertBanner() {
       )}
 
       {/* Content column — grows to fill */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '3px' }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
 
         {/* Line 1: pill badge + bold title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span
+            className="max-sm:hidden"
             style={{
               fontSize: '11px',
               fontWeight: 600,
@@ -119,18 +124,28 @@ export function GlobalAlertBanner() {
           >
             {label}
           </span>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: titleColor }}>{firstAlert.title}</span>
+          <span className="truncate" style={{ fontSize: '14px', fontWeight: 600, color: titleColor }}>{firstAlert.title}</span>
+          {collapsible ? (
+            <button
+              type="button"
+              onClick={() => setExpanded((value) => !value)}
+              aria-expanded={expanded}
+              style={{ flexShrink: 0, fontSize: '12px', fontWeight: 600, color: accentColor, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            >
+              {expanded ? 'Show less' : 'Read more'}
+            </button>
+          ) : null}
         </div>
 
         {/* Line 2: body message (if present) */}
-        {bodyText && (
+        {bodyText && showDetails && (
           <div style={{ fontSize: '13px', lineHeight: '1.5', opacity: 0.9, color: bodyColor }}>
             {bodyText}
           </div>
         )}
 
         {/* Line 3: CTA link */}
-        {ctaUrl ? (
+        {ctaUrl && showDetails ? (
           <a
             href={ctaUrl}
             style={{

@@ -4,7 +4,8 @@ import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import type { Trek } from '@/lib/data'
 import { treks } from '@/lib/data'
-import { getBlogs, getTreks, getSiteReviews } from '@/lib/api'
+import { getAdminAbout, getBlogs, getTreks, getSiteReviews } from '@/lib/api'
+import { getNextDepartures } from '@/lib/trek-availability'
 import { HeroSection } from './home/hero-section'
 import { WhyUsSection } from './home/why-us-section'
 import { BlogHighlights } from './home/blog-highlights'
@@ -16,7 +17,7 @@ import { SpecialOffers } from './home/special-offers'
 
 export const metadata = buildMetadata({
   title: 'Gele Trekking — Nepal Trekking & Himalaya Tours',
-  description: 'Founded in 2024 by Gele, a guide with 15+ years in the Himalaya. Explore Nepal trekking packages, local guides, and private Himalayan adventures.',
+  description: 'Founded in 2024 by Gele, who has worked in the Himalaya since 1998. Explore Nepal trekking packages, local guides, and private Himalayan adventures.',
   path: '/',
   keywords: ['Nepal trekking packages', 'guided Himalayan treks', 'local Nepal trekking agency'],
 })
@@ -34,10 +35,11 @@ function rankForHomepage(treks: Trek[], offerIds: Set<string>): Trek[] {
 }
 
 export default async function HomePage() {
-  const [apiTreks, apiBlogs, reviews] = await Promise.all([
+  const [apiTreks, apiBlogs, reviews, about] = await Promise.all([
     getTreks(),
     getBlogs(),
     getSiteReviews(),
+    getAdminAbout().catch(() => null),
   ])
 
   const activeTreks = apiTreks.length > 0 ? apiTreks : treks
@@ -45,13 +47,18 @@ export default async function HomePage() {
   const offerTreks = activeTreks.filter((trek) => trek.hasOffer).slice(0, 4)
   const popularTreks = rankForHomepage(activeTreks, new Set(offerTreks.map((trek) => trek.id)))
 
+  const founder = about?.teamMembers?.find((member) => /founder/i.test(member.role)) ?? null
+  const departures = getNextDepartures(activeTreks, new Date().toISOString().slice(0, 10))
+  const rating = reviews?.averageRating ?? null
+  const reviewCount = reviews?.totalReviewCount ?? null
+
   return (
     <>
       <Navbar />
       <div className="pt-16">
         <main>
-          <HeroSection />
-          <StatsBar />
+          <HeroSection founder={founder} departures={departures} rating={rating} reviewCount={reviewCount} />
+          <StatsBar rating={rating} reviewCount={reviewCount} />
 
         <SpecialOffers treks={offerTreks} />
 

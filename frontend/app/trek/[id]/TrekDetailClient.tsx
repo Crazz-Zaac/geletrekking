@@ -3,7 +3,7 @@
 import { TrustBadges } from '@/components/trust-badges';
 import { PackingListCta } from '@/components/packing-list-cta';
 import type { TrustSummary } from '@/lib/api';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { BookingForm, FAQAccordion } from '@/components/booking-form';
 import type { Trek } from '@/lib/data';
 import { TrekAvailabilityCalendar } from '@/components/trek-availability-calendar';
+import { TrekItinerary } from '@/components/trek-itinerary';
 import { getTrekFAQBySlug } from '@/lib/faq-data';
 import {
   BedDouble,
@@ -179,7 +180,6 @@ export default function TrekDetailClient({
   trek,
   trust = null,
 }: TrekDetailClientProps) {
-  const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [downloadingItinerary, setDownloadingItinerary] = useState(false);
   const [expandedPricingTier, setExpandedPricingTier] = useState<string | null>(null);
   const [expandedEssential, setExpandedEssential] = useState<string | null>(null);
@@ -349,6 +349,15 @@ export default function TrekDetailClient({
 
   const [activeSection, setActiveSection] = useState<string>('trek-overview')
 
+  const sectionNavRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const nav = sectionNavRef.current
+    const chip = nav?.querySelector<HTMLElement>('[data-active="true"]')
+    if (!nav || !chip) return
+    nav.scrollTo({ left: chip.offsetLeft - (nav.clientWidth - chip.offsetWidth) / 2, behavior: 'smooth' })
+  }, [activeSection])
+
   const scrollToBooking = () => {
     const node = document.getElementById('booking-inquiry-section')
     if (!node) return
@@ -366,11 +375,17 @@ export default function TrekDetailClient({
 
     const updateActiveSection = () => {
       const offset = 140
+      // On desktop the calendar sits in the side column, level with the main
+      // sections, so it can't be used to work out what is being read.
+      const isDesktop = window.matchMedia('(min-width: 1024px)').matches
       let current = navItems[0]?.id
+      let closestTop = Number.NEGATIVE_INFINITY
 
       navItems.forEach((item) => {
+        if (isDesktop && item.id === 'trek-availability') return
         const top = getSectionTop(item.id)
-        if (top - offset <= 0) {
+        if (top - offset <= 0 && top > closestTop) {
+          closestTop = top
           current = item.id
         }
       })
@@ -837,8 +852,11 @@ export default function TrekDetailClient({
       </motion.section>
 
       <section className="sticky top-16 z-40 border-b border-border bg-background/95 backdrop-blur shadow-sm">
-        <div className="container mx-auto px-4 md:px-6 py-2.5">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="container mx-auto px-4 md:px-6 py-2">
+          <div
+            ref={sectionNavRef}
+            className="relative -mx-4 flex items-center gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden"
+          >
             {navItems.map((item) => {
               const isActive = activeSection === item.id
               return (
@@ -847,7 +865,9 @@ export default function TrekDetailClient({
                   variant={isActive ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => scrollToSection(item.id)}
-                  className={isActive ? 'bg-primary text-white hover:bg-primary/90' : 'text-muted-foreground'}
+                  data-active={isActive}
+                  aria-current={isActive ? 'location' : undefined}
+                  className={`shrink-0 ${isActive ? 'bg-primary text-white hover:bg-primary/90' : 'text-muted-foreground'}`}
                 >
                   {item.label}
                 </Button>
@@ -936,55 +956,14 @@ export default function TrekDetailClient({
               </motion.div>
 
               <motion.div id="trek-itinerary" variants={itemVariants} className="space-y-5 scroll-mt-36">
-                <SectionHeader index="04" title="Itinerary Timeline" icon={Route} />
-                <div className="relative border-l border-border ml-3 space-y-5">
-                  {trek.itinerary.map((day) => (
-                    <div key={day.day} className="relative pl-8">
-                      <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-primary" />
-                      <div className="rounded-xl border border-border bg-card p-4 md:p-5">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-3 mb-2">
-                              <Badge className="bg-primary text-white">Day {day.day}</Badge>
-                              <h3 className="font-bold text-foreground text-base md:text-lg">{day.title}</h3>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setExpandedDay(expandedDay === day.day ? null : day.day)}
-                            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 shrink-0 mt-0.5"
-                          >
-                            {expandedDay === day.day ? 'Hide details' : 'Show details'}
-                            <ChevronDown className={`w-4 h-4 transition-transform ${expandedDay === day.day ? 'rotate-180' : ''}`} />
-                          </button>
-                        </div>
-
-                        {expandedDay === day.day && (
-                          <div className="mt-4 pt-4 border-t border-border">
-                            <FormattedText value={day.description} />
-                          </div>
-                        )}
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 text-primary px-3 py-1.5 text-xs font-semibold">
-                            <Mountain className="w-3.5 h-3.5" />
-                            Altitude: {day.altitude ? `${day.altitude}m` : 'N/A'}
-                          </span>
-                          {day.distance ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/15 text-sky-700 dark:text-sky-300 px-3 py-1.5 text-xs font-semibold">
-                              <MapPin className="w-3.5 h-3.5" />
-                              {day.distance}
-                            </span>
-                          ) : null}
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 px-3 py-1.5 text-xs font-semibold">
-                            <BedDouble className="w-3.5 h-3.5" />
-                            Stay: {day.accommodation}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <SectionHeader index="04" title="Itinerary" icon={Route} />
+                <TrekItinerary
+                  days={trek.itinerary}
+                  maxAltitude={trek.maxAltitude}
+                  onDownload={handleDownloadItinerary}
+                  downloading={downloadingItinerary}
+                  renderText={(value) => <FormattedText value={value} />}
+                />
               </motion.div>
 
               <motion.div id="trek-trip-essentials" variants={itemVariants} className="space-y-4 scroll-mt-36">
@@ -1169,7 +1148,7 @@ export default function TrekDetailClient({
               </motion.div>
             </motion.div>
 
-            <motion.aside variants={itemVariants} className="space-y-6 h-fit w-full lg:max-w-sm lg:ml-auto">
+            <motion.aside variants={itemVariants} className="space-y-6 h-fit w-full lg:sticky lg:top-32 lg:ml-auto lg:max-h-[calc(100vh-9rem)] lg:max-w-sm lg:overflow-y-auto">
               <Card className="border-border bg-white p-5 md:p-6 transition-all hover:shadow-md">
                 <div className="space-y-4">
                   <div>
@@ -1240,12 +1219,6 @@ export default function TrekDetailClient({
                 )}
 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-2"><CalendarRange className="w-4 h-4 text-primary" /> {trek.duration} days</div>
-                    <div className="flex items-center gap-2"><Mountain className="w-4 h-4 text-primary" /> {trek.maxAltitude}m</div>
-                    <div className="flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> {trek.groupSize}</div>
-                  </div>
-
                   <TrekAvailabilityCalendar key={trek.id} ranges={trek.availabilityRanges || []} />
 
                   <Button variant="outline" className="w-full" onClick={handleDownloadItinerary} disabled={downloadingItinerary}>

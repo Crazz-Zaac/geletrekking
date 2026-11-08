@@ -44,6 +44,7 @@ test('floating contact links all three channels on public pages and stays off ad
     '@/lib/contact-links': contact,
     '@/components/whatsapp-icon': loadSource('components/whatsapp-icon.tsx'),
     '@/components/copy-button': { CopyButton: () => null },
+    '@/hooks/use-scrolled-past-hero': { useScrolledPastHero: () => false },
     '@/hooks/use-site-settings': { useSiteSettings: () => ({ settings: { email: contact.CONTACT_EMAIL, phone: contact.CONTACT_PHONE }, social: { whatsapp: contact.WHATSAPP_URL } }) },
     'next/navigation': { usePathname: () => pathname },
   })

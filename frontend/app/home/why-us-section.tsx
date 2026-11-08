@@ -1,7 +1,8 @@
 import { COMPANY_FOUNDING_STORY } from '@/lib/site-metrics'
-import { Shield, Users, Leaf, Award, Clock, MapPin } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowRight, Shield, Users, Leaf, Award, Clock, MapPin } from 'lucide-react'
 
-const reasons = [
+const reasons: { Icon: typeof Shield; title: string; description: string; link?: { href: string; label: string } }[] = [
   {
     Icon: Shield,
     title: 'Safety Comes First',
@@ -25,6 +26,7 @@ const reasons = [
     title: 'Licensed & Reliable',
     description:
       'Officially registered with the Nepal Tourism Board and affiliated with TAAN, offering professional and dependable trekking experiences.',
+    link: { href: '/company/registrations-affiliations', label: 'See our registrations' },
   },
   {
     Icon: Clock,
@@ -57,7 +59,7 @@ export function WhyUsSection() {
 
         {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-          {reasons.map(({ Icon, title, description }) => (
+          {reasons.map(({ Icon, title, description, link }) => (
             <div
               key={title}
               className="flex flex-col gap-3 bg-card p-5 rounded-2xl border border-border hover:shadow-md transition-shadow"
@@ -68,6 +70,12 @@ export function WhyUsSection() {
               <div>
                 <h3 className="font-semibold text-foreground mb-1.5">{title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+                {link ? (
+                  <Link href={link.href} className="mt-2 inline-flex items-center gap-1 py-1 text-sm font-semibold text-primary hover:underline">
+                    {link.label}
+                    <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Link>
+                ) : null}
               </div>
             </div>
           ))}

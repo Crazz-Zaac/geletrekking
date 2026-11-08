@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ArrowUpRight, CalendarDays, Clock, Mail, MessageCircle, X } from 'lucide-react'
 import { useSiteSettings } from '@/hooks/use-site-settings'
+import { useScrolledPastHero } from '@/hooks/use-scrolled-past-hero'
 import { getContactLinks } from '@/lib/contact-links'
 import { WhatsAppIcon } from '@/components/whatsapp-icon'
 import { CopyButton } from '@/components/copy-button'
@@ -103,6 +104,10 @@ export function FloatingContact() {
   const panelId = useId()
   const titleId = useId()
   const reduceMotion = useReducedMotion()
+  // Keep the phone launcher off the homepage hero, which has its own contact link.
+  const isHome = pathname === '/'
+  const pastHero = useScrolledPastHero(isHome)
+  const hideOnHero = isHome && !pastHero && !open
 
   useEffect(() => {
     if (!open) return
@@ -141,6 +146,8 @@ export function FloatingContact() {
       // Desktop shows the always-visible rail, which needs no hint.
       if (window.matchMedia('(min-width: 640px)').matches) return
       if (!cookieChoiceMade || document.querySelector('[role="dialog"]')) return
+      // The launcher is hidden over the homepage hero, so keep the hint for later.
+      if (pathname === '/' && window.scrollY <= window.innerHeight * 0.5) return
       setShowHint(true)
       try {
         localStorage.setItem(HINT_SEEN_KEY, '1')
@@ -209,7 +216,7 @@ export function FloatingContact() {
     {/* Phones: single launcher with a bottom-sheet panel */}
     <div
       ref={containerRef}
-      className={`fixed left-4 sm:hidden ${open ? 'z-[80]' : 'z-[60]'}`}
+      className={`fixed left-4 sm:hidden ${open ? 'z-[80]' : 'z-[60]'} ${hideOnHero ? 'invisible' : ''}`}
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6rem)' }}
       onKeyDown={(event) => {
         if (event.key === 'Escape' && open) {

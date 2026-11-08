@@ -78,3 +78,33 @@ export function formatCalendarDate(value: string): string {
 export function formatCalendarRange(range: CalendarAvailabilityRange): string {
   return `${formatCalendarDate(range.startDate)} – ${formatCalendarDate(range.endDate)}`
 }
+
+export type NextDeparture<T> = {
+  trek: T
+  startDate: string
+  endDate: string
+  status: 'available' | 'limited'
+}
+
+/**
+ * The soonest departures still open to book, one per trek so the list shows
+ * variety. Bookings close `minLeadDays` before a trek starts (see the Terms).
+ */
+export function getNextDepartures<T extends { availabilityRanges?: TrekAvailabilityRange[] }>(
+  treks: T[],
+  today: string,
+  limit = 3,
+  minLeadDays = 30
+): NextDeparture<T>[] {
+  const start = parseCalendarDate(today)
+  if (!start) return []
+  const earliest = new Date(start.getTime() + minLeadDays * 86400000).toISOString().slice(0, 10)
+  const found: NextDeparture<T>[] = []
+  for (const trek of treks) {
+    const next = getDepartureRanges(trek.availabilityRanges ?? []).find(
+      (range) => range.startDate >= earliest && range.status !== 'booked'
+    )
+    if (next) found.push({ trek, startDate: next.startDate, endDate: next.endDate, status: next.status as 'available' | 'limited' })
+  }
+  return found.sort((a, b) => a.startDate.localeCompare(b.startDate)).slice(0, limit)
+}
