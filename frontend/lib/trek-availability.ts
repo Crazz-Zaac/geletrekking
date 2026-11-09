@@ -109,6 +109,14 @@ export function getNextDepartures<T extends { availabilityRanges?: TrekAvailabil
   return found.sort((a, b) => a.startDate.localeCompare(b.startDate)).slice(0, limit)
 }
 
+/** Open departures far enough ahead to book, since bookings close `minLeadDays` before a trek starts. */
+export function getBookableDepartures(ranges: TrekAvailabilityRange[], today: string, minLeadDays = 30): DepartureRange[] {
+  const start = parseCalendarDate(today)
+  if (!start) return []
+  const earliest = new Date(start.getTime() + minLeadDays * 86400000).toISOString().slice(0, 10)
+  return getDepartureRanges(ranges).filter((range) => range.startDate >= earliest && range.status !== 'booked')
+}
+
 export function addCalendarDays(date: string, days: number): string {
   const parsed = parseCalendarDate(date)
   return parsed ? new Date(parsed.getTime() + days * 86400000).toISOString().slice(0, 10) : ''

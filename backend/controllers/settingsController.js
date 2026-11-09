@@ -132,6 +132,24 @@ exports.updateSettings = async (req, res) => {
   }
 };
 
+// Admins manage activities, so they may also show or hide them in the site menu.
+// This changes only that one setting; everything else still needs manage_settings.
+exports.updateActivitiesVisibility = async (req, res) => {
+  try {
+    if (typeof req.body?.enabled !== "boolean") {
+      return res.status(400).json({ message: "enabled must be true or false" });
+    }
+    const doc = await getSingleton();
+    doc.set("navigation.activitiesEnabled", req.body.enabled);
+    await doc.save();
+    const { registrationsAffiliations, ...publicSettings } = doc.toObject();
+    res.json(publicSettings);
+  } catch (err) {
+    console.error("updateActivitiesVisibility error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // ---- Registrations & affiliations ----
 const DOCUMENT_TYPES = new Set(["image", "pdf"]);
 const DOCUMENT_STATUSES = new Set(["placeholder", "pending", "uploaded"]);

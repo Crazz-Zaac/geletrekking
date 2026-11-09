@@ -24,6 +24,7 @@ export type LegalHighlight = { icon: LucideIcon; title: string; text: string }
 
 const RELATED = [
   { href: '/terms-and-conditions', label: 'Terms & Conditions' },
+  { href: '/liability-waiver', label: 'Liability Waiver' },
   { href: '/disclaimer', label: 'Health & Safety Disclaimer' },
   { href: '/privacy-policy', label: 'Privacy Policy' },
 ]

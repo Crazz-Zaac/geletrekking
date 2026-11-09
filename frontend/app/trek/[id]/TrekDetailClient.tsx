@@ -1,18 +1,24 @@
 'use client';
 
-import { TrustBadges } from '@/components/trust-badges';
+import { TrustBadges, TrustRating } from '@/components/trust-badges';
+import { TrekReviews } from '@/components/trek-reviews';
+import { ShareTrek } from '@/components/share-trek';
+import { getTrekPath } from '@/lib/trek-path';
 import { applyOfferToTier } from '@/lib/trek-offer'
 import { PackingListCta } from '@/components/packing-list-cta';
-import type { TrustSummary } from '@/lib/api';
+import type { SiteReviews, TrustSummary } from '@/lib/api';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useSiteSettings } from '@/hooks/use-site-settings'
+import { toast } from 'sonner'
+import { getAdminSettings } from '@/lib/api'
+import { Toaster } from '@/components/ui/sonner'
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookingForm, FAQAccordion } from '@/components/booking-form';
+import { BookingForm, FAQAccordion, type BookingFormPrefill } from '@/components/booking-form';
 import type { Trek } from '@/lib/data';
 import { TrekAvailabilityCalendar } from '@/components/trek-availability-calendar';
 import { TrekItinerary } from '@/components/trek-itinerary';
@@ -36,6 +42,7 @@ import {
   Mountain,
   Package,
   Download,
+  Loader2,
   Route,
   Sparkles,
   Star,
@@ -54,6 +61,7 @@ import {
 interface TrekDetailClientProps {
   trek: Trek;
   trust?: TrustSummary | null;
+  reviews?: SiteReviews | null;
 }
 
 function getAltitudeLabel(maxAltitude: number) {
@@ -61,10 +69,6 @@ function getAltitudeLabel(maxAltitude: number) {
   if (maxAltitude >= 4000) return 'High Altitude';
   if (maxAltitude >= 3000) return 'Moderate Altitude';
   return 'Low Altitude';
-}
-
-function formatPdfText(value?: string) {
-  return String(value || "").replace(/[^\x20-\x7E]/g, "").replace(/\s+/g, " ").trim()
 }
 
 const containerVariants = {
@@ -81,22 +85,18 @@ const itemVariants = {
 };
 
 type SectionHeaderProps = {
-  index: string
   title: string
   icon: typeof Sparkles
 }
 
-function SectionHeader({ index, title, icon: Icon }: SectionHeaderProps) {
+function SectionHeader({ title, icon: Icon }: SectionHeaderProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
         <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-[#E6F1F5] text-[#004D67]">
           <Icon className="h-5 w-5" />
         </div>
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#004D67]">Section {index}</p>
-          <h2 className="text-2xl md:text-[28px] font-bold text-foreground leading-tight">{title}</h2>
-        </div>
+        <h2 className="text-2xl md:text-[28px] font-bold text-foreground leading-tight">{title}</h2>
       </div>
       <div className="h-px bg-border" />
     </div>
@@ -180,9 +180,11 @@ function FormattedText({ value }: { value: string }) {
 export default function TrekDetailClient({
   trek,
   trust = null,
+  reviews = null,
 }: TrekDetailClientProps) {
   const [downloadingItinerary, setDownloadingItinerary] = useState(false);
   const [expandedPricingTier, setExpandedPricingTier] = useState<string | null>(null);
+  const [inquiryPrefill, setInquiryPrefill] = useState<BookingFormPrefill | null>(null);
   const [expandedEssential, setExpandedEssential] = useState<string | null>(null);
   const { settings, social } = useSiteSettings()
   const fallbackFaqs = getTrekFAQBySlug(trek.slug)?.faqs || []
@@ -341,7 +343,7 @@ export default function TrekDetailClient({
       { id: 'trek-overview', label: 'Overview' },
       { id: 'trek-highlights', label: 'Highlights' },
       { id: 'trek-itinerary', label: 'Itinerary' },
-      { id: 'trek-availability', label: 'Available Dates' },
+      { id: 'trek-availability', label: 'Dates' },
       { id: 'trek-trip-essentials', label: 'Essentials' },
       { id: 'trek-includes', label: 'Included' },
       { id: 'trek-excludes', label: 'Excluded' },
@@ -369,6 +371,21 @@ export default function TrekDetailClient({
     const node = document.getElementById('booking-inquiry-section')
     if (!node) return
     node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    // Photos above the form can finish loading mid-scroll and push it down the page.
+    window.setTimeout(() => {
+      const top = node.getBoundingClientRect().top
+      if (top > window.innerHeight / 2 || top < 0) node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 1500)
+  }
+
+  const inquireAbout = (choice: BookingFormPrefill) => {
+    setInquiryPrefill(choice)
+    scrollToBooking()
+  }
+
+  const inquireAboutDeparture = ({ startDate, endDate }: { startDate: string; endDate: string }) => {
+    const label = (date: string) => new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+    inquireAbout({ date: startDate, dateLabel: `${label(startDate)} to ${label(endDate)}` })
   }
 
   const scrollToSection = (sectionId: string) => {
@@ -418,405 +435,28 @@ export default function TrekDetailClient({
     setDownloadingItinerary(true)
 
     try {
-      const { jsPDF } = await import("jspdf")
-      const pdf = new jsPDF({ unit: "mm", format: "a4" })
-      const pageWidth = pdf.internal.pageSize.getWidth()
-      const pageHeight = pdf.internal.pageSize.getHeight()
-      const margin = 14
-      const footerTop = pageHeight - 22
-      const contentWidth = pageWidth - margin * 2
-      let cursorY = margin
-
-      type PdfImage = { dataUrl: string; format: "PNG" | "JPEG" }
-      type SocialLink = { label: string; url: string }
-
-      const toImage = async (src?: string): Promise<PdfImage | null> => {
-        if (!src) return null
-
-        try {
-          const response = await fetch(src, { cache: "force-cache" })
-          if (!response.ok) return null
-
-          const blob = await response.blob()
-          const dataUrl = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader()
-            reader.onload = () => resolve(String(reader.result || ""))
-            reader.onerror = reject
-            reader.readAsDataURL(blob)
-          })
-
-          return {
-            dataUrl,
-            format: dataUrl.includes("image/jpeg") || dataUrl.includes("image/jpg") ? "JPEG" : "PNG",
-          }
-        } catch {
-          return null
-        }
-      }
-
-      const logo = await toImage(settings.logoUrl || "/geletrekking.png")
-      const mapImage = await toImage(trek.mapImageUrl)
-      const loadCarryingImages = await Promise.all([
-        toImage("/images/load_carrying_1.JPG"),
-        toImage("/images/load_carrying_2.JPG"),
-      ])
-      const companyName = settings.siteName || "Gele Trekking"
-      const contactPhone = settings.phone || "+977 985 123 4567"
-      const contactEmail = settings.email || "info@geletrekking.com"
-      const contactAddress = settings.address || "Thamel, Kathmandu 44600, Nepal"
-      const socialLinks: SocialLink[] = [
-        { label: "Facebook", url: social.facebook },
-        { label: "Instagram", url: social.instagram },
-        { label: "YouTube", url: social.youtube },
-        { label: "LinkedIn", url: social.linkedin },
-        { label: "WhatsApp", url: social.whatsapp },
-        { label: "Twitter", url: social.twitter },
-      ].filter((item) => Boolean(item.url))
-      const tipGuideline = "Tipping is not mandatory, but it is a meaningful way to express gratitude for the services provided, in line with trekking traditions. It typically occurs on the final night of the trek, often accompanied by a celebration with the team. During this time, the support team shares their joy and emotions. The leader will guide the group in collecting the tips, which are then distributed by one of the group members to the team. The recommended tip for each Sherpa is $ 90 to $ 100, or an amount of your choice, excluding the trip leader. For the trip leader, depending on the group size, the suggested contribution is USD $40-$50 per person. However, the amount is entirely at your discretion and can be adjusted as you see fit."
-      const loadCarryingTitle = "Traditional Load-Carrying in Nepal"
-      const loadCarryingContent = "Gele Trekking is committed to bringing attention to the potential brain damage being caused to countless Nepalese by the common practice of carrying heavy loads on their heads, known as 'head carrying'. Gele Trekking has pledged to make this a top focus for their treks and to actively seek solutions, including having one sherpa accompany each guest and to supporting further research on this critical health concern. By choosing Gele Trekking, our guests are providing support from around the world to help protect and nurture the minds of Nepalese in Nepal."
-
-      pdf.setProperties({
-        title: trek.title + " Complete Itinerary",
-        subject: "Trek itinerary and package details",
-        author: companyName,
+      const { downloadTrekItineraryPdf } = await import('@/lib/trek-itinerary-pdf')
+      // Always the current details, even if someone clicks before the page has loaded them.
+      const latestSettings = await getAdminSettings().catch(() => null)
+      await downloadTrekItineraryPdf({
+        trek,
+        settings: { ...settings, ...latestSettings },
+        socialLinks: [
+          { label: 'Facebook', url: social.facebook },
+          { label: 'Instagram', url: social.instagram },
+          { label: 'YouTube', url: social.youtube },
+          { label: 'LinkedIn', url: social.linkedin },
+          { label: 'WhatsApp', url: social.whatsapp },
+        ].filter((item) => Boolean(item.url)),
+        summary: primaryKpis.map(({ label, value }) => ({ label, value })),
+        details: [...secondaryKpis, ...tertiaryKpis].map(({ label, value }) => ({ label, value })),
+        packages: orderedPricingTiers,
+        essentials: tripEssentials,
+        equipment: specialEquipmentItems,
+        faqs: trekFaqs,
       })
-
-      const setText = (size: number, style: "normal" | "bold" = "normal", color: [number, number, number] = [28, 35, 39]) => {
-        pdf.setFont("helvetica", style)
-        pdf.setFontSize(size)
-        pdf.setTextColor(color[0], color[1], color[2])
-      }
-
-      const withOpacity = (opacity: number, draw: () => void) => {
-        const doc = pdf as unknown as { GState?: new (value: { opacity: number }) => unknown; setGState?: (state: unknown) => void }
-        if (!doc.GState || !doc.setGState) return
-
-        try {
-          doc.setGState(new doc.GState({ opacity }))
-          draw()
-        } finally {
-          doc.setGState(new doc.GState({ opacity: 1 }))
-        }
-      }
-
-      const drawWatermark = () => {
-        if (!logo) return
-        withOpacity(0.06, () => {
-          const size = 118
-          pdf.addImage(logo.dataUrl, logo.format, (pageWidth - size) / 2, 86, size, size)
-        })
-      }
-
-      const drawFooter = () => {
-        pdf.setDrawColor(218, 226, 230)
-        pdf.line(margin, footerTop - 5, pageWidth - margin, footerTop - 5)
-        setText(8, "normal", [73, 85, 91])
-        pdf.text(companyName + " | " + contactPhone + " | " + contactEmail, margin, footerTop)
-        pdf.text(contactAddress, margin, footerTop + 5)
-
-        let linkX = margin
-        socialLinks.slice(0, 5).forEach((link) => {
-          const label = link.label
-          const width = pdf.getTextWidth(label)
-          if (linkX + width > pageWidth - margin) return
-          setText(8, "bold", [0, 77, 103])
-          pdf.text(label, linkX, footerTop + 11)
-          pdf.link(linkX, footerTop + 7, width, 5, { url: link.url })
-          linkX += width + 6
-        })
-      }
-
-      const decoratePage = (includeWatermark = true) => {
-        if (includeWatermark) drawWatermark()
-        drawFooter()
-      }
-
-      const addPage = (includeWatermark = true) => {
-        pdf.addPage()
-        cursorY = margin
-        decoratePage(includeWatermark)
-      }
-
-      const ensureSpace = (needed = 10) => {
-        if (cursorY + needed <= footerTop - 8) return
-        addPage()
-      }
-
-      const addSection = (title: string) => {
-        ensureSpace(16)
-        cursorY += 4
-        pdf.setFillColor(230, 241, 245)
-        pdf.roundedRect(margin, cursorY - 6, contentWidth, 9, 2, 2, "F")
-        setText(12, "bold", [0, 77, 103])
-        pdf.text(title.toUpperCase(), margin + 4, cursorY)
-        cursorY += 9
-      }
-
-      const addParagraph = (text?: string, size = 10, indent = 0) => {
-        if (!text) return
-        setText(size, "normal", [43, 52, 57])
-        const lines = pdf.splitTextToSize(text, contentWidth - indent)
-        lines.forEach((line: string) => {
-          ensureSpace(6)
-          setText(size, "normal", [43, 52, 57])
-          pdf.text(line, margin + indent, cursorY)
-          cursorY += 5
-        })
-      }
-
-      const addBulletList = (items: string[]) => {
-        items.filter(Boolean).forEach((item) => {
-          ensureSpace(7)
-          setText(10, "normal", [43, 52, 57])
-          pdf.circle(margin + 1.5, cursorY - 1.2, 0.8, "F")
-          const lines = pdf.splitTextToSize(item, contentWidth - 7)
-          lines.forEach((line: string, index: number) => {
-            setText(10, "normal", [43, 52, 57])
-            pdf.text(line, margin + 6, cursorY)
-            if (index < lines.length - 1) {
-              cursorY += 5
-              ensureSpace(6)
-            }
-          })
-          cursorY += 5
-        })
-      }
-
-      const addKeyValueGrid = (items: { label: string; value: string }[]) => {
-        const columnGap = 7
-        const columnWidth = (contentWidth - columnGap) / 2
-        items.forEach((item, index) => {
-          const x = margin + (index % 2) * (columnWidth + columnGap)
-          if (index % 2 === 0) ensureSpace(19)
-          pdf.setDrawColor(218, 226, 230)
-          pdf.setFillColor(250, 252, 252)
-          pdf.roundedRect(x, cursorY, columnWidth, 15, 2, 2, "FD")
-          setText(7, "bold", [0, 77, 103])
-          pdf.text(item.label.toUpperCase(), x + 3, cursorY + 5)
-          setText(10, "bold", [28, 35, 39])
-          pdf.text(pdf.splitTextToSize(item.value || "On request", columnWidth - 6), x + 3, cursorY + 11)
-          if (index % 2 === 1 || index === items.length - 1) cursorY += 18
-        })
-      }
-
-      const addLinkedText = (label: string, url: string) => {
-        if (!url) return
-        ensureSpace(6)
-        setText(10, "bold", [0, 77, 103])
-        pdf.text(label, margin, cursorY)
-        pdf.link(margin, cursorY - 4, pdf.getTextWidth(label), 6, { url })
-        cursorY += 6
-      }
-
-      const addCover = () => {
-        decoratePage()
-        if (logo) pdf.addImage(logo.dataUrl, logo.format, margin, margin, 28, 28)
-        setText(9, "bold", [0, 77, 103])
-        pdf.text(companyName.toUpperCase(), margin + 34, margin + 8)
-        setText(8, "normal", [73, 85, 91])
-        pdf.text("Complete trek itinerary packet", margin + 34, margin + 14)
-
-        cursorY = 62
-        setText(24, "bold", [22, 31, 36])
-        pdf.text(pdf.splitTextToSize(trek.title, contentWidth), margin, cursorY)
-        cursorY += 15
-        setText(11, "normal", [73, 85, 91])
-        pdf.text(trek.region + " | " + trek.duration + " days | " + trek.difficulty, margin, cursorY)
-        cursorY += 9
-        addParagraph("Prepared on " + new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }), 10)
-        cursorY += 6
-        addKeyValueGrid(primaryKpis.map((item) => ({ label: item.label, value: item.value })))
-
-        cursorY += 4
-        addSection("Contact Details")
-        addParagraph(contactPhone + " | " + contactEmail)
-        addParagraph(contactAddress)
-        socialLinks.slice(0, 5).forEach((link) => addLinkedText(link.label, link.url))
-      }
-
-
-      const addFaqItems = (items: { question: string; answer: string }[]) => {
-        if (items.length === 0) {
-          addParagraph("FAQs for this destination will be added soon. Please contact us for trek-specific questions.")
-          return
-        }
-
-        items.forEach((faq, index) => {
-          ensureSpace(18)
-          setText(10, "bold", [0, 77, 103])
-          const questionLines = pdf.splitTextToSize(String(index + 1) + ". " + faq.question, contentWidth)
-          questionLines.forEach((line: string) => {
-            ensureSpace(6)
-            pdf.text(line, margin, cursorY)
-            cursorY += 5
-          })
-          addParagraph(faq.answer, 9)
-          cursorY += 2
-        })
-      }
-
-      const addImageRow = (images: PdfImage[]) => {
-        const availableImages = images.filter(Boolean)
-        if (availableImages.length === 0) return
-
-        const gap = 6
-        const imageCount = Math.min(2, availableImages.length)
-        const imageWidth = imageCount === 1 ? Math.min(contentWidth, 100) : (contentWidth - gap) / 2
-        const maxHeight = 82
-        ensureSpace(maxHeight + 8)
-
-        const startY = cursorY
-        availableImages.slice(0, 2).forEach((image, index) => {
-          let width = imageWidth
-          let height = maxHeight
-
-          try {
-            const props = pdf.getImageProperties(image.dataUrl)
-            const scale = Math.min(imageWidth / props.width, maxHeight / props.height)
-            width = props.width * scale
-            height = props.height * scale
-          } catch {
-            height = Math.min(maxHeight, imageWidth * 0.75)
-          }
-
-          const columnX = imageCount === 1 ? margin + (contentWidth - width) / 2 : margin + index * (imageWidth + gap) + (imageWidth - width) / 2
-          pdf.addImage(image.dataUrl, image.format, columnX, startY, width, height)
-        })
-
-        cursorY = startY + maxHeight + 6
-      }
-
-      const addCenteredImageBlock = (image: PdfImage, maxHeight: number) => {
-        let imageWidth = contentWidth
-        let imageHeight = maxHeight
-
-        try {
-          const props = pdf.getImageProperties(image.dataUrl)
-          const scale = Math.min(contentWidth / props.width, maxHeight / props.height)
-          imageWidth = props.width * scale
-          imageHeight = props.height * scale
-        } catch {
-          imageHeight = Math.min(maxHeight, contentWidth * 0.62)
-        }
-
-        const imageX = margin + (contentWidth - imageWidth) / 2
-        const imageY = cursorY + Math.max(0, (maxHeight - imageHeight) / 2)
-        pdf.addImage(image.dataUrl, image.format, imageX, imageY, imageWidth, imageHeight)
-        cursorY = imageY + imageHeight + 6
-      }
-
-      addCover()
-
-      addPage()
-      addSection("Basic Info")
-      addKeyValueGrid([
-        ...primaryKpis,
-        ...secondaryKpis,
-        ...tertiaryKpis,
-      ].map((item) => ({ label: item.label, value: item.value })))
-
-      addSection("Trek Details")
-      addParagraph(trek.fullDescription || "Trek details are currently being prepared.")
-      if (trek.highlights.length > 0) {
-        cursorY += 2
-        setText(11, "bold", [28, 35, 39])
-        pdf.text("Trek highlights", margin, cursorY)
-        cursorY += 6
-        addBulletList(trek.highlights)
-      }
-      if (pricingTiers.length > 0) {
-        cursorY += 2
-        setText(11, "bold", [28, 35, 39])
-        pdf.text("Package options", margin, cursorY)
-        cursorY += 7
-        pricingTiers.forEach((tier) => {
-          const detailLines = (tier.includes && tier.includes.length > 0
-            ? tier.includes
-            : ["Package details will be confirmed by our team."]
-          ).flatMap((item) => pdf.splitTextToSize(formatPdfText(item), contentWidth - 12))
-          const boxHeight = Math.max(30, 21 + detailLines.length * 4.5)
-
-          ensureSpace(boxHeight + 5)
-          pdf.setDrawColor(0, 77, 103)
-          pdf.setFillColor(240, 248, 250)
-          pdf.roundedRect(margin, cursorY, contentWidth, boxHeight, 3, 3, "FD")
-
-          setText(7, "bold", [0, 77, 103])
-          pdf.text("PACKAGE OPTION", margin + 5, cursorY + 6)
-          setText(13, "bold", [22, 31, 36])
-          pdf.text(tier.name, margin + 5, cursorY + 14)
-          const priceText = "USD " + tier.priceUsd.toLocaleString() + (tier.wasPriceUsd ? " (was " + tier.wasPriceUsd.toLocaleString() + ")" : "")
-          pdf.text(priceText, pageWidth - margin - 5 - pdf.getTextWidth(priceText), cursorY + 14)
-
-          setText(9, "normal", [43, 52, 57])
-          let detailY = cursorY + 22
-          detailLines.forEach((line: string) => {
-            pdf.text(line, margin + 5, detailY)
-            detailY += 4.5
-          })
-          cursorY += boxHeight + 5
-        })
-      }
-
-      addSection("Itinerary")
-      trek.itinerary.forEach((day) => {
-        ensureSpace(24)
-        setText(11, "bold", [0, 77, 103])
-        pdf.text("Day " + day.day + ": " + day.title, margin, cursorY)
-        cursorY += 6
-        addParagraph(day.description)
-        const meta = "Altitude: " + (day.altitude ? day.altitude + "m" : "N/A") + " | Distance: " + (formatPdfText(day.distance) || "N/A") + " | Stay: " + (day.accommodation || "N/A")
-        setText(8, "bold", [73, 85, 91])
-        ensureSpace(5)
-        pdf.text(meta, margin, cursorY)
-        cursorY += 8
-      })
-
-      addSection("Trip Essentials")
-      tripEssentials.forEach((item) => {
-        ensureSpace(20)
-        setText(11, "bold", [0, 77, 103])
-        pdf.text(item.title, margin, cursorY)
-        cursorY += 6
-        addParagraph(item.summary, 10)
-        addParagraph(item.detail, 9)
-        cursorY += 2
-      })
-
-      addSection("Includes")
-      addBulletList(trek.includes)
-      addSection("Excludes")
-      addBulletList(trek.excludes)
-
-      if (specialEquipmentItems.length > 0) {
-        addSection("Special Equipment")
-        addBulletList(specialEquipmentItems)
-      }
-
-      addSection("Tip guideline")
-      addParagraph(tipGuideline, 9)
-
-      addSection("FAQ")
-      addFaqItems(trekFaqs)
-
-      addPage(false)
-      addSection("Map")
-      if (mapImage) {
-        addCenteredImageBlock(mapImage, footerTop - cursorY - 10)
-      } else if (trek.mapImageUrl) {
-        addParagraph("Map image could not be embedded in the PDF. Open the live map image below:")
-        addLinkedText("Open trek map", trek.mapImageUrl)
-      } else {
-        addParagraph("Map details are currently not available for this trek.")
-      }
-
-      addSection(loadCarryingTitle)
-      addParagraph(loadCarryingContent, 9)
-      cursorY += 2
-      addImageRow(loadCarryingImages.filter((image): image is PdfImage => Boolean(image)))
-
-      pdf.save(trek.slug + "-complete-itinerary.pdf")
+    } catch {
+      toast.error("We couldn't create the PDF. Please check your connection and try again.")
     } finally {
       setDownloadingItinerary(false)
     }
@@ -824,6 +464,7 @@ export default function TrekDetailClient({
 
   return (
     <main className="min-h-screen bg-background">
+      <Toaster position="top-center" richColors closeButton />
       <motion.section
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -859,10 +500,10 @@ export default function TrekDetailClient({
       </motion.section>
 
       <section className="sticky top-16 z-40 border-b border-border bg-background/95 backdrop-blur shadow-sm">
-        <div className="container mx-auto px-4 md:px-6 py-2">
+        <div className="container mx-auto flex items-center gap-2 px-4 py-2 md:px-6">
           <div
             ref={sectionNavRef}
-            className="relative -mx-4 flex items-center gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden"
+            className="relative -ml-4 flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto pl-4 [scrollbar-width:none] md:ml-0 md:pl-0 [&::-webkit-scrollbar]:hidden"
           >
             {navItems.map((item) => {
               const isActive = activeSection === item.id
@@ -874,20 +515,33 @@ export default function TrekDetailClient({
                   onClick={() => scrollToSection(item.id)}
                   data-active={isActive}
                   aria-current={isActive ? 'location' : undefined}
-                  className={`shrink-0 ${isActive ? 'bg-primary text-white hover:bg-primary/90' : 'text-muted-foreground'}`}
+                  className={`shrink-0 px-2.5 ${isActive ? 'bg-primary text-white hover:bg-primary/90' : 'text-muted-foreground'}`}
                 >
                   {item.label}
                 </Button>
               )
             })}
           </div>
+          <ShareTrek title={trek.title} path={getTrekPath(trek)} variant="bar" />
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0 gap-1.5 border-primary text-primary hover:bg-primary/10 hover:text-primary"
+            onClick={handleDownloadItinerary}
+            disabled={downloadingItinerary}
+            aria-label="Download itinerary PDF"
+          >
+            {downloadingItinerary ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
+            <span className="hidden sm:inline">{downloadingItinerary ? 'Preparing…' : 'Download Itinerary'}</span>
+            <span className="sm:hidden">PDF</span>
+          </Button>
         </div>
       </section>
 
       <section className="relative z-10 border-b border-border bg-muted/30">
         <div className="container mx-auto px-4 md:px-6 py-8">
           <div className="mb-5">
-            <SectionHeader index="01" title="Key Information" icon={Sparkles} />
+            <SectionHeader title="Key Information" icon={Sparkles} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
             {primaryKpis.map((info) => {
@@ -944,7 +598,7 @@ export default function TrekDetailClient({
           >
             <motion.div variants={itemVariants} className="lg:col-span-2 space-y-8">
               <motion.div id="trek-highlights" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="02" title="Trek Highlights" icon={Star} />
+                <SectionHeader title="Trek Highlights" icon={Star} />
                 <ul className="space-y-3">
                   {trek.highlights.map((highlight, idx) => (
                     <li key={idx} className="flex gap-3 text-muted-foreground">
@@ -958,23 +612,21 @@ export default function TrekDetailClient({
               </motion.div>
 
               <motion.div id="trek-overview" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="03" title="About The Trek" icon={Info} />
+                <SectionHeader title="About The Trek" icon={Info} />
                 <p className="text-base md:text-[17px] text-muted-foreground leading-relaxed">{trek.fullDescription}</p>
               </motion.div>
 
               <motion.div id="trek-itinerary" variants={itemVariants} className="space-y-5 scroll-mt-36">
-                <SectionHeader index="04" title="Itinerary" icon={Route} />
+                <SectionHeader title="Itinerary" icon={Route} />
                 <TrekItinerary
                   days={trek.itinerary}
                   maxAltitude={trek.maxAltitude}
-                  onDownload={handleDownloadItinerary}
-                  downloading={downloadingItinerary}
                   renderText={(value) => <FormattedText value={value} />}
                 />
               </motion.div>
 
               <motion.div id="trek-trip-essentials" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="05" title="Trip Essentials" icon={Compass} />
+                <SectionHeader title="Trip Essentials" icon={Compass} />
                 <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-stretch">
                   {tripEssentials.map((item, index) => {
                     const EssentialIcon = item.icon
@@ -1009,7 +661,7 @@ export default function TrekDetailClient({
               </motion.div>
 
               <motion.div variants={itemVariants} className="space-y-4">
-                <SectionHeader index="06" title="What's Covered" icon={ClipboardList} />
+                <SectionHeader title="What's Covered" icon={ClipboardList} />
                 <Card className="overflow-hidden border-border scroll-mt-36">
                   <div className="grid grid-cols-1 md:grid-cols-2">
                     <div id="trek-includes" className="px-5 py-4 md:py-5">
@@ -1044,7 +696,7 @@ export default function TrekDetailClient({
               </motion.div>
 
               <motion.div id="trek-map" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="07" title="Map" icon={MapPin} />
+                <SectionHeader title="Map" icon={MapPin} />
                 <Card className="border-border overflow-hidden">
                   {trek.mapImageUrl ? (
                     <img
@@ -1062,7 +714,7 @@ export default function TrekDetailClient({
               </motion.div>
 
               <motion.div id="trek-special-equipment" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="08" title="Special Equipment" icon={ClipboardList} />
+                <SectionHeader title="Special Equipment" icon={ClipboardList} />
                 <Card className="border-border p-5 md:p-6 space-y-5">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="space-y-1">
@@ -1101,7 +753,7 @@ export default function TrekDetailClient({
               </motion.div>
 
               <motion.div id="trek-gallery" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="09" title="Gallery" icon={ImageIcon} />
+                <SectionHeader title="Gallery" icon={ImageIcon} />
                 <div className="flex items-center justify-between gap-4">
                   <Link
                     href={`/gallery?trek=${trek.slug}`}
@@ -1126,7 +778,7 @@ export default function TrekDetailClient({
               </motion.div>
 
               <motion.div id="trek-faq" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="10" title="FAQ" icon={HelpCircle} />
+                <SectionHeader title="FAQ" icon={HelpCircle} />
                 {trekFaqs.length > 0 ? (
                   <FAQAccordion faqs={trekFaqs} />
                 ) : (
@@ -1138,10 +790,22 @@ export default function TrekDetailClient({
                 )}
               </motion.div>
 
+              {reviews?.available && reviews.reviews.length > 0 ? (
+                <motion.div variants={itemVariants} className="space-y-4">
+                  <SectionHeader title="What Trekkers Say" icon={Star} />
+                  <TrekReviews reviews={reviews} trekTitle={trek.title} />
+                </motion.div>
+              ) : null}
+
               <motion.div id="booking-inquiry-section" variants={itemVariants} className="space-y-4 scroll-mt-36">
-                <SectionHeader index="11" title="Booking Inquiry Form" icon={FileText} />
+                <SectionHeader title="Booking Inquiry Form" icon={FileText} />
+                {trust && (
+                  <div className="rounded-lg border border-border bg-muted/30 p-4">
+                    <TrustBadges trust={trust} className="grid gap-x-6 gap-y-2.5 space-y-0 sm:grid-cols-2" />
+                  </div>
+                )}
                 <Card className="border-border p-6 md:p-8">
-                  <BookingForm trek={trek} packageOptions={orderedPricingTiers.map((tier) => tier.name)} />
+                  <BookingForm trek={trek} packageOptions={orderedPricingTiers.map((tier) => tier.name)} prefill={inquiryPrefill} />
                 </Card>
               </motion.div>
 
@@ -1155,13 +819,13 @@ export default function TrekDetailClient({
               </motion.div>
             </motion.div>
 
-            <motion.aside variants={itemVariants} className="space-y-6 h-fit w-full lg:sticky lg:top-32 lg:ml-auto lg:max-h-[calc(100vh-9rem)] lg:max-w-sm lg:overflow-y-auto">
-              <Card className="border-border bg-white p-5 md:p-6 transition-all hover:shadow-md">
-                <div className="space-y-4">
+            <motion.aside variants={itemVariants} className="space-y-6 h-fit w-full lg:sticky lg:top-[7.5rem] lg:ml-auto lg:max-h-[calc(100vh-8rem)] lg:max-w-sm lg:overflow-y-auto">
+              <Card className="gap-0 border-border bg-white p-5 md:p-5 transition-all hover:shadow-md">
+                <div className="space-y-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Price of the Trek</p>
-                    <h3 className="mt-1 text-lg font-semibold text-foreground">Choose your package</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">Per person pricing. Expand a tier to see what is included.</p>
+                    <h3 className="text-lg font-semibold text-foreground">Choose your package</h3>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Per person. Tap a package to see what&apos;s included.</p>
+                    {trust && <div className="mt-2"><TrustRating trust={trust} /></div>}
                   </div>
 
                   <div className="space-y-2">
@@ -1172,13 +836,10 @@ export default function TrekDetailClient({
                           <button
                             type="button"
                             onClick={() => setExpandedPricingTier(isExpanded ? null : tier.name)}
-                            className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
+                            className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-muted/40 transition-colors"
                             aria-expanded={isExpanded}
                           >
-                            <span className="min-w-0">
-                              <span className="block text-sm font-semibold text-foreground">{tier.name}</span>
-                              <span className="block text-xs text-muted-foreground">Package tier</span>
-                            </span>
+                            <span className="min-w-0 text-sm font-semibold text-foreground">{tier.name}</span>
                             <span className="flex shrink-0 items-center gap-3">
                               <span className="text-right leading-tight">
                                 {tier.wasPriceUsd ? <span className="block text-xs text-muted-foreground line-through">USD {tier.wasPriceUsd.toLocaleString()}</span> : null}
@@ -1203,7 +864,7 @@ export default function TrekDetailClient({
                                 <p className="text-sm text-muted-foreground">Tier details will be confirmed by our team.</p>
                               )}
 
-                              <Button className="w-full" onClick={scrollToBooking}>
+                              <Button className="w-full" onClick={() => inquireAbout({ packageTier: tier.name })}>
                                 <ArrowRight className="w-4 h-4 mr-2" />
                                 Inquire for {tier.name}
                               </Button>
@@ -1219,21 +880,14 @@ export default function TrekDetailClient({
                   ) : null}
                 </div>
 
-                <div className="my-5 h-px bg-border" />
-
-                {trust && (
-                  <>
-                    <TrustBadges trust={trust} />
-                    <div className="my-5 h-px bg-border" />
-                  </>
-                )}
+                <div className="my-4 h-px bg-border" />
 
                 <div className="space-y-4">
-                  <TrekAvailabilityCalendar key={trek.id} ranges={trek.availabilityRanges || []} />
+                  <TrekAvailabilityCalendar key={trek.id} ranges={trek.availabilityRanges || []} onSelectDeparture={inquireAboutDeparture} />
 
-                  <Button variant="outline" className="w-full" onClick={handleDownloadItinerary} disabled={downloadingItinerary}>
-                    <Download className="w-4 h-4 mr-2" />
-                    Download PDF itinerary
+                  <Button className="w-full" onClick={() => (expandedPricingTier ? inquireAbout({ packageTier: expandedPricingTier }) : scrollToBooking())}>
+                    Send an inquiry
+                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                   </Button>
                 </div>
               </Card>
@@ -1244,12 +898,8 @@ export default function TrekDetailClient({
       </section>
 
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur md:hidden">
-        <div className="container mx-auto px-4 py-3 grid grid-cols-2 gap-2">
+        <div className="container mx-auto px-4 py-3">
           <Button className="w-full" onClick={scrollToBooking}>Book This Trek</Button>
-          <Button variant="outline" className="w-full" onClick={handleDownloadItinerary} disabled={downloadingItinerary}>
-            <Download className="w-4 h-4 mr-2" />
-            Itinerary PDF
-          </Button>
         </div>
       </div>
     </main>

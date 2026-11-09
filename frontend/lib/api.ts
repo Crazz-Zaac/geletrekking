@@ -1141,6 +1141,18 @@ export async function deleteAdminBookingFormLink(token: string, id: string): Pro
   await fetchAdminJson<{ message: string }>("/api/booking-submissions/admin/links/" + id, token, { method: "DELETE" })
 }
 
+export async function getBookingFormTemplate(token: string): Promise<BookingFormConfig | null> {
+  return (await fetchAdminJson<{ config: BookingFormConfig | null }>("/api/booking-submissions/admin/form-template", token)).config
+}
+
+export async function saveBookingFormTemplate(token: string, config: BookingFormConfig): Promise<void> {
+  await fetchAdminJson("/api/booking-submissions/admin/form-template", token, { method: "PUT", body: JSON.stringify({ config }) })
+}
+
+export async function resetBookingFormTemplate(token: string): Promise<void> {
+  await fetchAdminJson("/api/booking-submissions/admin/form-template", token, { method: "DELETE" })
+}
+
 export async function getAdminBookingSubmissions(token: string): Promise<AdminBookingSubmission[]> {
   return fetchAdminJson<AdminBookingSubmission[]>("/api/booking-submissions/admin", token)
 }
@@ -1237,9 +1249,31 @@ export interface ReviewRequestInfo {
   automaticSendingEnabled: boolean
   scheduledFor: string | null
   preview: { subject: string; text: string }
+  customized: boolean
+  reviewUrl: string
 }
 export async function getReviewRequest(token: string, bookingId: string): Promise<ReviewRequestInfo> {
   return fetchAdminJson<ReviewRequestInfo>(`/api/booking-submissions/admin/${bookingId}/review-request`, token)
+}
+export interface ReviewEmailTemplate {
+  subject: string
+  text: string
+  customized: boolean
+}
+export async function getReviewEmailTemplate(token: string): Promise<ReviewEmailTemplate> {
+  return fetchAdminJson<ReviewEmailTemplate>('/api/booking-submissions/admin/review-request/template', token)
+}
+export async function updateReviewEmailTemplate(token: string, email: { subject: string; text: string }): Promise<void> {
+  await fetchAdminJson('/api/booking-submissions/admin/review-request/template', token, { method: 'PUT', body: JSON.stringify(email) })
+}
+export async function resetReviewEmailTemplate(token: string): Promise<void> {
+  await fetchAdminJson('/api/booking-submissions/admin/review-request/template', token, { method: 'DELETE' })
+}
+export async function updateReviewRequestEmail(token: string, bookingId: string, email: { subject: string; text: string }): Promise<void> {
+  await fetchAdminJson(`/api/booking-submissions/admin/${bookingId}/review-request/email`, token, { method: 'PUT', body: JSON.stringify(email) })
+}
+export async function resetReviewRequestEmail(token: string, bookingId: string): Promise<void> {
+  await fetchAdminJson(`/api/booking-submissions/admin/${bookingId}/review-request/email`, token, { method: 'DELETE' })
 }
 export async function sendReviewRequestNow(token: string, bookingId: string): Promise<void> {
   await fetchAdminJson(`/api/booking-submissions/admin/${bookingId}/review-request/send`, token, { method: 'POST' })
@@ -1324,6 +1358,12 @@ export async function updateAdminSettings(token: string, payload: AdminSiteSetti
   return fetchAdminJson<AdminSiteSettings>('/api/settings', token, {
     method: 'PUT',
     body: JSON.stringify(payload),
+  })
+}
+export async function updateActivitiesVisibility(token: string, enabled: boolean): Promise<AdminSiteSettings> {
+  return fetchAdminJson<AdminSiteSettings>('/api/settings/activities-visibility', token, {
+    method: 'PUT',
+    body: JSON.stringify({ enabled }),
   })
 }
 export async function getRegistrationsAffiliations(): Promise<PublicRegistrationDocument[]> {

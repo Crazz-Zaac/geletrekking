@@ -40,7 +40,7 @@ function nextOpenMonth(departures: DepartureRange[], after: number) {
   return openMonths(departures).find((key) => key > after)
 }
 
-export function TrekAvailabilityCalendar({ ranges }: { ranges: TrekAvailabilityRange[] }) {
+export function TrekAvailabilityCalendar({ ranges, onSelectDeparture }: { ranges: TrekAvailabilityRange[]; onSelectDeparture?: (departure: { startDate: string; endDate: string }) => void }) {
   const id = useId()
   const departures = useMemo(() => getDepartureRanges(ranges), [ranges])
   const [chosenMonth, setChosenMonth] = useState<number | null>(null)
@@ -52,6 +52,7 @@ export function TrekAvailabilityCalendar({ ranges }: { ranges: TrekAvailabilityR
   const nextOpen = nextOpenMonth(departures, shownMonth)
 
   const [onlyTrips, setOnlyTrips] = useState(false)
+  const today = now.toISOString().slice(0, 10)
   const thisMonth = now.getUTCFullYear() * 12 + now.getUTCMonth()
   const thisYear = Math.floor(thisMonth / 12)
   // Every upcoming month with a departure, including full ones: they still have trips.
@@ -86,7 +87,6 @@ export function TrekAvailabilityCalendar({ ranges }: { ranges: TrekAvailabilityR
   return (
     <section id="trek-availability" aria-labelledby={`${id}-title`} className={styles.calendar}>
       <h2 id={`${id}-title`} className={styles.eyebrow}>Departure availability</h2>
-      <p className={styles.subtitle}>Tick marks show available dates throughout each trip.</p>
       <div className={styles.yearNavigation}>
         <button type="button" aria-label="Previous month" disabled={previous === undefined} onClick={() => previous !== undefined && setChosenMonth(previous)} className={styles.yearButton}>
           <ChevronLeft size={18} aria-hidden="true" />
@@ -138,6 +138,28 @@ export function TrekAvailabilityCalendar({ ranges }: { ranges: TrekAvailabilityR
                   const coveringRanges = trips.filter((range) => range.startDate <= date && date <= range.endDate)
                   const dateStatus = getDepartureStatus(coveringRanges)
                   const description = coveringRanges.map((range) => `${formatCalendarRange(range)}: ${STATUS_LABELS[range.status]}${range.note ? ` — ${range.note}` : ''}`).join('; ')
+                  // Any day of a trip selects that trip, which starts on its first day.
+                  const bookable = onSelectDeparture
+                    ? coveringRanges.filter((range) => (range.status === 'available' || range.status === 'limited') && range.startDate >= today).sort((a, b) => a.startDate.localeCompare(b.startDate))[0]
+                    : undefined
+                  if (bookable) {
+                    return (
+                      <span key={date} className={styles.dayCell}>
+                        <button
+                          type="button"
+                          data-available-date={date}
+                          data-status={dateStatus}
+                          aria-label={`Inquire about the departure ${formatCalendarRange(bookable)}, ${STATUS_LABELS[bookable.status]}`}
+                          title={`${formatCalendarDate(date)} — ${description}`}
+                          onClick={() => onSelectDeparture?.({ startDate: bookable.startDate, endDate: bookable.endDate })}
+                          className={`${styles.day} ${styles.dayButton} ${styles.departureDay} ${styles[`${dateStatus}Day`]}`}
+                        >
+                          <span aria-hidden="true">{Number(date.slice(-2))}</span>
+                          <Check className={styles.tick} strokeWidth={3} aria-hidden="true" />
+                        </button>
+                      </span>
+                    )
+                  }
                   return (
                     <span key={date} className={styles.dayCell}>
                       <span
@@ -170,7 +192,7 @@ export function TrekAvailabilityCalendar({ ranges }: { ranges: TrekAvailabilityR
       <p className={styles.legend}>
         <span className={styles.available}>✓ Available</span> ·{' '}
         <span className={styles.limited}>✓ Few left</span> · <span className={styles.booked}>Grey: full</span>.
-        {' '}Ticks include the start and end dates of each trip.
+        {' '}{onSelectDeparture ? 'Ticks cover each full trip. Select one to inquire.' : 'Ticks include the start and end dates of each trip.'}
       </p>
       {!departures.length && <p className={styles.empty}>Departure dates haven’t been published yet. <a href="/contact">Contact us to arrange your dates.</a></p>}
     </section>

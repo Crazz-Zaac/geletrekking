@@ -2,10 +2,12 @@ const express = require("express");
 const router = express.Router();
 
 const authMiddleware = require("../middleware/authMiddleware");
-const { requirePermission } = require("../middleware/roleMiddleware");
+const { requirePermission, restrictToRoles } = require("../middleware/roleMiddleware");
+const { auditContent } = require("../middleware/auditMiddleware");
 const {
   getSettings,
   updateSettings,
+  updateActivitiesVisibility,
   getRegistrationsAffiliations,
   getRegistrationsAffiliationsAdmin,
   getRegistrationPreview,
@@ -27,6 +29,13 @@ router.get("/registrations-affiliations/:code/preview", getRegistrationPreview);
 
 // Admin/Superadmin
 router.put("/", authMiddleware, requirePermission('manage_settings'), updateSettings);
+router.put(
+  "/activities-visibility",
+  authMiddleware,
+  restrictToRoles("admin", "superadmin"),
+  auditContent("settings.activities_visibility", (req) => ({ targetLabel: String(req.body?.enabled) })),
+  updateActivitiesVisibility
+);
 
 // Registrations & Affiliations Management
 router.post(

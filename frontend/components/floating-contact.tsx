@@ -108,6 +108,10 @@ export function FloatingContact() {
   const isHome = pathname === '/'
   const pastHero = useScrolledPastHero(isHome)
   const hideOnHero = isHome && !pastHero && !open
+  // Forms need the whole phone screen; they have their own help and the menu has Contact.
+  const onFormPage = pathname === '/book' || pathname.startsWith('/private-booking')
+  // Trek pages have a Book bar along the bottom of the screen.
+  const launcherLift = pathname.startsWith('/trek/') ? '5rem' : '1rem'
 
   useEffect(() => {
     if (!open) return
@@ -216,8 +220,8 @@ export function FloatingContact() {
     {/* Phones: single launcher with a bottom-sheet panel */}
     <div
       ref={containerRef}
-      className={`fixed left-4 sm:hidden ${open ? 'z-[80]' : 'z-[60]'} ${hideOnHero ? 'invisible' : ''}`}
-      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6rem)' }}
+      className={`fixed left-4 sm:hidden ${open ? 'z-[80]' : 'z-[60]'} ${hideOnHero || onFormPage ? 'invisible' : ''}`}
+      style={{ bottom: `calc(env(safe-area-inset-bottom, 0px) + ${launcherLift})` }}
       onKeyDown={(event) => {
         if (event.key === 'Escape' && open) {
           event.stopPropagation()

@@ -1,5 +1,6 @@
 const ContactMessage = require("../models/ContactMessage");
 const sendEmail = require("../utils/sendEmail");
+const { sendGuestConfirmation } = require("../utils/guestConfirmation");
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -179,6 +180,8 @@ exports.submitMessage = async (req, res) => {
     } else {
       console.warn("Contact notification email skipped: email sending or ADMIN_NOTIFICATION_EMAIL is not configured.");
     }
+
+    sendGuestConfirmation({ to: normalizedEmail, name: normalizedName, kind: "inquiry" });
 
     res.status(201).json({ message: "Thank you for contacting us!" });
   } catch (err) {

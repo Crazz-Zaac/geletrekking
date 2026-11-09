@@ -1,7 +1,10 @@
 const crypto = require("crypto");
 const BookingSubmission = require("../models/BookingSubmission");
 const BookingFormLink = require("../models/BookingFormLink");
+const BookingFormTemplate = require("../models/BookingFormTemplate");
+const { logAudit } = require("../utils/auditLogger");
 const sendEmail = require("../utils/sendEmail");
+const { sendGuestConfirmation } = require("../utils/guestConfirmation");
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const DEFAULT_LINK_TTL_DAYS = 14;
@@ -185,6 +188,37 @@ exports.createBookingFormLink = async (req, res) => {
   }
 };
 
+exports.getBookingFormTemplate = async (req, res) => {
+  try {
+    const template = await BookingFormTemplate.findOne().lean();
+    res.json({ config: template?.config || null });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.saveBookingFormTemplate = async (req, res) => {
+  try {
+    const config = sanitizeFormConfig(req.body?.config);
+    if (!config) return res.status(400).json({ message: "The form needs at least one step with a question." });
+    await BookingFormTemplate.findOneAndUpdate({}, { config }, { upsert: true });
+    await logAudit({ actor: req.user._id, actorEmail: req.user.email, action: "booking.form_template.edit", outcome: "success", ip: req.ip, meta: {} });
+    res.json({ config });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.resetBookingFormTemplate = async (req, res) => {
+  try {
+    await BookingFormTemplate.deleteMany({});
+    await logAudit({ actor: req.user._id, actorEmail: req.user.email, action: "booking.form_template.reset", outcome: "success", ip: req.ip, meta: {} });
+    res.json({ config: null });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 exports.getBookingFormLinks = async (req, res) => {
   try {
     const links = await BookingFormLink.find().sort({ createdAt: -1 });
@@ -349,6 +383,8 @@ exports.submitBooking = async (req, res) => {
       console.warn("Booking submission notification email skipped: EMAIL_USER or EMAIL_PASS is not configured.");
     }
 
+    sendGuestConfirmation({ to: email, name: firstName, kind: "booking" });
+
     res.status(201).json({
       message: "Your booking form was submitted.",
       id: submission._id,
@@ -453,6 +489,8 @@ exports.submitPreBooking = async (req, res) => {
         data: pdfBuffer,
       },
     });
+
+    sendGuestConfirmation({ to: email, name: fullName, kind: "preBooking" });
 
     res.status(201).json({
       message: "Your pre-booking form was submitted.",

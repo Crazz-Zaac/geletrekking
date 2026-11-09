@@ -40,9 +40,8 @@ export default async function BookPage() {
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
               <Card className="lg:col-span-3 border-border p-5 md:p-8 shadow-sm">
                 <div className="mb-6">
-                  <h2 className="text-2xl md:text-3xl font-bold text-foreground">Pre-booking Form</h2>
-                  <p className="mt-2 text-sm md:text-base text-muted-foreground">
-                    Complete the pre-booking form below so our team can review your trek details and prepare the next steps.
+                  <p className="text-sm md:text-base text-muted-foreground">
+                    Tell us about your trip so we can check your dates and prepare the next steps. It takes about 10 minutes, and your passport details will be needed.
                   </p>
                 </div>
                 <PreBookingForm treks={treks} requireTrek />
@@ -55,9 +54,9 @@ export default async function BookPage() {
                       <MapPinned className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground">Choose from active treks</h3>
+                      <h3 className="font-semibold text-foreground">Not sure which trek?</h3>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        The trek dropdown uses the current public trek list, so new active packages appear automatically.
+                        Choose &quot;Custom trek route / not sure yet&quot; and we&apos;ll help you decide.
                       </p>
                     </div>
                   </div>
@@ -71,7 +70,7 @@ export default async function BookPage() {
                     <div>
                       <h3 className="font-semibold text-foreground">Flexible dates are welcome</h3>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        If your date is approximate, pick your best estimate and add details in the message field.
+                        If your dates are approximate, pick your best estimate and tell us under Additional Information.
                       </p>
                     </div>
                   </div>
@@ -85,7 +84,7 @@ export default async function BookPage() {
                     <div>
                       <h3 className="font-semibold text-foreground">Groups and private trips</h3>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Group size helps us suggest guide, porter, and accommodation arrangements.
+                        Choose Group or Private in the form, and tell us your group size under Additional Information.
                       </p>
                     </div>
                   </div>

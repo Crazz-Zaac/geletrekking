@@ -203,7 +203,7 @@ export function OfferEditor({
           <p role="alert" className="rounded-md border-l-4 border-red-500 bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-500/10 dark:text-red-200">{problem}</p>
         ) : null}
         <div inert className="pointer-events-none">
-          <OfferCard trek={preview} className="min-h-[9.5rem]" />
+          <OfferCard trek={preview} className="min-h-[9.5rem]" showShare={false} />
         </div>
         {value.offer_description.trim() ? (
           <p className="inline-flex items-start gap-1.5 text-xs text-red-700 dark:text-red-400">

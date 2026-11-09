@@ -124,6 +124,84 @@ export const defaultBookingFormConfig: BookingFormConfig = [
   },
 ]
 
+/** The public /book form. Not editable per link. */
+export const preBookingFormConfig: BookingFormConfig = [
+  {
+    id: 'personal',
+    title: 'Personal Information',
+    fields: [
+      { id: 'fullName', label: 'Full Name', type: 'text', required: true },
+      { id: 'dateOfBirth', label: 'Date of Birth', type: 'date', required: true },
+      { id: 'gender', label: 'Gender', type: 'select', required: true, options: ['Male', 'Female', 'Other'] },
+      { id: 'nationality', label: 'Nationality', type: 'text', required: true },
+      { id: 'phoneNumber', label: 'Phone Number (country code)', type: 'tel', required: true, placeholder: '+977 ...' },
+      { id: 'email', label: 'Email', type: 'email', required: true, placeholder: 'you@example.com' },
+      { id: 'passportNumber', label: 'Passport Number', type: 'text', required: true },
+      { id: 'passportExpiryDate', label: 'Passport Expiry Date', type: 'date', required: true },
+    ],
+  },
+  {
+    id: 'trek',
+    title: 'Trek Details',
+    fields: [
+      { id: 'nameOfTrekRoute', label: 'Name of Trek Route', type: 'select', required: true },
+      { id: 'trekStartDate', label: 'Trek Start Date', type: 'date', required: true },
+      { id: 'trekEndDate', label: 'Trek End Date', type: 'date', required: true },
+      { id: 'tripType', label: 'Trip', type: 'select', required: true, options: ['Group', 'Private'] },
+      { id: 'roomPreference', label: 'Room', type: 'select', required: true, options: ['Shared (included)', 'Private (extra charge)'] },
+      { id: 'insuranceDetailsLater', label: 'Will you provide us with your travel insurance details when you meet your guide?', type: 'checkbox', required: true },
+    ],
+  },
+  {
+    id: 'flight',
+    title: 'Flight Details',
+    fields: [
+      { id: 'arrivalAirline', label: 'Arrival Airline', type: 'text' },
+      { id: 'arrivalDate', label: 'Arrival Date', type: 'date' },
+      { id: 'arrivalTime', label: 'Arrival Time', type: 'text', placeholder: 'HH:MM or 2:30 PM' },
+      { id: 'arrivalFlightNumber', label: 'Arrival Flight Number', type: 'text' },
+      { id: 'departureAirline', label: 'Departure Airline', type: 'text' },
+      { id: 'departureDate', label: 'Departure Date', type: 'date' },
+      { id: 'departureTime', label: 'Departure Time', type: 'text', placeholder: 'HH:MM or 2:30 PM' },
+      { id: 'departureFlightNumber', label: 'Departure Flight Number', type: 'text' },
+    ],
+  },
+  {
+    id: 'payment',
+    title: 'Payment Information',
+    fields: [
+      { id: 'totalAmountDue', label: 'Total Amount Due', type: 'text' },
+      { id: 'depositPaid', label: 'Amount of Deposit Paid (advance)', type: 'text' },
+      { id: 'balanceRemaining', label: 'Balance Remaining', type: 'text' },
+      { id: 'paymentMethod', label: 'Payment Method', type: 'select', options: ['Bank Transfer', 'Cash on Arrival', 'Other'] },
+      { id: 'balanceAgreement', label: 'I agree to pay the remaining balance at the group meeting prior to the departure date.', type: 'checkbox', required: true },
+    ],
+  },
+  {
+    id: 'additional',
+    title: 'Additional Information',
+    fields: [
+      {
+        id: 'additionalInformation',
+        label: 'Is there any additional information that you would like to share with Gele Trekking to help us ensure that your particular needs are cared for?',
+        type: 'textarea',
+        placeholder: 'For example, dietary requirements, allergies, etc. If so, please explain here.',
+      },
+    ],
+  },
+  {
+    id: 'consent',
+    title: 'Consent',
+    fields: [
+      { id: 'agreeTerms', label: 'Terms and Conditions accepted', type: 'checkbox', required: true },
+      { id: 'acceptLiabilityWaiver', label: 'Liability waiver accepted', type: 'checkbox', required: true },
+      { id: 'photoMarketingConsent', label: 'Photo marketing consent', type: 'checkbox' },
+      { id: 'signatureName', label: 'Typed signature', type: 'text', required: true },
+      { id: 'signatureDate', label: 'Signature date', type: 'date', required: true },
+    ],
+  },
+]
+
 
 const fieldOverrides: Record<string, Partial<BookingFormFieldConfig> | null> = {
   arrivalTime: { type: 'text', placeholder: 'HH:MM or 2:30 PM' },

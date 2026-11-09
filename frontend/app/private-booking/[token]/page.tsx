@@ -1,5 +1,6 @@
 import { PrivateBookingForm } from '@/components/private-booking-form'
-import { getTreks } from '@/lib/api'
+import Image from 'next/image'
+import { getAdminSettings, getTreks } from '@/lib/api'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -19,18 +20,20 @@ interface PrivateBookingPageProps {
 
 export default async function PrivateBookingPage({ params }: PrivateBookingPageProps) {
   const { token } = await params
-  const treks = await getTreks()
+  const [treks, settings] = await Promise.all([getTreks(), getAdminSettings().catch(() => null)])
 
   return (
     <main className="min-h-screen bg-muted/30 py-8 md:py-12">
       <div className="mx-auto w-full max-w-4xl px-4 md:px-6">
         <div className="rounded-lg border border-border bg-background p-5 md:p-8 shadow-sm">
-          <div className="mb-6">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Private secure intake</p>
-            <h1 className="mt-2 text-2xl md:text-3xl font-bold text-foreground">Gele Trekking Booking Form</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              This form is available only from the link sent by the admin team. It is not listed in site navigation.
-            </p>
+          <div className="mb-6 flex items-start gap-4">
+            <Image src={settings?.logoUrl || '/geletrekking.png'} alt="Gele Trekking" width={56} height={56} className="h-14 w-14 shrink-0 rounded-lg border border-border object-cover" />
+            <div>
+              <h1 className="text-2xl font-bold text-foreground md:text-3xl">Your booking form</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                This takes about 10 minutes. Please have your passport and travel insurance details to hand. This link is just for you.
+              </p>
+            </div>
           </div>
           <PrivateBookingForm token={token} treks={treks} requireTrek />
         </div>

@@ -36,6 +36,7 @@ const footerLinks = {
     { label: 'Leave us a review on Google', href: 'https://search.google.com/local/writereview?placeid=ChIJR_d6frYf6zkR0HAm4EnYRkI', external: true },
     { label: 'Safety & Trekking with Confidence', href: '/safety' },
     { label: 'Terms and Conditions', href: '/terms-and-conditions' },
+    { label: 'Liability Waiver', href: '/liability-waiver' },
     { label: 'Privacy Policy', href: '/privacy-policy' },
     { label: 'Disclaimer', href: '/disclaimer' },
   ],
@@ -117,7 +118,7 @@ export function Footer() {
               </a>
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                <span>{settings.address || 'Thamel, Kathmandu 44600, Nepal'}</span>
+                <span>{settings.address || 'Lalitpur - 4, Lalitpur 44600'}</span>
               </div>
             </div>
             {/* Social */}

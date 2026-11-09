@@ -183,6 +183,7 @@ export default function AdminFaqPage() {
               label="Background photo"
               value={form.heroImageUrl}
               onChange={(value) => setForm((prev) => ({ ...prev, heroImageUrl: value }))}
+              size="header"
               hint="Shown behind the heading with a dark overlay."
             />
           </FormSection>

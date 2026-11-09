@@ -2,6 +2,11 @@
 export const FOUNDER_SINCE_YEAR = 1998
 export const FOUNDER_LEADER_SINCE_YEAR = 2004
 export const COMPANY_FOUNDED_YEAR = 2024
+export const COMPANY_REGISTRATION_NO = '329488/080/081'
+export const COMPANY_LICENSE_NO = '3265/081/082'
+export const COMPANY_TAAN_MEMBER_ID = '2540'
+/** For letterheads and page footers. */
+export const COMPANY_REGISTRATION_LINE = `Company Reg. No. ${COMPANY_REGISTRATION_NO} | License No. ${COMPANY_LICENSE_NO} | TAAN Member ID ${COMPANY_TAAN_MEMBER_ID}`
 
 /** Whole five-year steps since 1998, e.g. "25+" from 2023 to 2027, so the claim is never overstated. */
 function yearsSince(year: number) {

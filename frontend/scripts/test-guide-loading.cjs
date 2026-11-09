@@ -105,7 +105,7 @@ test('the itinerary page redirects a legacy ID to the named URL and preserves ba
           permanentRedirect: destination => { throw Object.assign(new Error('Redirect'), { destination }) },
           notFound: () => { throw new Error('NOT_FOUND') },
         }
-        if (name === '@/lib/api') return { getTrekByIdentifier: lookup, getTrustSummary: async () => null }
+        if (name === '@/lib/api') return { getTrekByIdentifier: lookup, getTrustSummary: async () => null, getSiteReviews: async () => null }
         if (name === '@/lib/trek-path') return { getTrekPath: trek => `/trek/${trek.slug || trek.id}` }
         if (name.startsWith('@/') || name === './TrekDetailClient') return {}
         return require(name)

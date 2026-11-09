@@ -659,7 +659,7 @@ export default function AdminGalleryPage() {
         {/* Hero Image Tab */}
         <TabsContent value="hero" className="space-y-6 mt-6">
           <FormSection title="Page header photo" description="The large photo at the top of the public Gallery page.">
-            <ImageUrlField label="Header photo" value={heroImageUrl} onChange={setHeroImageUrl} hint="Wide landscape photo, at least 1920 px." />
+            <ImageUrlField label="Header photo" value={heroImageUrl} onChange={setHeroImageUrl} size="header" />
             <div className="flex justify-end">
               <Button onClick={onSaveHero} disabled={heroSaving} className="min-w-32">
                 {heroSaving ? 'Saving…' : 'Save header photo'}

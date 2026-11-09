@@ -23,6 +23,9 @@
 .tick { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; }
 .availableDay { background: #e9f6ed; color: #167343; }
 .limitedDay { background: #fff3dd; color: #9a5b00; }
+.dayButton { border: 0; font-family: inherit; cursor: pointer; transition: filter .15s; }
+.dayButton:hover { filter: brightness(.93); }
+.dayButton:focus-visible { outline: 2px solid #1f6b7a; outline-offset: 1px; }
 .bookedDay { background: #ededed; color: #767676; }
 .legend { margin: 12px 0 0; font-size: 11px; line-height: 1.6; color: #5b5b5b; }
 .empty { margin-top: 12px; }
@@ -35,3 +38,14 @@
 .select:focus-visible { outline: 2px solid #1f6b7a; outline-offset: 2px; }
 .tripFilter { display: flex; align-items: center; gap: 8px; min-height: 32px; margin-bottom: 8px; font-size: 13px; color: #1d1d1d; cursor: pointer; }
 .tripFilter input { width: 16px; height: 16px; accent-color: #1f6b7a; }
+
+/* Beside the package prices on desktop, so the whole month fits without scrolling. */
+@media (min-width: 1024px) {
+  .eyebrow { margin-bottom: 8px; }
+  .yearButton { width: 36px; height: 36px; }
+  .select { height: 36px; }
+  .tripFilter { min-height: 26px; margin-bottom: 6px; }
+  .dayCell { height: 30px; }
+  .day { height: 28px; padding-bottom: 7px; }
+  .legend { margin-top: 8px; }
+}

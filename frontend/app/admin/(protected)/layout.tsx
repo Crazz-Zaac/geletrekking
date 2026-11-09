@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
@@ -11,7 +12,6 @@ import {
   ExternalLink,
   LogOut,
   Menu,
-  Mountain,
   Search,
   ShieldCheck, CalendarClock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -36,6 +36,7 @@ import {
   type AdminNotificationSummary,
   type AdminUser,
 } from '@/lib/api'
+import { useSiteSettings } from '@/hooks/use-site-settings'
 import { cn } from '@/lib/utils'
 
 const COLLAPSED_KEY = 'gele_admin_sidebar_collapsed'
@@ -130,14 +131,19 @@ function SidebarNav({ role, pathname, collapsed, notifications, onNavigate }: Si
 }
 
 function Brand({ collapsed }: { collapsed: boolean }) {
+  const { settings } = useSiteSettings()
   return (
     <Link
       href="/admin"
       className={cn('flex items-center gap-2.5 rounded-lg px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', collapsed && 'justify-center px-0')}
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <Mountain className="h-5 w-5" aria-hidden="true" />
-      </span>
+      <Image
+        src={settings.logoUrl || '/geletrekking.png'}
+        alt=""
+        width={36}
+        height={36}
+        className="h-9 w-9 shrink-0 rounded-lg border border-border object-cover"
+      />
       {!collapsed && (
         <span className="leading-tight">
           <span className="block text-sm font-semibold text-foreground">Gele Trekking</span>

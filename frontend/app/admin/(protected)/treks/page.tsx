@@ -6,7 +6,7 @@ import { Reorder, useDragControls } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { ArrowLeft, ExternalLink, GripVertical, Home, Mountain, Pencil, Plus, Search, Star, Trash2, X } from 'lucide-react'
+import { ArrowLeft, ExternalLink, GripVertical, Home, Mountain, Pencil, Plus, Search, Star, Tag, Trash2, X } from 'lucide-react'
 import {
   AdminPageHeader,
   EmptyState,
@@ -24,7 +24,7 @@ import {
 import { ItineraryEditor } from '@/components/admin/itinerary-editor'
 import { DepartureDatesEditor } from '@/components/admin/departure-dates-editor'
 import { OfferEditor } from '@/components/admin/offer-editor'
-import { offerProblem } from '@/lib/trek-offer'
+import { offerProblem, offerStatus } from '@/lib/trek-offer'
 import { cn } from '@/lib/utils'
 import {
   AdminTrek,
@@ -133,6 +133,20 @@ const emptyDay = (): ItineraryDay => ({
   distance: '',
   accommodation: '',
 })
+
+/** Offer status beside Visible and Featured in the trek list. */
+function TrekOfferBadge({ item }: { item: AdminTrek }) {
+  if (!item.has_offer) return null
+  const { state } = offerStatus((item.offer_valid_from || '').slice(0, 10), (item.offer_valid_to || '').slice(0, 10), new Date().toISOString().slice(0, 10))
+  if (state === 'live') {
+    return (
+      <Badge variant="outline" className="gap-1 border-red-300 bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
+        <Tag className="h-3 w-3" /> On offer{item.offer_discount_percent ? ` · ${item.offer_discount_percent}% off` : ''}
+      </Badge>
+    )
+  }
+  return <Badge variant="outline" className="gap-1"><Tag className="h-3 w-3" /> {state === 'scheduled' ? 'Offer scheduled' : 'Offer ended'}</Badge>
+}
 
 /** The "from" price: the lowest package price when packages are set, otherwise the trek price. */
 function regularPrice(form: { price_usd: number; price_gbp: number; pricing_tiers: { price_usd: number; price_gbp: number }[] }, key: 'price_usd' | 'price_gbp') {
@@ -1017,7 +1031,7 @@ export default function AdminTreksPage() {
             {/* media tab */}
             {activeTab === 'media' && (
               <div className="space-y-3">
-                <ImageUrlField label="Cover photo" value={form.image_url} onChange={(image_url) => setForm((p) => ({ ...p, image_url }))} hint="Used on the trek page header and trek cards. Landscape, at least 1600 px wide." />
+                <ImageUrlField label="Cover photo" value={form.image_url} onChange={(image_url) => setForm((p) => ({ ...p, image_url }))} size="header" hint="Used on the trek page header and trek cards." />
                 {field('More photos', (
                   <ImageListField images={linesToList(form.gallery_images)} onChange={(images) => setForm((p) => ({ ...p, gallery_images: listToLines(images) }))} />
                 ))}
@@ -1267,6 +1281,7 @@ export default function AdminTreksPage() {
                       <p className="truncate font-medium text-foreground">{item.name}</p>
                       <Badge variant="outline" className={item.is_active ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : ''}>{item.is_active ? 'Visible' : 'Hidden'}</Badge>
                       {item.is_featured && <Badge variant="outline" className="gap-1 border-amber-300 bg-amber-50 text-amber-700"><Star className="h-3 w-3" /> Featured</Badge>}
+                      <TrekOfferBadge item={item} />
                     </div>
                     <p className="mt-0.5 truncate text-xs text-muted-foreground">
                       {[item.region, item.duration_days ? `${item.duration_days} days` : null, item.difficulty, item.price_usd ? `$${item.price_usd}` : null].filter(Boolean).join(' · ')}

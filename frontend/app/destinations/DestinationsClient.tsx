@@ -10,10 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { getBookableDepartures } from '@/lib/trek-availability';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { getTreks } from '@/lib/api';
 import type { Trek } from '@/lib/data';
-import { SlidersHorizontal, X, Scale } from 'lucide-react';
+import { SlidersHorizontal, X, Scale, CalendarDays } from 'lucide-react';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -26,6 +27,14 @@ const containerVariants = {
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
+
+const formatMonth = (month: string) =>
+  new Date(`${month}-01T00:00:00Z`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+const departureSummary = (dates: string[]) => {
+  const shown = dates.slice(0, 3).map((date) => new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }));
+  return `${shown.join(', ')}${dates.length > 3 ? ` +${dates.length - 3} more` : ''}`;
 };
 
 function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
@@ -83,6 +92,23 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
   const selectedSeason = (searchParams.get('season') ?? '').toLowerCase();
   const selectedSort = searchParams.get('sort') ?? 'nameAsc';
 
+  // Months with a departure that can still be booked, for visitors who plan around dates.
+  const today = new Date().toISOString().slice(0, 10);
+  const departuresByTrek = useMemo(
+    () => new Map(trekList.map((trek) => [trek.id, getBookableDepartures(trek.availabilityRanges ?? [], today)])),
+    [trekList, today]
+  );
+  const monthOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    departuresByTrek.forEach((departures) => {
+      new Set(departures.map((departure) => departure.startDate.slice(0, 7))).forEach((month) => counts.set(month, (counts.get(month) ?? 0) + 1));
+    });
+    return [...counts.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [departuresByTrek]);
+  const requestedMonth = searchParams.get('month') ?? '';
+  const selectedMonth = monthOptions.some(([month]) => month === requestedMonth) ? requestedMonth : '';
+  const departuresInMonth = (trekId: string) => (departuresByTrek.get(trekId) ?? []).filter((departure) => departure.startDate.startsWith(selectedMonth));
+
   const updateFilters = (updates: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -112,7 +138,9 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
     const durationMatch = matchesDuration(trek.duration);
     const seasonMatch = selectedSeason ? getSeasonsFromBestSeason(trek.bestSeason).has(selectedSeason) : true;
 
-    return regionMatch && difficultyMatch && durationMatch && seasonMatch;
+    const monthMatch = selectedMonth ? departuresInMonth(trek.id).length > 0 : true;
+
+    return regionMatch && difficultyMatch && durationMatch && seasonMatch && monthMatch;
   });
 
   const regionOptions = useMemo(
@@ -187,10 +215,11 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
           value: selectedSeason.charAt(0).toUpperCase() + selectedSeason.slice(1),
         }
       : null,
+    selectedMonth ? { key: 'month', label: 'Departing', value: formatMonth(selectedMonth) } : null,
   ].filter(Boolean) as Array<{ key: string; label: string; value: string }>;
 
   const clearAllFilters = () => {
-    updateFilters({ region: '', difficulty: '', duration: '', season: '', sort: 'nameAsc' });
+    updateFilters({ region: '', difficulty: '', duration: '', season: '', month: '', sort: 'nameAsc' });
   };
 
   const handleToggleCompare = (trekId: string) => {
@@ -210,7 +239,7 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
     .filter((trek): trek is typeof trekList[number] => Boolean(trek));
 
   const renderFilterControls = (isMobile = false) => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2.5">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2.5">
       <select
         value={selectedRegion}
         onChange={(e) => updateFilters({ region: e.target.value })}
@@ -256,6 +285,18 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
         <option value="winter">Winter</option>
       </select>
 
+      <select
+        value={selectedMonth}
+        onChange={(e) => updateFilters({ month: e.target.value })}
+        aria-label="Departure month"
+        className="w-full h-11 px-3 rounded-md border border-border bg-background text-sm text-foreground"
+      >
+        <option value="">Any Departure Month</option>
+        {monthOptions.map(([month, count]) => (
+          <option key={month} value={month}>{formatMonth(month)} ({count})</option>
+        ))}
+      </select>
+
       {isMobile ? (
         <Button
           variant="outline"
@@ -271,7 +312,7 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
     </div>
   );
 
-  const queryAnimationKey = `${selectedRegion}-${selectedDifficulty}-${selectedDuration}-${selectedSeason}-${selectedSort}`;
+  const queryAnimationKey = `${selectedRegion}-${selectedDifficulty}-${selectedDuration}-${selectedSeason}-${selectedMonth}-${selectedSort}`;
 
   return (
     <>
@@ -477,15 +518,27 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
                 transition={{ duration: 0.25 }}
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
               >
-                {sortedTreks.map((trek) => (
-                  <TrekCard
-                    key={trek.id}
-                    trek={trek}
-                    isCompared={compareIds.includes(trek.id)}
-                    compareDisabled={!compareIds.includes(trek.id) && compareIds.length >= 3}
-                    onToggleCompare={handleToggleCompare}
-                  />
-                ))}
+                {sortedTreks.map((trek) => {
+                  const card = (
+                    <TrekCard
+                      key={trek.id}
+                      trek={trek}
+                      isCompared={compareIds.includes(trek.id)}
+                      compareDisabled={!compareIds.includes(trek.id) && compareIds.length >= 3}
+                      onToggleCompare={handleToggleCompare}
+                    />
+                  );
+                  if (!selectedMonth) return card;
+                  return (
+                    <div key={trek.id} className="space-y-1.5">
+                      {card}
+                      <p className="flex items-center gap-1.5 px-1 text-sm font-medium text-foreground">
+                        <CalendarDays className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                        Departs {departureSummary(departuresInMonth(trek.id).map((departure) => departure.startDate))}
+                      </p>
+                    </div>
+                  );
+                })}
               </motion.div>
             )}
           </div>

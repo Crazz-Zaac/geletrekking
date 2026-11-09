@@ -112,7 +112,7 @@ export const ADMIN_SETTING_SHORTCUTS: AdminSettingShortcut[] = [
   { label: 'Social media links', href: '/admin/settings#social', keywords: ['facebook', 'instagram', 'linkedin', 'youtube', 'whatsapp', 'twitter'], roles: ['superadmin'] },
   { label: 'Two-factor authentication', href: '/admin/account-security', keywords: ['2fa', 'authenticator', 'otp'] },
   { label: 'Invite an admin', href: '/admin/users', keywords: ['invite', 'new user', 'add admin'], roles: ['superadmin'] },
-  { label: 'Create a private booking link', href: '/admin/bookings', keywords: ['private link', 'booking link', 'send form'] },
+  { label: 'Create a private booking link', href: '/admin/bookings#links', keywords: ['private link', 'booking link', 'send form'] },
   { label: 'Announcement banner', href: '/admin/alerts', keywords: ['banner', 'announcement', 'notice'] },
 ]
 

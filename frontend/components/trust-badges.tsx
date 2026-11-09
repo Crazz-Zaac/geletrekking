@@ -25,8 +25,22 @@ function RatingStars({ rating }: { rating: number }) {
   )
 }
 
+/** One-line Google rating for tight spaces such as the booking card. */
+export function TrustRating({ trust }: { trust: TrustSummary | null }) {
+  if (!trust || trust.rating === null || !trust.reviewCount) return null
+  return (
+    <a href={GOOGLE_REVIEWS_URL} target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-2 text-sm text-foreground">
+      <RatingStars rating={trust.rating} />
+      <span>
+        <span className="font-semibold">{trust.rating.toFixed(1)}</span>
+        <span className="text-muted-foreground"> · <span className="underline-offset-2 group-hover:underline">{trust.reviewCount} Google reviews</span></span>
+      </span>
+    </a>
+  )
+}
+
 /**
- * Compact trust signals for decision points (booking card). Shows only what
+ * Compact trust signals for decision points (next to the inquiry form). Shows only what
  * the admin data supports: Google rating, verified registrations, memberships,
  * and links to the booking/cancellation terms.
  */

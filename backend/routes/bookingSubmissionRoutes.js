@@ -9,6 +9,9 @@ const {
   getBookingFormLinks,
   deactivateBookingFormLink,
   deleteBookingFormLink,
+  getBookingFormTemplate,
+  saveBookingFormTemplate,
+  resetBookingFormTemplate,
   getPublicBookingFormLink,
   submitBooking,
   submitPreBooking,
@@ -19,7 +22,8 @@ const {
   deleteBookingSubmission,
 } = require("../controllers/bookingSubmissionController");
 const BookingSubmission = require("../models/BookingSubmission");
-const { buildReviewRequestEmail, sendReviewRequest, isReviewRequestsEnabled, REVIEW_REQUEST_WINDOW } = require("../utils/reviewRequests");
+const ReviewEmailTemplate = require("../models/ReviewEmailTemplate");
+const { getReviewRequestEmail, getReviewEmailTemplate, cleanReviewRequestEmail, cleanReviewEmailTemplate, WRITE_REVIEW_URL, sendReviewRequest, isReviewRequestsEnabled, REVIEW_REQUEST_WINDOW } = require("../utils/reviewRequests");
 const { logAudit } = require("../utils/auditLogger");
 
 router.get("/link/:token", getPublicBookingFormLink);
@@ -30,6 +34,10 @@ router.get("/admin/links", authMiddleware, restrictToRoles("admin", "superadmin"
 router.post("/admin/links", authMiddleware, restrictToRoles("admin", "superadmin"), createBookingFormLink);
 router.patch("/admin/links/:id/deactivate", authMiddleware, restrictToRoles("admin", "superadmin"), deactivateBookingFormLink);
 router.delete("/admin/links/:id", authMiddleware, restrictToRoles("admin", "superadmin"), deleteBookingFormLink);
+
+router.get("/admin/form-template", authMiddleware, restrictToRoles("admin", "superadmin"), getBookingFormTemplate);
+router.put("/admin/form-template", authMiddleware, restrictToRoles("admin", "superadmin"), saveBookingFormTemplate);
+router.delete("/admin/form-template", authMiddleware, restrictToRoles("admin", "superadmin"), resetBookingFormTemplate);
 
 router.get("/admin", authMiddleware, restrictToRoles("admin", "superadmin"), getBookingSubmissions);
 router.get("/admin/:id/pdf", authMiddleware, restrictToRoles("admin", "superadmin"), downloadBookingPdf);
@@ -56,7 +64,9 @@ router.get("/admin/:id/review-request", ...reviewAdmin, async (req, res) => {
       error: booking.reviewRequestError || "",
       automaticSendingEnabled: isReviewRequestsEnabled(),
       scheduledFor,
-      preview: buildReviewRequestEmail(booking),
+      preview: await getReviewRequestEmail(booking),
+      customized: Boolean(booking.reviewRequestSubject || booking.reviewRequestText),
+      reviewUrl: WRITE_REVIEW_URL,
     });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -90,5 +100,64 @@ router.patch("/admin/:id/review-request", ...reviewAdmin, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+// The standard wording, shared by every booking without its own edit.
+const auditTemplate = (req, action) =>
+  logAudit({ actor: req.user._id, actorEmail: req.user.email, action, outcome: "success", ip: req.ip, meta: {} });
+
+router.get("/admin/review-request/template", ...reviewAdmin, async (req, res) => {
+  try {
+    res.json(await getReviewEmailTemplate());
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.put("/admin/review-request/template", ...reviewAdmin, async (req, res) => {
+  const { error, subject, text } = cleanReviewEmailTemplate(req.body);
+  if (error) return res.status(400).json({ message: error });
+  try {
+    await ReviewEmailTemplate.findOneAndUpdate({}, { subject, text }, { upsert: true });
+    await auditTemplate(req, "booking.review_template.edit");
+    res.json(await getReviewEmailTemplate());
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.delete("/admin/review-request/template", ...reviewAdmin, async (req, res) => {
+  try {
+    await ReviewEmailTemplate.deleteMany({});
+    await auditTemplate(req, "booking.review_template.reset");
+    res.json(await getReviewEmailTemplate());
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+const saveReviewEmail = async (req, res, fields, action) => {
+  try {
+    const booking = await BookingSubmission.findById(req.params.id).select("-pdf.data");
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (booking.reviewRequestStatus === "sent") return res.status(409).json({ message: "This email was already sent." });
+    booking.reviewRequestSubject = fields.subject;
+    booking.reviewRequestText = fields.text;
+    await booking.save();
+    await logAudit({ actor: req.user._id, actorEmail: req.user.email, action, outcome: "success", ip: req.ip, meta: { bookingId: String(booking._id) } });
+    res.json({ preview: await getReviewRequestEmail(booking) });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+router.put("/admin/:id/review-request/email", ...reviewAdmin, (req, res) => {
+  const { error, subject, text } = cleanReviewRequestEmail(req.body);
+  if (error) return res.status(400).json({ message: error });
+  return saveReviewEmail(req, res, { subject, text }, "booking.review_request.edit");
+});
+
+router.delete("/admin/:id/review-request/email", ...reviewAdmin, (req, res) =>
+  saveReviewEmail(req, res, { subject: "", text: "" }, "booking.review_request.reset")
+);
 
 module.exports = router;

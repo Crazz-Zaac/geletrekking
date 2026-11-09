@@ -20,6 +20,7 @@ const staticRoutes = [
   '/company/registrations-affiliations',
   '/privacy-policy',
   '/terms-and-conditions',
+  '/liability-waiver',
   '/disclaimer',
 ]
 

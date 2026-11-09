@@ -34,7 +34,7 @@ import {
   getAdminActivities,
   getAdminSettings,
   updateAdminActivity,
-  updateAdminSettings,
+  updateActivitiesVisibility,
 } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
 import { Activity as ActivityIcon, ArrowLeft, ExternalLink, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react'
@@ -316,15 +316,7 @@ export default function AdminActivitiesPage() {
     setMessage('')
 
     try {
-      const base = siteSettings || {}
-      const payload: AdminSiteSettings = {
-        ...base,
-        navigation: {
-          ...(base.navigation || {}),
-          activitiesEnabled: nextValue,
-        },
-      }
-      const updated = await updateAdminSettings(token, payload)
+      const updated = await updateActivitiesVisibility(token, nextValue)
       setSiteSettings(updated)
       setMessage(nextValue ? 'Activities now appear in the site menu.' : 'Activities hidden from the site menu.')
     } catch (err) {
@@ -548,7 +540,7 @@ export default function AdminActivitiesPage() {
             </FormSection>
 
             <FormSection id="media" title="Photos & video">
-              <ImageUrlField label="Main photo" value={form.mainImage} onChange={(value) => set('mainImage', value)} hint="Shown at the top of the activity page and on its card." />
+              <ImageUrlField label="Main photo" value={form.mainImage} onChange={(value) => set('mainImage', value)} size="inset" hint="Shown at the top of the activity page and on its card." />
               <Field label="More photos">
                 <ImageListField images={form.galleryImages} onChange={(galleryImages) => set('galleryImages', galleryImages)} />
               </Field>

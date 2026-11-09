@@ -3,7 +3,7 @@
 import { useSiteSettings } from '@/hooks/use-site-settings'
 import { getContactLinks } from '@/lib/contact-links'
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import type { Trek } from '@/lib/data'
 import { submitContactMessage } from '@/lib/api'
@@ -14,9 +14,13 @@ interface BookingFormProps {
   treks?: Trek[]
   requireTrek?: boolean
   packageOptions?: string[]
+  /** A choice made elsewhere on the page. Each new object is applied once. */
+  prefill?: BookingFormPrefill | null
 }
 
-export function BookingForm({ trek, treks = [], requireTrek = false, packageOptions }: BookingFormProps) {
+export type BookingFormPrefill = { packageTier?: string; date?: string; dateLabel?: string }
+
+export function BookingForm({ trek, treks = [], requireTrek = false, packageOptions, prefill }: BookingFormProps) {
   const { settings, social } = useSiteSettings()
   const { whatsappUrl } = getContactLinks(settings.email, social.whatsapp, settings.phone)
   const [submitted, setSubmitted] = useState(false)
@@ -42,6 +46,16 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
     groupSize: '',
     message: '',
   })
+
+  const [dateLabel, setDateLabel] = useState('')
+
+  useEffect(() => {
+    if (!prefill) return
+    const { dateLabel: label, ...choice } = prefill
+    setForm((current) => ({ ...current, ...choice }))
+    if (label) setDateLabel(label)
+    setError(null)
+  }, [prefill])
 
   const updateForm = (patch: Partial<typeof form>) => {
     setForm((current) => ({ ...current, ...patch }))
@@ -213,9 +227,13 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
           <input
             type="date"
             value={form.date}
-            onChange={(e) => updateForm({ date: e.target.value })}
+            onChange={(e) => {
+              setDateLabel('')
+              updateForm({ date: e.target.value })
+            }}
             className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
           />
+          {dateLabel ? <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-400">Departure selected: {dateLabel}</p> : null}
         </div>
         <div>
           <label className="block text-sm font-medium text-foreground mb-1.5">Group Size</label>
@@ -277,7 +295,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
             onExpire={() => setCaptchaToken('')}
             onError={() => {
               setCaptchaToken('')
-              setError('Captcha failed to load. Verify Turnstile site key domain settings and disable ad blockers for this site.')
+              setError("The security check couldn't load. Please turn off any ad blocker for this page and reload it.")
             }}
           />
           <p className="text-xs text-muted-foreground" aria-live="polite">
@@ -286,13 +304,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
               : 'Complete the captcha to enable the send button.'}
           </p>
         </div>
-      ) : (
-        <p className="text-sm text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
-          {hasPlaceholderTurnstileKey
-            ? 'Captcha key is a placeholder. Set a real `NEXT_PUBLIC_TURNSTILE_SITE_KEY` to show verification.'
-            : 'Captcha is not configured in this environment.'}
-        </p>
-      )}
+      ) : null}
       <button
         type="submit"
         disabled={!canSubmit}

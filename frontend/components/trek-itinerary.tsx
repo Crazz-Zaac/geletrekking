@@ -8,7 +8,6 @@ import {
   ChevronsDownUp,
   ChevronsUpDown,
   Clock,
-  Download,
   Footprints,
   Plane,
   TrendingDown,
@@ -256,15 +255,11 @@ function DayRow({
 export function TrekItinerary({
   days,
   maxAltitude,
-  onDownload,
-  downloading,
   renderText,
 }: {
   days: ItineraryDay[]
   /** The trek's highest point, which can be above any overnight stop. */
   maxAltitude: number
-  onDownload: () => void
-  downloading: boolean
   renderText: (value: string) => ReactNode
 }) {
   const rows = useMemo(() => buildItineraryRows(days), [days])
@@ -318,15 +313,6 @@ export function TrekItinerary({
           >
             {allOpen ? <ChevronsDownUp className="h-4 w-4" /> : <ChevronsUpDown className="h-4 w-4" />}
             {allOpen ? 'Collapse all' : 'Expand all'}
-          </button>
-          <button
-            type="button"
-            onClick={onDownload}
-            disabled={downloading}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border px-3.5 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-60"
-          >
-            <Download className="h-4 w-4" />
-            PDF
           </button>
         </div>
       </div>

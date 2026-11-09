@@ -234,7 +234,7 @@ export default function AdminAboutPage() {
               <Field label="Introduction" count={{ value: form.heroSubtitle, max: 220, recommended: true }}>
                 <TextArea rows={3} value={form.heroSubtitle || ''} onChange={(e) => setForm((prev) => ({ ...prev, heroSubtitle: e.target.value }))} />
               </Field>
-              <ImageUrlField label="Header photo" value={form.heroImageUrl} onChange={(heroImageUrl) => setForm((prev) => ({ ...prev, heroImageUrl }))} hint="A team or landscape photo, at least 1600 px wide." />
+              <ImageUrlField label="Header photo" value={form.heroImageUrl} onChange={(heroImageUrl) => setForm((prev) => ({ ...prev, heroImageUrl }))} size="header" hint="Shown faintly behind the heading." />
             </FormSection>
 
             <FormSection id="story" title="Story & mission">

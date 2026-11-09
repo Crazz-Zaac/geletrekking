@@ -131,32 +131,13 @@ export default function AdminHeroPage() {
             </div>
           </section>
 
-          <FormSection title="Text" description="Keep the headline short and the message to one or two sentences.">
-            <Field label="Headline" hint="Press Enter for a line break." count={{ value: form.title, max: 60, recommended: true }}>
-              <TextArea rows={2} className="min-h-0" placeholder={'Experience the\nReal Himalayas'} value={form.title || ''} onChange={(e) => set('title', e.target.value)} />
-            </Field>
-            <Field label="Message" count={{ value: form.subtitle, max: 160, recommended: true }}>
-              <TextArea rows={3} placeholder="Authentic adventures led by local experts." value={form.subtitle || ''} onChange={(e) => set('subtitle', e.target.value)} />
-            </Field>
-          </FormSection>
-
-          <FormSection title="Button" description="The main call to action under the message.">
-            <FieldGrid>
-              <Field label="Button text">
-                <Input className="h-10" placeholder="Explore Treks" value={form.ctaText || ''} onChange={(e) => set('ctaText', e.target.value)} />
-              </Field>
-              <Field label="Button link" hint="A page on this site, e.g. /destinations or /book.">
-                <Input className="h-10" placeholder="/destinations" value={form.ctaLink || ''} onChange={(e) => set('ctaLink', e.target.value)} />
-              </Field>
-            </FieldGrid>
-          </FormSection>
-
-          <FormSection title="Background" description="A wide, high-resolution landscape photo. The overlay keeps the text readable.">
+          <FormSection title="Background" description="The overlay keeps the text readable.">
             <ImageUrlField
               label="Background photo"
               value={form.backgroundImage}
               onChange={(value) => set('backgroundImage', value)}
-              hint="At least 1920 px wide. Leave empty to use the default Himalaya photo."
+              size="hero"
+              hint="Phones crop the sides. Leave empty to use the default Himalaya photo."
             />
             <div className="space-y-2">
               <p className="text-sm font-medium text-foreground">Darken overlay</p>
@@ -201,6 +182,26 @@ export default function AdminHeroPage() {
                 <Input className="h-10 font-mono text-xs" placeholder="linear-gradient(…)" value={form.overlay || ''} onChange={(e) => set('overlay', e.target.value)} />
               </Field>
             )}
+          </FormSection>
+
+          <FormSection title="Text" description="Keep the headline short and the message to one or two sentences.">
+            <Field label="Headline" hint="Press Enter for a line break." count={{ value: form.title, max: 60, recommended: true }}>
+              <TextArea rows={2} className="min-h-0" placeholder={'Experience the\nReal Himalayas'} value={form.title || ''} onChange={(e) => set('title', e.target.value)} />
+            </Field>
+            <Field label="Message" count={{ value: form.subtitle, max: 160, recommended: true }}>
+              <TextArea rows={3} placeholder="Authentic adventures led by local experts." value={form.subtitle || ''} onChange={(e) => set('subtitle', e.target.value)} />
+            </Field>
+          </FormSection>
+
+          <FormSection title="Button" description="The main call to action under the message.">
+            <FieldGrid>
+              <Field label="Button text">
+                <Input className="h-10" placeholder="Explore Treks" value={form.ctaText || ''} onChange={(e) => set('ctaText', e.target.value)} />
+              </Field>
+              <Field label="Button link" hint="A page on this site, e.g. /destinations or /book.">
+                <Input className="h-10" placeholder="/destinations" value={form.ctaLink || ''} onChange={(e) => set('ctaLink', e.target.value)} />
+              </Field>
+            </FieldGrid>
           </FormSection>
 
           <SaveBar dirty={dirty} saving={saving} onSave={onSave} onDiscard={dirty ? onDiscard : undefined} saveLabel="Save hero" />

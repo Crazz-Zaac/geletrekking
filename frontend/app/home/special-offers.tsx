@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { ArrowRight, CalendarClock, Clock, Tag } from 'lucide-react'
 import type { Trek } from '@/lib/data'
 import { getTrekPath } from '@/lib/trek-path'
+import { ShareTrek } from '@/components/share-trek'
 import { DifficultyLabel, OfferRibbon } from '@/components/trek-card-compact'
 import { cn } from '@/lib/utils'
 
@@ -14,7 +15,7 @@ function formatEndDate(value?: string) {
 }
 
 /** Horizontal "deal" card: photo left, offer details right. About a third the height of a grid card. */
-export function OfferCard({ trek, className }: { trek: Trek; className?: string }) {
+export function OfferCard({ trek, className, showShare = true }: { trek: Trek; className?: string; showShare?: boolean }) {
   const ends = formatEndDate(trek.offerValidTo)
   return (
     <Link
@@ -64,10 +65,13 @@ export function OfferCard({ trek, className }: { trek: Trek; className?: string 
             <span className="text-lg font-bold text-red-600">${trek.price.toLocaleString()}</span>
             <span className="ml-1 text-[11px] text-muted-foreground">pp</span>
           </p>
-          <span className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-red-600 transition-all group-hover:gap-2 dark:text-red-400">
-            View deal
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </span>
+          <div className="flex shrink-0 items-center gap-2">
+            {showShare ? <ShareTrek title={trek.title} path={getTrekPath(trek)} /> : null}
+            <span className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-red-600 transition-all group-hover:gap-2 dark:text-red-400">
+              View deal
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </span>
+          </div>
         </div>
       </div>
     </Link>

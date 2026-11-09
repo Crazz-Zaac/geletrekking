@@ -204,13 +204,13 @@ export default function AdminSettingsPage() {
               label="Contact page"
               value={form.contactHeroImageUrl}
               onChange={(value) => set('contactHeroImageUrl', value)}
-              hint="Landscape photo, at least 1600 px wide."
+              size="header"
             />
             <ImageUrlField
               label="Booking page"
               value={form.bookingHeroImageUrl}
               onChange={(value) => set('bookingHeroImageUrl', value)}
-              hint="Landscape photo, at least 1600 px wide."
+              size="header"
             />
           </FormSection>
 

@@ -1,22 +1,21 @@
 'use client'
 
-import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, ArrowRight, CheckCircle2, CircleAlert, Download, FileText, Loader2, Send } from 'lucide-react'
+import { CheckCircle2, Download, Mail, MessageCircle } from 'lucide-react'
 import type { Trek } from '@/lib/data'
 import { getPrivateBookingFormLink, submitPrivateBookingSubmission } from '@/lib/api'
 import {
   createEmptyBookingFormState,
   defaultBookingFormConfig,
-  getBookingFieldMap,
   normalizeBookingFormConfig,
   type BookingFormFieldConfig,
   type BookingFormState,
 } from '@/lib/booking-form-config'
-import { TurnstileWidget } from '@/components/turnstile-widget'
+import { BookingWizard, type BookingSubmitResult } from '@/components/booking-wizard'
+import { CONTACT_EMAIL, WHATSAPP_URL } from '@/lib/contact-links'
 import { useSiteSettings } from '@/hooks/use-site-settings'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Progress } from '@/components/ui/progress'
+import { loadPdfLogo } from '@/lib/pdf-images'
+import { COMPANY_REGISTRATION_LINE } from '@/lib/site-metrics'
 
 interface PrivateBookingFormProps {
   token: string
@@ -25,31 +24,31 @@ interface PrivateBookingFormProps {
   requireTrek?: boolean
 }
 
+function ContactHelp() {
+  return (
+    <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+      <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline">
+        <MessageCircle className="h-4 w-4" aria-hidden="true" /> WhatsApp us
+      </a>
+      <a href={`mailto:${CONTACT_EMAIL}`} className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline">
+        <Mail className="h-4 w-4" aria-hidden="true" /> {CONTACT_EMAIL}
+      </a>
+    </div>
+  )
+}
+
 export function PrivateBookingForm({ token, trek, treks = [], requireTrek = false }: PrivateBookingFormProps) {
-  const [step, setStep] = useState(0)
   const [formConfig, setFormConfig] = useState(defaultBookingFormConfig)
   const [submitted, setSubmitted] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [missingFieldIds, setMissingFieldIds] = useState<string[]>([])
-  const [honeypot, setHoneypot] = useState('')
-  const [formStartedAt, setFormStartedAt] = useState<number>(() => Date.now())
-  const [captchaToken, setCaptchaToken] = useState('')
-  const [turnstileRenderKey, setTurnstileRenderKey] = useState(0)
+  const [formStartedAt] = useState<number>(() => Date.now())
   const [form, setForm] = useState<BookingFormState>(() => createEmptyBookingFormState(defaultBookingFormConfig, trek))
   const [linkLoading, setLinkLoading] = useState(true)
   const [linkError, setLinkError] = useState<string | null>(null)
   const [downloadPdf, setDownloadPdf] = useState<{ dataUri: string; filename: string } | null>(null)
-  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
-  const rawTurnstileSiteKey = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '').trim()
-  const hasPlaceholderTurnstileKey = /your_turnstile_site_key|your-site-key|changeme|placeholder/i.test(rawTurnstileSiteKey)
-  const turnstileSiteKey = hasPlaceholderTurnstileKey ? '' : rawTurnstileSiteKey
-  const requiresCaptcha = Boolean(turnstileSiteKey)
   const selectedTrek = useMemo(() => treks.find((item) => item.title === form.trekPackage) || trek, [form.trekPackage, trek, treks])
   const needsAltitudeCoverage = (selectedTrek?.maxAltitude || 0) > 5000
-  const fieldMap = useMemo(() => getBookingFieldMap(formConfig), [formConfig])
-  const activeSection = formConfig[step] || formConfig[0]
+  const { settings } = useSiteSettings()
 
   const isFieldVisible = (field: BookingFormFieldConfig) => {
     if (field.id === 'trekPackage' && !requireTrek && !trek && treks.length === 0) return false
@@ -57,22 +56,6 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
     if (field.condition === 'altitudeCoverage') return needsAltitudeCoverage
     return true
   }
-
-  const getMissingRequiredFields = (sections = formConfig) => sections.flatMap((section) => section.fields).filter((field) => {
-    if (!field.required || !isFieldVisible(field)) return false
-    const value = form[field.id]
-    return typeof value === 'boolean' ? !value : !String(value || '').trim()
-  })
-
-  const currentMissingFields = getMissingRequiredFields([activeSection])
-  const requiredConsentFields = ['agreeTerms', 'acceptLiabilityWaiver'].filter((id) => fieldMap.has(id))
-  const consentComplete = requiredConsentFields.every((id) => form[id] === true)
-  const isCaptchaReady = !requiresCaptcha || Boolean(captchaToken)
-  const visibleRequiredFields = formConfig.flatMap((section) => section.fields).filter((field) => field.required && isFieldVisible(field))
-  const missingRequiredFields = getMissingRequiredFields()
-  const canSubmit = !submitting && missingRequiredFields.length === 0 && consentComplete && isCaptchaReady
-  const progressValue = visibleRequiredFields.length === 0 ? 100 : ((visibleRequiredFields.length - missingRequiredFields.length) / visibleRequiredFields.length) * 100
-  const { settings } = useSiteSettings()
 
   useEffect(() => {
     let cancelled = false
@@ -103,11 +86,7 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
     return () => { cancelled = true }
   }, [token, trek])
 
-  const updateField = (field: string, value: string | boolean) => {
-    setForm((prev) => ({ ...prev, [field]: value }))
-    setMissingFieldIds((prev) => prev.filter((item) => item !== field))
-    setError(null)
-  }
+  const updateField = (field: string, value: string | boolean) => setForm((prev) => ({ ...prev, [field]: value }))
 
   const getPdfFilename = () => ('gele-trekking-booking-' + (String(form.firstName) || 'client') + '-' + (String(form.lastName) || 'form') + '.pdf').toLowerCase().replace(/[^a-z0-9.-]+/g, '-')
 
@@ -130,37 +109,6 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
     window.setTimeout(() => URL.revokeObjectURL(href), 1000)
   }
 
-  const validateStep = () => {
-    const missing = getMissingRequiredFields([activeSection])
-    if (missing.length > 0) {
-      setMissingFieldIds(missing.map((field) => field.id))
-      setError(`Please complete: ${missing.map((field) => field.label).join(', ')}.`)
-      return false
-    }
-    setError(null)
-    setMissingFieldIds([])
-    return true
-  }
-
-  const validateAll = () => {
-    const missing = getMissingRequiredFields()
-    if (missing.length > 0) {
-      const firstSectionIndex = formConfig.findIndex((section) => section.fields.some((field) => field.id === missing[0].id))
-      setStep(Math.max(0, firstSectionIndex))
-      setMissingFieldIds(missing.map((field) => field.id))
-      setError(`Please complete: ${missing.map((field) => field.label).join(', ')}.`)
-      return false
-    }
-    if (!consentComplete) {
-      setStep(Math.max(0, formConfig.findIndex((section) => section.id === 'consent')))
-      setError('Please accept the required consent items before submitting.')
-      return false
-    }
-    setError(null)
-    setMissingFieldIds([])
-    return true
-  }
-
   const generatePdf = async () => {
     const { jsPDF } = await import('jspdf')
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' })
@@ -172,33 +120,7 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
     const contentWidth = pageWidth - margin * 2
     let y = headerHeight + 12
 
-    type PdfImage = { dataUrl: string; format: 'PNG' | 'JPEG' }
-
-    const toImage = async (src?: string): Promise<PdfImage | null> => {
-      if (!src) return null
-
-      try {
-        const response = await fetch(src, { cache: 'force-cache' })
-        if (!response.ok) return null
-
-        const blob = await response.blob()
-        const dataUrl = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = () => resolve(String(reader.result || ''))
-          reader.onerror = reject
-          reader.readAsDataURL(blob)
-        })
-
-        return {
-          dataUrl,
-          format: dataUrl.includes('image/jpeg') || dataUrl.includes('image/jpg') ? 'JPEG' : 'PNG',
-        }
-      } catch {
-        return null
-      }
-    }
-
-    const logo = await toImage(settings.logoUrl || '/geletrekking.png')
+    const logo = await loadPdfLogo(settings.logoUrl)
     const companyName = settings.siteName || 'GELE TREKKING'
     const contactLine = [settings.phone, settings.email].filter(Boolean).join(' | ')
 
@@ -255,6 +177,7 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
       setText(8, 'normal', [91, 104, 111])
       pdf.text(companyName, margin, footerTop)
       if (contactLine) pdf.text(contactLine, pageWidth - margin, footerTop, { align: 'right' })
+      pdf.text(COMPANY_REGISTRATION_LINE, margin, footerTop + 4.5)
     }
 
     const decoratePage = () => {
@@ -320,171 +243,67 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
     return pdf.output('datauristring')
   }
 
-  const handleDownloadPdfCopy = async () => {
-    if (!validateAll()) return
-    setDownloadingPdf(true)
-    setError(null)
-
-    try {
-      const dataUri = await generatePdf()
-      const filename = getPdfFilename()
-      setDownloadPdf({ dataUri, filename })
-      downloadLocalPdf(dataUri, filename)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to create the PDF form. Please try again.')
-    } finally {
-      setDownloadingPdf(false)
-    }
+  const handleDownloadCopy = async () => {
+    const dataUri = await generatePdf()
+    const filename = getPdfFilename()
+    setDownloadPdf({ dataUri, filename })
+    downloadLocalPdf(dataUri, filename)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validateAll()) return
-    if (requiresCaptcha && !captchaToken) {
-      setError('Please complete captcha verification before submitting.')
-      return
-    }
+  const handleSubmit = async ({ captchaToken, honeypot }: { captchaToken: string; honeypot: string }): Promise<BookingSubmitResult> => {
+    const pdfBase64 = await generatePdf()
+    const result = await submitPrivateBookingSubmission(token, {
+      formData: form,
+      pdfBase64,
+      website: honeypot,
+      formStartedAt,
+      captchaToken,
+    })
+    if (!result.success) return { ok: false, message: result.message }
 
-    setSubmitting(true)
-    setError(null)
-
-    try {
-      const pdfBase64 = await generatePdf()
-      const result = await submitPrivateBookingSubmission(token, {
-        formData: form,
-        pdfBase64,
-        website: honeypot,
-        formStartedAt,
-        captchaToken,
-      })
-
-      if (!result.success) {
-        setError(result.message)
-        if (result.message.toLowerCase().includes('captcha')) {
-          setCaptchaToken('')
-          setTurnstileRenderKey((value) => value + 1)
-        }
-        return
-      }
-
-      const filename = getPdfFilename()
-      setDownloadPdf({ dataUri: pdfBase64, filename })
-      downloadLocalPdf(pdfBase64, filename)
-      setSubmitted(true)
-      setHoneypot('')
-      setFormStartedAt(Date.now())
-      setCaptchaToken('')
-      setTurnstileRenderKey((value) => value + 1)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to create the PDF form. Please try again.')
-    } finally {
-      setSubmitting(false)
-    }
+    const filename = getPdfFilename()
+    setDownloadPdf({ dataUri: pdfBase64, filename })
+    downloadLocalPdf(pdfBase64, filename)
+    setSubmitted(true)
+    return { ok: true }
   }
 
-  const inputClass = 'w-full h-11 px-4 rounded-md border border-input bg-background text-foreground shadow-xs placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring text-sm'
-  const textareaClass = 'w-full min-h-28 px-4 py-3 rounded-md border border-input bg-background text-foreground shadow-xs placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring text-sm'
-  const fieldShell = (field: BookingFormFieldConfig, children: React.ReactNode, wide = false) => {
-    const missing = missingFieldIds.includes(field.id)
+  if (linkLoading) {
     return (
-      <div className={wide ? 'sm:col-span-2 space-y-1.5' : 'space-y-1.5'}>
-        <label className="flex items-center justify-between gap-3 text-sm font-medium text-foreground">
-          <span>{field.label}</span>
-          {field.required ? <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-[11px] font-semibold text-red-700">Required</span> : null}
-        </label>
-        {children}
-        {missing ? <p className="flex items-center gap-1.5 text-xs text-red-600"><CircleAlert className="h-3.5 w-3.5" /> {field.label} is required.</p> : null}
+      <div className="space-y-3" aria-busy="true" aria-label="Loading your form">
+        <div className="h-24 animate-pulse rounded-lg bg-muted" />
+        <div className="h-64 animate-pulse rounded-lg bg-muted" />
       </div>
     )
   }
 
-  const renderField = (field: BookingFormFieldConfig) => {
-    if (!isFieldVisible(field)) return null
-    const hasError = missingFieldIds.includes(field.id)
-    const className = `${inputClass} ${hasError ? 'border-red-400 focus:ring-red-200' : ''}`
-
-    if (field.id === 'trekPackage') {
-      return fieldShell(field, (
-        <select value={String(form.trekPackage || '')} onChange={(e) => updateField('trekPackage', e.target.value)} className={className} autoComplete="off" aria-invalid={hasError}>
-          <option value="">Select a trek</option>
-          {trek && !treks.some((item) => item.title === trek.title) ? <option value={trek.title}>{trek.title}</option> : null}
-          {treks.map((item) => <option key={item.id} value={item.title}>{item.title}</option>)}
-        </select>
-      ))
-    }
-
-    if (field.id === 'agreeTerms') {
-      return (
-        <label className={`sm:col-span-2 flex items-start gap-3 rounded-md border bg-background p-4 text-sm shadow-xs ${hasError ? 'border-red-400 bg-red-50' : 'border-border'}`}>
-          <Checkbox checked={form.agreeTerms === true} onCheckedChange={(checked) => updateField('agreeTerms', checked === true)} />
-          <span>I agree to the <Link href="/terms-and-conditions" className="text-primary underline underline-offset-2" target="_blank">Terms and Conditions</Link>.</span>
-        </label>
-      )
-    }
-
-    if (field.id === 'acceptLiabilityWaiver' || field.id === 'photoMarketingConsent') {
-      return (
-        <label className={`sm:col-span-2 flex items-start gap-3 rounded-md border bg-background p-4 text-sm shadow-xs ${hasError ? 'border-red-400 bg-red-50' : 'border-border'}`}>
-          <Checkbox checked={form[field.id] === true} onCheckedChange={(checked) => updateField(field.id, checked === true)} />
-          <span>{field.id === 'acceptLiabilityWaiver' ? 'I accept the liability waiver.' : 'I consent to my photos being used for marketing.'}</span>
-        </label>
-      )
-    }
-
-    if (field.type === 'checkbox') {
-      return (
-        <label className={`sm:col-span-2 flex items-start gap-3 rounded-md border bg-background p-4 text-sm shadow-xs ${hasError ? 'border-red-400 bg-red-50' : 'border-border'}`}>
-          <Checkbox checked={form[field.id] === true} onCheckedChange={(checked) => updateField(field.id, checked === true)} />
-          <span>{field.label}</span>
-        </label>
-      )
-    }
-
-    if (field.type === 'textarea') {
-      return fieldShell(field, (
-        <textarea value={String(form[field.id] || '')} onChange={(e) => updateField(field.id, e.target.value)} placeholder={field.placeholder} rows={3} className={(hasError ? textareaClass + ' border-red-400 focus:ring-red-200' : textareaClass) + ' resize-none'} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} aria-invalid={hasError} />
-      ), true)
-    }
-
-    if (field.type === 'select') {
-      return fieldShell(field, (
-        <select value={String(form[field.id] || '')} onChange={(e) => updateField(field.id, e.target.value)} className={className} autoComplete="off" aria-invalid={hasError}>
-          <option value="">Select</option>
-          {(field.options || []).map((option) => <option key={option} value={option}>{option}</option>)}
-        </select>
-      ))
-    }
-
-    return fieldShell(field, (
-      <input type={field.type} value={String(form[field.id] || '')} onChange={(e) => updateField(field.id, e.target.value)} placeholder={field.placeholder} className={className} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} aria-invalid={hasError} />
-    ))
-  }
-
-  if (linkLoading) {
-    return <div className="rounded-lg border border-border bg-muted/20 p-5 text-sm text-muted-foreground">Checking private form link...</div>
-  }
-
   if (linkError) {
-    return <div className="rounded-lg border border-red-200 bg-red-50 p-5 text-sm text-red-700">{linkError}</div>
+    return (
+      <div className="rounded-lg border border-border bg-muted/20 p-5">
+        <h2 className="font-semibold text-foreground">This link isn&apos;t available</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{linkError} Please contact us and we&apos;ll send you a new one.</p>
+        <ContactHelp />
+      </div>
+    )
   }
 
   if (submitted) {
     return (
-      <div className="text-center py-10">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="w-8 h-8 text-green-600" />
+      <div className="py-10 text-center">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10">
+          <CheckCircle2 className="h-8 w-8 text-emerald-600" aria-hidden="true" />
         </div>
-        <h3 className="font-serif text-xl font-bold text-foreground mb-2">Booking Form Submitted</h3>
-        <p className="text-muted-foreground text-sm max-w-md mx-auto">
-          Your PDF form is now available to admins in the dashboard. A copy has been downloaded in this browser.
+        <h2 className="font-serif text-2xl font-bold text-foreground">Thank you{form.firstName ? `, ${String(form.firstName)}` : ''}</h2>
+        <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+          We&apos;ve received your booking form and will be in touch soon. A PDF copy has been saved to your device.
         </p>
         {downloadPdf ? (
           <button
             type="button"
             onClick={() => downloadLocalPdf(downloadPdf.dataUri, downloadPdf.filename)}
-            className="mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+            className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg border border-input px-4 py-2.5 text-sm font-semibold hover:bg-muted/60"
           >
-            Download another copy
+            <Download className="h-4 w-4" aria-hidden="true" /> Download another copy
           </button>
         ) : null}
       </div>
@@ -492,119 +311,17 @@ export function PrivateBookingForm({ token, trek, treks = [], requireTrek = fals
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
-      <div className="overflow-hidden rounded-lg border border-border bg-background shadow-xs">
-        <div className="space-y-4 border-b border-border bg-muted/20 p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground">Section {step + 1} of {formConfig.length}</p>
-              <h3 className="mt-1 text-xl font-bold text-foreground">{activeSection.title}</h3>
-            </div>
-            <div className="rounded-md border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground">
-              {Math.round(progressValue)}% complete
-            </div>
-          </div>
-          <Progress value={progressValue} />
-          <div className="space-y-2">
-            <select
-              value={String(step)}
-              onChange={(event) => { setStep(Number(event.target.value)); setError(null) }}
-              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm font-medium text-foreground shadow-xs outline-none focus:ring-2 focus:ring-ring sm:hidden"
-              aria-label="Booking form section"
-            >
-              {formConfig.map((section, index) => {
-                const missingCount = getMissingRequiredFields([section]).length
-                const complete = missingCount === 0
-                return <option key={section.id} value={String(index)}>{index + 1}. {section.title}{complete ? ' ✓' : missingCount > 0 ? ` (${missingCount})` : ''}</option>
-              })}
-            </select>
-            <div className="hidden grid-cols-2 gap-2 sm:grid lg:grid-cols-5">
-              {formConfig.map((section, index) => {
-                const missingCount = getMissingRequiredFields([section]).length
-                const complete = missingCount === 0
-                const selected = step === index
-                return (
-                  <button
-                    key={section.id}
-                    type="button"
-                    onClick={() => { setStep(index); setError(null) }}
-                    className={`flex min-h-14 items-center gap-2 rounded-md border px-3 py-2 text-left text-xs leading-tight transition-colors ${selected ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-background text-foreground hover:bg-muted/50'}`}
-                  >
-                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${complete ? 'bg-emerald-500/15 text-emerald-700' : 'bg-amber-500/15 text-amber-700'}`}>{index + 1}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="line-clamp-2 font-semibold">{section.title}</span>
-                      {!complete ? <span className="mt-0.5 block text-[11px] text-muted-foreground">{missingCount} left</span> : null}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-        <div className="p-4">
-          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-muted-foreground">{currentMissingFields.length === 0 ? 'No required fields remaining in this section.' : `${currentMissingFields.length} required field(s) remaining in this section.`}</p>
-            <span className="w-fit rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">{activeSection.fields.filter((field) => field.required && isFieldVisible(field)).length} required field(s)</span>
-          </div>
-
-          {error ? <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p> : null}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {activeSection.fields.map((field) => <div key={field.id} className="contents">{renderField(field)}</div>)}
-        {activeSection.id === 'consent' && requiresCaptcha ? (
-          <div className="sm:col-span-2 rounded-lg bg-muted/30 p-4 space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-foreground">Security verification</p>
-              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${isCaptchaReady ? 'bg-emerald-500/10 text-emerald-700' : 'bg-amber-500/10 text-amber-700'}`}>
-                {isCaptchaReady ? 'Verified' : 'Required'}
-              </span>
-            </div>
-            <TurnstileWidget
-              key={turnstileRenderKey}
-              siteKey={turnstileSiteKey}
-              onVerify={(value) => { setCaptchaToken(value); setError(null) }}
-              onExpire={() => setCaptchaToken('')}
-              onError={() => { setCaptchaToken(''); setError('Captcha failed to load. Verify Turnstile site key domain settings and disable ad blockers for this site.') }}
-            />
-          </div>
-        ) : null}
-        {activeSection.id === 'consent' && !requiresCaptcha ? (
-          <p className="sm:col-span-2 text-sm text-amber-700 bg-amber-500/10 border border-amber-500/30 rounded-md px-3 py-2">
-            {hasPlaceholderTurnstileKey ? 'Captcha key is a placeholder. Set a real `NEXT_PUBLIC_TURNSTILE_SITE_KEY` to show verification.' : 'Captcha is not configured in this environment.'}
-          </p>
-        ) : null}
-          </div>
-        </div>
-      </div>
-
-      <input type="text" name="website" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} autoComplete="off" tabIndex={-1} className="hidden" aria-hidden="true" />
-
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between pt-2">
-        <button type="button" onClick={() => { setError(null); setStep((value) => Math.max(0, value - 1)) }} disabled={step === 0 || submitting} className="inline-flex items-center justify-center gap-2 rounded-lg border border-input px-4 py-2.5 text-sm font-semibold disabled:opacity-50">
-          <ArrowLeft className="w-4 h-4" /> Back
-        </button>
-        {step < formConfig.length - 1 ? (
-          <button type="button" onClick={() => validateStep() && setStep((value) => Math.min(formConfig.length - 1, value + 1))} className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
-            Next <ArrowRight className="w-4 h-4" />
-          </button>
-        ) : (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <button type="button" onClick={() => void handleDownloadPdfCopy()} disabled={submitting || downloadingPdf || getMissingRequiredFields().length > 0 || !consentComplete} className="inline-flex items-center justify-center gap-2 rounded-lg border border-input px-4 py-2.5 text-sm font-semibold hover:bg-muted/60 disabled:opacity-50">
-              {downloadingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              {downloadingPdf ? 'Preparing PDF...' : 'Download PDF copy'}
-            </button>
-            <button type="submit" disabled={!canSubmit} className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              {submitting ? 'Creating PDF...' : 'Submit PDF Form'}
-            </button>
-          </div>
-        )}
-      </div>
-
-      <p className="text-xs text-muted-foreground leading-relaxed flex gap-2">
-        <FileText className="w-4 h-4 shrink-0" />
-        Admins download the submitted PDF from the protected dashboard. Use Download PDF copy on the final step to save your own copy before or after submitting.
-      </p>
-    </form>
+    <BookingWizard
+      sections={formConfig}
+      form={form}
+      onFieldChange={updateField}
+      isFieldVisible={isFieldVisible}
+      trekField={{ id: 'trekPackage', placeholder: 'Select a trek', options: [...new Set([...(trek ? [trek.title] : []), ...treks.map((item) => item.title)])] }}
+      draftKey={`private:${token.slice(0, 16)}`}
+      onRestoreDraft={(draft) => setForm((prev) => ({ ...prev, ...draft }))}
+      submitLabel="Submit booking form"
+      onSubmit={handleSubmit}
+      onDownloadCopy={handleDownloadCopy}
+    />
   )
 }

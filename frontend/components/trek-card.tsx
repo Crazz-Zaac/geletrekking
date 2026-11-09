@@ -4,6 +4,7 @@ import { Clock, Mountain, Users, ArrowRight, Check } from 'lucide-react'
 import type { Trek } from '@/lib/data'
 import { cn } from '@/lib/utils'
 import { getTrekPath } from '@/lib/trek-path'
+import { ShareTrek } from '@/components/share-trek'
 
 const difficultyColors: Record<Trek['difficulty'], string> = {
   Easy: 'bg-green-100 text-green-800',
@@ -149,10 +150,13 @@ export function TrekCard({ trek, className, isCompared = false, compareDisabled 
               </>
             )}
           </div>
-          <span className="flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
-            View Details
-            <ArrowRight className="w-4 h-4" />
-          </span>
+          <div className="flex items-center gap-2.5">
+            <ShareTrek title={trek.title} path={getTrekPath(trek)} />
+            <span className="flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
+              View Details
+              <ArrowRight className="w-4 h-4" />
+            </span>
+          </div>
         </div>
         {hasActiveOffer && trek.offerDescription ? (
           <p className="mt-2 text-[11px] text-red-700 line-clamp-1">{trek.offerDescription}</p>

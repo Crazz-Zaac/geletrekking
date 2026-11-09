@@ -28,9 +28,10 @@ import {
   type ReactNode,
 } from 'react'
 import { toast } from 'sonner'
-import { AlertCircle, ArrowDown, ArrowUp, CheckCircle2, ExternalLink, ImageOff, Loader2, Plus, X } from 'lucide-react'
+import { AlertCircle, AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, ExternalLink, ImageOff, Loader2, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
+import { checkImageSize, IMAGE_GUIDES, type ImageGuideName } from '@/lib/image-guidance'
 import { cn } from '@/lib/utils'
 
 /* ------------------------------------------------------------------ */
@@ -287,7 +288,7 @@ export function ToggleField({
   )
 }
 
-/** URL field for an image with a live preview, "open" and "clear" actions. */
+/** URL field for an image with a live preview, "open" and "clear" actions. `size` adds the recommended resolution and checks the photo against it. */
 export function ImageUrlField({
   label,
   value,
@@ -297,6 +298,7 @@ export function ImageUrlField({
   placeholder = 'https://…',
   aspect = 'wide',
   error,
+  size,
 }: {
   label: ReactNode
   value: string | undefined | null
@@ -306,14 +308,32 @@ export function ImageUrlField({
   placeholder?: string
   aspect?: 'wide' | 'square' | 'logo'
   error?: string | null
+  size?: ImageGuideName
 }) {
   const [broken, setBroken] = useState(false)
+  const [natural, setNatural] = useState<{ width: number; height: number } | null>(null)
   const url = (value || '').trim()
-  useEffect(() => setBroken(false), [url])
+  useEffect(() => {
+    setBroken(false)
+    setNatural(null)
+  }, [url])
+
+  const guide = size ? IMAGE_GUIDES[size] : null
+  const check = guide && natural && !broken ? checkImageSize(natural.width, natural.height, guide) : null
+  const fullHint = guide ? (
+    <>
+      <span className="block font-medium text-foreground">
+        Recommended: {guide.width} × {guide.height} px, landscape
+      </span>
+      {guide.label}. {hint}
+    </>
+  ) : (
+    hint
+  )
 
   return (
     <div className="space-y-3">
-      <Field label={label} hint={hint} required={required} error={error}>
+      <Field label={label} hint={fullHint} required={required} error={error}>
         <div className="flex gap-2">
           <input
             type="url"
@@ -357,10 +377,23 @@ export function ImageUrlField({
               src={url}
               alt=""
               onError={() => setBroken(true)}
+              onLoad={(event) => {
+                const { naturalWidth: width, naturalHeight: height } = event.currentTarget
+                setNatural(width && height ? { width, height } : null)
+              }}
               className={cn('h-full w-full', aspect === 'logo' ? 'object-contain' : 'object-cover')}
             />
           )}
         </div>
+      )}
+      {check && (
+        <p
+          role="status"
+          className={cn('flex items-start gap-1.5 text-xs font-medium', check.good ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400')}
+        >
+          {check.good ? <CheckCircle2 className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" /> : <AlertTriangle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
+          {check.message}
+        </p>
       )}
     </div>
   )

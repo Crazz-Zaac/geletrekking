@@ -4,6 +4,7 @@ import { ArrowRight, Clock, Mountain } from 'lucide-react'
 import type { Trek } from '@/lib/data'
 import { cn } from '@/lib/utils'
 import { getTrekPath } from '@/lib/trek-path'
+import { ShareTrek } from '@/components/share-trek'
 
 // Difficulty is shown as a coloured label in the card body (always readable,
 // unlike a chip on top of a photo).
@@ -97,10 +98,13 @@ export function TrekCardCompact({ trek, className }: { trek: Trek; className?: s
               <span className="ml-1 text-[11px] font-normal text-muted-foreground">per person</span>
             </p>
           </div>
-          <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary transition-all group-hover:gap-2">
-            Details
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </span>
+          <div className="flex shrink-0 items-center gap-2">
+            <ShareTrek title={trek.title} path={getTrekPath(trek)} />
+            <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary transition-all group-hover:gap-2">
+              Details
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </span>
+          </div>
         </div>
       </div>
     </Link>

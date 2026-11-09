@@ -12,12 +12,13 @@ const defaultSettings: Required<AdminSiteSettings> = {
   phone: CONTACT_PHONE,
   email: CONTACT_EMAIL,
   contactEmails: DEFAULT_CONTACT_EMAILS,
-  address: 'Thamel, Kathmandu 44600, Nepal',
+  address: 'Lalitpur - 4, Lalitpur 44600',
   officeHoursWeekdays: 'Sunday – Friday: 9:00 AM – 6:00 PM',
   officeHoursWeekend: 'Saturday: By appointment only',
   mapEmbedUrl: 'https://maps.google.com/maps?q=Kathmandu%2C%20Nepal&t=&z=12&ie=UTF8&iwloc=&output=embed',
+  // Off until the real setting arrives, so a hidden menu can't flash up or appear if loading fails.
   navigation: {
-    activitiesEnabled: true,
+    activitiesEnabled: false,
   },
   social: {
     facebook: '',
@@ -65,38 +66,65 @@ function normalizeSocialUrl(platform: SocialKey, rawValue?: string): string {
   }
 }
 
+type LoadedSettings = Required<AdminSiteSettings>
+
+function mergeSettings(data: AdminSiteSettings): LoadedSettings {
+  return {
+    ...defaultSettings,
+    ...data,
+    logoUrl: (data.logoUrl || '').trim() || defaultSettings.logoUrl,
+    email: (data.email || '').trim() || CONTACT_EMAIL,
+    phone: (data.phone || '').trim() || CONTACT_PHONE,
+    contactEmails: Array.isArray(data.contactEmails) ? data.contactEmails : DEFAULT_CONTACT_EMAILS,
+    navigation: {
+      ...defaultSettings.navigation,
+      ...(data.navigation || {}),
+    },
+    social: {
+      ...defaultSettings.social,
+      ...(data.social || {}),
+    },
+  }
+}
+
+/** Long enough to cover moving between pages; short enough that admin edits show up quickly. */
+const SETTINGS_FRESH_MS = 60_000
+let sharedRequest: Promise<LoadedSettings> | null = null
+let requestedAt = 0
+let latestSettings: LoadedSettings | null = null
+
+/** Every component on a page shares this one request. Failures aren't kept, so the next page retries. */
+function loadSharedSettings() {
+  if (!sharedRequest || Date.now() - requestedAt > SETTINGS_FRESH_MS) {
+    requestedAt = Date.now()
+    sharedRequest = getAdminSettings()
+      .then((data) => {
+        latestSettings = mergeSettings(data)
+        return latestSettings
+      })
+      .catch((error) => {
+        sharedRequest = null
+        throw error
+      })
+  }
+  return sharedRequest
+}
+
 export function useSiteSettings() {
-  const [settings, setSettings] = useState<Required<AdminSiteSettings>>(defaultSettings)
+  const [settings, setSettings] = useState<LoadedSettings>(() => latestSettings ?? defaultSettings)
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await getAdminSettings()
-
-        const merged: Required<AdminSiteSettings> = {
-          ...defaultSettings,
-          ...data,
-          logoUrl: (data.logoUrl || '').trim() || defaultSettings.logoUrl,
-          email: (data.email || '').trim() || CONTACT_EMAIL,
-          phone: (data.phone || '').trim() || CONTACT_PHONE,
-          contactEmails: Array.isArray(data.contactEmails) ? data.contactEmails : DEFAULT_CONTACT_EMAILS,
-          navigation: {
-            ...defaultSettings.navigation,
-            ...(data.navigation || {}),
-          },
-          social: {
-            ...defaultSettings.social,
-            ...(data.social || {}),
-          },
-        }
-
-        setSettings(merged)
-      } catch {
-        setSettings(defaultSettings)
-      }
+    let cancelled = false
+    loadSharedSettings()
+      .then((loaded) => {
+        if (!cancelled) setSettings(loaded)
+      })
+      .catch(() => {
+        if (!cancelled) setSettings(latestSettings ?? defaultSettings)
+      })
+    return () => {
+      cancelled = true
     }
-
-    void load()
   }, [])
 
   const normalizedSocial = useMemo(

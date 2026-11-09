@@ -23,6 +23,9 @@ const bookingSubmissionSchema = new mongoose.Schema(
     reviewRequestStatus: { type: String, enum: ["pending", "sent", "skipped", "failed"], default: "pending" },
     reviewRequestSentAt: { type: Date, default: null },
     reviewRequestError: { type: String, default: "" },
+    // Admin's edited wording for this booking; empty means the standard email.
+    reviewRequestSubject: { type: String, default: "" },
+    reviewRequestText: { type: String, default: "" },
   },
   { timestamps: true }
 );

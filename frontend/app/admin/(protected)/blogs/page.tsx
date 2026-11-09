@@ -278,7 +278,7 @@ export default function AdminBlogsPage() {
             </div>
 
             <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-              <ImageUrlField label="Cover image" value={form.coverImage} onChange={(coverImage) => setForm((prev) => ({ ...prev, coverImage }))} hint="Landscape, at least 1200 × 630 px." />
+              <ImageUrlField label="Cover image" value={form.coverImage} onChange={(coverImage) => setForm((prev) => ({ ...prev, coverImage }))} size="hero" hint="Also used on the blog list." />
             </div>
 
             <div className="space-y-2 rounded-xl border border-border bg-card p-4 shadow-sm">

@@ -26,6 +26,9 @@ import type { AdminAbout, AdminAboutTeamMember, SiteReviews, TrustSummary } from
 import { GELE_CALL_URL, WHATSAPP_URL } from '@/lib/contact-links';
 import {
   COMPANY_FOUNDED_YEAR,
+  COMPANY_LICENSE_NO,
+  COMPANY_REGISTRATION_NO,
+  COMPANY_TAAN_MEMBER_ID,
   FOUNDER_LEADER_SINCE_YEAR,
   FOUNDER_SINCE_YEAR,
   SITE_METRICS,
@@ -511,7 +514,7 @@ export function AboutContent({
               </p>
               <h2 className="text-xl font-bold text-foreground md:text-2xl">Licensed, registered and a TAAN member</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Company reg. no. 329488/080/081 · TAAN member ID 2540
+                Company reg. no. {COMPANY_REGISTRATION_NO} · License no. {COMPANY_LICENSE_NO} · TAAN member ID {COMPANY_TAAN_MEMBER_ID}
               </p>
               <Link
                 href="/company/registrations-affiliations"
