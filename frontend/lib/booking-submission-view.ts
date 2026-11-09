@@ -35,6 +35,8 @@ export function buildSubmissionSections(formData: Record<string, unknown> | unde
     title: section.title,
     rows: section.fields.flatMap((field) => {
       shown.add(field.id)
+      // A tick box missing from older answers was never asked, so it isn't a "No".
+      if (field.type === 'checkbox' && !(field.id in data)) return []
       const value = asText(field.type === 'checkbox' ? data[field.id] === true : data[field.id])
       return value ? [{ label: field.label, value }] : []
     }),

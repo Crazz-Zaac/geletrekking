@@ -15,6 +15,8 @@ export interface UiBlogPost {
   date: string
   readTime: string
   content: string
+  views: number
+  likes: number
 }
 export interface AdminUser {
   email: string
@@ -155,6 +157,8 @@ export interface AdminBlog {
   hashtags?: string[]
   isPublished: boolean
   createdAt?: string
+  views?: number
+  likes?: number
 }
 export interface AdminGalleryItem {
   _id: string
@@ -207,6 +211,7 @@ export interface AdminBookingSubmission {
   updatedAt?: string
   pdfFilename?: string
   pdfPurgedAt?: string | null
+  formDataPurgedAt?: string | null
 }
 export interface AdminNotificationItem {
   id: string
@@ -621,6 +626,8 @@ interface BackendBlogPost {
   author?: string
   hashtags?: string[]
   createdAt?: string
+  views?: number
+  likes?: number
 }
 const getApiBaseUrl = () => {
   const isServer = typeof window === 'undefined'
@@ -876,6 +883,8 @@ function mapBlog(post: BackendBlogPost): UiBlogPost {
     date: formatDate(post.createdAt),
     readTime: estimateReadTime(post.content || ''),
     content: post.content || '',
+    views: post.views || 0,
+    likes: post.likes || 0,
   }
 }
 export async function getTreks(): Promise<Trek[]> {
@@ -904,6 +913,16 @@ export async function getBlogs(): Promise<UiBlogPost[]> {
     return []
   }
 }
+export type BlogCounts = { views: number; likes: number }
+
+export function recordBlogView(slug: string): Promise<BlogCounts> {
+  return fetchJson<BlogCounts>(`/api/blogs/${encodeURIComponent(slug)}/view`, { method: 'POST', body: '{}' })
+}
+
+export function setBlogLike(slug: string, liked: boolean): Promise<BlogCounts> {
+  return fetchJson<BlogCounts>(`/api/blogs/${encodeURIComponent(slug)}/like`, { method: 'POST', body: JSON.stringify({ liked }) })
+}
+
 export async function getBlogBySlug(slug: string): Promise<UiBlogPost | null> {
   try {
     const data = await fetchJson<BackendBlogPost>(`/api/blogs/${encodeURIComponent(slug)}`)

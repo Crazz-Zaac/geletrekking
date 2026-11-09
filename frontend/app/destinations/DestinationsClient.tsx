@@ -476,7 +476,7 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
             ) : null}
 
             {isLoadingTreks ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(17.5rem,21rem))] justify-center gap-5">
                 {Array.from({ length: 6 }).map((_, idx) => (
                   <div key={idx} className="rounded-2xl border border-border p-4 space-y-3">
                     <Skeleton className="h-48 w-full rounded-xl" />
@@ -497,7 +497,7 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
 
                 <div>
                   <h4 className="text-base font-semibold text-foreground mb-4">Suggested Treks</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(17.5rem,21rem))] justify-center gap-5">
                     {suggestedTreks.map((trek) => (
                       <TrekCard
                         key={trek.id}
@@ -516,7 +516,7 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                className="grid grid-cols-[repeat(auto-fill,minmax(17.5rem,21rem))] justify-center gap-5"
               >
                 {sortedTreks.map((trek) => {
                   const card = (

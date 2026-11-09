@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { Card } from "@/components/ui/card";
 import { PreBookingForm } from "@/components/pre-booking-form";
 import { getAdminSettings, getTreks } from "@/lib/api";
 import { CalendarDays, Mail, MapPinned, Users } from "lucide-react";
@@ -37,73 +36,30 @@ export default async function BookPage() {
 
         <section className="py-10 md:py-14">
           <div className="container mx-auto px-4 md:px-6">
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
-              <Card className="lg:col-span-3 border-border p-5 md:p-8 shadow-sm">
-                <div className="mb-6">
-                  <p className="text-sm md:text-base text-muted-foreground">
-                    Tell us about your trip so we can check your dates and prepare the next steps. It takes about 10 minutes, and your passport details will be needed.
-                  </p>
-                </div>
+            <div className="mx-auto grid max-w-6xl grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-14">
+              <div className="sm:rounded-2xl sm:border sm:border-border sm:bg-card sm:p-8 sm:shadow-sm">
+                <p className="mb-6 text-sm text-muted-foreground md:text-base">
+                  Tell us about your trip so we can check your dates and prepare the next steps. It takes about 10 minutes. Passport details are optional here, as we only need them once your booking is confirmed.
+                </p>
                 <PreBookingForm treks={treks} requireTrek />
-              </Card>
-
-              <div className="lg:col-span-2 space-y-4">
-                <Card className="border-border p-5">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <MapPinned className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Not sure which trek?</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Choose &quot;Custom trek route / not sure yet&quot; and we&apos;ll help you decide.
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="border-border p-5">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <CalendarDays className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Flexible dates are welcome</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        If your dates are approximate, pick your best estimate and tell us under Additional Information.
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="border-border p-5">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <Users className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Groups and private trips</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Choose Group or Private in the form, and tell us your group size under Additional Information.
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="border-border p-5">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <Mail className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Reply within 24 hours</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        We send the response to the email address you provide in the form.
-                      </p>
-                    </div>
-                  </div>
-                </Card>
               </div>
+
+              <aside aria-label="Good to know" className="space-y-6">
+                {[
+                  { icon: MapPinned, title: "Not sure which trek?", text: "Choose \"Custom trek route / not sure yet\" and we'll help you decide." },
+                  { icon: CalendarDays, title: "Flexible dates are welcome", text: "If your dates are approximate, pick your best estimate and tell us under Additional Information." },
+                  { icon: Users, title: "Groups and private trips", text: "Choose Group or Private in the form, and tell us your group size under Additional Information." },
+                  { icon: Mail, title: "Reply within 24 hours", text: "We send the response to the email address you provide in the form." },
+                ].map(({ icon: Icon, title, text }) => (
+                  <div key={title} className="flex items-start gap-3">
+                    <Icon className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+                      <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{text}</p>
+                    </div>
+                  </div>
+                ))}
+              </aside>
             </div>
           </div>
         </section>

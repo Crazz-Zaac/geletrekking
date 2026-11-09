@@ -20,6 +20,8 @@ const bookingSubmissionSchema = new mongoose.Schema(
     },
     isRead: { type: Boolean, default: false },
     // Post-trek Google review request (see utils/reviewRequests.js).
+    // When the retention job removed this guest's form answers (see utils/bookingPdfRetention.js).
+    formDataPurgedAt: { type: Date, default: null },
     reviewRequestStatus: { type: String, enum: ["pending", "sent", "skipped", "failed"], default: "pending" },
     reviewRequestSentAt: { type: Date, default: null },
     reviewRequestError: { type: String, default: "" },

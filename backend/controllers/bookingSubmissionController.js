@@ -161,6 +161,7 @@ const listSummary = (submission) => ({
   updatedAt: submission.updatedAt,
   pdfFilename: submission.pdf?.filename,
   pdfPurgedAt: submission.pdf?.purgedAt || null,
+  formDataPurgedAt: submission.formDataPurgedAt || null,
 });
 
 exports.createBookingFormLink = async (req, res) => {

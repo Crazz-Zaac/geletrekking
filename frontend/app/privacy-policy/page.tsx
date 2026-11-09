@@ -36,63 +36,63 @@ const getPolicySections = (contactEmail: string) => [
     id: 'who-we-are',
     title: '1) Who We Are (Data Controller)',
     content:
-      `Gele Trekking is the data controller for personal data submitted through our website inquiry forms. If you have privacy questions, contact us at ${contactEmail}.`,
+      `Gele Trekking is the data controller for personal data submitted through this website. If you have privacy questions, contact us at ${contactEmail}.`,
     icon: ShieldCheck,
   },
   {
     id: 'scope',
     title: '2) Scope of This Policy',
     content:
-      'This policy applies to data submitted through the Booking Inquiry Form and Contact Form on our website. These forms are used only to receive and respond to trek-related inquiries.',
+      'This policy applies to data submitted through our Contact Form, Booking Inquiry Form, public Pre-booking Form, and the private Booking Form we send you once your trek is confirmed.',
     icon: Scale,
   },
   {
     id: 'what-we-collect',
     title: '3) Personal Data We Collect',
     content:
-      'From inquiry forms, we collect only: Name, Email address, and Message content. We do not request payment data or sensitive personal health data through these forms.',
+      'Contact and inquiry forms: name, email address, phone number if you give one, and your message and trek preferences. Pre-booking Form: your name, contact details, date of birth, gender, nationality, trek and flight details, and optionally your passport number and expiry date. Private Booking Form, used only after confirmation: passport and travel details, health and fitness information including medical conditions and medications, travel insurance details, emergency contact, preferences and your typed signature. We do not ask for card numbers through these forms.',
     icon: UserRound,
   },
   {
     id: 'how-we-use',
     title: '4) Purpose and Legal Basis (GDPR)',
     content:
-      'We process inquiry data solely to reply to your request and provide pre-booking information. GDPR legal bases: Article 6(1)(b) (steps at your request before a contract) and Article 6(1)(f) (legitimate interest in customer communication).',
+      'We use inquiry data to reply to you, and booking data to arrange your trek, obtain permits, and keep you safe in the mountains. GDPR legal bases: Article 6(1)(b) (steps at your request before a contract, and performing that contract) and Article 6(1)(f) (legitimate interest in customer communication). Health information is processed on the basis of your explicit consent under Article 9(2)(a), given by ticking the health consent box on the Private Booking Form. You can withdraw it at any time by contacting us, although we may then be unable to operate your trek safely.',
     icon: Database,
   },
   {
     id: 'storage',
-    title: '5) Storage and Marketing Statement',
+    title: '5) Where Your Data Is Stored',
     content:
-      'We do not store inquiry form submissions in our website database for profiling or marketing. Form submissions are delivered to our Gmail inbox so we can respond. We do not use these submissions for newsletters, promotional campaigns, or third-party marketing lists.',
+      'Form submissions are stored on our server in Germany. Booking Form and Pre-booking Form submissions stay on that server: their answers are not sent by email and are not included in our backups. Contact and inquiry messages are also delivered to our staff email inbox so we can reply. We send you a short confirmation email that does not repeat what you submitted. When you submit a booking form, a PDF copy is saved to your own device. We do not use any of this data for marketing or share it for third-party marketing.',
     icon: Lock,
   },
   {
     id: 'retention',
     title: '6) Retention',
     content:
-      'Inquiry emails are kept only as long as reasonably necessary to handle your request, provide follow-up clarification, and maintain basic business records. We regularly review and remove inquiry emails that are no longer needed.',
+      'Booking form answers and the PDF of your form are deleted automatically 12 months after your trek ends, or 18 months after you submitted them if there is no trek end date. After that we keep only your name, contact details, trek and dates as a basic business record. You can ask us to delete your booking data earlier at any time, unless we still need it to operate your trek or meet a legal obligation. Inquiry messages are kept only as long as reasonably necessary and are reviewed regularly.',
     icon: CalendarDays,
   },
   {
     id: 'processors-transfers',
-    title: '7) Processors and International Transfers',
+    title: '7) Backups, Processors and International Transfers',
     content:
-      'We use service providers (such as email hosting and website infrastructure providers) to operate our services. Where data is processed outside the EEA/UK, we rely on appropriate safeguards under GDPR, such as contractual safeguards provided by those services.',
+      'Encrypted backups of our website content and inquiry messages are stored in Google Drive and kept for up to 12 months. Backups made before 9 November 2026 may still contain booking form data until they expire, no later than November 2027. We use service providers for email, website hosting and spam protection. Our team is based in Nepal and accesses your data from there in order to arrange your trek. Where data is processed outside the EEA/UK, we rely on appropriate safeguards under GDPR or, where applicable, on the necessity of the transfer to perform your booking.',
     icon: Globe,
   },
   {
     id: 'cookies',
     title: 'Cookies, Local Storage & External Content',
     content:
-      'Strictly necessary storage is always on: it protects forms against spam and bots (Cloudflare), keeps administrators signed in, remembers dismissed notices and stores your cookie choice. We do not use advertising or analytics cookies. Optional third-party content (Google Maps on the Contact page and YouTube videos in blog posts) stays off until you allow Maps & videos; these providers may then receive your IP address and set their own cookies, and their own privacy policies apply. The Google reviews on our homepage are fetched and stored by our own server (via Featurable) and shown as part of our page, including reviewer photos, so your browser does not contact Google or Featurable to display them. You can accept all, reject all, or customise your choice in the cookie banner, and change your choice at any time through Cookie settings at the bottom of every page. Your choice is stored in this browser for up to 6 months, after which we ask again. Withdrawing permission reloads the page to remove content that was already loaded. Links to WhatsApp, Cal.com, Google and Trustpilot open those services only when you choose to visit them. If you request our free packing list, we store your email address (and first name, if given) to provide it; we send you trek tips and offers only if you tick the separate opt-in box, and you can ask us at any time to delete your details.',
+      'Strictly necessary storage is always on: it protects forms against spam and bots (Cloudflare), keeps administrators signed in, remembers dismissed notices and blog posts you have liked, and stores your cookie choice. We do not use advertising or analytics cookies. Optional third-party content (Google Maps on the Contact page and YouTube videos in blog posts) stays off until you allow Maps & videos; these providers may then receive your IP address and set their own cookies, and their own privacy policies apply. The Google reviews on our homepage are fetched and stored by our own server (via Featurable) and shown as part of our page, including reviewer photos, so your browser does not contact Google or Featurable to display them. You can accept all, reject all, or customise your choice in the cookie banner, and change your choice at any time through Cookie settings at the bottom of every page. Your choice is stored in this browser for up to 6 months, after which we ask again. Withdrawing permission reloads the page to remove content that was already loaded. Links to WhatsApp, Cal.com, Google and Trustpilot open those services only when you choose to visit them. If you request our free packing list, we store your email address (and first name, if given) to provide it; we send you trek tips and offers only if you tick the separate opt-in box, and you can ask us at any time to delete your details.',
     icon: Lock,
   },
   {
     id: 'security',
     title: '8) Security Measures',
     content:
-      'We apply reasonable technical and organizational measures to protect inquiry data, including transport security, access controls, and anti-abuse protections (e.g., captcha and rate-limiting) on forms.',
+      'We apply reasonable technical and organizational measures to protect your data, including transport security, access controls, and anti-abuse protections (e.g., captcha and rate-limiting) on forms.',
     icon: ShieldCheck,
   },
   {
@@ -130,17 +130,17 @@ export default function PrivacyPolicyPage() {
                 Privacy Policy (GDPR)
               </motion.h1>
               <motion.p variants={itemVariants} className="text-muted-foreground max-w-3xl">
-                This policy explains how Gele Trekking handles personal data submitted through our inquiry forms, in line with EU GDPR principles of lawfulness, transparency, and data minimization.
+                This policy explains how Gele Trekking handles personal data submitted through our website forms, in line with EU GDPR principles of lawfulness, transparency, and data minimization.
               </motion.p>
 
               <motion.div variants={itemVariants} className="pt-2 flex flex-wrap items-center gap-2.5 text-sm">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-muted-foreground">
                   <CalendarDays className="h-4 w-4" />
-                  Effective April 2026
+                  Effective November 2026
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-muted-foreground">
                   <Scale className="h-4 w-4" />
-                  GDPR-aligned inquiry handling
+                  GDPR-aligned data handling
                 </span>
               </motion.div>
             </motion.div>
@@ -213,10 +213,10 @@ export default function PrivacyPolicyPage() {
                   <Card className="border-border bg-primary/10 p-6 md:p-7">
                     <h3 className="text-lg font-semibold text-foreground">Summary</h3>
                     <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                      <li>• Inquiry forms are only for receiving and answering user inquiries.</li>
-                      <li>• We collect only name, email, and message from these forms.</li>
-                      <li>• Data is received in Gmail for response handling.</li>
-                      <li>• We do not use inquiry data for marketing purposes.</li>
+                      <li>• Your data is stored on our server in Germany and is never used for marketing.</li>
+                      <li>• Passport and health details are requested only once your trek is confirmed.</li>
+                      <li>• Booking form answers are deleted 12 months after your trek and are not in our backups.</li>
+                      <li>• You can ask us to delete your data earlier at any time.</li>
                     </ul>
                     <div className="mt-5 flex flex-wrap gap-3">
                       <a

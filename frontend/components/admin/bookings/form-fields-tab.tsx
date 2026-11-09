@@ -20,7 +20,7 @@ const FIELD_TYPES: Array<{ value: BookingFieldType; label: string }> = [
   { value: 'select', label: 'Choice list' },
   { value: 'checkbox', label: 'Tick box' },
 ]
-const LOCKED_IDS = new Set(['firstName', 'lastName', 'email', 'trekPackage', 'agreeTerms', 'acceptLiabilityWaiver', 'signatureName', 'signatureDate'])
+const LOCKED_IDS = new Set(['firstName', 'lastName', 'email', 'trekPackage', 'agreeTerms', 'acceptLiabilityWaiver', 'healthDataConsent', 'signatureName', 'signatureDate'])
 /** Built-in answers are matched by id elsewhere, so renaming the label must not change it. */
 const BUILT_IN_IDS = new Set(defaultBookingFormConfig.flatMap((section) => section.fields.map((field) => field.id)))
 

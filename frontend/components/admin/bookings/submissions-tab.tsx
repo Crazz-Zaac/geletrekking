@@ -103,8 +103,14 @@ function SubmissionDetail({
 
       <ReviewRequestPanel token={token} bookingId={item._id} email={item.email} />
 
+      {item.formDataPurgedAt ? (
+        <p className="rounded-md border border-dashed border-border px-3 py-2 text-sm text-muted-foreground">
+          Form answers were removed on {formatBookingDate(item.formDataPurgedAt)} under the data retention policy.
+        </p>
+      ) : null}
+
       <div className="space-y-5">
-        {sections.map((section) => (
+        {!item.formDataPurgedAt && sections.map((section) => (
           <section key={section.title}>
             <h3 className="border-b border-border pb-1.5 text-sm font-semibold text-foreground">{section.title}</h3>
             <dl className="mt-2.5 grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2">

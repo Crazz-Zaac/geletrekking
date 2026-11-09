@@ -27,6 +27,23 @@ export type BookingFormState = Record<string, string | boolean>
 
 export const today = new Date().toISOString().slice(0, 10)
 
+const HEALTH_CONSENT_FIELD: BookingFormFieldConfig = { id: 'healthDataConsent', label: 'Health information consent', type: 'checkbox', required: true, locked: true }
+const HEALTH_FIELD_IDS = new Set(['medicalConditions', 'currentMedications', 'highAltitudeExperience', 'fitnessLevel', 'foodPreferenceAllergies'])
+
+/** Forms saved or sent before this consent existed still ask about health, so they need it too. */
+const withHealthConsent = (config: BookingFormConfig): BookingFormConfig => {
+  const fields = config.flatMap((section) => section.fields)
+  if (fields.some((field) => field.id === HEALTH_CONSENT_FIELD.id) || !fields.some((field) => HEALTH_FIELD_IDS.has(field.id))) return config
+  const home = config.findIndex((section) => section.fields.some((field) => field.id === 'acceptLiabilityWaiver'))
+  const sectionIndex = home >= 0 ? home : config.length - 1
+  return config.map((section, index) => {
+    if (index !== sectionIndex) return section
+    const after = section.fields.findIndex((field) => field.id === 'acceptLiabilityWaiver')
+    const insertAt = after >= 0 ? after + 1 : section.fields.length
+    return { ...section, fields: [...section.fields.slice(0, insertAt), HEALTH_CONSENT_FIELD, ...section.fields.slice(insertAt)] }
+  })
+}
+
 export const defaultBookingFormConfig: BookingFormConfig = [
   {
     id: 'personal',
@@ -117,6 +134,7 @@ export const defaultBookingFormConfig: BookingFormConfig = [
     fields: [
       { id: 'agreeTerms', label: 'Terms and Conditions accepted', type: 'checkbox', required: true, locked: true },
       { id: 'acceptLiabilityWaiver', label: 'Liability waiver accepted', type: 'checkbox', required: true, locked: true },
+      HEALTH_CONSENT_FIELD,
       { id: 'photoMarketingConsent', label: 'Photo marketing consent', type: 'checkbox' },
       { id: 'signatureName', label: 'Typed signature', type: 'text', required: true, locked: true },
       { id: 'signatureDate', label: 'Signature date', type: 'date', required: true, locked: true },
@@ -136,8 +154,9 @@ export const preBookingFormConfig: BookingFormConfig = [
       { id: 'nationality', label: 'Nationality', type: 'text', required: true },
       { id: 'phoneNumber', label: 'Phone Number (country code)', type: 'tel', required: true, placeholder: '+977 ...' },
       { id: 'email', label: 'Email', type: 'email', required: true, placeholder: 'you@example.com' },
-      { id: 'passportNumber', label: 'Passport Number', type: 'text', required: true },
-      { id: 'passportExpiryDate', label: 'Passport Expiry Date', type: 'date', required: true },
+      // Only needed once a booking is confirmed; the private form asks for them then.
+      { id: 'passportNumber', label: 'Passport Number', type: 'text' },
+      { id: 'passportExpiryDate', label: 'Passport Expiry Date', type: 'date' },
     ],
   },
   {
@@ -185,7 +204,7 @@ export const preBookingFormConfig: BookingFormConfig = [
         id: 'additionalInformation',
         label: 'Is there any additional information that you would like to share with Gele Trekking to help us ensure that your particular needs are cared for?',
         type: 'textarea',
-        placeholder: 'For example, dietary requirements, allergies, etc. If so, please explain here.',
+        placeholder: 'For example, dietary preferences or anything else we should know. Please leave out medical details; we ask for those once your booking is confirmed.',
       },
     ],
   },
@@ -268,7 +287,7 @@ export const normalizeBookingFormConfig = (value: unknown): BookingFormConfig =>
     })
     .filter(Boolean) as BookingFormConfig
 
-  return sections.length > 0 ? sections : defaultBookingFormConfig
+  return sections.length > 0 ? withHealthConsent(sections) : defaultBookingFormConfig
 }
 
 export const createEmptyBookingFormState = (config: BookingFormConfig = defaultBookingFormConfig, trek?: Trek): BookingFormState => {

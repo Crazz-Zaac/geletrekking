@@ -23,10 +23,10 @@ export default async function PrivateBookingPage({ params }: PrivateBookingPageP
   const [treks, settings] = await Promise.all([getTreks(), getAdminSettings().catch(() => null)])
 
   return (
-    <main className="min-h-screen bg-muted/30 py-8 md:py-12">
-      <div className="mx-auto w-full max-w-4xl px-4 md:px-6">
-        <div className="rounded-lg border border-border bg-background p-5 md:p-8 shadow-sm">
-          <div className="mb-6 flex items-start gap-4">
+    <main className="min-h-screen bg-background py-6 sm:bg-muted/30 md:py-12">
+      <div className="mx-auto w-full max-w-3xl px-4 md:px-6">
+        <div className="sm:rounded-2xl sm:border sm:border-border sm:bg-background sm:p-8 sm:shadow-sm">
+          <div className="mb-8 flex items-start gap-4">
             <Image src={settings?.logoUrl || '/geletrekking.png'} alt="Gele Trekking" width={56} height={56} className="h-14 w-14 shrink-0 rounded-lg border border-border object-cover" />
             <div>
               <h1 className="text-2xl font-bold text-foreground md:text-3xl">Your booking form</h1>

@@ -7,13 +7,15 @@ import { Footer } from '@/components/footer';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, CalendarDays, ChevronLeft, Clock3, Link as LinkIcon, Mail, MapPin, Tag, UserRound } from 'lucide-react';
+import { ArrowRight, CalendarDays, ChevronLeft, Clock3, Eye, Heart, Link as LinkIcon, Mail, Tag, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEffect, useMemo, useState } from 'react';
 import type { UiBlogPost } from '@/lib/api';
 import { marked } from 'marked';
 import { sanitizeHtml } from '@/lib/sanitize-html'
 import { PackingListCta } from '@/components/packing-list-cta'
+import { useBlogEngagement } from '@/hooks/use-blog-engagement'
+import { cn } from '@/lib/utils'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -27,6 +29,27 @@ const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
+
+const compactCount = (value: number) => new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
+
+function LikeButton({ liked, likes, onToggle }: { liked: boolean; likes: number; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={liked}
+      aria-label={liked ? 'Remove your like' : 'Like this story'}
+      className={cn(
+        'inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        liked ? 'border-red-200 bg-red-50 text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400' : 'border-border bg-background text-foreground hover:bg-muted'
+      )}
+    >
+      <Heart className={cn('h-4 w-4', liked && 'fill-current')} aria-hidden="true" />
+      {liked ? 'Liked' : 'Like'}
+      {likes > 0 ? <span className="tabular-nums">{compactCount(likes)}</span> : null}
+    </button>
+  );
+}
 
 type ShareIconProps = { className?: string };
 
@@ -159,6 +182,7 @@ function renderBlogMarkdown(content: string, allowExternalMedia: boolean) {
 export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) {
   const { externalMedia } = useCookieConsent();
   const renderedContent = useMemo(() => sanitizeHtml(marked.parse(renderBlogMarkdown(post.content || '', externalMedia), { async: false }) as string), [post.content, externalMedia]);
+  const { views, likes, liked, toggleLike } = useBlogEngagement(post);
   const [shareUrl, setShareUrl] = useState('');
   const [showCopiedToast, setShowCopiedToast] = useState(false);
 
@@ -274,6 +298,12 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
                   <Clock3 className="h-4 w-4" />
                   {post.readTime} read
                 </span>
+                {views > 0 ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Eye className="h-4 w-4" aria-hidden="true" />
+                    {compactCount(views)} {views === 1 ? 'view' : 'views'}
+                  </span>
+                ) : null}
               </motion.div>
             </motion.div>
           </div>
@@ -285,10 +315,7 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
               <ChevronLeft className="h-4 w-4" />
               Back to Blog
             </Link>
-            <span className="inline-flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-primary" />
-              Nepal trekking insight
-            </span>
+            <LikeButton liked={liked} likes={likes} onToggle={toggleLike} />
           </div>
         </section>
 
@@ -322,6 +349,10 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
                   </div>
                 </div>
               ) : null}
+              <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6">
+                <p className="font-semibold text-foreground">Enjoyed this story?</p>
+                <LikeButton liked={liked} likes={likes} onToggle={toggleLike} />
+              </div>
             </motion.article>
 
             <motion.aside variants={itemVariants} className="space-y-6 lg:sticky lg:top-24 lg:h-fit">
@@ -340,6 +371,12 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
                     <Clock3 className="h-4 w-4 text-primary" />
                     <span>{post.readTime} read</span>
                   </div>
+                  {views > 0 ? (
+                    <div className="flex items-center gap-3">
+                      <Eye className="h-4 w-4 text-primary" aria-hidden="true" />
+                      <span>{compactCount(views)} {views === 1 ? 'view' : 'views'}</span>
+                    </div>
+                  ) : null}
                 </div>
               </div>
 

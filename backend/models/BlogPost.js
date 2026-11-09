@@ -21,6 +21,8 @@ const blogPostSchema = new mongoose.Schema(
     author: { type: String, trim: true },
     hashtags: [{ type: String, trim: true }],
     isPublished: { type: Boolean, default: false },
+    views: { type: Number, default: 0, min: 0 },
+    likes: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );

@@ -12,6 +12,14 @@ const apiLimiter = rateLimit({
   message: { message: "Too many requests. Please try again later." },
 });
 
+const blogEngagementLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many requests. Please try again later." },
+});
+
 const contactLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 5,
@@ -41,6 +49,7 @@ const authLoginLimiter = rateLimit({
 });
 
 module.exports = {
+  blogEngagementLimiter,
   apiLimiter,
   contactLimiter,
   contactSlowDown,

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, CircleAlert, Download, Info, Loader2, Send } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronDown, CircleAlert, Download, Info, Loader2, Send } from 'lucide-react'
 import type { BookingFormConfig, BookingFormFieldConfig, BookingFormState } from '@/lib/booking-form-config'
 import {
   autocompleteFor,
@@ -17,7 +17,6 @@ import {
 } from '@/lib/booking-form-validation'
 import { TurnstileWidget } from '@/components/turnstile-widget'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
 export type BookingSubmitResult = { ok: true } | { ok: false; message: string }
@@ -38,9 +37,9 @@ type BookingWizardProps = {
 }
 
 const fieldInput =
-  'w-full rounded-md border border-input bg-background text-base text-foreground shadow-xs transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring sm:text-sm'
-const invalidInput = 'border-red-500 focus:ring-red-200'
-const buttonBase = 'inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
+  'w-full rounded-lg border border-input bg-background text-base text-foreground transition-[border-color,box-shadow] placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-[3px] focus:ring-primary/15 sm:text-sm'
+const invalidInput = 'border-red-500 focus:border-red-500 focus:ring-red-500/15'
+const buttonBase = 'inline-flex h-12 items-center justify-center gap-2 rounded-lg px-6 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
 
 const HEADER_CLEARANCE = 80
 
@@ -221,7 +220,7 @@ export function BookingWizard({
     const notice = problem ? null : getFieldNotice(field, form)
     const messageId = problem || notice ? `${id}-message` : undefined
     const value = String(form[field.id] ?? '')
-    const inputClass = cn(fieldInput, 'h-11 px-3', problem && invalidInput)
+    const inputClass = cn(fieldInput, 'h-12 px-3.5', problem && invalidInput)
     const shared = {
       id,
       'aria-invalid': problem ? true : undefined,
@@ -257,6 +256,14 @@ export function BookingWizard({
             </Link>
             .
           </>
+        ) : field.id === 'healthDataConsent' ? (
+          <>
+            I consent to Gele Trekking using the health information in this form, including medical conditions, medications, fitness and allergies, to plan my trek and keep me safe, as described in the{' '}
+            <Link href="/privacy-policy" className="text-primary underline underline-offset-2" target="_blank">
+              Privacy Policy
+            </Link>
+            .
+          </>
         ) : field.id === 'photoMarketingConsent' ? (
           'I consent to my photos being used for marketing. (Optional)'
         ) : (
@@ -264,8 +271,8 @@ export function BookingWizard({
         )
       return (
         <div data-field={field.id} className="space-y-1.5 sm:col-span-2">
-          <label htmlFor={id} className={cn('flex cursor-pointer items-start gap-3 rounded-md border bg-background p-4 text-sm', problem ? 'border-red-500' : 'border-border')}>
-            <Checkbox {...shared} onBlur={undefined} className="mt-0.5" checked={form[field.id] === true} onCheckedChange={(checked) => change(field.id, checked === true)} />
+          <label htmlFor={id} className="flex cursor-pointer items-start gap-3 text-sm leading-relaxed">
+            <Checkbox {...shared} onBlur={undefined} className={cn('mt-0.5', problem && 'border-red-500')} checked={form[field.id] === true} onCheckedChange={(checked) => change(field.id, checked === true)} />
             <span>{label}</span>
           </label>
           {message}
@@ -307,7 +314,7 @@ export function BookingWizard({
 
     if (field.type === 'textarea') {
       return shell(
-        <textarea {...shared} value={value} onChange={(event) => change(field.id, event.target.value)} placeholder={field.placeholder} rows={3} className={cn(fieldInput, 'min-h-24 resize-y px-3 py-2.5', problem && invalidInput)} />
+        <textarea {...shared} value={value} onChange={(event) => change(field.id, event.target.value)} placeholder={field.placeholder} rows={3} className={cn(fieldInput, 'min-h-28 resize-y px-3.5 py-3', problem && invalidInput)} />
       )
     }
 
@@ -319,7 +326,7 @@ export function BookingWizard({
               <input type="radio" name={id} value={option} checked={value === option} onChange={() => change(field.id, option)} className="peer sr-only" />
               <span
                 className={cn(
-                  'flex h-11 items-center rounded-md border bg-background px-4 text-sm font-medium transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring',
+                  'flex h-12 items-center rounded-lg border bg-background px-5 text-sm font-medium transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring',
                   problem ? 'border-red-500' : 'border-input hover:bg-muted/60'
                 )}
               >
@@ -369,74 +376,66 @@ export function BookingWizard({
     })
 
   return (
-    <form ref={rootRef} onSubmit={submit} noValidate className="scroll-mt-20 space-y-5">
+    <form ref={rootRef} onSubmit={submit} noValidate className="scroll-mt-24 space-y-6">
       {restored && (
-        <p role="status" className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+        <p role="status" className="text-sm text-muted-foreground">
           We kept the answers you already entered in this tab.
         </p>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-border bg-background">
-        <div className="space-y-3 border-b border-border bg-muted/20 p-4">
-          <div className="flex items-end justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-muted-foreground">
-                Step {step + 1} of {sections.length}
-              </p>
-              <h2 ref={headingRef} tabIndex={-1} className="mt-0.5 text-xl font-bold text-foreground outline-none">
-                {activeSection.title}
-              </h2>
-            </div>
-            <span className="shrink-0 text-sm font-semibold text-muted-foreground">{progress}%</span>
-          </div>
-          <Progress value={progress} aria-label="Form progress" />
-          <ol className="flex flex-wrap gap-1.5">
-            {sections.map((section, index) => {
-              const hasProblems = problemsIn([section]).length > 0
-              const flaggedHere = section.fields.some((field) => flagged.has(field.id) && isFieldVisible(field) && getFieldProblem(field, form) !== null)
-              const done = visited.has(index) && !hasProblems && index !== step
-              return (
-                <li key={section.id}>
-                  <button
-                    type="button"
-                    onClick={() => goTo(index)}
-                    title={section.title}
-                    aria-label={`Step ${index + 1}: ${section.title}${done ? ', complete' : flaggedHere ? ', needs attention' : ''}`}
-                    aria-current={index === step ? 'step' : undefined}
-                    className={cn(
-                      'flex h-9 w-9 items-center justify-center rounded-full border text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                      index === step
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : flaggedHere
-                          ? 'border-red-500 bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400'
-                          : done
-                            ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-                            : 'border-border bg-background text-muted-foreground hover:bg-muted'
-                    )}
-                  >
-                    {done ? <Check className="h-4 w-4" aria-hidden="true" /> : index + 1}
-                  </button>
-                </li>
-              )
-            })}
-          </ol>
+      <header>
+        <div className="flex items-baseline justify-between gap-3 text-xs font-medium text-muted-foreground">
+          <p>
+            Step {step + 1} of {sections.length}
+          </p>
+          <p>{progress}% complete</p>
         </div>
+        <ol className="mt-1 flex gap-1">
+          {sections.map((section, index) => {
+            const hasProblems = problemsIn([section]).length > 0
+            const flaggedHere = section.fields.some((field) => flagged.has(field.id) && isFieldVisible(field) && getFieldProblem(field, form) !== null)
+            const done = visited.has(index) && !hasProblems && index !== step
+            return (
+              <li key={section.id} className="flex-1">
+                <button
+                  type="button"
+                  onClick={() => goTo(index)}
+                  title={section.title}
+                  aria-label={`Step ${index + 1}: ${section.title}${done ? ', complete' : flaggedHere ? ', needs attention' : ''}`}
+                  aria-current={index === step ? 'step' : undefined}
+                  className="block w-full rounded-sm py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span
+                    className={cn(
+                      'block h-1.5 rounded-full transition-colors',
+                      index === step ? 'bg-primary' : flaggedHere ? 'bg-red-500' : done ? 'bg-primary/45' : 'bg-border hover:bg-muted-foreground/40'
+                    )}
+                  />
+                </button>
+              </li>
+            )
+          })}
+        </ol>
+        <h2 ref={headingRef} tabIndex={-1} className="mt-2 text-2xl font-bold tracking-tight text-foreground outline-none">
+          {activeSection.title}
+        </h2>
+      </header>
 
-        <div className="space-y-4 p-4">
+      <div className="space-y-6">
           {banner && (
-            <p role="alert" className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
+            <p role="alert" className="flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2.5 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">
               <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               {banner}
             </p>
           )}
 
           {isLastStep && sections.length > 1 && (
-            <details className="group rounded-md border border-border">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3 text-sm font-semibold text-foreground">
+            <details className="group border-y border-border">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 py-3.5 text-sm font-semibold text-foreground">
                 Review your answers
                 <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
               </summary>
-              <div className="space-y-4 border-t border-border p-3">
+              <div className="space-y-5 pb-5 pt-1">
                 {sections.slice(0, -1).map((section) => {
                   const rows = answeredRows(section)
                   return (
@@ -466,7 +465,7 @@ export function BookingWizard({
             </details>
           )}
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
             {activeSection.fields.map((field) => (
               <div key={field.id} className="contents">
                 {renderField(field)}
@@ -491,14 +490,13 @@ export function BookingWizard({
               </div>
             )}
           </div>
-        </div>
       </div>
 
       <input type="text" name="website" value={honeypot} onChange={(event) => setHoneypot(event.target.value)} autoComplete="off" tabIndex={-1} className="hidden" aria-hidden="true" />
 
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
         {step > 0 ? (
-          <button type="button" onClick={() => goTo(step - 1)} disabled={submitting} className={cn(buttonBase, 'border border-input hover:bg-muted/60')}>
+          <button type="button" onClick={() => goTo(step - 1)} disabled={submitting} className={cn(buttonBase, 'text-muted-foreground hover:bg-muted/60 hover:text-foreground')}>
             <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
           </button>
         ) : (

@@ -74,6 +74,39 @@ test('pre-bookings and custom link fields keep their labels', () => {
   assert.deepEqual(buildSubmissionSections({ shoeSize: '42' }).find((s) => s.title === 'Other answers').rows, [{ label: 'Shoe Size', value: '42' }])
 })
 
+test('passport details are optional on the public form but not the private one', () => {
+  const { preBookingFormConfig, defaultBookingFormConfig } = load('lib/booking-form-config.ts')
+  const field = (config, id) => config.flatMap((section) => section.fields).find((item) => item.id === id)
+  for (const id of ['passportNumber', 'passportExpiryDate']) {
+    assert.equal(check(field(preBookingFormConfig, id), {}), null)
+    assert.match(check(field(defaultBookingFormConfig, id), {}), /required/)
+  }
+})
+
+test('health consent is required, and reaches forms made before it existed', () => {
+  const { defaultBookingFormConfig, normalizeBookingFormConfig, preBookingFormConfig } = load('lib/booking-form-config.ts')
+  const ids = (config) => config.flatMap((section) => section.fields).map((field) => field.id)
+  const consent = defaultBookingFormConfig.flatMap((section) => section.fields).find((field) => field.id === 'healthDataConsent')
+  assert.match(check(consent, { healthDataConsent: false }), /tick/)
+  assert.equal(check(consent, { healthDataConsent: true }), null)
+
+  const old = [
+    { id: 'health', title: 'Health', fields: [{ id: 'medicalConditions', label: 'Medical', type: 'textarea' }] },
+    { id: 'consent', title: 'Consent', fields: [{ id: 'acceptLiabilityWaiver', label: 'Waiver', type: 'checkbox' }, { id: 'signatureName', label: 'Sign', type: 'text' }] },
+  ]
+  assert.deepEqual(ids(normalizeBookingFormConfig(old)), ['medicalConditions', 'acceptLiabilityWaiver', 'healthDataConsent', 'signatureName'])
+  assert.deepEqual(ids(normalizeBookingFormConfig(normalizeBookingFormConfig(old))).filter((id) => id === 'healthDataConsent').length, 1)
+  assert.ok(!ids(normalizeBookingFormConfig([{ id: 's', title: 'S', fields: [{ id: 'dog', label: 'Dog', type: 'text' }] }])).includes('healthDataConsent'))
+  assert.ok(!ids(preBookingFormConfig).includes('healthDataConsent'))
+})
+
+test('a consent that was never asked is not shown as No', () => {
+  const rows = buildSubmissionSections({ agreeTerms: true }).flatMap((section) => section.rows)
+  assert.ok(!rows.some((row) => row.label === 'Health information consent'))
+  const asked = buildSubmissionSections({ healthDataConsent: true }).flatMap((section) => section.rows)
+  assert.ok(asked.some((row) => row.label === 'Health information consent' && row.value === 'Yes'))
+})
+
 test('contact and link helpers', () => {
   assert.equal(whatsappDigits('+977 984-3988164'), '9779843988164')
   assert.equal(whatsappDigits('12'), null)

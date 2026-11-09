@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Nightly MongoDB backup.
-#   1. Dumps the database to BACKUP_DIR on this server.
+#   1. Dumps the database to BACKUP_DIR on this server. Booking form submissions
+#      (passport, medical and similar details) are deliberately left out.
 #   2. Uploads it, encrypted, to Google Drive via the rclone remote "gdrive-crypt"
 #      (skipped with a warning until that remote is configured).
 #   3. Deletes old copies: LOCAL_RETENTION_DAYS here; in Drive, 30 daily copies
@@ -79,6 +80,7 @@ if ! dump_output="$(/usr/bin/docker exec "$CONTAINER_NAME" mongodump \
     --password "$MONGO_PASSWORD" \
     --authenticationDatabase admin \
     --db "$DATABASE_NAME" \
+    --excludeCollection=bookingsubmissions \
     --archive="$CONTAINER_ARCHIVE" \
     --gzip 2>&1)"; then
     echo "$dump_output" | tail -n 20

@@ -1,6 +1,7 @@
-// Booking-form PDF retention: the signed PDF (personal details) is removed from
-// the database a while after the trek ends. The booking record itself (name,
-// trek, dates, form answers) is kept, so the admin history stays intact.
+// Booking-form retention: the signed PDF and the form answers (passport, medical,
+// insurance, emergency contact and so on) are removed a while after the trek
+// ends. Only the summary stays for the admin history: name, email, phone, trek
+// and dates. The Privacy Policy states these periods, so keep the two in step.
 //
 // - BOOKING_PDF_RETENTION_MONTHS (default 12): months after the trek end date.
 // - Bookings without a valid end date use the submission date plus 6 extra months.
@@ -28,21 +29,27 @@ const purgeExpiredBookingPdfs = async () => {
   const endDateCutoff = monthsAgo(months).toISOString().slice(0, 10); // trekEndDate is YYYY-MM-DD
   const createdCutoff = monthsAgo(months + NO_END_DATE_EXTRA_MONTHS);
 
-  const result = await BookingSubmission.updateMany(
-    {
-      'pdf.data': { $exists: true },
-      $or: [
-        { trekEndDate: { $regex: DATE_RE, $lt: endDateCutoff } },
-        { trekEndDate: { $not: DATE_RE }, createdAt: { $lt: createdCutoff } },
-      ],
-    },
-    { $unset: { 'pdf.data': '' }, $set: { 'pdf.purgedAt': new Date() } }
+  const expired = {
+    $or: [
+      { trekEndDate: { $regex: DATE_RE, $lt: endDateCutoff } },
+      { trekEndDate: { $not: DATE_RE }, createdAt: { $lt: createdCutoff } },
+    ],
+  };
+  const now = new Date();
+
+  const pdfs = await BookingSubmission.updateMany(
+    { 'pdf.data': { $exists: true }, ...expired },
+    { $unset: { 'pdf.data': '' }, $set: { 'pdf.purgedAt': now } }
+  );
+  const answers = await BookingSubmission.updateMany(
+    { formDataPurgedAt: null, ...expired },
+    { $set: { formData: {}, formDataPurgedAt: now } }
   );
 
-  if (result.modifiedCount) {
-    console.log(`[pdf-retention] removed ${result.modifiedCount} booking PDF(s) older than ${months} months after the trek`);
+  if (pdfs.modifiedCount || answers.modifiedCount) {
+    console.log(`[pdf-retention] removed ${pdfs.modifiedCount} PDF(s) and ${answers.modifiedCount} set(s) of form answers older than ${months} months after the trek`);
   }
-  return result.modifiedCount;
+  return pdfs.modifiedCount + answers.modifiedCount;
 };
 
 const startBookingPdfRetentionJob = () => {
@@ -51,7 +58,7 @@ const startBookingPdfRetentionJob = () => {
     () => void purgeExpiredBookingPdfs().catch((error) => console.error('[pdf-retention]', error.message)),
     { timezone: 'Asia/Kathmandu' }
   );
-  console.log(`[pdf-retention] daily job scheduled (keeps booking PDFs ${retentionMonths()} months after the trek)`);
+  console.log(`[pdf-retention] daily job scheduled (keeps booking PDFs and form answers ${retentionMonths()} months after the trek)`);
 };
 
 module.exports = { purgeExpiredBookingPdfs, startBookingPdfRetentionJob };

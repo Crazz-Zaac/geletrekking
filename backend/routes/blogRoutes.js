@@ -3,6 +3,7 @@ const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 const { restrictToRoles } = require("../middleware/roleMiddleware");
 const { auditContent } = require("../middleware/auditMiddleware");
+const { blogEngagementLimiter } = require("../middleware/rateLimitMiddleware");
 const {
   getAllBlogs,
   getBlogBySlug,
@@ -10,6 +11,8 @@ const {
   updateBlog,
   deleteBlog,
   getBlogById,
+  recordBlogView,
+  setBlogLike,
 } = require("../controllers/blogController");
 
 // Public: list all published posts
@@ -40,6 +43,10 @@ router.get(
 
 // Public: get a published post by slug
 router.get("/:slug", getBlogBySlug);
+
+// Public: reader activity on a published post
+router.post("/:slug/view", blogEngagementLimiter, recordBlogView);
+router.post("/:slug/like", blogEngagementLimiter, setBlogLike);
 
 // Admin: create a new post
 router.post(

@@ -800,9 +800,7 @@ export default function TrekDetailClient({
               <motion.div id="booking-inquiry-section" variants={itemVariants} className="space-y-4 scroll-mt-36">
                 <SectionHeader title="Booking Inquiry Form" icon={FileText} />
                 {trust && (
-                  <div className="rounded-lg border border-border bg-muted/30 p-4">
-                    <TrustBadges trust={trust} className="grid gap-x-6 gap-y-2.5 space-y-0 sm:grid-cols-2" />
-                  </div>
+                  <TrustBadges trust={trust} className="grid gap-x-6 gap-y-2.5 space-y-0 sm:grid-cols-2" />
                 )}
                 <Card className="border-border p-6 md:p-8">
                   <BookingForm trek={trek} packageOptions={orderedPricingTiers.map((tier) => tier.name)} prefill={inquiryPrefill} />

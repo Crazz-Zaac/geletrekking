@@ -1,4 +1,5 @@
 const BlogPost = require("../models/BlogPost");
+const { isBot, isFirstViewToday } = require("../utils/blogViews");
 
 // Helper to generate slugs from titles
 function slugify(str) {
@@ -49,6 +50,45 @@ exports.getBlogBySlug = async (req, res) => {
   }
 };
 
+const counts = (post) => ({ views: post.views || 0, likes: post.likes || 0 });
+// Reader activity isn't an edit, so it must not change the post's "last updated" date.
+const countUpdate = { new: true, timestamps: false, projection: "views likes" };
+
+// Count a read (public)
+exports.recordBlogView = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const post = await BlogPost.findOne({ slug, isPublished: true }).select("views likes").lean();
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    const userAgent = String(req.get("user-agent") || "");
+    if (isBot(userAgent) || !isFirstViewToday({ ip: req.ip, userAgent, slug })) return res.json(counts(post));
+
+    const updated = await BlogPost.findOneAndUpdate({ slug, isPublished: true }, { $inc: { views: 1 } }, countUpdate).lean();
+    res.json(counts(updated || post));
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Like or unlike a post (public)
+exports.setBlogLike = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    if (typeof req.body?.liked !== "boolean") return res.status(400).json({ message: "Liked must be true or false." });
+
+    const filter = req.body.liked ? { slug, isPublished: true } : { slug, isPublished: true, likes: { $gt: 0 } };
+    const updated = await BlogPost.findOneAndUpdate(filter, { $inc: { likes: req.body.liked ? 1 : -1 } }, countUpdate).lean();
+    if (updated) return res.json(counts(updated));
+
+    const post = await BlogPost.findOne({ slug, isPublished: true }).select("views likes").lean();
+    if (!post) return res.status(404).json({ message: "Post not found" });
+    res.json(counts(post));
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // Create a new blog post (admin/superadmin)
 exports.createBlog = async (req, res) => {
   try {
@@ -85,6 +125,9 @@ exports.updateBlog = async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+    // These are counted from visitors, so saving an edit must never reset them.
+    delete updates.views;
+    delete updates.likes;
 
     if (Object.prototype.hasOwnProperty.call(updates, 'hashtags')) {
       updates.hashtags = normalizeHashtags(updates.hashtags);

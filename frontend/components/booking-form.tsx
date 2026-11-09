@@ -272,7 +272,7 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
         aria-hidden="true"
       />
       {requiresCaptcha ? (
-        <div className="rounded-lg bg-muted/30 p-4 space-y-3">
+        <div className="space-y-3">
           <div className="flex items-start justify-between gap-3">
             <p className="text-sm font-semibold text-foreground">Security verification</p>
             <span

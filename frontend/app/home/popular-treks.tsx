@@ -36,7 +36,7 @@ export function PopularTreks({ treks, totalCount }: { treks: Trek[]; totalCount:
 
   return (
     <section className="bg-background py-16 md:py-20" aria-labelledby="popular-treks-heading">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 xl:max-w-[69.5rem]">
         <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-primary">Our Top Picks</p>
@@ -81,7 +81,7 @@ export function PopularTreks({ treks, totalCount }: { treks: Trek[]; totalCount:
         {/* Phones: swipeable row with the next card peeking. Tablet+: grid. */}
         <div
           key={region}
-          className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3 animate-in fade-in duration-300"
+          className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-[repeat(auto-fill,minmax(17.5rem,21rem))] sm:justify-center sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 animate-in fade-in duration-300"
         >
           {shown.map((trek) => (
             <TrekCardCompact key={trek.id} trek={trek} className="w-[80%] shrink-0 snap-start sm:w-auto" />

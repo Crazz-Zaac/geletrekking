@@ -3,7 +3,7 @@ import type { BookingFormFieldConfig, BookingFormState } from '@/lib/booking-for
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const PHONE_RE = /^[+()\d\s.-]{7,24}$/
 /** Consent the backend and terms depend on, even if an admin unticks "required". */
-const ALWAYS_REQUIRED = new Set(['agreeTerms', 'acceptLiabilityWaiver'])
+const ALWAYS_REQUIRED = new Set(['agreeTerms', 'acceptLiabilityWaiver', 'healthDataConsent'])
 
 const AUTOCOMPLETE: Record<string, string> = {
   firstName: 'given-name',

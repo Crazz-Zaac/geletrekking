@@ -367,6 +367,7 @@ export default function AdminBlogsPage() {
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">
                   /blog/{item.slug}
                   {item.createdAt ? ` · ${new Date(item.createdAt).toLocaleDateString()}` : ''}
+                  {item.isPublished ? ` · ${(item.views || 0).toLocaleString()} views · ${(item.likes || 0).toLocaleString()} likes` : ''}
                   {item.hashtags?.length ? ` · ${item.hashtags.slice(0, 3).map((tag) => `#${tag.replace(/^#/, '')}`).join(' ')}` : ''}
                 </p>
               </button>

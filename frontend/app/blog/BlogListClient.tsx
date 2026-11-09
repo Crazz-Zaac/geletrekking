@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, CalendarDays, Clock3, Compass, Search, X } from 'lucide-react';
+import { ArrowRight, BookOpen, CalendarDays, Clock3, Compass, Eye, Heart, Search, X } from 'lucide-react';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
@@ -318,6 +318,20 @@ function PostMeta({ post, className }: { post: UiBlogPost; className?: string })
         <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
         {readTimeLabel(post.readTime)}
       </span>
+      {post.views > 0 ? (
+        <span className="inline-flex items-center gap-1">
+          <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="sr-only">Views: </span>
+          {post.views.toLocaleString()}
+        </span>
+      ) : null}
+      {post.likes > 0 ? (
+        <span className="inline-flex items-center gap-1">
+          <Heart className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="sr-only">Likes: </span>
+          {post.likes.toLocaleString()}
+        </span>
+      ) : null}
     </div>
   );
 }
