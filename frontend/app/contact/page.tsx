@@ -74,41 +74,16 @@ export default function ContactPage() {
     },
   ];
 
-  const contactInfo = [
-    {
-      icon: Mail,
-      label: 'Email',
-      value: contactEmail,
-      href: contactEmail ? `mailto:${contactEmail}` : '#',
-      description: 'Best for itinerary planning and custom quotes',
-      copy: contactEmail,
-    },
-    // Extra addresses managed in Admin -> Site settings.
+  // One list of addresses: the main one first, then extras from Admin -> Site settings.
+  const emailAddresses = [
+    { email: contactEmail, note: 'Best for itinerary planning and custom quotes' },
     ...(settings.contactEmails || [])
       .filter((item) => item.email && item.email.toLowerCase() !== contactEmail.toLowerCase())
-      .map((item) => ({
-        icon: Mail,
-        label: item.label || 'Email',
-        value: item.email,
-        href: `mailto:${item.email}`,
-        description: item.note || '',
-        copy: item.email,
-      })),
-    {
-      icon: Phone,
-      label: 'Phone',
-      value: settings.phone || '+977 985 123 4567',
-      href: `tel:${(settings.phone || '+9779851234567').replace(/\s+/g, '')}`,
-      description: `${officeHoursWeekdays}; ${officeHoursWeekend} (NPT).`,
-    },
-    {
-      icon: MapPin,
-      label: 'Office',
-      value: settings.address || 'Kathmandu, Nepal',
-      href: '#',
-      description: 'In-person consultation by prior appointment',
-    },
-  ];
+      .map((item) => ({ email: item.email, note: item.note || '' })),
+  ].filter((item) => item.email);
+  const phone = settings.phone || '+977 9843988164';
+  const address = settings.address || 'Kathmandu, Nepal';
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
   const socialLinks = [
     {
       Icon: FacebookIcon,
@@ -441,19 +416,8 @@ export default function ContactPage() {
                     />
 
                     {requiresCaptcha ? (
-                      <div className="rounded-lg bg-muted/30 p-4 space-y-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <p className="text-sm font-semibold text-foreground">Security verification</p>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                              isCaptchaReady
-                                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                                : 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
-                            }`}
-                          >
-                            {isCaptchaReady ? 'Verified' : 'Required'}
-                          </span>
-                        </div>
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold text-foreground">Security check</p>
                         <TurnstileWidget
                           key={turnstileRenderKey}
                           siteKey={turnstileSiteKey}
@@ -464,22 +428,11 @@ export default function ContactPage() {
                           onExpire={() => setCaptchaToken('')}
                           onError={() => {
                             setCaptchaToken('');
-                            setSubmitError('Captcha failed to load. Verify Turnstile site key domain settings and disable ad blockers for this site.');
+                            setSubmitError("The security check couldn't load. Please turn off any ad blocker for this page and reload it.");
                           }}
                         />
-                        <p className="text-xs text-muted-foreground" aria-live="polite">
-                          {isCaptchaReady
-                            ? 'Verification complete. You can send your inquiry now.'
-                            : 'Complete the captcha to enable the send button.'}
-                        </p>
                       </div>
-                    ) : (
-                      <p className="text-sm text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
-                        {hasPlaceholderTurnstileKey
-                          ? 'Captcha key is a placeholder. Set a real `NEXT_PUBLIC_TURNSTILE_SITE_KEY` to show verification.'
-                          : 'Captcha is not configured in this environment. Submission remains available.'}
-                      </p>
-                    )}
+                    ) : null}
 
                     <Button
                       type="submit"
@@ -507,76 +460,96 @@ export default function ContactPage() {
                     </p>
                   </form>
                 </Card>
-
-                <Card className="border-0 bg-transparent shadow-none p-5 mt-5">
-                  <h3 className="text-base font-bold text-foreground mb-3">Follow Us</h3>
-                  {socialLinks.length > 0 ? (
-                    <div className="flex items-center gap-2.5">
-                      {socialLinks.map(({ Icon, href, label, className }) => (
-                        <a
-                          key={label}
-                          href={href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={label}
-                          className={`w-9 h-9 rounded-full transition-colors flex items-center justify-center ${className}`}
-                        >
-                          <Icon className="w-4 h-4" />
-                        </a>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No social links configured yet.</p>
-                  )}
-                </Card>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="lg:col-span-2 space-y-5">
-                <div className="space-y-4">
-                  {contactInfo.map((info) => {
-                    const Icon = info.icon;
-                    return (
-                      <Card key={info.label} className="border-border p-5 hover:shadow-md transition-shadow">
-                        <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                            <Icon className="w-5 h-5 text-primary" />
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-sm text-muted-foreground font-semibold">{info.label}</p>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <a href={info.href} target={info.href.startsWith('https://') ? '_blank' : undefined} rel={info.href.startsWith('https://') ? 'noopener noreferrer' : undefined} className="break-all text-base font-bold text-foreground hover:text-primary transition-colors">
-                                {info.value}
-                              </a>
-                              {'copy' in info && info.copy ? <CopyButton value={info.copy} /> : null}
-                            </div>
-                            {info.description ? <p className="text-sm text-muted-foreground">{info.description}</p> : null}
-                          </div>
+              <motion.div variants={itemVariants} className="lg:col-span-2">
+                <section aria-labelledby="contact-details-heading" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                  <div className="p-6">
+                    <h2 id="contact-details-heading" className="text-lg font-semibold text-foreground">Contact details</h2>
+                    <dl className="mt-2 divide-y divide-border">
+                      <div className="flex gap-3 py-4">
+                        <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                        <div className="min-w-0 flex-1">
+                          <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Email</dt>
+                          <dd className="mt-1.5 space-y-2.5">
+                            {emailAddresses.map((item) => (
+                              <div key={item.email}>
+                                <div className="flex items-center gap-1">
+                                  <a href={`mailto:${item.email}`} className="min-w-0 break-words font-medium text-foreground hover:text-primary">
+                                    {/* Long addresses wrap at the @, not mid-word. */}
+                                    {item.email.split('@')[0]}
+                                    <wbr />@{item.email.split('@').slice(1).join('@')}
+                                  </a>
+                                  <CopyButton value={item.email} iconOnly className="border-0 bg-transparent px-1.5" />
+                                </div>
+                                {item.note ? <p className="text-sm text-muted-foreground">{item.note}</p> : null}
+                              </div>
+                            ))}
+                          </dd>
                         </div>
-                      </Card>
-                    );
-                  })}
-                </div>
-
-                <Card className="border-border p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Clock3 className="w-4 h-4 text-primary" />
-                    <h3 className="text-base font-bold text-foreground">Office Hours (NPT)</h3>
+                      </div>
+                      <div className="flex gap-3 py-4">
+                        <Phone className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Phone and WhatsApp</dt>
+                          <dd className="mt-1.5">
+                            <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="font-medium text-foreground hover:text-primary">{phone}</a>
+                          </dd>
+                        </div>
+                      </div>
+                      <div className="flex gap-3 py-4">
+                        <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Office hours (Nepal time)</dt>
+                          <dd className="mt-1.5 text-sm text-foreground">
+                            <p>{officeHoursWeekdays}</p>
+                            <p>{officeHoursWeekend}</p>
+                          </dd>
+                        </div>
+                      </div>
+                      <div className="flex gap-3 py-4">
+                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Office</dt>
+                          <dd className="mt-1.5">
+                            <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-foreground hover:text-primary">{address}</a>
+                            <p className="text-sm text-muted-foreground">Visits by appointment</p>
+                          </dd>
+                        </div>
+                      </div>
+                    </dl>
+                    {socialLinks.length > 0 ? (
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Follow us</p>
+                        <div className="flex items-center gap-2">
+                          {socialLinks.map(({ Icon, href, label, className }) => (
+                            <a
+                              key={label}
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={label}
+                              className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${className}`}
+                            >
+                              <Icon className="h-4 w-4" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
-                  <p className="text-sm text-muted-foreground">{officeHoursWeekdays}</p>
-                  <p className="text-sm text-muted-foreground">{officeHoursWeekend}</p>
-                </Card>
-
-                <Card className="border-border overflow-hidden">
-                  <ConsentGate label="Office map" loadLabel="Load map" externalUrl="https://maps.google.com/maps?q=Kathmandu%2C%20Nepal" externalLabel="Open in Google Maps" className="min-h-[280px] rounded-none border-0">
-                  <iframe
-                    title="Kathmandu office map"
-                    src={settings.mapEmbedUrl || 'https://maps.google.com/maps?q=Kathmandu%2C%20Nepal&t=&z=12&ie=UTF8&iwloc=&output=embed'}
-                    className="w-full h-[280px] border-0"
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
-                  </ConsentGate>
-                </Card>
+                  <div className="border-t border-border">
+                    <ConsentGate label="Office map" loadLabel="Load map" externalUrl={mapsUrl} externalLabel="Open in Google Maps" className="min-h-[240px] rounded-none border-0">
+                      <iframe
+                        title="Office map"
+                        src={settings.mapEmbedUrl || 'https://maps.google.com/maps?q=Kathmandu%2C%20Nepal&t=&z=12&ie=UTF8&iwloc=&output=embed'}
+                        className="h-[240px] w-full border-0"
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                      />
+                    </ConsentGate>
+                  </div>
+                </section>
               </motion.div>
             </motion.div>
           </div>
