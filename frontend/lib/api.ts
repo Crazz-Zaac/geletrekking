@@ -1,5 +1,5 @@
 import type { TeamSocialLinks } from '@/lib/team-social-links'
-import { treks as fallbackTreks } from '@/lib/data'
+import { getTrekPath } from '@/lib/trek-path'
 import type { Trek } from '@/lib/data'
 import { parseAltitude } from '@/lib/trek-itinerary'
 export interface UiBlogPost {
@@ -109,6 +109,7 @@ export interface AdminTrek {
   group_size_min?: number
   group_size_max?: number
   max_altitude_meters?: number
+  max_altitude_place?: string
   trip_length_km?: number
   acclimatization_days?: number
   daily_activity_hours?: string
@@ -344,6 +345,8 @@ export interface AdminAboutTeamMember {
   role: string
   description: string
   imageUrl: string
+  licenceNumber?: string
+  guidingSince?: number | null
 }
 export interface AdminAboutAssociation {
   name: string
@@ -586,6 +589,7 @@ interface BackendTrek {
   group_size_min?: number
   group_size_max?: number
   max_altitude_meters?: number
+  max_altitude_place?: string
   trip_length_km?: number
   acclimatization_days?: number
   daily_activity_hours?: string
@@ -806,6 +810,7 @@ function mapTrek(trek: BackendTrek): Trek {
     duration: trek.duration_days || 0,
     difficulty: normalizeDifficultyFull(trek.difficulty),
     maxAltitude: trek.max_altitude_meters || 0,
+    maxAltitudePlace: trek.max_altitude_place?.trim() || undefined,
     tripLengthKm: trek.trip_length_km,
     acclimatizationDays: trek.acclimatization_days,
     dailyActivityHours: trek.daily_activity_hours,
@@ -892,7 +897,8 @@ export async function getTreks(): Promise<Trek[]> {
     const data = await fetchJson<BackendTrek[]>('/api/treks')
     return data.map(mapTrek)
   } catch {
-    return fallbackTreks
+    // Never show sample treks: their pages don't exist, so every link would be dead.
+    return []
   }
 }
 export async function getTrekByIdentifier(identifier: string): Promise<Trek | null> {
@@ -1225,6 +1231,22 @@ export async function getAdminSslHealth(token: string): Promise<AdminSslHealthRe
 }
 // Cached copy for site-wide server rendering (structured data). Revalidated
 // hourly so it does not force every page into dynamic rendering.
+/** Trek names and links for the menu and footer, refreshed every 5 minutes. Empty if unavailable. */
+export async function getCachedTrekLinks(): Promise<Array<{ title: string; href: string }>> {
+  try {
+    const internalToken = typeof window === 'undefined' ? process.env.INTERNAL_API_TOKEN : undefined
+    const response = await fetch(getApiUrl('/api/treks'), {
+      headers: internalToken ? { 'x-internal-api-token': internalToken } : {},
+      next: { revalidate: 300 },
+    })
+    if (!response.ok) return []
+    const data = (await response.json()) as BackendTrek[]
+    return data.map(mapTrek).map((trek) => ({ title: trek.title, href: getTrekPath(trek) }))
+  } catch {
+    return []
+  }
+}
+
 export async function getCachedPublicSettings(): Promise<AdminSiteSettings | null> {
   try {
     const internalToken = typeof window === 'undefined' ? process.env.INTERNAL_API_TOKEN : undefined

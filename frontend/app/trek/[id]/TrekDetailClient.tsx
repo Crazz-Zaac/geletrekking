@@ -219,7 +219,11 @@ export default function TrekDetailClient({
 
   const primaryKpis = [
     { label: 'Duration', value: formatMetric(trek.duration, 'days'), icon: CalendarRange },
-    { label: 'Max Altitude', value: formatMetric(trek.maxAltitude, 'm'), icon: Mountain },
+    {
+      label: trek.maxAltitudePlace ? 'Highest point' : 'Max Altitude',
+      value: trek.maxAltitudePlace && trek.maxAltitude ? `${formatMetric(trek.maxAltitude, 'm')} (${trek.maxAltitudePlace})` : formatMetric(trek.maxAltitude, 'm'),
+      icon: Mountain,
+    },
     { label: 'Trip Length', value: formatMetric(trek.tripLengthKm, 'km'), icon: Route },
   ]
 

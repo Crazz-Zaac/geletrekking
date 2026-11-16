@@ -3,7 +3,6 @@ import { HomepageGreetingWidget } from '@/components/homepage-greeting-widget'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import type { Trek } from '@/lib/data'
-import { treks } from '@/lib/data'
 import { getAdminAbout, getBlogs, getTreks, getSiteReviews } from '@/lib/api'
 import { getNextDepartures } from '@/lib/trek-availability'
 import { HeroSection } from './home/hero-section'
@@ -42,7 +41,7 @@ export default async function HomePage() {
     getAdminAbout().catch(() => null),
   ])
 
-  const activeTreks = apiTreks.length > 0 ? apiTreks : treks
+  const activeTreks = apiTreks
   const activeBlogs = apiBlogs
   const offerTreks = activeTreks.filter((trek) => trek.hasOffer).slice(0, 4)
   const popularTreks = rankForHomepage(activeTreks, new Set(offerTreks.map((trek) => trek.id)))

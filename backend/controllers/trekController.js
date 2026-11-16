@@ -100,6 +100,11 @@ const getAllTreks = async (req, res) => {
   }
 };
 
+// Addresses that changed before treks remembered their old addresses.
+const LEGACY_SLUGS = {
+  "everest-base-camp": "6a54c92fd5a65be18a32925a",
+};
+
 const getTrekById = async (req, res) => {
   const { id } = req.params;
 
@@ -108,6 +113,14 @@ const getTrekById = async (req, res) => {
 
     if (!trek && mongoose.Types.ObjectId.isValid(id)) {
       trek = await TrekPackage.findById(id);
+    }
+
+    // An old address: return the trek, and the site redirects to its current address.
+    if (!trek) {
+      trek = await TrekPackage.findOne({ previousSlugs: id });
+    }
+    if (!trek && LEGACY_SLUGS[id]) {
+      trek = await TrekPackage.findById(LEGACY_SLUGS[id]);
     }
 
     if (!trek) {
@@ -168,6 +181,17 @@ const updateTrek = async (req, res) => {
         .trim()
         .replace(/[^a-z0-9\s-]/g, "")
         .replace(/\s+/g, "-");
+    }
+
+    // Keep old addresses working: remember the slug this trek is moving away from.
+    delete payload.previousSlugs;
+    if (payload.slug) {
+      const current = await TrekPackage.findById(id).select("slug previousSlugs").lean();
+      if (current) {
+        const history = (current.previousSlugs || []).filter((slug) => slug && slug !== payload.slug);
+        if (current.slug && current.slug !== payload.slug && !history.includes(current.slug)) history.push(current.slug);
+        payload.previousSlugs = history;
+      }
     }
 
     const updatedTrek = await TrekPackage.findByIdAndUpdate(id, payload, {

@@ -229,6 +229,16 @@ export function guideArticleJsonLd(guide: TravelGuide, path: string) {
   }
 }
 
+/** One price, or a range when the trek has several packages. */
+function trekOffers(trek: Trek, url: string) {
+  const prices = (trek.pricingTiers?.length ? trek.pricingTiers.map((tier) => tier.priceUsd) : [trek.price]).filter((price) => price > 0)
+  if (prices.length === 0) return undefined
+  const low = Math.min(...prices)
+  const high = Math.max(...prices)
+  if (low === high) return { '@type': 'Offer', price: low, priceCurrency: 'USD', availability: 'https://schema.org/InStock', url }
+  return { '@type': 'AggregateOffer', lowPrice: low, highPrice: high, offerCount: prices.length, priceCurrency: 'USD', availability: 'https://schema.org/InStock', url }
+}
+
 export function trekJsonLd(trek: Trek, path: string) {
   return {
     '@context': 'https://schema.org',
@@ -239,20 +249,18 @@ export function trekJsonLd(trek: Trek, path: string) {
     url: absoluteUrl(path),
     provider: { '@id': `${SITE_URL}/#organization` },
     touristType: ['Trekkers', 'Adventure travelers'],
-    itinerary: trek.itinerary?.map((day) => ({
-      '@type': 'ItemList',
-      name: `Day ${day.day}: ${day.title}`,
-      description: day.description,
-    })),
-    offers: trek.price
+    itinerary: trek.itinerary?.length
       ? {
-          '@type': 'Offer',
-          price: trek.price,
-          priceCurrency: 'USD',
-          availability: 'https://schema.org/InStock',
-          url: absoluteUrl(path),
+          '@type': 'ItemList',
+          numberOfItems: trek.itinerary.length,
+          itemListElement: trek.itinerary.map((day, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            item: { '@type': 'TouristAttraction', name: `Day ${day.day}: ${day.title}`, description: truncateDescription(day.description, day.title) },
+          })),
         }
       : undefined,
+    offers: trekOffers(trek, absoluteUrl(path)),
   }
 }
 

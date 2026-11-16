@@ -491,6 +491,16 @@ export function AboutContent({
                   <div className="min-w-0 flex-1">
                     <h3 className="font-semibold text-foreground">{member.name}</h3>
                     <p className="text-sm font-medium text-primary">{member.role}</p>
+                    {member.guidingSince || member.licenceNumber ? (
+                      <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                        {member.guidingSince ? (
+                          <span>
+                            Guiding since {member.guidingSince} ({Math.max(1, new Date().getFullYear() - member.guidingSince)} years)
+                          </span>
+                        ) : null}
+                        {member.licenceNumber ? <span>Licence no. {member.licenceNumber}</span> : null}
+                      </p>
+                    ) : null}
                     {member.description ? <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{member.description}</p> : null}
                     <div className="mt-3">
                       <MemberSocials member={member} />

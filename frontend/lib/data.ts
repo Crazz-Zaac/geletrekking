@@ -28,6 +28,8 @@ export interface Trek {
   duration: number
   difficulty: 'Easy' | 'Moderate' | 'Strenuous' | 'Challenging'
   maxAltitude: number
+  /** Where the highest point is, e.g. Kala Patthar. */
+  maxAltitudePlace?: string
   price: number
   pricingTiers?: TrekPricingTier[]
   groupSize: string

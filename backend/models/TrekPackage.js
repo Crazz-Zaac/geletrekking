@@ -56,6 +56,9 @@ const trekPackageSchema = new mongoose.Schema(
     // url-friendly version of the name, used to find the trek from the browser address bar
     slug: { type: String, unique: true, trim: true },
 
+    // earlier addresses of this trek; visiting one redirects to the current address
+    previousSlugs: { type: [{ type: String, trim: true }], default: [], index: true },
+
     // the main description shown on the trek detail page
     description: { type: String, required: true, trim: true },
 
@@ -125,6 +128,8 @@ const trekPackageSchema = new mongoose.Schema(
 
     // the highest point reached during the trek in meters
     max_altitude_meters: { type: Number },
+    // where that highest point is, e.g. "Kala Patthar", so it isn't confused with the camp's altitude
+    max_altitude_place: { type: String, trim: true, maxlength: 60, default: "" },
 
     // total distance covered in kilometers
     trip_length_km: { type: Number },

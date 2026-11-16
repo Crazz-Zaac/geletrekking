@@ -10,17 +10,11 @@ import Image from 'next/image'
 import { useSiteSettings } from '@/hooks/use-site-settings'
 import { getTreks } from '@/lib/api'
 import { getTrekPath } from '@/lib/trek-path'
+import { useTrekLinks, type TrekLink } from '@/components/trek-links'
 import { FooterTrustRow } from '@/components/trust-badges'
 import { COMPANY_FOUNDING_STORY } from '@/lib/site-metrics'
 
 const footerLinks = {
-  destinations: [
-    { label: 'Everest Base Camp', href: '/trek/everest-base-camp' },
-    { label: 'Annapurna Circuit', href: '/trek/annapurna-circuit' },
-    { label: 'Langtang Valley', href: '/trek/langtang-valley' },
-    { label: 'Manaslu Circuit', href: '/trek/manaslu-circuit' },
-    { label: 'Upper Mustang', href: '/trek/upper-mustang' },
-  ],
   quickLinks: [
     { label: 'About Us', href: '/about' },
     { label: 'Our Team', href: '/about#team' },
@@ -45,7 +39,9 @@ const footerLinks = {
 export function Footer() {
   const { settings, social } = useSiteSettings()
   const contactEmail = settings.email.trim()
-  const [destinationLinks, setDestinationLinks] = useState(footerLinks.destinations)
+  const toFooterLinks = (links: TrekLink[]) => links.map((link) => ({ label: link.title.replace(/\s+Trek$/i, ''), href: link.href }))
+  const serverLinks = useTrekLinks()
+  const [destinationLinks, setDestinationLinks] = useState(() => toFooterLinks(serverLinks))
 
   useEffect(() => {
     let isMounted = true
@@ -55,14 +51,9 @@ export function Footer() {
         const trekList = await getTreks()
         if (!isMounted || trekList.length === 0) return
 
-        setDestinationLinks(
-          trekList.map((trek) => ({
-            label: trek.title.replace(/\s+Trek$/i, ''),
-            href: getTrekPath(trek),
-          }))
-        )
+        setDestinationLinks(toFooterLinks(trekList.map((trek) => ({ title: trek.title, href: getTrekPath(trek) }))))
       } catch {
-        // Keep the curated fallback links when trek loading fails.
+        // Keep the list the page arrived with.
       }
     }
 

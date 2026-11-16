@@ -25,8 +25,8 @@ function loadApi(fetchImpl, browser = false) {
     process: { env: { INTERNAL_API_URL: 'http://api.test', INTERNAL_API_TOKEN: 'test-private-token-never-for-browser' } },
     fetch: fetchImpl,
     require: name => {
-      if (name === '@/lib/data') return { treks: [] }
       if (name === '@/lib/trek-itinerary') return loadItineraryModule()
+      if (name === '@/lib/trek-path') return { getTrekPath: (trek) => `/trek/${trek.slug || trek.id}` }
       throw new Error(`Unexpected import: ${name}`)
     },
   }

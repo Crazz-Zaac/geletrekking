@@ -5,7 +5,6 @@ import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { TrekCard } from '@/components/trek-card';
 import { AnnouncementBanner } from '@/components/announcement-banner';
-import { treks } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -42,7 +41,7 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [trekList, setTrekList] = useState(initialTreks.length > 0 ? initialTreks : treks);
+  const [trekList, setTrekList] = useState(initialTreks);
   const [isLoadingTreks, setIsLoadingTreks] = useState(initialTreks.length === 0);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);

@@ -339,6 +339,23 @@ export default function AdminAboutPage() {
                               <Field label="Name"><Input className="h-10" value={member.name} onChange={(e) => updateTeamMember(index, { name: e.target.value })} /></Field>
                               <Field label="Role"><Input className="h-10" placeholder="e.g. Lead guide" value={member.role} onChange={(e) => updateTeamMember(index, { role: e.target.value })} /></Field>
                             </FieldGrid>
+                            <FieldGrid>
+                              <Field label="Guide licence number" hint="Optional. Shown on the About page.">
+                                <Input className="h-10" maxLength={60} placeholder="e.g. 12345" value={member.licenceNumber || ''} onChange={(e) => updateTeamMember(index, { licenceNumber: e.target.value })} />
+                              </Field>
+                              <Field label="Guiding since (year)" hint="Optional. Years of experience are worked out from this.">
+                                <Input
+                                  className="h-10"
+                                  type="number"
+                                  inputMode="numeric"
+                                  min={1950}
+                                  max={new Date().getFullYear()}
+                                  placeholder="e.g. 2004"
+                                  value={member.guidingSince ?? ''}
+                                  onChange={(e) => updateTeamMember(index, { guidingSince: e.target.value ? Number(e.target.value) : null })}
+                                />
+                              </Field>
+                            </FieldGrid>
                             <ImageUrlField label="Photo" aspect="square" value={member.imageUrl} onChange={(imageUrl) => updateTeamMember(index, { imageUrl })} hint="Square portrait works best." />
                             <Field label="Bio">
                               <TextArea rows={3} value={member.description} onChange={(e) => updateTeamMember(index, { description: e.target.value })} />

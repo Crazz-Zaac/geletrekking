@@ -59,6 +59,10 @@ const teamMemberSchema = new mongoose.Schema(
     role: { type: String, required: true, trim: true },
     description: { type: String, default: "", trim: true },
     imageUrl: { type: String, default: "", trim: true },
+    // official trekking guide licence, shown on the About page when filled in
+    licenceNumber: { type: String, default: "", trim: true, maxlength: 60 },
+    // year this person started guiding; years of experience are worked out from it
+    guidingSince: { type: Number, default: null, min: 1950, max: 2100 },
     social: { type: teamSocialSchema, default: () => ({}) },
   },
   { _id: false }

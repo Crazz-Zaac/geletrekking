@@ -5,7 +5,8 @@ import { FloatingContact } from '@/components/floating-contact'
 import { ScrollToTop } from '@/components/scroll-to-top'
 import { JsonLd } from '@/components/json-ld'
 import { absoluteUrl, organizationJsonLd, SITE_URL, websiteJsonLd } from '@/lib/seo'
-import { getCachedPublicSettings } from '@/lib/api'
+import { getCachedPublicSettings, getCachedTrekLinks } from '@/lib/api'
+import { TrekLinksProvider } from '@/components/trek-links'
 import './globals.css'
 
 const inter = Inter({
@@ -67,16 +68,18 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   // Company contact details for structured data; the page still renders if this fails.
-  const settings = await getCachedPublicSettings()
+  const [settings, trekLinks] = await Promise.all([getCachedPublicSettings(), getCachedTrekLinks()])
 
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <body className="font-sans antialiased">
         <CookieConsentProvider>
+        <TrekLinksProvider links={trekLinks}>
         <JsonLd data={[organizationJsonLd(settings), websiteJsonLd()]} />
         {children}
         <FloatingContact />
         <ScrollToTop />
+        </TrekLinksProvider>
         </CookieConsentProvider>
       </body>
     </html>

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getTrekPath } from '@/lib/trek-path'
-import { treks as defaultTreks } from '@/lib/data'
+import { useTrekLinks } from '@/components/trek-links'
 import { GlobalAlertBanner } from '@/components/global-alert-banner'
 import { WhatsAppIcon } from '@/components/whatsapp-icon'
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons'
@@ -50,7 +50,10 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
-  const [destinationChildren, setDestinationChildren] = useState<DestinationChild[]>([])
+  const serverTrekLinks = useTrekLinks()
+  const [destinationChildren, setDestinationChildren] = useState<DestinationChild[]>(() =>
+    sortDestinationChildren(serverTrekLinks.map((link) => ({ label: link.title, href: link.href })))
+  )
   const [guideColumns, setGuideColumns] = useState<GuideColumn[]>([])
   const [activityColumns, setActivityColumns] = useState<ActivityColumn[]>([])
   const [expandedMobileMenu, setExpandedMobileMenu] = useState<Set<string>>(new Set())
@@ -147,11 +150,6 @@ export function Navbar() {
   // Load treks from database
   useEffect(() => {
     const loadTreks = async () => {
-      const fallbackChildren = sortDestinationChildren(defaultTreks.map((trek) => ({
-        label: trek.title.replace(/\s+Trek$/i, ""),
-        href: getTrekPath(trek),
-      })))
-
       try {
         const dbTreks = await getTreks()
         if (dbTreks && dbTreks.length > 0) {
@@ -161,11 +159,9 @@ export function Navbar() {
               href: getTrekPath(trek),
             })))
           )
-        } else {
-          setDestinationChildren(fallbackChildren)
         }
       } catch {
-        setDestinationChildren(fallbackChildren)
+        // Keep the list the page arrived with.
       }
     }
 

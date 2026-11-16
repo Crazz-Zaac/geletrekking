@@ -87,6 +87,7 @@ type TrekForm = {
   duration_days: number
   difficulty: 'Easy' | 'Moderate' | 'Hard'
   max_altitude_meters: number
+  max_altitude_place: string
   trip_length_km: number
   acclimatization_days: number
   daily_activity_hours: string
@@ -202,6 +203,7 @@ const initialForm: TrekForm = {
   duration_days: 10,
   difficulty: 'Moderate',
   max_altitude_meters: 0,
+  max_altitude_place: '',
   trip_length_km: 0,
   acclimatization_days: 0,
   daily_activity_hours: '',
@@ -269,6 +271,7 @@ function formToPayload(form: TrekForm): Partial<AdminTrek> {
     duration_days: form.duration_days,
     difficulty: form.difficulty,
     max_altitude_meters: form.max_altitude_meters || undefined,
+    max_altitude_place: form.max_altitude_place.trim(),
     trip_length_km: form.trip_length_km || undefined,
     acclimatization_days: form.acclimatization_days || undefined,
     daily_activity_hours: form.daily_activity_hours.trim() || undefined,
@@ -340,6 +343,7 @@ function trekToForm(item: AdminTrek): TrekForm {
     duration_days: item.duration_days || 10,
     difficulty: item.difficulty || 'Moderate',
     max_altitude_meters: item.max_altitude_meters || 0,
+    max_altitude_place: item.max_altitude_place || '',
     trip_length_km: item.trip_length_km || 0,
     acclimatization_days: item.acclimatization_days || 0,
     daily_activity_hours: item.daily_activity_hours || '',
@@ -862,6 +866,14 @@ export default function AdminTreksPage() {
                         type="number"
                         value={form.max_altitude_meters}
                         onChange={(e) => setForm((p) => ({ ...p, max_altitude_meters: Number(e.target.value) || 0 }))}
+                      />
+                    ))}
+                    {field('Highest point name', (
+                      <Input
+                        placeholder="e.g. Kala Patthar"
+                        maxLength={60}
+                        value={form.max_altitude_place}
+                        onChange={(e) => setForm((p) => ({ ...p, max_altitude_place: e.target.value }))}
                       />
                     ))}
                     {field('Trip length (km)', (
