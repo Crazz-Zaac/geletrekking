@@ -84,7 +84,10 @@ export function GalleryContent({ photos, heroImageUrl }: GalleryContentProps) {
   const searchParams = useSearchParams();
   const columnCount = useColumnCount();
 
-  const allPhotos = useMemo(() => sortPhotos(photos), [photos]);
+  // Photos whose file no longer exists are dropped, so counts and filters stay honest.
+  const [failedIds, setFailedIds] = useState<Set<string>>(() => new Set());
+  const markFailed = useCallback((id: string) => setFailedIds((current) => (current.has(id) ? current : new Set(current).add(id))), []);
+  const allPhotos = useMemo(() => sortPhotos(photos).filter((photo) => !failedIds.has(photo.id)), [photos, failedIds]);
 
   // Filters live in the URL so links like /gallery?trek=everest-base-camp work.
   const regionParam = searchParams?.get('region') || '';
@@ -307,6 +310,7 @@ export function GalleryContent({ photos, heroImageUrl }: GalleryContentProps) {
                           width={800}
                           height={600}
                           loading={index < 4 ? 'eager' : 'lazy'}
+                          onError={() => markFailed(photo.id)}
                           sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
                           className="h-auto w-full transition-transform duration-500 group-hover:scale-[1.03]"
                         />

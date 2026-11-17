@@ -89,7 +89,30 @@ async function fetchGalleryData() {
           isFeatured: Boolean(item.isFeatured),
         };
       });
-    return { photos, heroImageUrl };
+
+    // Photos added to each trek in Admin -> Treks, unless the same photo is already in the gallery.
+    const photoKey = (url: string) => url.split('?')[0].replace(/\/+$/, '').toLowerCase();
+    const seen = new Set(photos.map((photo) => photoKey(photo.image)));
+    const trekPhotos = treks.flatMap((trek) =>
+      (trek.gallery || []).flatMap<GalleryPhoto>((image, index) => {
+        // Treks without their own photos fall back to the site's default image; that isn't a trek photo.
+        if (!image || image === '/images/hero-himalaya.jpg' || seen.has(photoKey(image))) return [];
+        seen.add(photoKey(image));
+        return [
+          {
+            id: `trek-${trek.id}-${index}`,
+            image,
+            caption: trek.title,
+            trekName: trek.title,
+            trekSlug: trek.slug ?? null,
+            region: regionFor(trek.title, trek),
+            isFeatured: false,
+          },
+        ];
+      })
+    );
+
+    return { photos: [...photos, ...trekPhotos], heroImageUrl };
   } catch (err) {
     console.error('Failed to fetch gallery data:', err);
     return { photos: [] as GalleryPhoto[], heroImageUrl: '' };
