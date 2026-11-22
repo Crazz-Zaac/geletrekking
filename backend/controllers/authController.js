@@ -175,7 +175,7 @@ exports.login = async (req, res) => {
       user: toSafeUser(user),
     });
   } catch (err) {
-    console.error('Login error:', err.stack || err);
+    console.error('Login error:', process.env.NODE_ENV === 'production' ? err.message : (err.stack || err));
     res.status(500).json({ message: 'Server error' });
   }
 };

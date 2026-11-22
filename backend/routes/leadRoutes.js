@@ -4,6 +4,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const { restrictToRoles } = require('../middleware/roleMiddleware');
 const { contactLimiter, contactSlowDown } = require('../middleware/rateLimitMiddleware');
 const { logAudit } = require('../utils/auditLogger');
+const mongoose = require('mongoose');
 
 const router = express.Router();
 
@@ -93,6 +94,9 @@ router.get('/admin/export.csv', ...adminOnly, async (req, res) => {
 
 router.delete('/admin/:id', ...adminOnly, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid ID' });
+    }
     const lead = await Lead.findByIdAndDelete(req.params.id);
     if (!lead) return res.status(404).json({ message: 'Not found' });
     await logAudit({ actor: req.user._id, actorEmail: req.user.email, action: 'leads.delete', outcome: 'success', ip: req.ip, meta: { email: lead.email } });

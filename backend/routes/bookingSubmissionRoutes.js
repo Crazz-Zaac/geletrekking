@@ -1,9 +1,19 @@
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 
 const authMiddleware = require("../middleware/authMiddleware");
 const { restrictToRoles } = require("../middleware/roleMiddleware");
 const { contactLimiter, contactSlowDown } = require("../middleware/rateLimitMiddleware");
+
+// Reusable ObjectId guard middleware — returns 400 instead of letting Mongoose
+// throw a CastError (which surfaces as a 500 and leaks stack info).
+const requireValidObjectId = (req, res, next) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ message: "Invalid ID" });
+  }
+  next();
+};
 const {
   createBookingFormLink,
   getBookingFormLinks,
@@ -32,21 +42,21 @@ router.post("/pre-booking", contactSlowDown, contactLimiter, submitPreBooking);
 
 router.get("/admin/links", authMiddleware, restrictToRoles("admin", "superadmin"), getBookingFormLinks);
 router.post("/admin/links", authMiddleware, restrictToRoles("admin", "superadmin"), createBookingFormLink);
-router.patch("/admin/links/:id/deactivate", authMiddleware, restrictToRoles("admin", "superadmin"), deactivateBookingFormLink);
-router.delete("/admin/links/:id", authMiddleware, restrictToRoles("admin", "superadmin"), deleteBookingFormLink);
+router.patch("/admin/links/:id/deactivate", authMiddleware, restrictToRoles("admin", "superadmin"), requireValidObjectId, deactivateBookingFormLink);
+router.delete("/admin/links/:id", authMiddleware, restrictToRoles("admin", "superadmin"), requireValidObjectId, deleteBookingFormLink);
 
 router.get("/admin/form-template", authMiddleware, restrictToRoles("admin", "superadmin"), getBookingFormTemplate);
 router.put("/admin/form-template", authMiddleware, restrictToRoles("admin", "superadmin"), saveBookingFormTemplate);
 router.delete("/admin/form-template", authMiddleware, restrictToRoles("admin", "superadmin"), resetBookingFormTemplate);
 
 router.get("/admin", authMiddleware, restrictToRoles("admin", "superadmin"), getBookingSubmissions);
-router.get("/admin/:id/pdf", authMiddleware, restrictToRoles("admin", "superadmin"), downloadBookingPdf);
-router.patch("/admin/:id/read", authMiddleware, restrictToRoles("admin", "superadmin"), markBookingAsRead);
-router.patch("/admin/:id/unread", authMiddleware, restrictToRoles("admin", "superadmin"), markBookingAsUnread);
-router.delete("/admin/:id", authMiddleware, restrictToRoles("admin", "superadmin"), deleteBookingSubmission);
+router.get("/admin/:id/pdf", authMiddleware, restrictToRoles("admin", "superadmin"), requireValidObjectId, downloadBookingPdf);
+router.patch("/admin/:id/read", authMiddleware, restrictToRoles("admin", "superadmin"), requireValidObjectId, markBookingAsRead);
+router.patch("/admin/:id/unread", authMiddleware, restrictToRoles("admin", "superadmin"), requireValidObjectId, markBookingAsUnread);
+router.delete("/admin/:id", authMiddleware, restrictToRoles("admin", "superadmin"), requireValidObjectId, deleteBookingSubmission);
 
 // Post-trek review request: status, email preview, send now, skip / re-enable.
-const reviewAdmin = [authMiddleware, restrictToRoles("admin", "superadmin")];
+const reviewAdmin = [authMiddleware, restrictToRoles("admin", "superadmin"), requireValidObjectId];
 
 router.get("/admin/:id/review-request", ...reviewAdmin, async (req, res) => {
   try {

@@ -4,8 +4,23 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const helmet = require("helmet");
 const path = require("path");
+const mongoSanitize = require("express-mongo-sanitize");
 const { apiLimiter } = require("./middleware/rateLimitMiddleware");
 const requestRiskMiddleware = require("./middleware/requestRiskMiddleware");
+
+/* =========================================================
+   0. STARTUP ASSERTIONS — fail fast on insecure config
+========================================================= */
+const EXAMPLE_JWT_SECRET = "your_jwt_secret_key_here_minimum_32_characters_long";
+const jwtSecret = process.env.JWT_SECRET || "";
+if (jwtSecret.length < 32 || jwtSecret === EXAMPLE_JWT_SECRET) {
+  console.error(
+    "FATAL: JWT_SECRET is missing, too short (< 32 chars), or still set to the example value. " +
+    "Generate a strong secret: node -e \"console.log(require('crypto').randomBytes(48).toString('hex'))\" " +
+    "and set it in backend/.env"
+  );
+  process.exit(1);
+}
 
 const app = express();
 
@@ -75,6 +90,19 @@ app.use((req, res, next) => {
 ========================================================= */
 app.use(express.urlencoded({ extended: true, limit: "6mb" }));
 app.use(express.json({ limit: "6mb" }));
+
+// Strip MongoDB operator keys ($gt, $where, etc.) from req.body, req.query, req.params.
+// This prevents NoSQL operator-injection attacks across all routes.
+app.use(
+  mongoSanitize({
+    replaceWith: "_",
+    onSanitizeError: (req, _res, next, err) => {
+      console.warn("mongo-sanitize stripped operator from request:", req.path, err.message);
+      next();
+    },
+  })
+);
+
 app.use("/api", requestRiskMiddleware);
 app.use("/api", apiLimiter);
 
@@ -158,7 +186,13 @@ app.use((err, req, res, next) => {
   if (err && err.message === "CORS not allowed") {
     return res.status(403).json({ error: "Origin not allowed" });
   }
-  console.error("ERROR:", err.stack);
+  // Never expose internal stack traces in production.
+  const isProd = process.env.NODE_ENV === "production";
+  if (!isProd) {
+    console.error("ERROR:", err.stack);
+  } else {
+    console.error("ERROR:", err.message);
+  }
   const status = Number(err.status || err.statusCode) || 500;
   // Body-parser and similar client errors (4xx) are safe to describe; hide 5xx details.
   res.status(status).json({ error: status < 500 ? err.message : "Internal server error" });

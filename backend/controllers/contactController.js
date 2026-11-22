@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const ContactMessage = require("../models/ContactMessage");
 const sendEmail = require("../utils/sendEmail");
 const { sendGuestConfirmation } = require("../utils/guestConfirmation");
@@ -207,6 +208,9 @@ exports.getMessages = async (req, res) => {
 // PATCH /api/contact/admin/:id/read   – mark a single message as read
 exports.markAsRead = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid message ID" });
+    }
     const msg = await ContactMessage.findByIdAndUpdate(
       req.params.id,
       { isRead: true },
@@ -223,6 +227,9 @@ exports.markAsRead = async (req, res) => {
 // PATCH /api/contact/admin/:id/unread – mark a single message as unread
 exports.markAsUnread = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid message ID" });
+    }
     const msg = await ContactMessage.findByIdAndUpdate(
       req.params.id,
       { isRead: false },
@@ -239,6 +246,9 @@ exports.markAsUnread = async (req, res) => {
 // DELETE /api/contact/admin/:id – permanently delete a message
 exports.deleteMessage = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid message ID" });
+    }
     const msg = await ContactMessage.findByIdAndDelete(req.params.id);
 
     if (!msg) return res.status(404).json({ message: "Message not found" });

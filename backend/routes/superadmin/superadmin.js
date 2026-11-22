@@ -25,7 +25,7 @@ router.post('/addadmin', authMiddleware, restrictToRoles('superadmin'), async (r
       return res.status(400).json({ message: 'Admin with this email already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Generate 2FA secret and enable 2FA
     const secret = speakeasy.generateSecret({ length: 20 });

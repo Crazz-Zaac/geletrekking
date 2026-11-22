@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Alert = require('../models/Alert');
 const { getAlertColorPreset } = require('../utils/alertColorPresets');
 const authMiddleware = require('../middleware/authMiddleware');
@@ -91,6 +92,9 @@ router.post('/', authMiddleware, restrictToRoles('admin', 'superadmin'), auditCo
 router.put('/:id', authMiddleware, restrictToRoles('admin', 'superadmin'), auditContent('alert', (req) => req.params.id), async (req, res) => {
   try {
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid alert ID' });
+    }
     const { title, message, icon, type, isActive, priority, ctaUrl, ctaLabel } = req.body;
 
     const existingAlert = await Alert.findById(id).lean();
@@ -133,6 +137,9 @@ router.put('/:id', authMiddleware, restrictToRoles('admin', 'superadmin'), audit
 router.delete('/:id', authMiddleware, restrictToRoles('admin', 'superadmin'), auditContent('alert', (req) => req.params.id), async (req, res) => {
   try {
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid alert ID' });
+    }
 
     const alert = await Alert.findByIdAndDelete(id);
 

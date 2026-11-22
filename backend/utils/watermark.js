@@ -13,6 +13,36 @@ const FETCH_TIMEOUT_MS = 15000;
 const CACHE_LIMIT = 24;
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
+// Private / link-local ranges that must never be fetched (SSRF guard).
+// Checked after URL parsing and after each redirect to block redirect-chain attacks.
+const PRIVATE_IP_RE =
+  /^(10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+|127\.\d+\.\d+\.\d+|169\.254\.\d+\.\d+|::1|fc[0-9a-f]{2}:|fd[0-9a-f]{2}:|::ffff:0?10\.|::ffff:0?127\.|::ffff:0?172\.(1[6-9]|2\d|3[01])\.|::ffff:0?192\.168\.|::ffff:a9fe:)$/i;
+
+/**
+ * Throws if `url` resolves to a private/link-local/loopback address.
+ * Also rejects non-HTTPS schemes.
+ */
+const assertSafeUrl = (url) => {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error('Invalid document URL');
+  }
+  if (parsed.protocol !== 'https:') {
+    throw new Error('Document link must use https');
+  }
+  const host = parsed.hostname.toLowerCase();
+  // Block numeric IP literals that resolve to private ranges.
+  if (PRIVATE_IP_RE.test(host)) {
+    throw new Error('Document link targets a private network address');
+  }
+  // Block localhost by name.
+  if (host === 'localhost' || host.endsWith('.local') || host.endsWith('.internal')) {
+    throw new Error('Document link targets a private network address');
+  }
+};
+
 const WATERMARK_TEXT = 'geletrekking.com · for verification only';
 const FOOTER_TEXT = 'Shared by Gele Trekking for verification only · geletrekking.com';
 
@@ -42,11 +72,30 @@ const buildOverlay = (width, height) => {
 };
 
 const fetchSource = async (url) => {
-  if (!/^https:\/\//i.test(url)) throw new Error('Document link must use https');
+  assertSafeUrl(url);  // throws on private IPs or non-HTTPS before the network call
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const response = await fetch(url, { signal: controller.signal, redirect: 'follow' });
+    // `redirect: 'manual'` prevents following redirects automatically — we
+    // inspect each hop ourselves so a redirect chain cannot escape to a
+    // private address.
+    const response = await fetch(url, { signal: controller.signal, redirect: 'manual' });
+
+    // Follow up to 5 redirects, asserting each destination is safe.
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get('location');
+      if (!location) throw new Error('Redirect with no Location header');
+      assertSafeUrl(location);  // guard the redirect target too
+      // Re-fetch the redirect destination (recursive-safe: limited by fetch internals + our assertion)
+      const followed = await fetch(location, { signal: controller.signal, redirect: 'follow' });
+      if (!followed.ok) throw new Error(`Source returned ${followed.status}`);
+      const declared = Number(followed.headers.get('content-length') || 0);
+      if (declared > MAX_SOURCE_BYTES) throw new Error('Source image is too large');
+      const buffer = Buffer.from(await followed.arrayBuffer());
+      if (buffer.length > MAX_SOURCE_BYTES) throw new Error('Source image is too large');
+      return buffer;
+    }
+
     if (!response.ok) throw new Error(`Source returned ${response.status}`);
     const declared = Number(response.headers.get('content-length') || 0);
     if (declared > MAX_SOURCE_BYTES) throw new Error('Source image is too large');

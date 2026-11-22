@@ -26,6 +26,9 @@ const contentSecurityPolicy = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+  // Never expose source maps to browsers in production — they would reveal
+  // the full application source code to anyone with DevTools open.
+  productionBrowserSourceMaps: false,
   async redirects() {
     return [
       {

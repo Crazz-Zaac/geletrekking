@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const BlogPost = require("../models/BlogPost");
 const { isBot, isFirstViewToday } = require("../utils/blogViews");
 
@@ -124,6 +125,9 @@ exports.createBlog = async (req, res) => {
 exports.updateBlog = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid blog post ID" });
+    }
     const updates = req.body;
     // These are counted from visitors, so saving an edit must never reset them.
     delete updates.views;
@@ -156,6 +160,9 @@ exports.updateBlog = async (req, res) => {
 exports.deleteBlog = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid blog post ID" });
+    }
     const post = await BlogPost.findByIdAndDelete(id);
     if (!post) return res.status(404).json({ message: "Post not found" });
     res.json({ message: "Post deleted" });
@@ -171,6 +178,9 @@ exports.deleteBlog = async (req, res) => {
 exports.getBlogById = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid blog post ID" });
+    }
     const post = await BlogPost.findById(id);
     if (!post) return res.status(404).json({ message: "Post not found" });
     res.json(post);

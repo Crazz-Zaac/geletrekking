@@ -33,7 +33,7 @@ const seedSuperAdmin = async () => {
     if (existing) {
       console.log('Superadmin already exists');
     } else {
-      const hashedPassword = await bcrypt.hash(SUPERADMIN_PASSWORD, 10);
+      const hashedPassword = await bcrypt.hash(SUPERADMIN_PASSWORD, 12);
       await User.create({
         name: 'Super Admin',
         email: SUPERADMIN_EMAIL,
