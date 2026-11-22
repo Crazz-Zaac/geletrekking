@@ -31,6 +31,7 @@ const userSchema = new mongoose.Schema(
     twoFactorTempSecret: { type: String, default: null },
     twoFactorSecretEnc: { type: String, default: null },
     twoFactorTempSecretEnc: { type: String, default: null },
+    lastUsedTotpStep: { type: Number, default: null },
   },
   { timestamps: true }
 );

@@ -21,14 +21,14 @@ const { getNotificationSummary } = require("../../controllers/adminNotificationC
 // ✅ Middleware
 const authMiddleware = require("../../middleware/authMiddleware");
 const { restrictToRoles, requirePermission } = require("../../middleware/roleMiddleware");
-const { authLoginLimiter } = require("../../middleware/rateLimitMiddleware");
+const { authLoginLimiter, authLoginIpLimiter } = require("../../middleware/rateLimitMiddleware");
 
 
 /* -----------------------------
  ✅ ADMIN LOGIN
   POST /api/admin/login
 --------------------------------*/
-router.post("/login", authLoginLimiter, login);
+router.post("/login", authLoginIpLimiter, authLoginLimiter, login);
 
 // Clears the httpOnly session cookie. No auth needed: it only removes a cookie.
 router.post("/logout", logout);

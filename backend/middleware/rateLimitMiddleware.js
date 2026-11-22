@@ -48,10 +48,20 @@ const authLoginLimiter = rateLimit({
   message: { message: 'Too many login attempts. Please wait and try again.' },
 });
 
+// Global IP-level limiter on login to block password-spraying across accounts from a single IP
+const authLoginIpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many login attempts from this network. Please wait and try again.' },
+});
+
 module.exports = {
   blogEngagementLimiter,
   apiLimiter,
   contactLimiter,
   contactSlowDown,
   authLoginLimiter,
+  authLoginIpLimiter,
 };

@@ -6,55 +6,10 @@ const Admin = require('../../models/user');
 const bcrypt = require('bcrypt');
 const speakeasy = require('speakeasy');
 
-// GET route — test if superadmin can access the admin creation form
-router.get('/addadmin', authMiddleware, restrictToRoles('superadmin'), (req, res) => {
-  res.json({ message: "Superadmin can access registration form" });
-});
-
-// POST — Create new admin (superadmin only)
-router.post('/addadmin', authMiddleware, restrictToRoles('superadmin'), async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'All fields (name, email, password) are required' });
-    }
-
-    const existingAdmin = await Admin.findOne({ email });
-    if (existingAdmin) {
-      return res.status(400).json({ message: 'Admin with this email already exists' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Generate 2FA secret and enable 2FA
-    const secret = speakeasy.generateSecret({ length: 20 });
-
-    const newAdmin = new Admin({
-      name,
-      email,
-      password: hashedPassword,
-      role: 'admin',
-      twoFactorEnabled: true,
-      twoFactorSecret: secret.base32,
-    });
-
-    await newAdmin.save();
-
-    res.status(201).json({ 
-      message: 'New admin created successfully with 2FA enabled', 
-      admin: {
-        id: newAdmin._id,
-        name: newAdmin.name,
-        email: newAdmin.email,
-        role: newAdmin.role,
-        twoFactorEnabled: newAdmin.twoFactorEnabled,
-      }
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error while creating admin' });
-  }
+// GET/POST /addadmin — Deprecated: direct admin creation bypassed the secure invitation flow
+// and generated unconfirmed 2FA secrets. All admin additions are managed via /api/admin/invites.
+router.all('/addadmin', authMiddleware, restrictToRoles('superadmin'), (req, res) => {
+  res.status(410).json({ message: 'Direct admin creation is deprecated. Please use the secure invitation flow at /api/admin/invites.' });
 });
 
 // DELETE /deleteadmin/:email — delete admin by email, prevent deleting self

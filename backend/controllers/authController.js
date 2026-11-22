@@ -16,9 +16,17 @@ const TWO_FACTOR_BYPASS_IPS = (process.env.ALLOW_2FA_BYPASS_IPS || '')
 const MAX_FAILED_LOGINS = Number(process.env.AUTH_MAX_FAILED_LOGINS || 5);
 const LOCKOUT_MINUTES = Number(process.env.AUTH_LOCKOUT_MINUTES || 15);
 
+// Precomputed bcrypt hash used to equalize execution time when an email does not exist,
+// neutralizing timing-based account enumeration.
+const DUMMY_PASSWORD_HASH = '$2b$12$e8Y5M5cO1y3E2p9c0zYy6O4q3V8r8u9y1x4w2v1t0s9r8q7p6o5n4';
+const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password';
+
 const isTwoFactorBypassAllowed = (req) => {
+  // Never permit 2FA bypass in production under any circumstance
+  if (process.env.NODE_ENV === 'production') return false;
   if (!TWO_FACTOR_BYPASS_ENABLED) return false;
-  if (TWO_FACTOR_BYPASS_IPS.length === 0) return true;
+  // An explicit non-empty IP allowlist is mandatory
+  if (TWO_FACTOR_BYPASS_IPS.length === 0) return false;
   return TWO_FACTOR_BYPASS_IPS.includes(req.ip);
 };
 
@@ -79,7 +87,9 @@ exports.login = async (req, res) => {
     const normalizedEmail = (email || '').toLowerCase().trim();
     const user = await User.findOne({ email: normalizedEmail });
     if (!user || !['editor', 'superadmin', 'admin'].includes(user.role)) {
-      return res.status(401).json({ message: 'Access denied' });
+      // Execute dummy bcrypt comparison to neutralize timing attacks
+      await bcrypt.compare(password || '', DUMMY_PASSWORD_HASH);
+      return res.status(401).json({ message: INVALID_CREDENTIALS_MESSAGE });
     }
 
     const statusCheck = enforceAccountStatus(user);
@@ -104,7 +114,7 @@ exports.login = async (req, res) => {
         userAgent: req.get('user-agent'),
         meta: { reason: 'invalid_password' },
       });
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: INVALID_CREDENTIALS_MESSAGE });
     }
 
     const role = normalizeRole(user.role);
@@ -121,6 +131,12 @@ exports.login = async (req, res) => {
       }
 
       if (twoFactorCode) {
+        // Enforce anti-replay: each 30-second TOTP step may only be consumed once
+        const currentStep = Math.floor(Date.now() / 1000 / 30);
+        if (user.lastUsedTotpStep && user.lastUsedTotpStep >= currentStep) {
+          return res.status(401).json({ message: 'This code was already used. Please wait for the next 6-digit code.' });
+        }
+
         const secret = getDecryptedSecret(user);
         const verified = verifyTotpCode({
           secret,
@@ -145,6 +161,8 @@ exports.login = async (req, res) => {
           });
           return res.status(401).json({ message: 'Invalid or expired 2FA code' });
         }
+
+        user.lastUsedTotpStep = currentStep;
 
         if (user.twoFactorSecret && !user.twoFactorSecretEnc) {
           user.twoFactorSecretEnc = encrypt(user.twoFactorSecret);
@@ -257,6 +275,10 @@ exports.disableTwoFactor = async (req, res) => {
     const user = await User.findById(req.user._id);
     if (!user || !['editor', 'superadmin', 'admin'].includes(user.role)) {
       return res.status(403).json({ message: 'Not authorized for 2FA disable.' });
+    }
+
+    if (user.role === 'superadmin') {
+      return res.status(400).json({ message: 'Two-factor authentication is mandatory and cannot be disabled for superadmin accounts.' });
     }
 
     if (!user.twoFactorEnabled || !(user.twoFactorSecretEnc || user.twoFactorSecret)) {

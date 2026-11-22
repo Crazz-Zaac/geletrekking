@@ -153,6 +153,14 @@ exports.acceptInvite = async (req, res) => {
     return res.status(400).json({ message: 'Token and password are required.' })
   }
 
+  if (typeof password !== 'string' || password.length < 10) {
+    return res.status(400).json({ message: 'Password must be at least 10 characters long.' })
+  }
+
+  if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9\W]/.test(password)) {
+    return res.status(400).json({ message: 'Password must contain uppercase, lowercase, and a number or symbol.' })
+  }
+
   try {
     const tokenHash = hashToken(token)
     const invite = await AdminInvite.findOne({ tokenHash })
