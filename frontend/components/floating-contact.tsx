@@ -273,7 +273,7 @@ export function FloatingContact() {
                   <span className="relative">
                     <img
                       src="/geletrekking.png"
-                      alt=""
+                      alt="Gele Trekking logo"
                       width={48}
                       height={48}
                       className="h-12 w-12 rounded-full bg-white object-contain p-1 ring-2 ring-white/40"

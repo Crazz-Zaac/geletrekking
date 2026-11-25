@@ -56,7 +56,7 @@ function Avatar({ review }: { review: SiteReview }) {
   const color = AVATAR_COLORS[review.name.length % AVATAR_COLORS.length]
   if (review.avatar && !broken) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={review.avatar} alt="" width={40} height={40} loading="lazy" onError={() => setBroken(true)} className="h-10 w-10 shrink-0 rounded-full object-cover" />
+    return <img src={review.avatar} alt={`${review.name} profile photo`} width={40} height={40} loading="lazy" onError={() => setBroken(true)} className="h-10 w-10 shrink-0 rounded-full object-cover" />
   }
   return <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white', color)} aria-hidden="true">{initial}</span>
 }

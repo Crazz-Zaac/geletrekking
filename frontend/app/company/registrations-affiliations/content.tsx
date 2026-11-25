@@ -198,7 +198,7 @@ export default function RegistrationsAffiliationsContent({ documents, associatio
                     <div className="flex h-16 min-w-16 max-w-[10rem] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-white px-2 py-1.5">
                       {logo ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={logo} alt="" className="h-full w-auto max-w-full object-contain" loading="lazy" />
+                        <img src={logo} alt={`${doc.issuer || doc.title || 'Membership'} logo`} className="h-full w-auto max-w-full object-contain" loading="lazy" />
                       ) : (
                         <Users className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
                       )}
@@ -236,7 +236,7 @@ export default function RegistrationsAffiliationsContent({ documents, associatio
                 <li key={association.name} className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
                   {/* Same height for every logo; wide ones (TAAN, NMA) can use more width. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={association.logoUrl} alt="" className="h-12 w-auto max-w-[10rem] rounded bg-white object-contain" loading="lazy" />
+                  <img src={association.logoUrl} alt={`${association.name} logo`} className="h-12 w-auto max-w-[10rem] rounded bg-white object-contain" loading="lazy" />
                   <span className="text-sm font-medium text-foreground">{association.name}</span>
                 </li>
               ))}

@@ -271,7 +271,7 @@ export function AboutContent({
       {/* Hero: the founder's story up front */}
       <section className="relative overflow-hidden bg-slate-950 text-white">
         {about?.heroImageUrl ? (
-          <Image src={about.heroImageUrl} alt="" fill priority sizes="100vw" className="object-cover opacity-25" />
+          <Image src={about.heroImageUrl} alt="Gele Trekking team and the Nepal Himalaya" aria-hidden="true" fill priority sizes="100vw" className="object-cover opacity-25" />
         ) : null}
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-slate-950/60" />
         <div className="container relative mx-auto grid items-center gap-10 px-4 py-12 md:px-6 md:py-16 lg:grid-cols-[1.15fr_0.85fr]">
@@ -537,7 +537,7 @@ export function AboutContent({
               {associationList.map((association) => (
                 <li key={association.name} className="flex flex-col items-center gap-2 text-center">
                   <span className="flex h-20 w-full items-center justify-center rounded-xl bg-white px-3">
-                    <img src={association.logoUrl} alt="" className="h-14 w-auto max-w-[8.5rem] object-contain" loading="lazy" />
+                    <img src={association.logoUrl} alt={`${association.name} logo`} className="h-14 w-auto max-w-[8.5rem] object-contain" loading="lazy" />
                   </span>
                   <span className="text-xs font-medium leading-snug text-muted-foreground">{association.name}</span>
                 </li>

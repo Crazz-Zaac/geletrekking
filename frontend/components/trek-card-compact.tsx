@@ -29,7 +29,7 @@ export function DifficultyLabel({ difficulty, className }: { difficulty: Trek['d
 export function OfferRibbon({ size = 140 }: { size?: number }) {
   return (
     <div className="pointer-events-none absolute -left-3 -top-3 z-40">
-      <Image src="/ribbon.png" alt="" width={size} height={size} className="object-contain drop-shadow-xl" loading="lazy" />
+      <Image src="/ribbon.png" alt="Special offer ribbon" width={size} height={size} className="object-contain drop-shadow-xl" loading="lazy" />
     </div>
   )
 }
