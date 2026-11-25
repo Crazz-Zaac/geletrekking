@@ -65,7 +65,7 @@ export default async function FAQPage() {
           ) : null}
           <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/95 to-slate-950/80" />
           <div className="container relative mx-auto max-w-7xl px-4 py-12 md:px-6 md:py-16">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-accent">Help centre</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-300">Help centre</p>
             <h1 className="text-3xl font-bold md:text-5xl">{faq.heroTitle}</h1>
             <p className="mt-3 max-w-2xl text-base text-primary-foreground/80 md:text-lg">
               {(faq.heroSubtitle || '').trim().replace(/([^.!?])$/, '$1.')}{' '}

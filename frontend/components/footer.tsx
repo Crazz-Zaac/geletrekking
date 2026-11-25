@@ -89,7 +89,7 @@ export function Footer() {
               />
               <div>
                 <div className="font-bold text-white text-sm leading-tight tracking-widest uppercase">{settings.siteName || 'GELE TREKKING'}</div>
-                <div className="text-white/50 text-[8px] uppercase tracking-[2px] leading-tight">Walk · Explore · Discover</div>
+                <div className="text-white/70 text-[8px] uppercase tracking-[2px] leading-tight">Walk · Explore · Discover</div>
               </div>
             </Link>
             <p className="text-white/60 text-sm leading-relaxed mb-6 max-w-xs">
@@ -131,7 +131,7 @@ export function Footer() {
 
           {/* Destinations */}
           <div>
-            <h3 className="font-semibold text-sm uppercase tracking-wider text-white/40 mb-4">Destinations</h3>
+            <h2 className="font-semibold text-sm uppercase tracking-wider text-white/70 mb-4">Destinations</h2>
             <ul className="space-y-2">
               {destinationLinks.map((link) => (
                 <li key={link.label}>
@@ -145,7 +145,7 @@ export function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-semibold text-sm uppercase tracking-wider text-white/40 mb-4">Quick Links</h3>
+            <h2 className="font-semibold text-sm uppercase tracking-wider text-white/70 mb-4">Quick Links</h2>
             <ul className="space-y-2">
               {footerLinks.quickLinks.map((link) => (
                 <li key={link.label}>
@@ -159,7 +159,7 @@ export function Footer() {
 
           {/* Company */}
           <div>
-            <h3 className="font-semibold text-sm uppercase tracking-wider text-white/40 mb-4">Company</h3>
+            <h2 className="font-semibold text-sm uppercase tracking-wider text-white/70 mb-4">Company</h2>
             <ul className="space-y-2">
               {footerLinks.company.map((link) => (
                 <li key={link.label}>
@@ -173,7 +173,7 @@ export function Footer() {
 
           {/* Useful Links */}
           <div>
-            <h3 className="font-semibold text-sm uppercase tracking-wider text-white/40 mb-4">Useful Links</h3>
+            <h2 className="font-semibold text-sm uppercase tracking-wider text-white/70 mb-4">Useful Links</h2>
             <ul className="space-y-2">
               {footerLinks.usefulLinks.map((link) => (
                 <li key={link.label}>
@@ -196,7 +196,7 @@ export function Footer() {
             </ul>
             {/* Trust badges */}
             <div className="mt-6 p-3 rounded-lg bg-white/5 border border-white/10">
-              <p className="text-xs text-white/40 uppercase tracking-wider mb-2">Certified By</p>
+              <p className="text-xs text-white/70 uppercase tracking-wider mb-2">Certified By</p>
               <p className="text-xs text-white/70 leading-relaxed">Nepal Tourism Board • TAAN Member • NMA Licensed</p>
             </div>
           </div>
@@ -210,7 +210,7 @@ export function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-center">
-          <p className="text-xs text-white/40">
+          <p className="text-xs text-white/70">
             &copy; {new Date().getFullYear()} Gele Trekking Pvt. Ltd. All rights reserved.
           </p>
         </div>

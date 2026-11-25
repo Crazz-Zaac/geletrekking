@@ -3,7 +3,7 @@
 import { useSiteSettings } from '@/hooks/use-site-settings'
 import { getContactLinks } from '@/lib/contact-links'
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import type { Trek } from '@/lib/data'
 import { submitContactMessage } from '@/lib/api'
@@ -21,6 +21,7 @@ interface BookingFormProps {
 export type BookingFormPrefill = { packageTier?: string; date?: string; dateLabel?: string }
 
 export function BookingForm({ trek, treks = [], requireTrek = false, packageOptions, prefill }: BookingFormProps) {
+  const fieldId = useId()
   const { settings, social } = useSiteSettings()
   const { whatsappUrl } = getContactLinks(settings.email, social.whatsapp, settings.phone)
   const [submitted, setSubmitted] = useState(false)
@@ -155,8 +156,9 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
       ) : null}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">Full Name *</label>
+          <label htmlFor={`${fieldId}-name`} className="block text-sm font-medium text-foreground mb-1.5">Full Name *</label>
           <input
+            id={`${fieldId}-name`}
             type="text"
             required
             value={form.name}
@@ -166,8 +168,9 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">Email Address *</label>
+          <label htmlFor={`${fieldId}-email`} className="block text-sm font-medium text-foreground mb-1.5">Email Address *</label>
           <input
+            id={`${fieldId}-email`}
             type="email"
             required
             value={form.email}
@@ -179,8 +182,9 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">Phone / WhatsApp</label>
+          <label htmlFor={`${fieldId}-phone`} className="block text-sm font-medium text-foreground mb-1.5">Phone / WhatsApp</label>
           <input
+            id={`${fieldId}-phone`}
             type="tel"
             value={form.phone}
             onChange={(e) => updateForm({ phone: e.target.value })}
@@ -189,8 +193,9 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">Preferred Trek {requireTrek ? '*' : ''}</label>
+          <label htmlFor={`${fieldId}-trek`} className="block text-sm font-medium text-foreground mb-1.5">Preferred Trek {requireTrek ? '*' : ''}</label>
           <select
+            id={`${fieldId}-trek`}
             value={form.trek}
             required={requireTrek}
             onChange={(e) => updateForm({ trek: e.target.value, packageTier: '' })}
@@ -210,8 +215,9 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">Choose Package</label>
+          <label htmlFor={`${fieldId}-package`} className="block text-sm font-medium text-foreground mb-1.5">Choose Package</label>
           <select
+            id={`${fieldId}-package`}
             value={form.packageTier}
             onChange={(e) => updateForm({ packageTier: e.target.value })}
             className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
@@ -223,8 +229,9 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">Preferred Start Date</label>
+          <label htmlFor={`${fieldId}-date`} className="block text-sm font-medium text-foreground mb-1.5">Preferred Start Date</label>
           <input
+            id={`${fieldId}-date`}
             type="date"
             value={form.date}
             onChange={(e) => {
@@ -236,8 +243,9 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
           {dateLabel ? <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-400">Departure selected: {dateLabel}</p> : null}
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">Group Size</label>
+          <label htmlFor={`${fieldId}-group`} className="block text-sm font-medium text-foreground mb-1.5">Group Size</label>
           <select
+            id={`${fieldId}-group`}
             value={form.groupSize}
             onChange={(e) => updateForm({ groupSize: e.target.value })}
             className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
@@ -252,8 +260,9 @@ export function BookingForm({ trek, treks = [], requireTrek = false, packageOpti
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1.5">Message / Special Requirements</label>
+        <label htmlFor={`${fieldId}-message`} className="block text-sm font-medium text-foreground mb-1.5">Message / Special Requirements</label>
         <textarea
+          id={`${fieldId}-message`}
           value={form.message}
           onChange={(e) => updateForm({ message: e.target.value })}
           placeholder="Tell us about your trekking experience, any dietary needs, or questions..."

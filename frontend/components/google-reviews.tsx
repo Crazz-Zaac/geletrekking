@@ -174,7 +174,7 @@ export function GoogleReviews({ data }: { data: SiteReviews | null }) {
       </div>
 
       {data?.showBranding && (
-        <p className="text-center text-xs text-white/60">
+        <p className="text-center text-xs text-white/80">
           Reviews collected via{' '}
           <a href="https://featurable.com" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-white">
             Featurable
