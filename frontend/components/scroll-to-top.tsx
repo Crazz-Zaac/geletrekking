@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { useIsAdminRoute } from '@/hooks/use-is-admin-route';
 
 export function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false);
-  const pathname = usePathname() || '';
+  const isAdminRoute = useIsAdminRoute();
 
   useEffect(() => {
     const toggleVisibility = () => {
@@ -30,7 +30,7 @@ export function ScrollToTop() {
   };
 
   // The admin has its own sticky save bar in this corner.
-  if (pathname === '/admin' || pathname.startsWith('/admin/')) return null;
+  if (isAdminRoute) return null;
 
   return (
     <AnimatePresence>

@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useId, useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useIsAdminRoute } from '@/hooks/use-is-admin-route'
 import { Cookie, ExternalLink, ShieldCheck } from 'lucide-react'
 import {
   CONSENT_CATEGORIES,
@@ -53,8 +53,7 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
   const [draft, setDraft] = useState<Choices>(NONE)
   const headingId = useId()
   // The admin has no optional third-party content, and the banner would cover its save bar.
-  const pathname = usePathname() || ''
-  const isAdmin = pathname === '/admin' || pathname.startsWith('/admin/')
+  const isAdmin = useIsAdminRoute()
 
   useEffect(() => {
     const restore = () => {

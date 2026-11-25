@@ -223,7 +223,7 @@ export function Navbar() {
             width={36}
             height={36}
             className="w-9 h-9 rounded-lg object-cover border border-white/20 shadow"
-            priority
+            loading="eager"
           />
           <div className="hidden sm:block">
             <div className="font-bold text-white text-sm leading-tight tracking-widest uppercase group-hover:text-accent transition-colors">

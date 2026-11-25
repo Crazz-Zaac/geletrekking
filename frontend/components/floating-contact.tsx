@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { useIsAdminRoute } from '@/hooks/use-is-admin-route'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ArrowUpRight, CalendarDays, Clock, Mail, MessageCircle, X } from 'lucide-react'
 import { useSiteSettings } from '@/hooks/use-site-settings'
@@ -93,6 +94,7 @@ const HINT_SEEN_KEY = 'gele_contact_hint_seen'
 
 export function FloatingContact() {
   const pathname = usePathname()
+  const isAdminRoute = useIsAdminRoute()
   const { settings, social } = useSiteSettings()
   const links = getContactLinks(settings.email, social.whatsapp, settings.phone)
   const [open, setOpen] = useState(false)
@@ -136,7 +138,7 @@ export function FloatingContact() {
   // Show the hint once per visitor, ~12 s in, and only when nothing else is
   // asking for attention (cookie banner unanswered, a dialog or panel open).
   useEffect(() => {
-    if (pathname === '/admin' || pathname.startsWith('/admin/')) return
+    if (isAdminRoute) return
     let seen = true
     try {
       seen = localStorage.getItem(HINT_SEEN_KEY) === '1'
@@ -158,7 +160,7 @@ export function FloatingContact() {
       } catch {}
     }, 12000)
     return () => window.clearTimeout(showTimer)
-  }, [pathname])
+  }, [pathname, isAdminRoute])
 
   // Hide the hint again after a while if it is ignored.
   useEffect(() => {
@@ -172,7 +174,7 @@ export function FloatingContact() {
     triggerRef.current?.focus()
   }
 
-  if (pathname === '/admin' || pathname.startsWith('/admin/')) return null
+  if (isAdminRoute) return null
 
   const panelMotion = reduceMotion
     ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
