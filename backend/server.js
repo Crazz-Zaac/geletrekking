@@ -93,15 +93,29 @@ app.use(express.json({ limit: "6mb" }));
 
 // Strip MongoDB operator keys ($gt, $where, etc.) from req.body, req.query, req.params.
 // This prevents NoSQL operator-injection attacks across all routes.
-app.use(
-  mongoSanitize({
-    replaceWith: "_",
-    onSanitizeError: (req, _res, next, err) => {
-      console.warn("mongo-sanitize stripped operator from request:", req.path, err.message);
-      next();
-    },
-  })
-);
+// Express 5 makes req.query a read-only getter, so the library's own middleware
+// (which assigns req.query) throws on every request. Sanitize in place instead and
+// pin the cleaned query on the request instance.
+const MONGO_SANITIZE_OPTIONS = { replaceWith: "_" };
+app.use((req, _res, next) => {
+  for (const key of ["body", "params", "headers"]) {
+    if (req[key] && mongoSanitize.has(req[key])) {
+      console.warn(`mongo-sanitize stripped operator from request ${key}:`, req.path);
+      mongoSanitize.sanitize(req[key], MONGO_SANITIZE_OPTIONS);
+    }
+  }
+  const query = req.query;
+  if (query && mongoSanitize.has(query)) {
+    console.warn("mongo-sanitize stripped operator from request query:", req.path);
+  }
+  Object.defineProperty(req, "query", {
+    value: query ? mongoSanitize.sanitize(query, MONGO_SANITIZE_OPTIONS) : query,
+    writable: true,
+    configurable: true,
+    enumerable: true,
+  });
+  next();
+});
 
 app.use("/api", requestRiskMiddleware);
 app.use("/api", apiLimiter);
