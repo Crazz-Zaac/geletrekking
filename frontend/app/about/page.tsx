@@ -10,8 +10,8 @@ import { AboutContent } from './AboutContent';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = buildMetadata({
-  title: 'About Us',
-  description: `Gele Bishokarma has worked in the Nepal Himalaya since ${FOUNDER_SINCE_YEAR}: porter, award-winning trek leader for Intrepid and Exodus, and now founder of Gele Trekking. Meet our team and our one guest, one porter policy.`,
+  title: 'About Us: Local Nepal Trekking Team',
+  description: `Founded by Gele Bishokarma, in the Nepal Himalaya since ${FOUNDER_SINCE_YEAR} as porter and award-winning trek leader. Meet our local team and our one guest, one porter policy.`,
   path: '/about',
   image: '/images/about-team.jpg',
   keywords: ['Gele Bishokarma', 'Gele Trekking founder', 'Nepal trekking guide since 1998', 'one guest one porter', 'Nepal trekking company'],

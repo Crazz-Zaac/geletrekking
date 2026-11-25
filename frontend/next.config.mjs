@@ -32,6 +32,12 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        // Browsers and crawlers request /favicon.ico by convention.
+        source: "/favicon.ico",
+        destination: "/geletrekking.png",
+        permanent: true,
+      },
+      {
         source: "/terms",
         destination: "/terms-and-conditions",
         permanent: true,
@@ -250,10 +256,10 @@ const nextConfig = {
     // Remove this when fully migrated to proxy pattern
   },
   images: {
-    deviceSizes: [360, 480, 640, 750, 828, 960, 1080, 1200, 1600, 1920],
+    deviceSizes: [360, 480, 540, 640, 750, 828, 960, 1080, 1200, 1600, 1920],
     imageSizes: [32, 48, 64, 96, 128, 256],
     formats: ['image/webp'],
-    qualities: [75, 90],
+    qualities: [60, 75, 90],
     remotePatterns: [
       {
         protocol: 'https',

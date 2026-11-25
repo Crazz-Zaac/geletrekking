@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { JsonLd } from '@/components/json-ld'
 import { getActivities } from '@/lib/api'
 import { breadcrumbJsonLd, buildMetadata, truncateDescription } from '@/lib/seo'
@@ -45,6 +46,8 @@ export async function generateMetadata({ params }: ActivityParams): Promise<Meta
 export default async function ActivityLayout({ children, params }: ActivityLayoutProps) {
   const { slug } = await params
   const activity = await loadActivity(slug)
+  // Unknown slugs must answer 404, not a 200 "soft 404" page.
+  if (!activity) notFound()
 
   return (
     <>

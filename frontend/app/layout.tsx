@@ -27,8 +27,11 @@ export const metadata: Metadata = {
   description:
     'Discover the Himalayas with Gele Trekking. Expert-guided trekking packages in Nepal — Everest Base Camp, Annapurna Circuit, Langtang Valley and more. Book your dream adventure today.',
   icons: {
-    icon: '/geletrekking.png',
+    icon: [{ url: '/geletrekking.png', type: 'image/png' }],
+    shortcut: '/geletrekking.png',
+    apple: '/geletrekking.png',
   },
+  manifest: '/manifest.webmanifest',
   alternates: {
     canonical: '/',
   },

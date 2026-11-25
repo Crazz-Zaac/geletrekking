@@ -34,6 +34,7 @@ export function OfferCard({ trek, className, showShare = true }: { trek: Trek; c
           loading="lazy"
           className="object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
           sizes="(max-width: 639px) 128px, 176px"
+          quality={60}
         />
         {trek.offerDiscountPercent ? (
           <span className="absolute bottom-2 left-2 rounded-md bg-red-600 px-2 py-1 text-xs font-extrabold leading-none text-white shadow">
@@ -101,7 +102,7 @@ export function SpecialOffers({ treks }: { treks: Trek[] }) {
             Explore All Deals
           </Link>
         </div>
-        <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-[repeat(auto-fill,30rem)] md:gap-5 md:overflow-visible md:px-0 md:pb-0">
+        <div className="-mx-4 flex snap-x snap-mandatory scroll-pl-4 gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-[repeat(auto-fill,30rem)] md:gap-5 md:overflow-visible md:px-0 md:pb-0">
           {treks.map((trek) => (
             <OfferCard key={trek.id} trek={trek} className="min-h-[9.5rem] w-[90%] shrink-0 snap-start md:w-auto" />
           ))}

@@ -104,7 +104,9 @@ export async function HeroSection({
         alt="Trekkers on a Himalayan trail in Nepal with snow-capped peaks"
         fill
         sizes="100vw"
-        priority
+        preload
+        fetchPriority="high"
+        loading="eager"
         className="object-cover"
         aria-hidden="true"
       />

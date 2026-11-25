@@ -81,7 +81,7 @@ export function PopularTreks({ treks, totalCount }: { treks: Trek[]; totalCount:
         {/* Phones: swipeable row with the next card peeking. Tablet+: grid. */}
         <div
           key={region}
-          className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-[repeat(auto-fill,minmax(17.5rem,21rem))] sm:justify-center sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 animate-in fade-in duration-300"
+          className="-mx-4 flex snap-x snap-mandatory scroll-pl-4 gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-[repeat(auto-fill,minmax(17.5rem,21rem))] sm:justify-center sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 animate-in fade-in duration-300"
         >
           {shown.map((trek) => (
             <TrekCardCompact key={trek.id} trek={trek} className="w-[80%] shrink-0 snap-start sm:w-auto" />

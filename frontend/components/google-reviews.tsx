@@ -151,7 +151,7 @@ export function GoogleReviews({ data }: { data: SiteReviews | null }) {
       <div className="relative">
         <div
           ref={trackRef}
-          className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-mx-4 flex snap-x snap-mandatory scroll-pl-4 gap-4 overflow-x-auto scroll-smooth px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="list"
           aria-label="Google reviews"
         >
