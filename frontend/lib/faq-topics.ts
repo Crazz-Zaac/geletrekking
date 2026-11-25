@@ -70,13 +70,13 @@ export const SUGGESTED_FAQS: Array<{ question: string; answer: string; category:
     category: 'booking',
     question: 'When and how do I pay?',
     answer:
-      'At the moment you pay for your trek **after you arrive in Nepal**, before the trek starts. No advance payment is required to reserve your place.\nWe will confirm the total price, currency and accepted payment methods in writing before you travel. See our [terms and conditions](/terms) for details.',
+      'At the moment you pay for your trek **after you arrive in Nepal**, before the trek starts. No advance payment is required to reserve your place.\nWe will confirm the total price, currency and accepted payment methods in writing before you travel. See our [terms and conditions](/terms-and-conditions) for details.',
   },
   {
     category: 'booking',
     question: 'What is your cancellation and rescheduling policy?',
     answer:
-      'We always try to **move your dates** rather than cancel your trip.\n- **Cancellation:** accepted up to **3 months before** the trip. A small fee is deducted to cover currency exchange and transaction charges.\n- **Rescheduling:** you can move your trip to new dates **within one year**, at the same price.\n- **Last-minute bookings** cannot be cancelled or refunded.\nFull details are in our [terms and conditions](/terms).',
+      'We always try to **move your dates** rather than cancel your trip.\n- **Cancellation:** accepted up to **3 months before** the trip. A small fee is deducted to cover currency exchange and transaction charges.\n- **Rescheduling:** you can move your trip to new dates **within one year**, at the same price.\n- **Last-minute bookings** cannot be cancelled or refunded.\nFull details are in our [terms and conditions](/terms-and-conditions).',
   },
   {
     category: 'booking',

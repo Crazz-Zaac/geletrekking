@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { buildMetadata } from '@/lib/seo'
 
 export const metadata: Metadata = buildMetadata({
-  title: 'Contact Gele Trekking',
+  title: 'Contact Us: Plan Your Nepal Trek',
   description: 'Contact Gele Trekking for Nepal trek planning, custom itineraries, booking questions, permit advice, and local Himalayan travel support.',
   path: '/contact',
 })

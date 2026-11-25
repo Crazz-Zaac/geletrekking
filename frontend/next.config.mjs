@@ -32,6 +32,12 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        // Browsers and crawlers request /favicon.ico by convention.
+        source: "/favicon.ico",
+        destination: "/geletrekking.png",
+        permanent: true,
+      },
+      {
         source: "/terms",
         destination: "/terms-and-conditions",
         permanent: true,

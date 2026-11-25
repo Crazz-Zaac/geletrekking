@@ -9,7 +9,7 @@ import { breadcrumbJsonLd, buildMetadata } from '@/lib/seo'
 export const metadata: Metadata = buildMetadata({
   title: 'Safety & Trekking with Confidence',
   description:
-    'How Gele Trekking keeps you safe in the Himalayas: trained guides, careful acclimatisation, emergency and evacuation support, insurance requirements, porter welfare and clear booking terms.',
+    'How we keep you safe in the Himalayas: trained guides, careful acclimatisation, emergency evacuation support, insurance requirements and porter welfare.',
   path: '/safety',
 })
 

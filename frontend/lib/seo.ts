@@ -66,8 +66,13 @@ export function trekSeoDescription(trek: TrekSeoInput) {
   return truncateDescription(capitalized, `${trek.title}: guided trek in Nepal with Gele Trekking.`)
 }
 
+/** Google shows roughly 60 characters; drop the brand suffix rather than truncate the page's own words. */
+const MAX_TITLE_LENGTH = 60
+
 export function pageTitle(title: string) {
-  return title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`
+  if (title.includes(SITE_NAME)) return title
+  const branded = `${title} | ${SITE_NAME}`
+  return branded.length <= MAX_TITLE_LENGTH ? branded : title
 }
 
 export function buildMetadata({

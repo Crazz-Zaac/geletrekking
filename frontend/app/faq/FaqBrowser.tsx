@@ -308,7 +308,7 @@ export function FaqSidebar() {
             { href: '/guides', label: 'Trek planning guides', icon: BookOpen },
             { href: '/packing-list', label: 'Packing list', icon: Backpack },
             { href: '/safety', label: 'Safety on the trail', icon: ShieldCheck },
-            { href: '/terms', label: 'Booking terms & conditions', icon: FileText },
+            { href: '/terms-and-conditions', label: 'Booking terms & conditions', icon: FileText },
           ].map(({ href, label, icon: Icon }) => (
             <li key={href}>
               <Link href={href} className="flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium text-foreground hover:bg-muted">

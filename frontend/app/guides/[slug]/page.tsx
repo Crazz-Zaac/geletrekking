@@ -16,13 +16,22 @@ import { marked } from 'marked'
 import { sanitizeHtml } from '@/lib/sanitize-html'
 import GuideContent from '@/components/guide-content'
 import { JsonLd } from '@/components/json-ld'
-import { breadcrumbJsonLd, buildMetadata, guideArticleJsonLd, truncateDescription } from '@/lib/seo'
+import { breadcrumbJsonLd, buildMetadata, guideArticleJsonLd, stripMarkdown, truncateDescription } from '@/lib/seo'
 
 interface GuideDetailPageProps {
   params: Promise<{ slug: string }>
 }
 
 const loadGuide = cache((slug: string) => getGuideBySlug(slug))
+
+// Editors often write a one-line summary; pad short ones with the guide's opening text
+// so the search snippet is a useful length (Google shows ~155 characters).
+function guideSeoDescription(guide: { title: string; description?: string; content?: string }) {
+  const summary = stripMarkdown(guide.description || '')
+  const body = stripMarkdown(guide.content || '')
+  const text = summary.length >= 110 || !body ? summary || body : `${summary.replace(/[.!?]?$/, '.')} ${body}`.trim()
+  return truncateDescription(text, `Read ${guide.title}: a Nepal trekking guide from Gele Trekking.`)
+}
 
 export async function generateMetadata({ params }: GuideDetailPageProps): Promise<Metadata> {
   const { slug } = await params
@@ -38,7 +47,7 @@ export async function generateMetadata({ params }: GuideDetailPageProps): Promis
 
   return buildMetadata({
     title: guide.title,
-    description: truncateDescription(guide.description || guide.content, `Read ${guide.title} from Gele Trekking.`),
+    description: guideSeoDescription(guide),
     path: `/guides/${guide.slug}`,
     type: 'article',
     publishedTime: guide.createdAt,
