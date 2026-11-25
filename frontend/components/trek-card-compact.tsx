@@ -55,6 +55,7 @@ export function TrekCardCompact({ trek, className }: { trek: Trek; className?: s
           loading="lazy"
           className="object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
           sizes="(max-width: 639px) 80vw, (max-width: 1023px) 45vw, 400px"
+          quality={60}
         />
         <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 to-transparent" aria-hidden="true" />
         <span className={cn('absolute rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm', hasOffer ? 'bottom-3 right-3' : 'left-3 top-3')}>

@@ -271,7 +271,7 @@ export function AboutContent({
       {/* Hero: the founder's story up front */}
       <section className="relative overflow-hidden bg-slate-950 text-white">
         {about?.heroImageUrl ? (
-          <Image src={about.heroImageUrl} alt="Gele Trekking team and the Nepal Himalaya" aria-hidden="true" fill priority sizes="100vw" className="object-cover opacity-25" />
+          <Image src={about.heroImageUrl} alt="Gele Trekking team and the Nepal Himalaya" aria-hidden="true" fill preload fetchPriority="high" sizes="100vw" className="object-cover opacity-25" />
         ) : null}
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-slate-950/60" />
         <div className="container relative mx-auto grid items-center gap-10 px-4 py-12 md:px-6 md:py-16 lg:grid-cols-[1.15fr_0.85fr]">
@@ -447,7 +447,7 @@ export function AboutContent({
                 </span>
               </p>
             </div>
-            <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0 [&::-webkit-scrollbar]:hidden">
+            <div className="-mx-4 flex snap-x snap-mandatory scroll-pl-4 gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0 [&::-webkit-scrollbar]:hidden">
               {guideReviews.map((review) => (
                 <figure key={review.id} className="flex w-[85%] shrink-0 snap-center flex-col rounded-2xl border border-border bg-card p-6 md:w-auto">
                   <Quote className="mb-3 h-6 w-6 text-primary/40" aria-hidden="true" />

@@ -16,7 +16,7 @@ export function TrekReviews({ reviews, trekTitle }: { reviews: SiteReviews | nul
           <span className="font-semibold text-foreground">{reviews.averageRating.toFixed(1)}</span> from {reviews.totalReviewCount} reviews on Google
         </p>
       ) : null}
-      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0 [&::-webkit-scrollbar]:hidden">
+      <div className="-mx-4 flex snap-x snap-mandatory scroll-pl-4 gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0 [&::-webkit-scrollbar]:hidden">
         {picked.map((review) => (
           <figure key={review.id} className="flex w-[85%] shrink-0 snap-center flex-col rounded-xl border border-border bg-card p-4 md:w-auto">
             <div className="mb-2 flex items-center justify-between gap-2">

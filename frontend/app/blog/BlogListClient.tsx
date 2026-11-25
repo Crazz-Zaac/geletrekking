@@ -384,7 +384,8 @@ function FeaturedBlogCard({ post }: { post: UiBlogPost }) {
           src={post.image}
           alt={`Cover photo for “${post.title}”`}
           fill
-          priority
+          preload
+          fetchPriority="high"
           className="object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none"
           sizes="(max-width: 768px) 100vw, 60vw"
         />

@@ -71,6 +71,7 @@ export function TrekCard({ trek, className, isCompared = false, compareDisabled 
           loading="lazy"
           className="object-cover group-hover:scale-105 transition-transform duration-500"
           sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1023px) calc(50vw - 32px), (max-width: 1279px) calc(33vw - 32px), 300px"
+          quality={60}
         />
         {onToggleCompare && (
           <button

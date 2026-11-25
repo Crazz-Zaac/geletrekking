@@ -190,7 +190,8 @@ export function GalleryContent({ photos, heroImageUrl }: GalleryContentProps) {
             alt="Himalayan mountain landscape from a Gele Trekking trek in Nepal"
             aria-hidden="true"
             fill
-            priority
+            preload
+            fetchPriority="high"
             sizes="100vw"
             className="object-cover opacity-60"
           />
