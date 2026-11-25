@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { acceptAdminInvite } from '@/lib/api'
+import { rememberAdminLoginPath } from '@/lib/admin-auth'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle } from 'lucide-react'
 
@@ -20,6 +21,7 @@ function AdminInviteContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [loginHref, setLoginHref] = useState('/admin/login?invited=1')
 
   const onAccept = async () => {
     if (!token) {
@@ -37,8 +39,13 @@ function AdminInviteContent() {
       return
     }
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
+    if (password.length < 10) {
+      setError('Password must be at least 10 characters.')
+      return
+    }
+
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9\W]/.test(password)) {
+      setError('Password must contain uppercase, lowercase, and a number or symbol.')
       return
     }
 
@@ -46,13 +53,17 @@ function AdminInviteContent() {
     setError('')
 
     try {
-      await acceptAdminInvite(token, email.trim(), password)
-
+      const result = await acceptAdminInvite(token, email.trim(), password)
+      const path = result.loginPath && /^\/[A-Za-z0-9_\/-]+$/.test(result.loginPath) ? result.loginPath : '/admin/login'
+      const href = `${path}?invited=1`
+      // Remember the (secret) login page on this device so sign-out can return here.
+      rememberAdminLoginPath(path)
+      setLoginHref(href)
       setSuccess(true)
-      
+
       // Redirect to login after 2 seconds so the user signs in with the new password
       setTimeout(() => {
-        window.location.href = '/admin/login?invited=1'
+        window.location.href = href
       }, 2000)
     } catch (err: any) {
       setError(err.message || 'Failed to create account. The invite may have expired.')
@@ -73,10 +84,10 @@ function AdminInviteContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-green-700 dark:text-green-300">
-              Your password has been set successfully. Redirecting you to the login page...
+              Your password has been set successfully. Redirecting you to the login page. Bookmark it: this is the only way to reach the admin sign-in.
             </p>
             <Button asChild className="w-full">
-              <Link href="/admin/login?invited=1">Go to Login</Link>
+              <Link href={loginHref}>Go to Login</Link>
             </Button>
           </CardContent>
         </Card>
@@ -135,7 +146,7 @@ function AdminInviteContent() {
             <label className="block text-sm font-medium">Password</label>
             <Input
               type="password"
-              placeholder="At least 8 characters"
+              placeholder="At least 10 characters, mixed case + number"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}

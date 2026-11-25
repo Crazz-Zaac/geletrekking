@@ -28,7 +28,7 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/
 import { AdminCommandMenu } from '@/components/admin/admin-command-menu'
 import { Toaster } from '@/components/ui/sonner'
 import { findActiveItem, visibleNav, type AdminRole } from '@/components/admin/admin-nav'
-import { clearAdminSession, getAdminToken, getAdminUser, saveAdminSession } from '@/lib/admin-auth'
+import { clearAdminSession, getAdminLoginPath, getAdminToken, getAdminUser, saveAdminSession } from '@/lib/admin-auth'
 import {
   adminLogout,
   getAdminNotificationSummary,
@@ -191,7 +191,7 @@ export default function ProtectedAdminLayout({ children }: { children: React.Rea
       const remoteUser = await getCurrentAdmin()
       if (!remoteUser) {
         clearAdminSession()
-        router.replace('/admin/login')
+        window.location.replace(getAdminLoginPath())
         return
       }
       saveAdminSession(remoteUser)
@@ -234,7 +234,7 @@ export default function ProtectedAdminLayout({ children }: { children: React.Rea
   const onLogout = useCallback(async () => {
     await adminLogout()
     clearAdminSession()
-    router.replace('/admin/login')
+    window.location.replace(getAdminLoginPath())
   }, [router])
 
   if (checking) {

@@ -101,7 +101,7 @@ export async function HeroSection({
       {/* Background Image */}
       <Image
         src={hero.backgroundImage}
-        alt=""
+        alt="Trekkers on a Himalayan trail in Nepal with snow-capped peaks"
         fill
         sizes="100vw"
         priority

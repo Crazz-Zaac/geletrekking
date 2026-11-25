@@ -54,6 +54,22 @@ export function clearAdminSession(): void {
   clearLegacyStorage()
 }
 
+// The login page lives at a secret path (ADMIN_LOGIN_PATH, see proxy.ts) that the
+// client bundle must not contain. After a successful sign-in we remember the path
+// on this device only, so sign-out / session expiry can return the admin to it.
+const LOGIN_PATH_KEY = 'gele_admin_login_path'
+
+export function rememberAdminLoginPath(path: string): void {
+  if (!isBrowser()) return
+  if (/^\/[A-Za-z0-9_\/-]+$/.test(path)) localStorage.setItem(LOGIN_PATH_KEY, path)
+}
+
+/** Where to send a signed-out admin: the remembered login page, or the public home page. */
+export function getAdminLoginPath(): string {
+  if (!isBrowser()) return '/'
+  return localStorage.getItem(LOGIN_PATH_KEY) || '/'
+}
+
 export function isAdminRole(user: AdminUser | null): boolean {
   return !!user && (user.role === 'editor' || user.role === 'superadmin')
 }

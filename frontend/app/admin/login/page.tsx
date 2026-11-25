@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { adminLogin, getCurrentAdmin } from '@/lib/api'
-import { clearAdminSession, saveAdminSession } from '@/lib/admin-auth'
+import { clearAdminSession, rememberAdminLoginPath, saveAdminSession } from '@/lib/admin-auth'
 
 function AdminLoginContent() {
   const router = useRouter()
@@ -65,6 +65,7 @@ function AdminLoginContent() {
     }
 
     saveAdminSession(result.user)
+    rememberAdminLoginPath(window.location.pathname)
     router.replace(result.user.requiresTwoFactorSetup ? '/admin/account-security' : '/admin')
   }
 

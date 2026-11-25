@@ -102,7 +102,11 @@ const enforceAccountStatus = (user) => {
 //  EMAIL + PASSWORD LOGIN CONTROLLER
 // ─────────────────────────────────────────────
 exports.login = async (req, res) => {
-  const { email, password, twoFactorCode } = req.body;
+  const { email, password, twoFactorCode } = req.body || {};
+
+  if (typeof email !== 'string' || typeof password !== 'string' || (twoFactorCode != null && typeof twoFactorCode !== 'string' && typeof twoFactorCode !== 'number')) {
+    return res.status(400).json({ message: INVALID_CREDENTIALS_MESSAGE });
+  }
 
   try {
     const normalizedEmail = (email || '').toLowerCase().trim();

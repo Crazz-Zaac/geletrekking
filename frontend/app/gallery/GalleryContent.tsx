@@ -187,7 +187,8 @@ export function GalleryContent({ photos, heroImageUrl }: GalleryContentProps) {
         {heroImageUrl ? (
           <Image
             src={heroImageUrl}
-            alt=""
+            alt="Himalayan mountain landscape from a Gele Trekking trek in Nepal"
+            aria-hidden="true"
             fill
             priority
             sizes="100vw"
@@ -498,7 +499,7 @@ function Lightbox({
         {/* Warm the cache for the next and previous photos. */}
         <div className="hidden" aria-hidden="true">
           {neighbours.map((item) => (
-            <Image key={item.id} src={item.image} alt="" width={1600} height={1200} sizes="100vw" loading="eager" />
+            <Image key={item.id} src={item.image} alt={`${item.caption ? `${item.caption} – ` : ''}${item.trekName}`} width={1600} height={1200} sizes="100vw" loading="eager" />
           ))}
         </div>
 
@@ -562,7 +563,7 @@ function Lightbox({
               itemIndex === index ? 'border-white' : 'border-transparent opacity-50 hover:opacity-100'
             )}
           >
-            <Image src={item.image} alt="" fill sizes="80px" loading="lazy" className="object-cover" />
+            <Image src={item.image} alt={`Thumbnail: ${item.caption ? `${item.caption} – ` : ''}${item.trekName}`} fill sizes="80px" loading="lazy" className="object-cover" />
           </button>
         ))}
       </div>

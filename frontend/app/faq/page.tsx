@@ -61,7 +61,7 @@ export default async function FAQPage() {
       <main className="min-h-screen bg-background pt-16">
         <section className="relative overflow-hidden bg-primary text-primary-foreground">
           {heroImageUrl ? (
-            <Image src={heroImageUrl} alt="" fill priority sizes="100vw" className="object-cover opacity-15" />
+            <Image src={heroImageUrl} alt="Himalayan trekking trail in Nepal, background for the trekking FAQ" aria-hidden="true" fill priority sizes="100vw" className="object-cover opacity-15" />
           ) : null}
           <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/95 to-slate-950/80" />
           <div className="container relative mx-auto max-w-7xl px-4 py-12 md:px-6 md:py-16">

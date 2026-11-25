@@ -206,7 +206,10 @@ exports.acceptInvite = async (req, res) => {
       userAgent: req.get('user-agent'),
     })
 
-    res.status(201).json({ message: 'Account created. Please login again to access the admin dashboard.' })
+    // The admin login lives at a secret path (ADMIN_LOGIN_PATH). Reveal it only to
+    // someone who just redeemed a valid one-time invite.
+    const loginPath = (process.env.ADMIN_LOGIN_PATH || '').trim() || '/admin/login'
+    res.status(201).json({ message: 'Account created. Please login again to access the admin dashboard.', loginPath })
   } catch (error) {
     res.status(500).json({ message: 'Unable to accept invite.' })
   }

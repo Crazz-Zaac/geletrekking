@@ -354,7 +354,7 @@ function BlogCard({ post }: { post: UiBlogPost }) {
       <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-muted ring-offset-background group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
         <Image
           src={post.image}
-          alt=""
+          alt={`Cover photo for “${post.title}”`}
           fill
           loading="lazy"
           className="object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
@@ -382,7 +382,7 @@ function FeaturedBlogCard({ post }: { post: UiBlogPost }) {
       <div className="relative aspect-[16/10] overflow-hidden bg-muted md:aspect-auto md:min-h-[24rem]">
         <Image
           src={post.image}
-          alt=""
+          alt={`Cover photo for “${post.title}”`}
           fill
           priority
           className="object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none"
