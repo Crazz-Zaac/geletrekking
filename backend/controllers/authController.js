@@ -30,15 +30,36 @@ const isTwoFactorBypassAllowed = (req) => {
   return TWO_FACTOR_BYPASS_IPS.includes(req.ip);
 };
 
-const verifyTotpCode = ({ secret, token }) => {
-  if (!secret || !token) return false;
-  return speakeasy.totp.verify({
+const TOTP_STEP_SECONDS = 30;
+
+// Returns the TOTP time step the code matched (accounting for the verify window), or null.
+// Anti-replay must compare against the matched step, not the current one: with window=1 a
+// code from step N is still accepted during step N+1.
+const getMatchedTotpStep = ({ secret, token, nowMs = Date.now() }) => {
+  if (!secret || !token) return null;
+  const time = Math.floor(nowMs / 1000);
+  const result = speakeasy.totp.verifyDelta({
     secret,
     encoding: 'base32',
     token: token.toString().trim(),
-    step: 30,
+    step: TOTP_STEP_SECONDS,
     window: TOTP_VERIFY_WINDOW,
+    time,
   });
+  if (!result) return null;
+  return Math.floor(time / TOTP_STEP_SECONDS) + result.delta;
+};
+
+const verifyTotpCode = ({ secret, token }) => getMatchedTotpStep({ secret, token }) !== null;
+
+// Atomically marks a TOTP step as consumed. Returns false if that step (or a later one)
+// was already used, so the same code cannot succeed twice, even from concurrent requests.
+const claimTotpStep = async (userId, step) => {
+  const result = await User.updateOne(
+    { _id: userId, $or: [{ lastUsedTotpStep: null }, { lastUsedTotpStep: { $lt: step } }] },
+    { $set: { lastUsedTotpStep: step } }
+  );
+  return result.modifiedCount === 1;
 };
 
 const normalizeRole = (role) => (role === 'admin' ? 'editor' : role);
@@ -92,12 +113,25 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: INVALID_CREDENTIALS_MESSAGE });
     }
 
+    // Always run bcrypt so locked/inactive accounts take as long as any other attempt.
+    const isMatch = await bcrypt.compare(password || '', user.password);
+
     const statusCheck = enforceAccountStatus(user);
     if (!statusCheck.ok) {
-      return res.status(403).json({ message: statusCheck.message });
+      // Respond exactly like an unknown email, whatever the password, so the lock/status
+      // reveals neither that the account exists nor whether the password was right.
+      await logAudit({
+        actor: user._id,
+        actorEmail: user.email,
+        action: 'admin.login',
+        outcome: 'failure',
+        ip: req.ip,
+        userAgent: req.get('user-agent'),
+        meta: { reason: 'account_unavailable', detail: statusCheck.message },
+      });
+      return res.status(401).json({ message: INVALID_CREDENTIALS_MESSAGE });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
       if (user.failedLoginAttempts >= MAX_FAILED_LOGINS) {
@@ -131,19 +165,13 @@ exports.login = async (req, res) => {
       }
 
       if (twoFactorCode) {
-        // Enforce anti-replay: each 30-second TOTP step may only be consumed once
-        const currentStep = Math.floor(Date.now() / 1000 / 30);
-        if (user.lastUsedTotpStep && user.lastUsedTotpStep >= currentStep) {
-          return res.status(401).json({ message: 'This code was already used. Please wait for the next 6-digit code.' });
-        }
-
         const secret = getDecryptedSecret(user);
-        const verified = verifyTotpCode({
+        const matchedStep = getMatchedTotpStep({
           secret,
           token: twoFactorCode,
         });
 
-        if (!verified) {
+        if (matchedStep === null) {
           user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
           if (user.failedLoginAttempts >= MAX_FAILED_LOGINS) {
             user.lockUntil = new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000);
@@ -162,7 +190,11 @@ exports.login = async (req, res) => {
           return res.status(401).json({ message: 'Invalid or expired 2FA code' });
         }
 
-        user.lastUsedTotpStep = currentStep;
+        // Enforce anti-replay: each TOTP step may only be consumed once
+        if (!(await claimTotpStep(user._id, matchedStep))) {
+          return res.status(401).json({ message: 'This code was already used. Please wait for the next 6-digit code.' });
+        }
+        user.lastUsedTotpStep = matchedStep;
 
         if (user.twoFactorSecret && !user.twoFactorSecretEnc) {
           user.twoFactorSecretEnc = encrypt(user.twoFactorSecret);
@@ -246,15 +278,17 @@ exports.verifyTwoFactorSetup = async (req, res) => {
       return res.status(400).json({ message: '2FA setup has not been initialized.' });
     }
 
-    const verified = verifyTotpCode({
+    const matchedStep = getMatchedTotpStep({
       secret: tempSecret,
       token: code,
     });
 
-    if (!verified) {
+    if (matchedStep === null) {
       return res.status(400).json({ message: 'Invalid verification code.' });
     }
 
+    // The setup code must not be reusable for the first login.
+    user.lastUsedTotpStep = Math.max(user.lastUsedTotpStep || 0, matchedStep);
     user.twoFactorSecretEnc = encrypt(tempSecret);
     user.twoFactorEnabled = true;
     user.twoFactorTempSecretEnc = null;
