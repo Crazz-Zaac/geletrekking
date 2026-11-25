@@ -102,19 +102,27 @@ const requestRiskMiddleware = async (req, res, next) => {
     trimEvents(ipProfile.requestEvents, config.requestWindowMs, currentTime);
     trimEvents(deviceProfile.requestEvents, config.requestWindowMs, currentTime);
 
-    if (!userAgent) {
-      addScore(ipProfile, 15);
-      addScore(deviceProfile, 15);
-    }
+    // Header fingerprints (bot/headless user agents, missing headers) only count
+    // against writes and admin calls. Public reads are what search engines
+    // (Googlebot renders pages in headless Chrome), PageSpeed Insights and link
+    // previews make; scoring them blocked those clients after a few requests.
+    // Reads stay covered by the volume check below and by apiLimiter.
+    const isPublicRead = (req.method === "GET" || req.method === "HEAD") && !/\/admin(?:\/|$)/.test(req.path);
+    if (!isPublicRead) {
+      if (!userAgent) {
+        addScore(ipProfile, 15);
+        addScore(deviceProfile, 15);
+      }
 
-    if (userAgent && SUSPICIOUS_UA.test(userAgent)) {
-      addScore(ipProfile, 20);
-      addScore(deviceProfile, 25);
-    }
+      if (userAgent && SUSPICIOUS_UA.test(userAgent)) {
+        addScore(ipProfile, 20);
+        addScore(deviceProfile, 25);
+      }
 
-    if (!acceptHeader) {
-      addScore(ipProfile, 5);
-      addScore(deviceProfile, 5);
+      if (!acceptHeader) {
+        addScore(ipProfile, 5);
+        addScore(deviceProfile, 5);
+      }
     }
 
     if (ipProfile.requestEvents.length > config.requestWindowLimit) {
