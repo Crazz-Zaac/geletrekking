@@ -1675,8 +1675,8 @@ export async function disableAdminUser(token: string, userId: string): Promise<{
   })
 }
 
-export async function acceptAdminInvite(inviteToken: string, email: string, password: string, name?: string): Promise<{ message: string }> {
-  return fetchJson<{ message: string }>('/api/admin/invites/accept', {
+export async function acceptAdminInvite(inviteToken: string, email: string, password: string, name?: string): Promise<{ message: string; loginPath?: string }> {
+  return fetchJson<{ message: string; loginPath?: string }>('/api/admin/invites/accept', {
     method: 'POST',
     body: JSON.stringify({ token: inviteToken, email, password, name }),
   })
