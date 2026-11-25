@@ -108,18 +108,16 @@ export function AltitudeChart({
               const active = row.day === (hovered ?? selected)
               const isPeak = index === peakIndex
               return (
-                <button
+                // Pointer shortcut only: on phones each column is narrower than a usable
+                // tap target, and every day already has its own button in the list below,
+                // which is what keyboard and screen-reader users get.
+                <div
                   key={row.day}
-                  type="button"
+                  aria-hidden="true"
                   onClick={() => onSelect(row.day)}
                   onMouseEnter={() => setHovered(row.day)}
-                  onFocus={() => setHovered(row.day)}
-                  onBlur={() => setHovered(null)}
-                  aria-label={`Day ${row.day}, ${row.place}, ${metres(row.altitude)}${row.isAcclimatisation ? ', acclimatisation day' : ''}. Open this day.`}
-                  className={cn(
-                    'absolute inset-y-0 rounded-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary',
-                    active && 'bg-primary/10'
-                  )}
+                  title={`Day ${row.day}, ${row.place}, ${metres(row.altitude)}`}
+                  className={cn('absolute inset-y-0 cursor-pointer rounded-sm transition-colors', active && 'bg-primary/10')}
                   style={{ left: `${(index / n) * 100}%`, width: `${100 / n}%` }}
                 >
                   <span
@@ -133,7 +131,7 @@ export function AltitudeChart({
                     )}
                     style={{ top: `${yOf(row.altitude)}%` }}
                   />
-                </button>
+                </div>
               )
             })}
           </div>
@@ -163,7 +161,7 @@ export function AltitudeChart({
             <span className="h-2.5 w-2.5 rounded-full border-2 border-accent bg-background" /> Acclimatisation day
           </span>
         ) : null}
-        <span>Metres, by day. Select a day to read it.</span>
+        <span>Metres, by day. Select a day below to read it.</span>
       </div>
     </div>
   )

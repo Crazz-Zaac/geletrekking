@@ -372,7 +372,7 @@ export function AboutContent({
       {/* Mission */}
       <section className="bg-primary py-14 text-primary-foreground md:py-16">
         <div className="container mx-auto max-w-3xl px-4 text-center md:px-6">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-accent">{missionTitle}</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-amber-300">{missionTitle}</p>
           <Prose value={missionBody} className="text-lg leading-relaxed md:text-xl [&_p]:text-primary-foreground/90" />
         </div>
       </section>
@@ -383,7 +383,7 @@ export function AboutContent({
           <div className="container mx-auto px-4 md:px-6">
             <div className="grid gap-8 rounded-3xl border border-accent/30 bg-accent/5 p-6 md:p-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-accent">Our cause</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-700 dark:text-amber-300">Our cause</p>
                 <h2 className="text-2xl font-bold text-foreground md:text-3xl">{cause.title}</h2>
                 <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                   {[
@@ -569,7 +569,7 @@ export function AboutContent({
                 href={WHATSAPP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-11 items-center gap-2 rounded-full bg-[#25D366] px-5 text-sm font-semibold text-white hover:bg-[#1ebe5a]"
+                className="inline-flex h-11 items-center gap-2 rounded-full bg-[#1A7F45] px-5 text-sm font-semibold text-white hover:bg-[#156c3a]"
               >
                 <WhatsAppIcon className="h-4 w-4" />
                 WhatsApp

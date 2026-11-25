@@ -67,7 +67,7 @@ export default async function HomePage() {
         <section className="py-16 md:py-20 bg-primary overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-10 md:mb-12">
-              <p className="text-accent text-sm font-semibold uppercase tracking-widest mb-3">What Trekkers Say</p>
+              <p className="text-amber-300 text-sm font-semibold uppercase tracking-widest mb-3">What Trekkers Say</p>
               <h2 className="font-serif text-3xl md:text-4xl font-bold text-white text-balance">
                 Stories from the Trail
               </h2>

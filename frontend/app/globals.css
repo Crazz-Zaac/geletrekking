@@ -1,4 +1,8 @@
 @import 'tailwindcss';
+/* Public visitors never load admin code, so keep its classes out of this
+   render-blocking stylesheet. Admin pages add app/admin/admin.css. */
+@source not './admin';
+@source not '../components/admin';
 @import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));

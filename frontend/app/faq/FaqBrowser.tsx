@@ -286,7 +286,7 @@ export function FaqSidebar() {
             href={WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 text-sm font-semibold text-white hover:bg-[#1ebe5a]"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#1A7F45] px-4 text-sm font-semibold text-white hover:bg-[#156c3a]"
           >
             <WhatsAppIcon className="h-4 w-4" />
             WhatsApp us

@@ -253,7 +253,7 @@ export default function ContactPage() {
                   className={`group relative flex h-full flex-col rounded-2xl border bg-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${highlight ? 'border-primary shadow-md ring-1 ring-primary/20' : 'border-border shadow-sm'}`}
                 >
                   {highlight && (
-                    <span className="absolute -top-2.5 right-4 rounded-full bg-accent px-2.5 py-0.5 text-[11px] font-semibold text-white">Free</span>
+                    <span className="absolute -top-2.5 right-4 rounded-full bg-amber-700 px-2.5 py-0.5 text-[11px] font-semibold text-white">Free</span>
                   )}
                   <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${tile}`}>
                     <Icon className="h-5 w-5" aria-hidden="true" />
@@ -467,10 +467,10 @@ export default function ContactPage() {
                   <div className="p-6">
                     <h2 id="contact-details-heading" className="text-lg font-semibold text-foreground">Contact details</h2>
                     <dl className="mt-2 divide-y divide-border">
-                      <div className="flex gap-3 py-4">
-                        <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-                        <div className="min-w-0 flex-1">
-                          <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Email</dt>
+                      <div className="relative min-w-0 py-4 pl-7">
+                          <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          <Mail className="absolute left-0 top-[1.125rem] h-4 w-4 text-primary" aria-hidden="true" />
+                          Email</dt>
                           <dd className="mt-1.5 space-y-2.5">
                             {emailAddresses.map((item) => (
                               <div key={item.email}>
@@ -486,36 +486,32 @@ export default function ContactPage() {
                               </div>
                             ))}
                           </dd>
-                        </div>
                       </div>
-                      <div className="flex gap-3 py-4">
-                        <Phone className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-                        <div>
-                          <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Phone and WhatsApp</dt>
+                      <div className="relative min-w-0 py-4 pl-7">
+                          <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          <Phone className="absolute left-0 top-[1.125rem] h-4 w-4 text-primary" aria-hidden="true" />
+                          Phone and WhatsApp</dt>
                           <dd className="mt-1.5">
                             <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="font-medium text-foreground hover:text-primary">{phone}</a>
                           </dd>
-                        </div>
                       </div>
-                      <div className="flex gap-3 py-4">
-                        <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-                        <div>
-                          <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Office hours (Nepal time)</dt>
+                      <div className="relative min-w-0 py-4 pl-7">
+                          <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          <Clock3 className="absolute left-0 top-[1.125rem] h-4 w-4 text-primary" aria-hidden="true" />
+                          Office hours (Nepal time)</dt>
                           <dd className="mt-1.5 text-sm text-foreground">
                             <p>{officeHoursWeekdays}</p>
                             <p>{officeHoursWeekend}</p>
                           </dd>
-                        </div>
                       </div>
-                      <div className="flex gap-3 py-4">
-                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-                        <div>
-                          <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Office</dt>
+                      <div className="relative min-w-0 py-4 pl-7">
+                          <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          <MapPin className="absolute left-0 top-[1.125rem] h-4 w-4 text-primary" aria-hidden="true" />
+                          Office</dt>
                           <dd className="mt-1.5">
                             <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-foreground hover:text-primary">{address}</a>
                             <p className="text-sm text-muted-foreground">Visits by appointment</p>
                           </dd>
-                        </div>
                       </div>
                     </dl>
                     {socialLinks.length > 0 ? (
