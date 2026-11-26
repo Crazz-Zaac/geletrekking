@@ -10,7 +10,7 @@ import type { SiteReviews, TrustSummary } from '@/lib/api';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { useSiteSettings } from '@/hooks/use-site-settings'
 import { toast } from 'sonner'
 import { getAdminSettings } from '@/lib/api'
@@ -469,7 +469,7 @@ export default function TrekDetailClient({
   return (
     <main className="min-h-screen bg-background">
       <Toaster position="top-center" richColors closeButton />
-      <motion.section
+      <m.section
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
@@ -486,22 +486,22 @@ export default function TrekDetailClient({
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         
         <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 text-white">
-          <motion.div
+          <m.div
             initial="hidden"
             animate="visible"
             variants={containerVariants}
             className="container mx-auto space-y-2"
           >
-            <motion.div variants={itemVariants} className="flex gap-2 flex-wrap">
+            <m.div variants={itemVariants} className="flex gap-2 flex-wrap">
               <Badge className="bg-primary text-white">{trek.region}</Badge>
               <Badge variant="outline" className="text-white border-white">{trek.difficulty}</Badge>
-            </motion.div>
-            <motion.h1 variants={itemVariants} className="text-2xl md:text-4xl font-bold text-balance max-w-4xl leading-tight">
+            </m.div>
+            <m.h1 variants={itemVariants} className="text-2xl md:text-4xl font-bold text-balance max-w-4xl leading-tight">
               {trek.title}
-            </motion.h1>
-          </motion.div>
+            </m.h1>
+          </m.div>
         </div>
-      </motion.section>
+      </m.section>
 
       <section className="sticky top-16 z-40 border-b border-border bg-background/95 backdrop-blur shadow-sm">
         <div className="container mx-auto flex items-center gap-2 px-4 py-2 md:px-6">
@@ -594,14 +594,14 @@ export default function TrekDetailClient({
 
       <section className="relative z-10 bg-background">
         <div className="container mx-auto px-4 md:px-6 py-10 md:py-14">
-          <motion.div
+          <m.div
             initial="hidden"
             animate="visible"
             variants={containerVariants}
             className="grid grid-cols-1 lg:grid-cols-3 gap-8"
           >
-            <motion.div variants={itemVariants} className="lg:col-span-2 space-y-8">
-              <motion.div id="trek-highlights" variants={itemVariants} className="space-y-4 scroll-mt-36">
+            <m.div variants={itemVariants} className="lg:col-span-2 space-y-8">
+              <m.div id="trek-highlights" variants={itemVariants} className="space-y-4 scroll-mt-36">
                 <SectionHeader title="Trek Highlights" icon={Star} />
                 <ul className="space-y-3">
                   {trek.highlights.map((highlight, idx) => (
@@ -613,23 +613,23 @@ export default function TrekDetailClient({
                     </li>
                   ))}
                 </ul>
-              </motion.div>
+              </m.div>
 
-              <motion.div id="trek-overview" variants={itemVariants} className="space-y-4 scroll-mt-36">
+              <m.div id="trek-overview" variants={itemVariants} className="space-y-4 scroll-mt-36">
                 <SectionHeader title="About The Trek" icon={Info} />
                 <p className="text-base md:text-[17px] text-muted-foreground leading-relaxed">{trek.fullDescription}</p>
-              </motion.div>
+              </m.div>
 
-              <motion.div id="trek-itinerary" variants={itemVariants} className="space-y-5 scroll-mt-36">
+              <m.div id="trek-itinerary" variants={itemVariants} className="space-y-5 scroll-mt-36">
                 <SectionHeader title="Itinerary" icon={Route} />
                 <TrekItinerary
                   days={trek.itinerary}
                   maxAltitude={trek.maxAltitude}
                   renderText={(value) => <FormattedText value={value} />}
                 />
-              </motion.div>
+              </m.div>
 
-              <motion.div id="trek-trip-essentials" variants={itemVariants} className="space-y-4 scroll-mt-36">
+              <m.div id="trek-trip-essentials" variants={itemVariants} className="space-y-4 scroll-mt-36">
                 <SectionHeader title="Trip Essentials" icon={Compass} />
                 <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-stretch">
                   {tripEssentials.map((item, index) => {
@@ -662,9 +662,9 @@ export default function TrekDetailClient({
                     )
                   })}
                 </div>
-              </motion.div>
+              </m.div>
 
-              <motion.div variants={itemVariants} className="space-y-4">
+              <m.div variants={itemVariants} className="space-y-4">
                 <SectionHeader title="What's Covered" icon={ClipboardList} />
                 <Card className="overflow-hidden border-border scroll-mt-36">
                   <div className="grid grid-cols-1 md:grid-cols-2">
@@ -697,9 +697,9 @@ export default function TrekDetailClient({
                     </div>
                   </div>
                 </Card>
-              </motion.div>
+              </m.div>
 
-              <motion.div id="trek-map" variants={itemVariants} className="space-y-4 scroll-mt-36">
+              <m.div id="trek-map" variants={itemVariants} className="space-y-4 scroll-mt-36">
                 <SectionHeader title="Map" icon={MapPin} />
                 <Card className="border-border overflow-hidden">
                   {trek.mapImageUrl ? (
@@ -715,9 +715,9 @@ export default function TrekDetailClient({
                     </div>
                   )}
                 </Card>
-              </motion.div>
+              </m.div>
 
-              <motion.div id="trek-special-equipment" variants={itemVariants} className="space-y-4 scroll-mt-36">
+              <m.div id="trek-special-equipment" variants={itemVariants} className="space-y-4 scroll-mt-36">
                 <SectionHeader title="Special Equipment" icon={ClipboardList} />
                 <Card className="border-border p-5 md:p-6 space-y-5">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -754,9 +754,9 @@ export default function TrekDetailClient({
                   )}
                 </Card>
                 <PackingListCta />
-              </motion.div>
+              </m.div>
 
-              <motion.div id="trek-gallery" variants={itemVariants} className="space-y-4 scroll-mt-36">
+              <m.div id="trek-gallery" variants={itemVariants} className="space-y-4 scroll-mt-36">
                 <SectionHeader title="Gallery" icon={ImageIcon} />
                 <div className="flex items-center justify-between gap-4">
                   <Link
@@ -779,9 +779,9 @@ export default function TrekDetailClient({
                     </div>
                   ))}
                 </div>
-              </motion.div>
+              </m.div>
 
-              <motion.div id="trek-faq" variants={itemVariants} className="space-y-4 scroll-mt-36">
+              <m.div id="trek-faq" variants={itemVariants} className="space-y-4 scroll-mt-36">
                 <SectionHeader title="FAQ" icon={HelpCircle} />
                 {trekFaqs.length > 0 ? (
                   <FAQAccordion faqs={trekFaqs} />
@@ -792,16 +792,16 @@ export default function TrekDetailClient({
                     </p>
                   </Card>
                 )}
-              </motion.div>
+              </m.div>
 
               {reviews?.available && reviews.reviews.length > 0 ? (
-                <motion.div variants={itemVariants} className="space-y-4">
+                <m.div variants={itemVariants} className="space-y-4">
                   <SectionHeader title="What Trekkers Say" icon={Star} />
                   <TrekReviews reviews={reviews} trekTitle={trek.title} />
-                </motion.div>
+                </m.div>
               ) : null}
 
-              <motion.div id="booking-inquiry-section" variants={itemVariants} className="space-y-4 scroll-mt-36">
+              <m.div id="booking-inquiry-section" variants={itemVariants} className="space-y-4 scroll-mt-36">
                 <SectionHeader title="Booking Inquiry Form" icon={FileText} />
                 {trust && (
                   <TrustBadges trust={trust} className="grid gap-x-6 gap-y-2.5 space-y-0 sm:grid-cols-2" />
@@ -809,19 +809,19 @@ export default function TrekDetailClient({
                 <Card className="border-border p-6 md:p-8">
                   <BookingForm trek={trek} packageOptions={orderedPricingTiers.map((tier) => tier.name)} prefill={inquiryPrefill} />
                 </Card>
-              </motion.div>
+              </m.div>
 
-              <motion.div variants={itemVariants} className="mt-6">
+              <m.div variants={itemVariants} className="mt-6">
                 <Link href="/destinations">
                   <Button variant="outline" className="border-primary text-primary">
                     <ChevronLeft className="w-4 h-4 mr-2" />
                     Back to Destinations
                   </Button>
                 </Link>
-              </motion.div>
-            </motion.div>
+              </m.div>
+            </m.div>
 
-            <motion.aside variants={itemVariants} className="space-y-6 h-fit w-full lg:sticky lg:top-[7.5rem] lg:ml-auto lg:max-h-[calc(100vh-8rem)] lg:max-w-sm lg:overflow-y-auto">
+            <m.aside variants={itemVariants} className="space-y-6 h-fit w-full lg:sticky lg:top-[7.5rem] lg:ml-auto lg:max-h-[calc(100vh-8rem)] lg:max-w-sm lg:overflow-y-auto">
               <Card className="gap-0 border-border bg-white p-5 md:p-5 transition-all hover:shadow-md">
                 <div className="space-y-3">
                   <div>
@@ -894,8 +894,8 @@ export default function TrekDetailClient({
                 </div>
               </Card>
 
-            </motion.aside>
-          </motion.div>
+            </m.aside>
+          </m.div>
         </div>
       </section>
 

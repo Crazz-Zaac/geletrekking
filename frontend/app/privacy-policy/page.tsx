@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { Badge } from '@/components/ui/badge';
@@ -122,18 +122,18 @@ export default function PrivacyPolicyPage() {
       <main className="min-h-screen bg-background">
         <section className="py-16 md:py-24 bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border">
           <div className="container mx-auto px-4 md:px-6">
-            <motion.div initial="hidden" animate="visible" variants={containerVariants} className="space-y-3 max-w-4xl">
-              <motion.div variants={itemVariants}>
+            <m.div initial="hidden" animate="visible" variants={containerVariants} className="space-y-3 max-w-4xl">
+              <m.div variants={itemVariants}>
                 <Badge className="mb-2 bg-primary/15 text-primary border-primary/30 hover:bg-primary/20">Privacy Policy</Badge>
-              </motion.div>
-              <motion.h1 variants={itemVariants} className="text-4xl md:text-5xl font-bold text-foreground text-balance">
+              </m.div>
+              <m.h1 variants={itemVariants} className="text-4xl md:text-5xl font-bold text-foreground text-balance">
                 Privacy Policy (GDPR)
-              </motion.h1>
-              <motion.p variants={itemVariants} className="text-muted-foreground max-w-3xl">
+              </m.h1>
+              <m.p variants={itemVariants} className="text-muted-foreground max-w-3xl">
                 This policy explains how Gele Trekking handles personal data submitted through our website forms, in line with EU GDPR principles of lawfulness, transparency, and data minimization.
-              </motion.p>
+              </m.p>
 
-              <motion.div variants={itemVariants} className="pt-2 flex flex-wrap items-center gap-2.5 text-sm">
+              <m.div variants={itemVariants} className="pt-2 flex flex-wrap items-center gap-2.5 text-sm">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-muted-foreground">
                   <CalendarDays className="h-4 w-4" />
                   Effective November 2026
@@ -142,20 +142,20 @@ export default function PrivacyPolicyPage() {
                   <Scale className="h-4 w-4" />
                   GDPR-aligned data handling
                 </span>
-              </motion.div>
-            </motion.div>
+              </m.div>
+            </m.div>
           </div>
         </section>
 
         <section className="py-14 md:py-20">
           <div className="container mx-auto px-4 md:px-6 max-w-6xl">
-            <motion.div
+            <m.div
               initial="hidden"
               animate="visible"
               variants={containerVariants}
               className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 lg:gap-10"
             >
-              <motion.aside variants={itemVariants} className="hidden lg:block">
+              <m.aside variants={itemVariants} className="hidden lg:block">
                 <div className="sticky top-24 rounded-2xl border border-border bg-muted/40 p-5">
                   <h3 className="text-sm font-semibold text-foreground mb-3">Quick Navigation</h3>
                   <nav className="space-y-1.5">
@@ -187,13 +187,13 @@ export default function PrivacyPolicyPage() {
                     )}
                   </div>
                 </div>
-              </motion.aside>
+              </m.aside>
 
               <div className="space-y-5 md:space-y-6">
                 {policySections.map((section) => {
                   const Icon = section.icon;
                   return (
-                    <motion.div key={section.id} variants={itemVariants} id={section.id} className="scroll-mt-28">
+                    <m.div key={section.id} variants={itemVariants} id={section.id} className="scroll-mt-28">
                       <Card className="border-border bg-card p-5 md:p-6 shadow-sm">
                         <div className="flex items-start gap-3">
                           <div className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -205,11 +205,11 @@ export default function PrivacyPolicyPage() {
                           </div>
                         </div>
                       </Card>
-                    </motion.div>
+                    </m.div>
                   );
                 })}
 
-                <motion.div variants={itemVariants}>
+                <m.div variants={itemVariants}>
                   <Card className="border-border bg-primary/10 p-6 md:p-7">
                     <h3 className="text-lg font-semibold text-foreground">Summary</h3>
                     <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
@@ -237,9 +237,9 @@ export default function PrivacyPolicyPage() {
                       ) : null}
                     </div>
                   </Card>
-                </motion.div>
+                </m.div>
               </div>
-            </motion.div>
+            </m.div>
           </div>
         </section>
       </main>

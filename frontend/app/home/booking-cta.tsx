@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
@@ -25,32 +25,32 @@ export function BookingCTA() {
   return (
     <section className="py-14 md:py-16 bg-primary text-primary-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
+        <m.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           variants={containerVariants}
           className="text-center"
         >
-          <motion.p
+          <m.p
             variants={itemVariants}
             className="text-primary-foreground/80 text-sm font-semibold uppercase tracking-widest mb-3"
           >
             Start Your Journey
-          </motion.p>
-          <motion.h2
+          </m.p>
+          <m.h2
             variants={itemVariants}
             className="font-serif text-3xl md:text-4xl font-bold mb-3 text-balance"
           >
             Ready for Your Himalayan Adventure?
-          </motion.h2>
-          <motion.p
+          </m.h2>
+          <m.p
             variants={itemVariants}
             className="text-primary-foreground/80 text-base md:text-lg max-w-2xl mx-auto mb-6"
           >
             Discover Nepal's magic with our expert local guides. Book your dream trek today.
-          </motion.p>
-          <motion.div
+          </m.p>
+          <m.div
             variants={itemVariants}
             className="flex flex-col sm:flex-row gap-3 justify-center"
           >
@@ -71,8 +71,8 @@ export function BookingCTA() {
                 Get in Touch
               </Button>
             </Link>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       </div>
     </section>
   );

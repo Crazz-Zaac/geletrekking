@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 
 interface BlogPost {
@@ -61,7 +61,7 @@ export function BlogHighlights({ posts }: BlogHighlightsProps) {
           </Link>
         </div>
 
-        <motion.div
+        <m.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-100px' }}
@@ -69,7 +69,7 @@ export function BlogHighlights({ posts }: BlogHighlightsProps) {
           className="grid grid-cols-1 md:grid-cols-3 gap-8"
         >
           {posts.map((post) => (
-            <motion.article key={post.id} variants={cardVariants}>
+            <m.article key={post.id} variants={cardVariants}>
               <Link href={`/blog/${post.slug}`} className="group block">
                 <div className="relative aspect-[16/10] rounded-xl overflow-hidden mb-4">
                   <Image
@@ -98,9 +98,9 @@ export function BlogHighlights({ posts }: BlogHighlightsProps) {
                   {post.excerpt}
                 </p>
               </Link>
-            </motion.article>
+            </m.article>
           ))}
-        </motion.div>
+        </m.div>
       </div>
     </section>
   );

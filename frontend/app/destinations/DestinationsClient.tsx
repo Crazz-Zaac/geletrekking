@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { TrekCard } from '@/components/trek-card';
@@ -322,29 +322,29 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
         {/* Hero Section */}
         <section className="py-8 md:py-10 bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border">
           <div className="container mx-auto px-4 md:px-6">
-            <motion.div
+            <m.div
               initial="hidden"
               animate="visible"
               variants={containerVariants}
               className="space-y-2 text-center"
             >
-              <motion.h1 variants={itemVariants} className="text-3xl md:text-4xl font-bold text-foreground text-balance">
+              <m.h1 variants={itemVariants} className="text-3xl md:text-4xl font-bold text-foreground text-balance">
                 Explore Our Treks
-              </motion.h1>
-              <motion.p
+              </m.h1>
+              <m.p
                 variants={itemVariants}
                 className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto"
               >
                 Choose from our complete collection of incredible trekking adventures across Nepal
-              </motion.p>
-            </motion.div>
+              </m.p>
+            </m.div>
           </div>
         </section>
 
         {/* Filters */}
         <section className="sticky top-16 z-30 py-3 md:py-4 border-b border-border bg-background/95 backdrop-blur">
           <div className="container mx-auto px-4 md:px-6">
-            <motion.div
+            <m.div
               initial="hidden"
               animate="visible"
               variants={containerVariants}
@@ -410,7 +410,7 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
                   </Button>
                 </div>
               ) : null}
-            </motion.div>
+            </m.div>
           </div>
         </section>
 
@@ -510,7 +510,7 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
                 </div>
               </div>
             ) : (
-              <motion.div
+              <m.div
                 key={queryAnimationKey}
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -538,7 +538,7 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
                     </div>
                   );
                 })}
-              </motion.div>
+              </m.div>
             )}
           </div>
         </section>

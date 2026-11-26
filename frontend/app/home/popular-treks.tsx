@@ -3,9 +3,8 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
-import type { Trek } from '@/lib/data'
 import { cn } from '@/lib/utils'
-import { TrekCardCompact } from '@/components/trek-card-compact'
+import { TrekCardCompact, type TrekCardData } from '@/components/trek-card-compact'
 
 const PER_VIEW = 6
 const ALL = 'All'
@@ -15,7 +14,7 @@ const ALL = 'All'
  * (a swipeable row on phones). `treks` arrives already ranked: featured treks
  * in their admin order first, then the rest.
  */
-export function PopularTreks({ treks, totalCount }: { treks: Trek[]; totalCount: number }) {
+export function PopularTreks({ treks, totalCount }: { treks: TrekCardData[]; totalCount: number }) {
   const [region, setRegion] = useState<string>(ALL)
 
   const regions = useMemo(() => {
