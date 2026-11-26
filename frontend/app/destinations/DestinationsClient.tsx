@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { getBookableDepartures } from '@/lib/trek-availability';
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { getTreks } from '@/lib/api';
 import type { Trek } from '@/lib/data';
 import { SlidersHorizontal, X, Scale, CalendarDays } from 'lucide-react';
@@ -312,6 +312,10 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
   );
 
   const queryAnimationKey = `${selectedRegion}-${selectedDifficulty}-${selectedDuration}-${selectedSeason}-${selectedMonth}-${selectedSort}`;
+  // The first results render visible (they hold the LCP image); only later
+  // filter changes fade the grid in.
+  const initialQueryKey = useRef(queryAnimationKey);
+  const animateResults = queryAnimationKey !== initialQueryKey.current;
 
   return (
     <>
@@ -512,16 +516,17 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
             ) : (
               <m.div
                 key={queryAnimationKey}
-                initial={{ opacity: 0, y: 6 }}
+                initial={animateResults ? { opacity: 0, y: 6 } : false}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25 }}
                 className="grid grid-cols-[repeat(auto-fill,minmax(17.5rem,21rem))] justify-center gap-5"
               >
-                {sortedTreks.map((trek) => {
+                {sortedTreks.map((trek, index) => {
                   const card = (
                     <TrekCard
                       key={trek.id}
                       trek={trek}
+                      eager={index === 0}
                       isCompared={compareIds.includes(trek.id)}
                       compareDisabled={!compareIds.includes(trek.id) && compareIds.length >= 3}
                       onToggleCompare={handleToggleCompare}
