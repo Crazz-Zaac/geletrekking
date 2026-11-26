@@ -2,10 +2,15 @@
  * Utilities for the admin, loaded only by app/admin/layout.tsx.
  *
  * app/globals.css leaves admin-only classes out to keep the public,
- * render-blocking stylesheet small. This sheet scans the WHOLE project, so
- * it is a superset of globals' utilities: it loads after globals, and every
- * class has a copy here in Tailwind's normal order, so a later base class
- * (e.g. `flex`) can never override an earlier variant (e.g. `md:hidden`).
+ * render-blocking stylesheet small. This sheet scans the WHOLE project, so it
+ * is a superset of globals' utilities: it loads after globals, and every class
+ * has a copy here in Tailwind's normal order, so a later base class (e.g.
+ * `flex`) can never override an earlier variant (e.g. `md:hidden`).
+ *
+ * It must NOT @reference globals.css: that file's `@source not './admin'`
+ * would apply here too and drop every admin-only class (e.g. the lg:pl-64
+ * offset that keeps content clear of the sidebar).
  */
-@reference '../globals.css';
 @import 'tailwindcss/utilities' source('../..');
+@reference 'tailwindcss/theme';
+@reference '../theme.css';
