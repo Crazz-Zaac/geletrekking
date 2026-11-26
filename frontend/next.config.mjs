@@ -252,8 +252,9 @@ const nextConfig = {
   },
   reactStrictMode: true,
   experimental: {
-    // Keep middleware.ts working (not using proxy yet)
-    // Remove this when fully migrated to proxy pattern
+    // inlineCss was measured and rejected: Next embeds the CSS three times
+    // (style tag + RSC payload), doubling the gzipped HTML (89 -> 178 KB) and
+    // lowering the mobile Lighthouse score (~83 -> ~73).
   },
   images: {
     deviceSizes: [360, 480, 540, 640, 750, 828, 960, 1080, 1200, 1600, 1920],

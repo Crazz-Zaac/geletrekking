@@ -7,7 +7,7 @@ const AVATAR_MAX_BYTES = 512 * 1024;
 const AVATAR_CACHE_MS = 24 * 60 * 60 * 1000;
 const AVATAR_CACHE_LIMIT = 100;
 const avatarCache = new Map(); // id -> { body, type, cachedAt }
-// Avatars are shown at 40px; browsers may keep them for 30 days (ids are stable per review).
+// Avatars are shown at 40px (80px covers 2x screens); browsers may keep them for 30 days (ids are stable per review).
 const AVATAR_BROWSER_CACHE = 'public, max-age=2592000, stale-while-revalidate=86400';
 
 // Google profile photos take a size suffix (".../photo=s128-c0x00000000-cc-rp-mo").
@@ -16,7 +16,7 @@ const smallAvatarUrl = (source) => {
   try {
     const url = new URL(source);
     if (!/(^|\.)googleusercontent\.com$/.test(url.hostname)) return source;
-    url.pathname = /=[^/]*$/.test(url.pathname) ? url.pathname.replace(/=[^/]*$/, '=s96-c-rw') : `${url.pathname}=s96-c-rw`;
+    url.pathname = /=[^/]*$/.test(url.pathname) ? url.pathname.replace(/=[^/]*$/, '=s80-c-rw') : `${url.pathname}=s80-c-rw`;
     return url.toString();
   } catch {
     return source;

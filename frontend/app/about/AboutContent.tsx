@@ -537,7 +537,7 @@ export function AboutContent({
               {associationList.map((association) => (
                 <li key={association.name} className="flex flex-col items-center gap-2 text-center">
                   <span className="flex h-20 w-full items-center justify-center rounded-xl bg-white px-3">
-                    <img src={association.logoUrl} alt={`${association.name} logo`} className="h-14 w-auto max-w-[8.5rem] object-contain" loading="lazy" />
+                    <img src={association.logoUrl} alt={`${association.name} logo`} width={136} height={56} className="h-14 w-auto max-w-[8.5rem] object-contain" loading="lazy" />
                   </span>
                   <span className="text-xs font-medium leading-snug text-muted-foreground">{association.name}</span>
                 </li>
