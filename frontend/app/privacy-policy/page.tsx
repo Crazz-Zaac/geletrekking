@@ -122,7 +122,7 @@ export default function PrivacyPolicyPage() {
       <main className="min-h-screen bg-background">
         <section className="py-16 md:py-24 bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border">
           <div className="container mx-auto px-4 md:px-6">
-            <m.div initial="hidden" animate="visible" variants={containerVariants} className="space-y-3 max-w-4xl">
+            <m.div initial={false} animate="visible" variants={containerVariants} className="space-y-3 max-w-4xl">
               <m.div variants={itemVariants}>
                 <Badge className="mb-2 bg-primary/15 text-primary border-primary/30 hover:bg-primary/20">Privacy Policy</Badge>
               </m.div>
@@ -150,7 +150,7 @@ export default function PrivacyPolicyPage() {
         <section className="py-14 md:py-20">
           <div className="container mx-auto px-4 md:px-6 max-w-6xl">
             <m.div
-              initial="hidden"
+              initial={false}
               animate="visible"
               variants={containerVariants}
               className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 lg:gap-10"

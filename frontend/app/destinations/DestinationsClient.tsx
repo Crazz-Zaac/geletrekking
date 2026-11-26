@@ -323,7 +323,7 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
         <section className="py-8 md:py-10 bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border">
           <div className="container mx-auto px-4 md:px-6">
             <m.div
-              initial="hidden"
+              initial={false}
               animate="visible"
               variants={containerVariants}
               className="space-y-2 text-center"
@@ -345,7 +345,7 @@ function DestinationsPageContent({ initialTreks }: { initialTreks: Trek[] }) {
         <section className="sticky top-16 z-30 py-3 md:py-4 border-b border-border bg-background/95 backdrop-blur">
           <div className="container mx-auto px-4 md:px-6">
             <m.div
-              initial="hidden"
+              initial={false}
               animate="visible"
               variants={containerVariants}
               className="space-y-3"

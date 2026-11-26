@@ -33,10 +33,9 @@ export const metadata: Metadata = {
   icons: {
     // Small icons: the original /geletrekking.png is 521 KB and was fetched on
     // every page as the favicon, competing with the hero image for bandwidth.
-    icon: [
-      { url: '/icons/icon-48.png', sizes: '48x48', type: 'image/png' },
-      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-    ],
+    // Only the small icon here: browsers fetch the largest listed icon for the tab
+    // at high priority. The 192/512 px icons live in the web manifest.
+    icon: [{ url: '/icons/icon-48.png', sizes: '48x48', type: 'image/png' }],
     shortcut: '/icons/icon-48.png',
     apple: { url: '/icons/apple-touch-icon.png', sizes: '180x180' },
   },
