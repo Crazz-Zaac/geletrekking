@@ -19,9 +19,11 @@ interface TrekCardProps {
   isCompared?: boolean
   compareDisabled?: boolean
   onToggleCompare?: (trekId: string) => void
+  /** Load the image immediately at high priority: for the first card, usually the page's LCP. */
+  eager?: boolean
 }
 
-export function TrekCard({ trek, className, isCompared = false, compareDisabled = false, onToggleCompare }: TrekCardProps) {
+export function TrekCard({ trek, className, isCompared = false, compareDisabled = false, onToggleCompare, eager = false }: TrekCardProps) {
   const hasActiveOffer = Boolean(trek.hasOffer)
   const discountPercent = trek.offerDiscountPercent
 
@@ -68,7 +70,7 @@ export function TrekCard({ trek, className, isCompared = false, compareDisabled 
           src={trek.image}
           alt={trek.title}
           fill
-          loading="lazy"
+          {...(eager ? { preload: true, fetchPriority: 'high' as const, loading: 'eager' as const } : { loading: 'lazy' as const })}
           className="object-cover group-hover:scale-105 transition-transform duration-500"
           sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1023px) calc(50vw - 32px), (max-width: 1279px) calc(33vw - 32px), 300px"
           quality={60}
