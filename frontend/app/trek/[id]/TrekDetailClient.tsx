@@ -470,7 +470,7 @@ export default function TrekDetailClient({
     <main className="min-h-screen bg-background">
       <Toaster position="top-center" richColors closeButton />
       <m.section
-        initial={{ opacity: 0 }}
+        initial={false}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
         className="relative z-0 h-[34vh] min-h-[240px] max-h-[380px] overflow-hidden"
@@ -481,13 +481,15 @@ export default function TrekDetailClient({
           fill
           sizes="100vw"
           className="object-cover"
-          priority
+          preload
+          fetchPriority="high"
+          loading="eager"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         
         <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 text-white">
           <m.div
-            initial="hidden"
+            initial={false}
             animate="visible"
             variants={containerVariants}
             className="container mx-auto space-y-2"
@@ -595,7 +597,7 @@ export default function TrekDetailClient({
       <section className="relative z-10 bg-background">
         <div className="container mx-auto px-4 md:px-6 py-10 md:py-14">
           <m.div
-            initial="hidden"
+            initial={false}
             animate="visible"
             variants={containerVariants}
             className="grid grid-cols-1 lg:grid-cols-3 gap-8"

@@ -257,7 +257,8 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
             alt={post.title}
             fill
             className="object-cover"
-            priority
+            preload
+            fetchPriority="high"
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/20" />

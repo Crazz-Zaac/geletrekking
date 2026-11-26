@@ -218,7 +218,8 @@ export default function ContactPage() {
                 alt="Contact page hero background"
                 fill
                 sizes="100vw"
-                priority
+                preload
+                fetchPriority="high"
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-black/60" />
@@ -228,7 +229,7 @@ export default function ContactPage() {
           )}
           <div className="container relative z-10 mx-auto px-4 md:px-6">
             <m.div
-              initial="hidden"
+              initial={false}
               animate="visible"
               variants={containerVariants}
               className="space-y-3 text-center"

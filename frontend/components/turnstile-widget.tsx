@@ -46,6 +46,29 @@ export function TurnstileWidget({
   const onExpireRef = useRef(onExpire)
   const [isReady, setIsReady] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  // Cloudflare's script and challenge iframe (~250 KB) load only when the form is
+  // about to be seen, not with the page: forms sit below the fold on trek pages.
+  const [nearViewport, setNearViewport] = useState(false)
+
+  useEffect(() => {
+    const element = containerRef.current
+    if (!element || nearViewport) return
+    if (typeof IntersectionObserver === 'undefined') {
+      setNearViewport(true)
+      return
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setNearViewport(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '600px 0px' }
+    )
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [nearViewport])
 
   useEffect(() => {
     onVerifyRef.current = onVerify
@@ -54,6 +77,7 @@ export function TurnstileWidget({
   }, [onError, onExpire, onVerify])
 
   useEffect(() => {
+    if (!nearViewport) return
     setLoadError(null)
 
     if (window.turnstile) {
@@ -97,7 +121,7 @@ export function TurnstileWidget({
       script.onload = null
       script.onerror = null
     }
-  }, [])
+  }, [nearViewport])
 
   useEffect(() => {
     if (!isReady || !containerRef.current || !window.turnstile) return

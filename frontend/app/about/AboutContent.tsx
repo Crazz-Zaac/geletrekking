@@ -310,7 +310,8 @@ export function AboutContent({
                   src={founder.imageUrl}
                   alt={`${founder.name}, ${founder.role} at Gele Trekking`}
                   fill
-                  priority
+                  preload
+                  fetchPriority="high"
                   sizes="(min-width: 1024px) 384px, 90vw"
                   className="object-cover"
                 />
