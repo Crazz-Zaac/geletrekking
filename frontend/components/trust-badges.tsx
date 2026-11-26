@@ -117,7 +117,7 @@ export function FooterTrustRow() {
               <li key={association.name} title={association.name} className="flex h-12 min-w-12 items-center justify-center rounded-lg bg-white px-2 py-1.5">
                 {/* Height-led sizing: wide logos (TAAN, NMA) get more width instead of shrinking into a square. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={association.logoUrl} alt={association.name} loading="lazy" className="h-full w-auto max-w-[9rem] object-contain" />
+                <img src={association.logoUrl} alt={association.name} width={144} height={48} loading="lazy" decoding="async" className="h-full w-auto max-w-[9rem] object-contain" />
               </li>
             ))}
           </ul>
