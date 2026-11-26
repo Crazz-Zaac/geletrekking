@@ -42,6 +42,8 @@ type MarkdownEditorProps = {
   previewClassName?: string
   /** Adds strikethrough, code, image and YouTube tools (for long-form content). */
   extended?: boolean
+  /** Alt text for inserted images when the Alt field is left blank (e.g. the post title). */
+  defaultAlt?: string
   'aria-describedby'?: string
   'aria-invalid'?: boolean
 }
@@ -50,7 +52,7 @@ type MarkdownEditorProps = {
  * Markdown textarea with a formatting toolbar, keyboard shortcuts and a
  * Write / Preview toggle. Preview is sanitized the same way as the public site.
  */
-export function MarkdownEditor({ value, onChange, id, rows = 8, placeholder, previewClassName, extended = false, ...aria }: MarkdownEditorProps) {
+export function MarkdownEditor({ value, onChange, id, rows = 8, placeholder, previewClassName, extended = false, defaultAlt, ...aria }: MarkdownEditorProps) {
   const autoId = useId()
   const textareaId = id || autoId
   const ref = useRef<HTMLTextAreaElement>(null)
@@ -103,7 +105,7 @@ export function MarkdownEditor({ value, onChange, id, rows = 8, placeholder, pre
     if (!/^https?:\/\//.test(url)) return
     if (panel === 'image') {
       const size = media.width.trim() ? `{width=${media.width.trim()}}` : ''
-      insertRaw(`![${media.alt.trim() || 'Image'}](${url})${size}`)
+      insertRaw(`![${(media.alt.trim() || defaultAlt?.trim() || 'Image').replace(/[[\]]/g, '')}](${url})${size}`)
     } else {
       insertRaw(`::youtube${media.title.trim() ? `[${media.title.trim()}]` : ''}(${url})`)
     }

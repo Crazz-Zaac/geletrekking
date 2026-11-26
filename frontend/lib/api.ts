@@ -81,6 +81,7 @@ export interface AdminTrek {
   region_description?: string
   image_url?: string
   gallery_images?: string[]
+  gallery_image_alts?: string[]
   map_image_url?: string
   highlights?: string[]
   includes?: string[]
@@ -564,6 +565,7 @@ interface BackendTrek {
   region_description?: string
   image_url?: string
   gallery_images?: string[]
+  gallery_image_alts?: string[]
   map_image_url?: string
   highlights?: string[]
   itinerary?: Array<{
@@ -857,6 +859,8 @@ function mapTrek(trek: BackendTrek): Trek {
       trek.gallery_images && trek.gallery_images.length > 0
         ? trek.gallery_images
         : [trek.image_url || '/images/hero-himalaya.jpg'],
+    // Same order as `gallery`; blank entries fall back to automatic alt text.
+    galleryAlts: trek.gallery_images && trek.gallery_images.length > 0 ? trek.gallery_image_alts || [] : [],
     mapEmbed: trek.trek_map_embed_url,
     mapImageUrl: trek.map_image_url,
     itineraryPdfUrl: trek.itinerary_pdf_url,

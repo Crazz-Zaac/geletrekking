@@ -17,6 +17,7 @@ import { sanitizeHtml } from '@/lib/sanitize-html'
 import GuideContent from '@/components/guide-content'
 import { JsonLd } from '@/components/json-ld'
 import { breadcrumbJsonLd, buildMetadata, guideArticleJsonLd, stripMarkdown, truncateDescription } from '@/lib/seo'
+import { withDefaultImageAlt } from '@/lib/markdown-alt'
 
 interface GuideDetailPageProps {
   params: Promise<{ slug: string }>
@@ -76,7 +77,7 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
 
   guide = await loadGuide(slug)
   if (guide?.content) {
-    contentHtml = sanitizeHtml((await marked(guide.content)) as string)
+    contentHtml = sanitizeHtml((await marked(withDefaultImageAlt(guide.content, guide.title || ''))) as string)
     readingTime = calculateReadingTime(guide.content)
   }
 

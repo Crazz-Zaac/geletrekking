@@ -1,4 +1,5 @@
 // controllers/trekController.js
+const { normalizeGalleryAlts } = require("../utils/galleryAlts");
 const TrekPackage = require("../models/TrekPackage");
 const mongoose = require("mongoose");
 
@@ -37,6 +38,7 @@ const createTrek = async (req, res) => {
     if (Object.prototype.hasOwnProperty.call(trekData, "trip_essentials")) {
       trekData.trip_essentials = normalizeTripEssentials(trekData.trip_essentials);
     }
+    normalizeGalleryAlts(trekData);
 
     if (trekData.offer_type && !trekData.offer_title) {
       trekData.offer_title = trekData.offer_type;
@@ -167,6 +169,7 @@ const updateTrek = async (req, res) => {
     if (Object.prototype.hasOwnProperty.call(payload, "trip_essentials")) {
       payload.trip_essentials = normalizeTripEssentials(payload.trip_essentials);
     }
+    normalizeGalleryAlts(payload);
 
     if (payload.offer_type && !payload.offer_title) {
       payload.offer_title = payload.offer_type;

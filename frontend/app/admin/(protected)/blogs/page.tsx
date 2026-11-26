@@ -245,6 +245,7 @@ export default function AdminBlogsPage() {
             <Field label="Post" required error={submitted && !form.content.trim() ? 'Write the post content.' : undefined}>
               <MarkdownEditor
                 extended
+                defaultAlt={form.title}
                 value={form.content}
                 onChange={(content) => setForm((prev) => ({ ...prev, content }))}
                 rows={22}

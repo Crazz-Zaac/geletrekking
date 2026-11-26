@@ -16,6 +16,7 @@ import { sanitizeHtml } from '@/lib/sanitize-html'
 import { PackingListCta } from '@/components/packing-list-cta'
 import { useBlogEngagement } from '@/hooks/use-blog-engagement'
 import { cn } from '@/lib/utils'
+import { withDefaultImageAlt } from '@/lib/markdown-alt'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -181,7 +182,7 @@ function renderBlogMarkdown(content: string, allowExternalMedia: boolean) {
 
 export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) {
   const { externalMedia } = useCookieConsent();
-  const renderedContent = useMemo(() => sanitizeHtml(marked.parse(renderBlogMarkdown(post.content || '', externalMedia), { async: false }) as string), [post.content, externalMedia]);
+  const renderedContent = useMemo(() => sanitizeHtml(marked.parse(renderBlogMarkdown(withDefaultImageAlt(post.content || '', post.title || ''), externalMedia), { async: false }) as string), [post.content, post.title, externalMedia]);
   const { views, likes, liked, toggleLike } = useBlogEngagement(post);
   const [shareUrl, setShareUrl] = useState('');
   const [showCopiedToast, setShowCopiedToast] = useState(false);

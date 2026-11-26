@@ -480,30 +480,66 @@ export function ListEditor({
 }
 
 /** Grid of image URLs with thumbnails, add-by-URL and remove. */
-export function ImageListField({ images, onChange }: { images: string[]; onChange: (images: string[]) => void }) {
+/**
+ * Editable list of photo URLs. Pass `alts` + `onAltsChange` to also edit an
+ * optional description (alt text) per photo, kept in the same order.
+ */
+export function ImageListField({
+  images,
+  onChange,
+  alts,
+  onAltsChange,
+  altPlaceholder = 'Describe this photo (optional)',
+}: {
+  images: string[]
+  onChange: (images: string[]) => void
+  alts?: string[]
+  onAltsChange?: (alts: string[]) => void
+  altPlaceholder?: string
+}) {
   const [draft, setDraft] = useState('')
+  const withAlts = Boolean(onAltsChange)
+  const altList = images.map((_, index) => alts?.[index] ?? '')
   const add = () => {
     const url = draft.trim()
     if (!/^https?:\/\//.test(url)) return
     onChange([...images, url])
+    if (withAlts) onAltsChange?.([...altList, ''])
     setDraft('')
+  }
+  const remove = (index: number) => {
+    onChange(images.filter((_, i) => i !== index))
+    if (withAlts) onAltsChange?.(altList.filter((_, i) => i !== index))
   }
   return (
     <div className="space-y-3">
       {images.length > 0 && (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {images.map((url, index) => (
-            <li key={`${index}-${url}`} className="group relative aspect-[4/3] overflow-hidden rounded-lg border border-border bg-muted">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
-              <button
-                type="button"
-                onClick={() => onChange(images.filter((_, i) => i !== index))}
-                className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-100 transition-opacity hover:bg-black/80 focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-                aria-label={`Remove image ${index + 1}`}
-              >
-                <X className="h-4 w-4" />
-              </button>
+            <li key={`${index}-${url}`} className="space-y-1.5">
+              <div className="group relative aspect-[4/3] overflow-hidden rounded-lg border border-border bg-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt={altList[index] || ''} className="h-full w-full object-cover" loading="lazy" />
+                <button
+                  type="button"
+                  onClick={() => remove(index)}
+                  className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-100 transition-opacity hover:bg-black/80 focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                  aria-label={`Remove image ${index + 1}`}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              {withAlts && (
+                <input
+                  type="text"
+                  value={altList[index]}
+                  maxLength={200}
+                  onChange={(event) => onAltsChange?.(altList.map((alt, i) => (i === index ? event.target.value : alt)))}
+                  placeholder={altPlaceholder}
+                  aria-label={`Description for photo ${index + 1}`}
+                  className={cn(controlBase, 'h-8 text-xs')}
+                />
+              )}
             </li>
           ))}
         </ul>

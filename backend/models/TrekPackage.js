@@ -82,6 +82,9 @@ const trekPackageSchema = new mongoose.Schema(
     // main cover image and extra photos shown in the gallery section
     image_url: { type: String },
     gallery_images: [{ type: String }],
+    // Optional description (alt text) per gallery photo, same order as
+    // gallery_images. Blank means "use the automatic text" on the site.
+    gallery_image_alts: [{ type: String }],
     map_image_url: { type: String },
 
     // bullet points shown in the trek highlights section

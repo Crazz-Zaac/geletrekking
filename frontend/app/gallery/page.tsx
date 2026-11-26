@@ -102,7 +102,8 @@ async function fetchGalleryData() {
           {
             id: `trek-${trek.id}-${index}`,
             image,
-            caption: trek.title,
+            // The admin's photo description, when given, doubles as the caption (and alt text).
+            caption: trek.galleryAlts?.[index]?.trim() || trek.title,
             trekName: trek.title,
             trekSlug: trek.slug ?? null,
             region: regionFor(trek.title, trek),
