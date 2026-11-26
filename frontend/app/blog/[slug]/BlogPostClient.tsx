@@ -1,7 +1,7 @@
 'use client';
 
 import { CookieSettingsButton, useCookieConsent } from '@/components/cookie-consent';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { Badge } from '@/components/ui/badge';
@@ -246,7 +246,7 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
     <>
       <Navbar />
       <main className="min-h-screen bg-background pt-16">
-        <motion.section
+        <m.section
           initial={false}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
@@ -263,29 +263,29 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/20" />
 
           <div className="relative z-10 w-full px-4 pt-12 pb-10 md:px-6 md:pt-20 md:pb-14">
-            <motion.div
+            <m.div
               initial={false}
               animate="visible"
               variants={containerVariants}
               className="container mx-auto max-w-5xl space-y-6 text-white"
             >
-              <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-2">
+              <m.div variants={itemVariants} className="flex flex-wrap items-center gap-2">
                 <Badge className="bg-primary text-primary-foreground">{post.category}</Badge>
                 {(post.hashtags || []).slice(0, 3).map((hashtag) => (
                   <span key={hashtag} className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
                     {hashtag}
                   </span>
                 ))}
-              </motion.div>
-              <motion.h1 variants={itemVariants} className="font-serif text-4xl font-bold leading-tight text-balance md:text-6xl">
+              </m.div>
+              <m.h1 variants={itemVariants} className="font-serif text-4xl font-bold leading-tight text-balance md:text-6xl">
                 {post.title}
-              </motion.h1>
+              </m.h1>
               {post.excerpt ? (
-                <motion.p variants={itemVariants} className="max-w-3xl text-base leading-8 text-white/85 md:text-xl">
+                <m.p variants={itemVariants} className="max-w-3xl text-base leading-8 text-white/85 md:text-xl">
                   {post.excerpt}
-                </motion.p>
+                </m.p>
               ) : null}
-              <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-4 text-sm text-white/85">
+              <m.div variants={itemVariants} className="flex flex-wrap items-center gap-4 text-sm text-white/85">
                 <span className="inline-flex items-center gap-2">
                   <UserRound className="h-4 w-4" />
                   {post.author}
@@ -304,10 +304,10 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
                     {compactCount(views)} {views === 1 ? 'view' : 'views'}
                   </span>
                 ) : null}
-              </motion.div>
-            </motion.div>
+              </m.div>
+            </m.div>
           </div>
-        </motion.section>
+        </m.section>
 
         <section className="border-b border-border bg-muted/30 py-4">
           <div className="container mx-auto flex flex-wrap items-center justify-between gap-3 px-4 text-sm text-muted-foreground md:px-6">
@@ -320,13 +320,13 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
         </section>
 
         <div className="container mx-auto px-4 py-12 md:px-6 md:py-16">
-          <motion.div
+          <m.div
             initial={false}
             animate="visible"
             variants={containerVariants}
             className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_320px]"
           >
-            <motion.article variants={itemVariants} className="mx-auto min-w-0 w-full max-w-3xl">
+            <m.article variants={itemVariants} className="mx-auto min-w-0 w-full max-w-3xl">
               <div
                 className="markdown-content trekking-blog-content"
                 dangerouslySetInnerHTML={{ __html: renderedContent }}
@@ -353,9 +353,9 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
                 <p className="font-semibold text-foreground">Enjoyed this story?</p>
                 <LikeButton liked={liked} likes={likes} onToggle={toggleLike} />
               </div>
-            </motion.article>
+            </m.article>
 
-            <motion.aside variants={itemVariants} className="space-y-6 lg:sticky lg:top-24 lg:h-fit">
+            <m.aside variants={itemVariants} className="space-y-6 lg:sticky lg:top-24 lg:h-fit">
               <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
                 <p className="text-xs font-semibold uppercase tracking-widest text-primary">Article Details</p>
                 <div className="mt-4 space-y-3 text-sm text-muted-foreground">
@@ -461,8 +461,8 @@ export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) 
                   Back to Blog
                 </Link>
               </Button>
-            </motion.aside>
-          </motion.div>
+            </m.aside>
+          </m.div>
         </div>
       </main>
       {showCopiedToast ? (

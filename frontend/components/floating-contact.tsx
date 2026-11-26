@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { useIsAdminRoute } from '@/hooks/use-is-admin-route'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, m, useReducedMotion } from 'framer-motion'
 import { ArrowUpRight, CalendarDays, Clock, Mail, MessageCircle, X } from 'lucide-react'
 import { useSiteSettings } from '@/hooks/use-site-settings'
 import { useScrolledPastHero } from '@/hooks/use-scrolled-past-hero'
@@ -235,7 +235,7 @@ export function FloatingContact() {
         {open && (
           <>
             {/* Dim the page behind the bottom sheet on phones */}
-            <motion.div
+            <m.div
               key="backdrop"
               className="fixed inset-0 bg-black/40 backdrop-blur-[2px] sm:hidden"
               initial={{ opacity: 0 }}
@@ -244,7 +244,7 @@ export function FloatingContact() {
               onClick={() => setOpen(false)}
               aria-hidden="true"
             />
-            <motion.div
+            <m.div
               key="panel"
               id={panelId}
               role="dialog"
@@ -274,7 +274,7 @@ export function FloatingContact() {
                 <div className="flex items-center gap-3">
                   <span className="relative">
                     <img
-                      src="/geletrekking.png"
+                      src="/icons/icon-96.png"
                       alt="Gele Trekking logo"
                       width={48}
                       height={48}
@@ -328,7 +328,7 @@ export function FloatingContact() {
                   onClick={() => setOpen(false)}
                 />
               </div>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>
@@ -336,7 +336,7 @@ export function FloatingContact() {
       {/* One-time hint so visitors know there are three ways to reach us */}
       <AnimatePresence>
         {showHint && !open && (
-          <motion.div
+          <m.div
             key="hint"
             role="status"
             initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.96 }}
@@ -354,7 +354,7 @@ export function FloatingContact() {
               <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
             <span className="absolute -bottom-1.5 left-6 h-3 w-3 rotate-45 border-b border-r border-border bg-background" aria-hidden="true" />
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
@@ -375,7 +375,7 @@ export function FloatingContact() {
         <span className="relative flex h-14 w-14 shrink-0 items-center justify-center">
           <AnimatePresence initial={false} mode="wait">
             {open ? (
-              <motion.span
+              <m.span
                 key="close"
                 initial={reduceMotion ? false : { rotate: -90, opacity: 0 }}
                 animate={{ rotate: 0, opacity: 1 }}
@@ -383,9 +383,9 @@ export function FloatingContact() {
                 transition={{ duration: 0.15 }}
               >
                 <X className="h-6 w-6" aria-hidden="true" />
-              </motion.span>
+              </m.span>
             ) : (
-              <motion.span
+              <m.span
                 key="open"
                 initial={reduceMotion ? false : { rotate: 90, opacity: 0 }}
                 animate={{ rotate: 0, opacity: 1 }}
@@ -393,7 +393,7 @@ export function FloatingContact() {
                 transition={{ duration: 0.15 }}
               >
                 <MessageCircle className="h-6 w-6" aria-hidden="true" />
-              </motion.span>
+              </m.span>
             )}
           </AnimatePresence>
           {!open && (

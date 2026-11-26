@@ -2,14 +2,11 @@
 
 import Link from 'next/link'
 import { CookieSettingsButton } from '@/components/cookie-consent'
-import { useEffect, useState } from 'react'
 import { Mail, Phone, MapPin } from 'lucide-react'
 import { WhatsAppIcon } from '@/components/whatsapp-icon'
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons'
 import Image from 'next/image'
 import { useSiteSettings } from '@/hooks/use-site-settings'
-import { getTreks } from '@/lib/api'
-import { getTrekPath } from '@/lib/trek-path'
 import { useTrekLinks, type TrekLink } from '@/components/trek-links'
 import { FooterTrustRow } from '@/components/trust-badges'
 import { COMPANY_FOUNDING_STORY } from '@/lib/site-metrics'
@@ -41,28 +38,8 @@ export function Footer() {
   const contactEmail = settings.email.trim()
   const toFooterLinks = (links: TrekLink[]) => links.map((link) => ({ label: link.title.replace(/\s+Trek$/i, ''), href: link.href }))
   const serverLinks = useTrekLinks()
-  const [destinationLinks, setDestinationLinks] = useState(() => toFooterLinks(serverLinks))
-
-  useEffect(() => {
-    let isMounted = true
-
-    const loadDestinationLinks = async () => {
-      try {
-        const trekList = await getTreks()
-        if (!isMounted || trekList.length === 0) return
-
-        setDestinationLinks(toFooterLinks(trekList.map((trek) => ({ title: trek.title, href: getTrekPath(trek) }))))
-      } catch {
-        // Keep the list the page arrived with.
-      }
-    }
-
-    void loadDestinationLinks()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
+  // Server-loaded trek list (cached 5 min); no client refetch of /api/treks.
+  const destinationLinks = toFooterLinks(serverLinks)
 
   const socialLinks = [
     { Icon: FacebookIcon, href: social.facebook, label: 'Facebook' },

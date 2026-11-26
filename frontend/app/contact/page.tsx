@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { ConsentGate } from '@/components/cookie-consent';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
@@ -227,16 +227,16 @@ export default function ContactPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-accent/10 to-background" />
           )}
           <div className="container relative z-10 mx-auto px-4 md:px-6">
-            <motion.div
+            <m.div
               initial="hidden"
               animate="visible"
               variants={containerVariants}
               className="space-y-3 text-center"
             >
-              <motion.h1 variants={itemVariants} className={heroImageUrl ? "text-4xl md:text-5xl font-bold text-white text-balance" : "text-4xl md:text-5xl font-bold text-foreground text-balance"}>
+              <m.h1 variants={itemVariants} className={heroImageUrl ? "text-4xl md:text-5xl font-bold text-white text-balance" : "text-4xl md:text-5xl font-bold text-foreground text-balance"}>
                 Contact Us
-              </motion.h1>
-            </motion.div>
+              </m.h1>
+            </m.div>
           </div>
         </section>
 
@@ -275,14 +275,14 @@ export default function ContactPage() {
 
         <section className="py-10 md:py-14">
           <div className="container mx-auto px-4 md:px-6">
-            <motion.div
+            <m.div
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
               variants={containerVariants}
               className="grid grid-cols-1 lg:grid-cols-5 gap-8"
             >
-              <motion.div variants={itemVariants} className="lg:col-span-3">
+              <m.div variants={itemVariants} className="lg:col-span-3">
                 <Card className="border-border p-6 md:p-8 shadow-sm">
                   <div className="mb-8">
                     <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">Send Us Your Inquiry</h2>
@@ -303,23 +303,23 @@ export default function ContactPage() {
 
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {submitted && (
-                      <motion.div
+                      <m.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="p-4 bg-green-500/10 border border-green-500/40 rounded-lg text-green-700 dark:text-green-300"
                       >
                         Thank you for your message! We’ll contact you shortly.
-                      </motion.div>
+                      </m.div>
                     )}
 
                     {submitError && (
-                      <motion.div
+                      <m.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="p-4 bg-red-500/10 border border-red-500/40 rounded-lg text-red-700 dark:text-red-300"
                       >
                         {submitError}
-                      </motion.div>
+                      </m.div>
                     )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -460,9 +460,9 @@ export default function ContactPage() {
                     </p>
                   </form>
                 </Card>
-              </motion.div>
+              </m.div>
 
-              <motion.div variants={itemVariants} className="lg:col-span-2">
+              <m.div variants={itemVariants} className="lg:col-span-2">
                 <section aria-labelledby="contact-details-heading" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
                   <div className="p-6">
                     <h2 id="contact-details-heading" className="text-lg font-semibold text-foreground">Contact details</h2>
@@ -546,8 +546,8 @@ export default function ContactPage() {
                     </ConsentGate>
                   </div>
                 </section>
-              </motion.div>
-            </motion.div>
+              </m.div>
+            </m.div>
           </div>
         </section>
       </main>

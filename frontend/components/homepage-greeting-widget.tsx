@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useId, useRef, useState } from 'react'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, m, useReducedMotion } from 'framer-motion'
 import { ArrowRight, ArrowUpRight, Star, X } from 'lucide-react'
 import { useScrolledPastHero } from '@/hooks/use-scrolled-past-hero'
 import styles from './homepage-greeting-widget.module.css'
@@ -105,7 +105,7 @@ export function HomepageGreetingWidget() {
       <AnimatePresence>
         {open && (
           <>
-            <motion.div
+            <m.div
               key="backdrop"
               className="fixed inset-0 bg-black/40 backdrop-blur-[2px] sm:hidden"
               initial={{ opacity: 0 }}
@@ -114,7 +114,7 @@ export function HomepageGreetingWidget() {
               onClick={() => close(false)}
               aria-hidden="true"
             />
-            <motion.div
+            <m.div
               key="panel"
               ref={panelRef}
               id={panelId}
@@ -143,14 +143,14 @@ export function HomepageGreetingWidget() {
               <div className="px-5 pb-1 pt-5 text-center sm:pt-6">
                 <div className="flex justify-center gap-1" aria-hidden="true">
                   {Array.from({ length: 5 }).map((_, index) => (
-                    <motion.span
+                    <m.span
                       key={index}
                       initial={reduceMotion ? false : { opacity: 0, y: 6, scale: 0.6 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       transition={{ delay: reduceMotion ? 0 : 0.08 + index * 0.06, type: 'spring', stiffness: 400, damping: 18 }}
                     >
                       <Star className="h-6 w-6 fill-amber-400 text-amber-400" />
-                    </motion.span>
+                    </m.span>
                   ))}
                 </div>
                 <p id={titleId} className="mt-3 text-lg font-semibold text-foreground">Trekked with us?</p>
@@ -175,7 +175,7 @@ export function HomepageGreetingWidget() {
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </div>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>

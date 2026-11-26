@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -25,23 +25,23 @@ export default function CTASection() {
   return (
     <section className="py-16 md:py-24 bg-gradient-to-r from-primary/10 to-accent/10 border-t border-border">
       <div className="container mx-auto px-4 md:px-6">
-        <motion.div
+        <m.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           variants={containerVariants}
           className="space-y-8 text-center"
         >
-          <motion.div variants={itemVariants} className="space-y-4">
+          <m.div variants={itemVariants} className="space-y-4">
             <h2 className="text-4xl md:text-5xl font-bold text-foreground text-balance">
               Ready to start your Himalayan adventure?
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Experience the magic of Nepal's mountains with our expert local guides.
             </p>
-          </motion.div>
+          </m.div>
 
-          <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center">
+          <m.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/destinations">
               <Button size="lg" className="bg-primary hover:bg-primary/90 text-white">
                 Explore Destinations
@@ -52,8 +52,8 @@ export default function CTASection() {
                 Contact Us Today
               </Button>
             </Link>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       </div>
     </section>
   );

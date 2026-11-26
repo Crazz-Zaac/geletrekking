@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 
 interface Region {
   id: string;
@@ -49,7 +49,7 @@ export function RegionsSection({ regions }: RegionsSectionProps) {
           </p>
         </div>
 
-        <motion.div
+        <m.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-100px' }}
@@ -57,7 +57,7 @@ export function RegionsSection({ regions }: RegionsSectionProps) {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
         >
           {regions.map((region) => (
-            <motion.div key={region.id} variants={cardVariants}>
+            <m.div key={region.id} variants={cardVariants}>
               <Link
                 href={`/destinations?region=${region.id}`}
                 className="group block relative overflow-hidden rounded-xl aspect-[4/5]"
@@ -82,9 +82,9 @@ export function RegionsSection({ regions }: RegionsSectionProps) {
                   </span> */}
                 </div>
               </Link>
-            </motion.div>
+            </m.div>
           ))}
-        </motion.div>
+        </m.div>
       </div>
     </section>
   );

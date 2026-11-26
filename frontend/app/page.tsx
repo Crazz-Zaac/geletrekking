@@ -12,6 +12,7 @@ import { BookingCTA } from './home/booking-cta'
 import { StatsBar } from './home/stats-bar'
 import { GoogleReviews } from '@/components/google-reviews'
 import { PopularTreks } from './home/popular-treks'
+import { toTrekCardData } from '@/components/trek-card-compact'
 import { SpecialOffers } from './home/special-offers'
 
 export const metadata = buildMetadata({
@@ -61,10 +62,14 @@ export default async function HomePage() {
 
         <SpecialOffers treks={offerTreks} />
 
-        <PopularTreks treks={popularTreks} totalCount={activeTreks.length} />
+        <PopularTreks treks={popularTreks.map(toTrekCardData)} totalCount={activeTreks.length} />
 
         <WhyUsSection />
-        <section className="py-16 md:py-20 bg-primary overflow-hidden">
+        {/* content-visibility: the browser skips laying out this below-the-fold
+            section until it nears the viewport, so reviewer names with accented
+            letters (e.g. "Ž") no longer trigger an 86 KB extended-Latin font
+            download during the initial load. */}
+        <section className="py-16 md:py-20 bg-primary overflow-hidden [content-visibility:auto] [contain-intrinsic-size:auto_720px]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-10 md:mb-12">
               <p className="text-amber-300 text-sm font-semibold uppercase tracking-widest mb-3">What Trekkers Say</p>

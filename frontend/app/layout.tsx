@@ -7,6 +7,7 @@ import { JsonLd } from '@/components/json-ld'
 import { absoluteUrl, organizationJsonLd, SITE_URL, websiteJsonLd } from '@/lib/seo'
 import { getCachedPublicSettings, getCachedTrekLinks } from '@/lib/api'
 import { TrekLinksProvider } from '@/components/trek-links'
+import { MotionProvider } from '@/components/motion-provider'
 import './globals.css'
 
 const inter = Inter({
@@ -17,6 +18,9 @@ const inter = Inter({
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
+  // Static weights instead of the 400–900 variable font. Pages download only
+  // the weights they use: bold for headings site-wide, regular in blog posts.
+  weight: ['400', '700'],
   variable: '--font-playfair',
   display: 'swap',
 })
@@ -27,9 +31,14 @@ export const metadata: Metadata = {
   description:
     'Discover the Himalayas with Gele Trekking. Expert-guided trekking packages in Nepal — Everest Base Camp, Annapurna Circuit, Langtang Valley and more. Book your dream adventure today.',
   icons: {
-    icon: [{ url: '/geletrekking.png', type: 'image/png' }],
-    shortcut: '/geletrekking.png',
-    apple: '/geletrekking.png',
+    // Small icons: the original /geletrekking.png is 521 KB and was fetched on
+    // every page as the favicon, competing with the hero image for bandwidth.
+    icon: [
+      { url: '/icons/icon-48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    shortcut: '/icons/icon-48.png',
+    apple: { url: '/icons/apple-touch-icon.png', sizes: '180x180' },
   },
   manifest: '/manifest.webmanifest',
   alternates: {
@@ -76,6 +85,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <body className="font-sans antialiased">
+        <MotionProvider>
         <CookieConsentProvider>
         <TrekLinksProvider links={trekLinks}>
         <JsonLd data={[organizationJsonLd(settings), websiteJsonLd()]} />
@@ -84,6 +94,7 @@ export default async function RootLayout({
         <ScrollToTop />
         </TrekLinksProvider>
         </CookieConsentProvider>
+        </MotionProvider>
       </body>
     </html>
   )

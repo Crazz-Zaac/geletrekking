@@ -34,7 +34,7 @@ const nextConfig = {
       {
         // Browsers and crawlers request /favicon.ico by convention.
         source: "/favicon.ico",
-        destination: "/geletrekking.png",
+        destination: "/icons/icon-48.png",
         permanent: true,
       },
       {
@@ -259,7 +259,8 @@ const nextConfig = {
   images: {
     deviceSizes: [360, 480, 540, 640, 750, 828, 960, 1080, 1200, 1600, 1920],
     imageSizes: [32, 48, 64, 96, 128, 256],
-    formats: ['image/webp'],
+    // AVIF first (typically 30–50% smaller than WebP), WebP for older browsers.
+    formats: ['image/avif', 'image/webp'],
     qualities: [60, 75, 90],
     remotePatterns: [
       {

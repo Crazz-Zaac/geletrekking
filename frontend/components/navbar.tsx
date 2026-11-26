@@ -8,14 +8,13 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { getTrekPath } from '@/lib/trek-path'
 import { useTrekLinks } from '@/components/trek-links'
 import { GlobalAlertBanner } from '@/components/global-alert-banner'
 import { WhatsAppIcon } from '@/components/whatsapp-icon'
 import { FacebookIcon, InstagramIcon, YouTubeIcon, LinkedInIcon } from '@/components/social-icons'
 import Image from 'next/image'
 import { useSiteSettings } from '@/hooks/use-site-settings'
-import { getTreks, getActivities, getGuides, type PublicActivity, type TravelGuide } from '@/lib/api'
+import { getActivities, getGuides, type PublicActivity, type TravelGuide } from '@/lib/api'
 import { getActivityMenuColumn, getActivityMenuIcon, getActivityMenuLabel } from '@/lib/activity-menu'
 
 type Guide = TravelGuide
@@ -51,7 +50,8 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const serverTrekLinks = useTrekLinks()
-  const [destinationChildren, setDestinationChildren] = useState<DestinationChild[]>(() =>
+  // Built from the server-loaded trek list (cached 5 min); no client refetch of /api/treks.
+  const [destinationChildren] = useState<DestinationChild[]>(() =>
     sortDestinationChildren(serverTrekLinks.map((link) => ({ label: link.title, href: link.href })))
   )
   const [guideColumns, setGuideColumns] = useState<GuideColumn[]>([])
@@ -146,27 +146,6 @@ export function Navbar() {
         .slice(0, 5),
     }))
   }
-
-  // Load treks from database
-  useEffect(() => {
-    const loadTreks = async () => {
-      try {
-        const dbTreks = await getTreks()
-        if (dbTreks && dbTreks.length > 0) {
-          setDestinationChildren(
-            sortDestinationChildren(dbTreks.map((trek) => ({
-              label: trek.title,
-              href: getTrekPath(trek),
-            })))
-          )
-        }
-      } catch {
-        // Keep the list the page arrived with.
-      }
-    }
-
-    void loadTreks()
-  }, [])
 
   // Load guides from editable API data
   useEffect(() => {

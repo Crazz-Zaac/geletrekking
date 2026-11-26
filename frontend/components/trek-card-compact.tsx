@@ -35,7 +35,19 @@ export function OfferRibbon({ size = 140 }: { size?: number }) {
 }
 
 /** Homepage card: shorter photo, key facts at a glance, price and link on one line. */
-export function TrekCardCompact({ trek, className }: { trek: Trek; className?: string }) {
+/** Only what a card shows. Client components receive this instead of the full
+ * trek, which keeps itineraries, FAQs and descriptions out of the page HTML. */
+export type TrekCardData = Pick<
+  Trek,
+  'id' | 'slug' | 'title' | 'region' | 'image' | 'duration' | 'difficulty' | 'maxAltitude' | 'price' | 'originalPrice' | 'hasOffer' | 'offerType' | 'offerDiscountPercent' | 'offerValidTo'
+>
+
+export function toTrekCardData(trek: Trek): TrekCardData {
+  const { id, slug, title, region, image, duration, difficulty, maxAltitude, price, originalPrice, hasOffer, offerType, offerDiscountPercent, offerValidTo } = trek
+  return { id, slug, title, region, image, duration, difficulty, maxAltitude, price, originalPrice, hasOffer, offerType, offerDiscountPercent, offerValidTo }
+}
+
+export function TrekCardCompact({ trek, className }: { trek: TrekCardData; className?: string }) {
   const hasOffer = Boolean(trek.hasOffer)
 
   return (

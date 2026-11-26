@@ -152,7 +152,7 @@ export function organizationJsonLd(settings?: OrganizationSettings) {
     '@id': `${SITE_URL}/#organization`,
     name: SITE_NAME,
     url: SITE_URL,
-    logo: absoluteUrl('/geletrekking.png'),
+    logo: absoluteUrl('/icons/icon-512.png'),
     image: absoluteUrl(DEFAULT_OG_IMAGE),
     description: 'Nepal-based trekking agency offering guided Himalayan treks, tours, and travel planning.',
     areaServed: ['Nepal', 'Himalayas', 'Everest Region', 'Annapurna Region', 'Langtang Region'],
