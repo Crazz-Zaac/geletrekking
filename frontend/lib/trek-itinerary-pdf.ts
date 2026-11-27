@@ -3,6 +3,7 @@ import { CONTACT_EMAIL, CONTACT_PHONE } from '@/lib/contact-links'
 import { loadPdfImage, loadPdfLogo, type PdfImage } from '@/lib/pdf-images'
 import { COMPANY_REGISTRATION_LINE } from '@/lib/site-metrics'
 import { buildItineraryRows } from '@/lib/trek-itinerary'
+import { TERMS_CLOSING, TERMS_EFFECTIVE, TERMS_SECTIONS, TERMS_VERSION } from '@/lib/terms-content'
 
 type Colour = [number, number, number]
 type KeyValue = { label: string; value: string }
@@ -181,6 +182,81 @@ export async function downloadTrekItineraryPdf({ trek, settings, socialLinks, su
       y += 0.75
     })
     y += 2
+  }
+
+  /** Text with **bold** segments, wrapped to the content width (used for the terms). */
+  const addRichText = (text: string, { size = 9, indent = 0, gap = 2 }: { size?: number; indent?: number; gap?: number } = {}) => {
+    const lineHeight = size * 0.5
+    const maxWidth = contentWidth() - indent
+    const tokens: Array<{ text: string; bold: boolean }> = []
+    pdfText(text)
+      .split(/(\*\*[^*]+\*\*)/g)
+      .filter(Boolean)
+      .forEach((segment) => {
+        const bold = segment.startsWith('**') && segment.endsWith('**')
+        ;(bold ? segment.slice(2, -2) : segment).split(/(\s+)/).filter(Boolean).forEach((word) => tokens.push({ text: word, bold }))
+      })
+    const widthOf = (token: { text: string; bold: boolean }) => {
+      pdf.setFont('helvetica', token.bold ? 'bold' : 'normal')
+      pdf.setFontSize(size)
+      return pdf.getTextWidth(token.text)
+    }
+    const lines: Array<typeof tokens> = []
+    let line: typeof tokens = []
+    let width = 0
+    tokens.forEach((token) => {
+      const isSpace = /^\s+$/.test(token.text)
+      if (isSpace && line.length === 0) return
+      const tokenWidth = widthOf(token)
+      if (!isSpace && line.length > 0 && width + tokenWidth > maxWidth) {
+        while (line.length && /^\s+$/.test(line[line.length - 1].text)) line.pop()
+        lines.push(line)
+        line = []
+        width = 0
+      }
+      line.push(token)
+      width += tokenWidth
+    })
+    if (line.length) lines.push(line)
+    lines.forEach((words) => {
+      ensureSpace(lineHeight + 1)
+      let x = MARGIN + indent
+      words.forEach((token) => {
+        setText(size, token.bold ? 'bold' : 'normal', token.bold ? INK : BODY)
+        pdf.text(token.text, x, y)
+        x += pdf.getTextWidth(token.text)
+      })
+      y += lineHeight
+    })
+    y += gap
+  }
+
+  const addRichBullets = (items: string[], size = 9) => {
+    items.forEach((item) => {
+      ensureSpace(6)
+      pdf.setFillColor(...BRAND)
+      pdf.circle(MARGIN + 1.2, y - 1.2, 0.65, 'F')
+      addRichText(item, { size, indent: 6, gap: 1.2 })
+    })
+    y += 1.5
+  }
+
+  const addTermsAndConditions = () => {
+    addSection('Terms and Conditions')
+    addRichText(
+      `**Effective ${TERMS_EFFECTIVE}, version ${TERMS_VERSION}.** These terms apply to every booking with Gele Trekking. The latest version is always available at ${WEBSITE}/terms-and-conditions.`,
+      { size: 8.5, gap: 4 }
+    )
+    TERMS_SECTIONS.forEach((section, index) => {
+      addSubheading(`${index + 1}. ${section.title}`)
+      // Same order as the website: first paragraph, then the key points, then the rest.
+      const [first, ...rest] = section.body
+      if (first) addRichText(first)
+      if (section.points?.length) addRichBullets(section.points)
+      rest.forEach((paragraph) => addRichText(paragraph))
+      y += 1.5
+    })
+    addRichText(TERMS_CLOSING, { size: 9, gap: 3 })
   }
 
   /** Label and value pairs in two columns, like a data sheet. */
@@ -480,7 +556,7 @@ export async function downloadTrekItineraryPdf({ trek, settings, socialLinks, su
 
   addSection('Important Information')
   addParagraph(
-    `This itinerary is a guide. Routes, schedules and accommodation may change because of weather, trail conditions, flights or safety decisions. Prices are shown in US dollars as of ${issuedLabel} and are confirmed in writing at booking. Comprehensive travel insurance covering high-altitude trekking and helicopter evacuation is required. All bookings are subject to our Terms and Conditions and Liability Waiver, available at ${WEBSITE}.`,
+    `This itinerary is a guide. Routes, schedules and accommodation may change because of weather, trail conditions, flights or safety decisions. Prices are shown in US dollars as of ${issuedLabel} and are confirmed in writing at booking. Comprehensive travel insurance covering high-altitude trekking and helicopter evacuation is required. All bookings are subject to our Terms and Conditions (included at the end of this document) and our Liability Waiver, available at ${WEBSITE}.`,
     9
   )
   if (socialLinks.length > 0) {
@@ -493,7 +569,10 @@ export async function downloadTrekItineraryPdf({ trek, settings, socialLinks, su
       pdf.link(x, y - 3.5, width, 5, { url: link.url })
       x += width + 7
     })
+    y += 8
   }
+
+  addTermsAndConditions()
 
   drawContents()
   drawHeadersAndFooters()
