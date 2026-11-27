@@ -82,6 +82,8 @@ type TrekForm = {
   season_tag: string
   image_url: string
   gallery_images: string
+  /** One description per photo in gallery_images (same order); '' = automatic. */
+  gallery_image_alts: string[]
   trek_map_embed_url: string
   map_image_url: string
   duration_days: number
@@ -198,6 +200,7 @@ const initialForm: TrekForm = {
   season_tag: '',
   image_url: '',
   gallery_images: '',
+  gallery_image_alts: [],
   trek_map_embed_url: '',
   map_image_url: '',
   duration_days: 10,
@@ -263,9 +266,9 @@ function formToPayload(form: TrekForm): Partial<AdminTrek> {
       .map((range) => ({ start_date: range.start_date, end_date: range.end_date, status: range.status, note: range.note.trim() })),
     season_tag: form.season_tag.trim() || undefined,
     image_url: form.image_url.trim() || undefined,
-    gallery_images: form.gallery_images
-      ? form.gallery_images.split('\n').map((s) => s.trim()).filter(Boolean)
-      : [],
+    // Built from the same list the photo editor shows, so descriptions stay aligned.
+    gallery_images: linesToList(form.gallery_images).map((url) => url.trim()),
+    gallery_image_alts: linesToList(form.gallery_images).map((_, index) => (form.gallery_image_alts[index] || '').trim()),
     trek_map_embed_url: form.trek_map_embed_url.trim() || undefined,
     map_image_url: form.map_image_url.trim() || undefined,
     duration_days: form.duration_days,
@@ -338,6 +341,7 @@ function trekToForm(item: AdminTrek): TrekForm {
     season_tag: item.season_tag || '',
     image_url: item.image_url || '',
     gallery_images: (item.gallery_images || []).join('\n'),
+    gallery_image_alts: (item.gallery_images || []).map((_, index) => item.gallery_image_alts?.[index] || ''),
     trek_map_embed_url: item.trek_map_embed_url || '',
     map_image_url: item.map_image_url || '',
     duration_days: item.duration_days || 10,
@@ -1045,8 +1049,14 @@ export default function AdminTreksPage() {
               <div className="space-y-3">
                 <ImageUrlField label="Cover photo" value={form.image_url} onChange={(image_url) => setForm((p) => ({ ...p, image_url }))} size="header" hint="Used on the trek page header and trek cards." />
                 {field('More photos', (
-                  <ImageListField images={linesToList(form.gallery_images)} onChange={(images) => setForm((p) => ({ ...p, gallery_images: listToLines(images) }))} />
-                ))}
+                  <ImageListField
+                    images={linesToList(form.gallery_images)}
+                    onChange={(images) => setForm((p) => ({ ...p, gallery_images: listToLines(images) }))}
+                    alts={form.gallery_image_alts}
+                    onAltsChange={(gallery_image_alts) => setForm((p) => ({ ...p, gallery_image_alts }))}
+                    altPlaceholder="Describe this photo, e.g. Prayer flags at Thorong La Pass"
+                  />
+                ), 'The description is read aloud by screen readers and helps Google Images. Leave blank to use the trek name.')}
                 <ImageUrlField label="Route map" value={form.map_image_url} onChange={(map_image_url) => setForm((p) => ({ ...p, map_image_url }))} hint="Shown uncropped, so wide, tall or square maps all work." />
               </div>
             )}

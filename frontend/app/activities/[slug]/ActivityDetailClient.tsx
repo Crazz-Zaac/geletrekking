@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { marked } from 'marked'
 import { sanitizeHtml } from '@/lib/sanitize-html'
+import { withDefaultImageAlt } from '@/lib/markdown-alt'
 
 /** Rendered on the server by page.tsx, so search engines get the full content and heading. */
 export function ActivityDetailClient({ activity }: { activity: PublicActivity }) {
@@ -200,7 +201,7 @@ function ActivityDetailTabs({ activity }: { activity: PublicActivity }) {
   useEffect(() => {
     const renderMarkdown = async () => {
       if (activity.fullDescription) {
-        const html = await marked(activity.fullDescription)
+        const html = await marked(withDefaultImageAlt(activity.fullDescription, getActivityMenuLabel(activity)))
         setDescriptionHtml(sanitizeHtml(html as string))
       }
     }

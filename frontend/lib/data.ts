@@ -53,6 +53,8 @@ export interface Trek {
   tripEssentials?: TripEssential[]
   faqs: FAQ[]
   gallery: string[]
+  /** Optional per-photo descriptions (alt text), same order as `gallery`. */
+  galleryAlts?: string[]
   mapEmbed?: string
   mapImageUrl?: string
   itineraryPdfUrl?: string

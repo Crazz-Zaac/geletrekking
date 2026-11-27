@@ -773,7 +773,7 @@ export default function TrekDetailClient({
                     <div key={`${img}-${idx}`} className="relative h-56 rounded-xl overflow-hidden border border-border">
                       <Image
                         src={img}
-                        alt={`${trek.title} gallery ${idx + 1}`}
+                        alt={trek.galleryAlts?.[idx]?.trim() || `${trek.title} gallery ${idx + 1}`}
                         fill
                         sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 767px) 45vw, (max-width: 1023px) 30vw, 22vw"
                         className="object-cover"
