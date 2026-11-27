@@ -444,6 +444,13 @@ exports.submitPreBooking = async (req, res) => {
       return res.status(400).json({ message: "Pre-booking form data is required." });
     }
 
+    // The pre-booking form no longer collects passport details (we only need them
+    // after confirmation, via the private booking form). Drop them if still sent,
+    // e.g. from an old cached copy of the form.
+    for (const key of ["passportNumber", "passportExpiryDate", "passportIssuingCountry"]) {
+      delete formData[key];
+    }
+
     const fullName = normalizeText(formData.fullName);
     const nameParts = fullName.split(" ").filter(Boolean);
     const firstName = nameParts[0] || fullName;

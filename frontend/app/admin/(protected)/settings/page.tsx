@@ -26,6 +26,7 @@ const defaultSettings: AdminSiteSettings = {
   contactHeroImageUrl: '',
   bookingHeroImageUrl: '',
   phone: '',
+  emergencyPhone: '',
   email: '',
   address: '',
   officeHoursWeekdays: '',
@@ -218,6 +219,9 @@ export default function AdminSettingsPage() {
             <FieldGrid>
               <Field label="Phone" hint="Include the country code, e.g. +977.">
                 <Input className="h-10" type="tel" inputMode="tel" placeholder="+977 98…" value={form.phone || ''} onChange={(e) => set('phone', e.target.value)} />
+              </Field>
+              <Field label="24-hour emergency phone" hint="Shown on the Safety page. Leave blank to hide it. Only add a number that is answered around the clock.">
+                <Input className="h-10" type="tel" inputMode="tel" maxLength={40} placeholder="+977 98…" value={form.emergencyPhone || ''} onChange={(e) => set('emergencyPhone', e.target.value)} />
               </Field>
               <Field label="Email" error={visibleErrors.email}>
                 <Input className="h-10" type="email" inputMode="email" placeholder="info@geletrekking.com" value={form.email || ''} onChange={(e) => set('email', e.target.value)} />

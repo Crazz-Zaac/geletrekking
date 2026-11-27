@@ -10,6 +10,7 @@ const defaultSettings: Required<AdminSiteSettings> = {
   contactHeroImageUrl: '',
   bookingHeroImageUrl: '',
   phone: CONTACT_PHONE,
+  emergencyPhone: '',
   email: CONTACT_EMAIL,
   contactEmails: DEFAULT_CONTACT_EMAILS,
   address: 'Lalitpur - 4, Lalitpur 44600',

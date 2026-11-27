@@ -40,7 +40,7 @@ export default async function BookPage() {
             <div className="mx-auto grid max-w-6xl grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-14">
               <div className="sm:rounded-2xl sm:border sm:border-border sm:bg-card sm:p-8 sm:shadow-sm">
                 <p className="mb-6 text-sm text-muted-foreground md:text-base">
-                  Tell us about your trip so we can check your dates and prepare the next steps. It takes about 10 minutes. Passport details are optional here, as we only need them once your booking is confirmed.
+                  Tell us about your trip so we can check your dates and prepare the next steps. It takes about 10 minutes. We don't ask for passport details here; we only need them once your booking is confirmed.
                 </p>
                 <PreBookingForm treks={treks} requireTrek />
               </div>

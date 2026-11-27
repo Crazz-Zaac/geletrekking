@@ -154,9 +154,8 @@ export const preBookingFormConfig: BookingFormConfig = [
       { id: 'nationality', label: 'Nationality', type: 'text', required: true },
       { id: 'phoneNumber', label: 'Phone Number (country code)', type: 'tel', required: true, placeholder: '+977 ...' },
       { id: 'email', label: 'Email', type: 'email', required: true, placeholder: 'you@example.com' },
-      // Only needed once a booking is confirmed; the private form asks for them then.
-      { id: 'passportNumber', label: 'Passport Number', type: 'text' },
-      { id: 'passportExpiryDate', label: 'Passport Expiry Date', type: 'date' },
+      // No passport fields here: we only need them once a booking is confirmed,
+      // and the private booking form asks for them then.
     ],
   },
   {

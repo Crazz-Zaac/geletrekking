@@ -16,11 +16,11 @@ import { LegalDocument, type LegalHighlight, type LegalSection } from '@/compone
 
 const highlights: LegalHighlight[] = [
   { icon: CalendarClock, title: 'Book one month ahead', text: 'Bookings close one month before the trek starts.' },
-  { icon: CreditCard, title: 'Pay on arrival', text: 'At present you pay after arriving in Nepal, before the trek begins.' },
-  { icon: RotateCcw, title: 'Free date changes', text: 'Reschedule within one year at the same rate. Cancel up to 3 months before for a small fee.' },
+  { icon: CreditCard, title: '15–20% deposit', text: 'Due 6 months before your trek (or when you book, if sooner). Pay the rest by bank transfer 3 days before, or in cash on arrival.' },
+  { icon: RotateCcw, title: 'Free date changes', text: 'Reschedule within one year at the same rate. Cancel 3 months or more before for a small fee.' },
   { icon: Shield, title: 'Insurance is required', text: 'Including high-altitude trekking and helicopter evacuation.' },
   { icon: Users, title: 'Ages 18–70 when joining alone', text: 'No age limit for families booking together.' },
-  { icon: AlertCircle, title: 'Last-minute bookings', text: 'Cannot be cancelled and are not refundable.' },
+  { icon: AlertCircle, title: 'Within 3 months: no refund', text: 'Cancellations inside 3 months, or once the trek has started, are not refundable.' },
 ]
 
 const sections: LegalSection[] = [
@@ -34,8 +34,8 @@ const sections: LegalSection[] = [
     ],
     points: [
       '**Booking deadline:** bookings must be made at least **one month before** the trek.',
-      '**Payment:** at present, payment is made after you arrive in Nepal, before the trek starts. Any deposit or advance payment we require will be stated in writing before your booking is confirmed.',
-      '**Last-minute bookings** are not accepted for cancellation and are not refundable.',
+      '**Deposit:** a deposit of **15% to 20%** of the trip price is required to confirm your booking. It is due at least **6 months before** the trek starts or, if you book less than 6 months ahead, when you book. We confirm the exact amount in writing.',
+      '**Balance:** the remaining amount can be paid by **bank transfer at least 3 days before** the trek starts, or **in cash when you arrive** in Nepal, before the trek begins.',
       '**Age:** trekkers must be between **18 and 70 years old** to join independently. No age restrictions apply for family groups booking together.',
     ],
   },
@@ -48,7 +48,9 @@ const sections: LegalSection[] = [
       'Cancellation charges otherwise depend on the date we receive written notice and any non-refundable commitments already made, including permits, domestic flights, hotels, guides, porters, vehicles, and accommodation. No refund is normally available for unused services after a trip has started, voluntary withdrawal, late arrival, early return, or services missed for reasons outside our control.',
     ],
     points: [
-      '**Cancellation:** cancellations are accepted up to **3 months before** the scheduled trip. A minimal fee is deducted to cover currency exchange rates and transaction charges.',
+      '**3 months or more before the trek:** you can cancel and receive a refund of the amount paid, minus a small fee to cover currency exchange and transaction charges.',
+      '**Less than 3 months before the trek:** cancellations are **not refundable**. You can still move your trip to new dates instead (see below).',
+      '**After the trek has started:** cancelling or leaving the trip is **not refundable**, including unused days, early return or departure, whatever the reason.',
       '**Date change:** trips can be rescheduled for up to **one year** from the original cancellation date, at the same rate.',
     ],
   },
@@ -134,7 +136,7 @@ export default function TermsPage() {
       title="Terms & Conditions"
       intro="The terms for booking and joining a trek with Gele Trekking: payments, cancellations, safety responsibilities, insurance and what happens when mountain conditions change."
       effective="November 2026"
-      version="1.2"
+      version="1.3"
       highlightsTitle="Key terms at a glance"
       highlights={highlights}
       sections={sections}

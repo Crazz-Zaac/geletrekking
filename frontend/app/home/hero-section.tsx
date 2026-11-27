@@ -92,7 +92,7 @@ export async function HeroSection({
   const ratingLabel = rating ? rating.toFixed(1) : SITE_METRICS.googleReviewRating
   const proof = [
     { icon: Star, text: reviewCount ? `${ratingLabel} from ${reviewCount} Google reviews` : `${ratingLabel} on Google` },
-    { icon: Wallet, text: 'Pay after you arrive in Nepal' },
+    { icon: Wallet, text: 'Small deposit, rest on arrival' },
     { icon: CalendarCheck, text: 'Change dates within a year' },
   ]
 

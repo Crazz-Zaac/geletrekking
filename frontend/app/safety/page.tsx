@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { ArrowRight, HeartPulse, LifeBuoy, Mountain, ShieldCheck, Stethoscope, Users, Wallet } from 'lucide-react'
+import { ArrowRight, HeartPulse, LifeBuoy, Mountain, Phone, ShieldCheck, Stethoscope, Users, Wallet } from 'lucide-react'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
 import { JsonLd } from '@/components/json-ld'
 import { breadcrumbJsonLd, buildMetadata } from '@/lib/seo'
+import { getCachedPublicSettings } from '@/lib/api'
 
 export const metadata: Metadata = buildMetadata({
   title: 'Safety & Trekking with Confidence',
@@ -80,14 +81,18 @@ const SECTIONS = [
     icon: Wallet,
     title: 'Clear booking & payment terms',
     points: [
-      'Your booking is confirmed only after we receive your deposit, your booking details and our written confirmation.',
-      'If you need to cancel, charges depend on when we receive your written notice and on costs already committed, such as permits and domestic flights.',
+      'Your booking is confirmed once we receive your 15–20% deposit, your booking details and our written confirmation.',
+      'Pay the rest by bank transfer at least 3 days before the trek, or in cash when you arrive.',
+      'Cancel 3 months or more ahead for a refund minus a small fee; closer to the trek, or once it has started, there is no refund, but you can move your dates within a year.',
     ],
     link: { href: '/terms-and-conditions#section-1', label: 'Booking, payment & cancellation terms' },
   },
 ]
 
-export default function SafetyPage() {
+export default async function SafetyPage() {
+  // Set in Admin → Site settings; the card stays hidden until a number is entered.
+  const emergencyPhone = (await getCachedPublicSettings())?.emergencyPhone?.trim() || ''
+
   return (
     <>
       <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'Safety', path: '/safety' }])} />
@@ -103,6 +108,31 @@ export default function SafetyPage() {
             </p>
           </div>
         </section>
+
+        {emergencyPhone ? (
+          <section aria-labelledby="emergency-line" className="pt-10 md:pt-14">
+            <div className="container mx-auto max-w-5xl px-4 md:px-6">
+              <div className="flex flex-col gap-4 rounded-2xl border border-red-200 bg-red-50 p-6 sm:flex-row sm:items-center sm:justify-between dark:border-red-900/60 dark:bg-red-950/30">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-600 text-white">
+                    <Phone className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h2 id="emergency-line" className="text-lg font-semibold text-foreground">24-hour emergency line</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">For emergencies during your trek, call us any time, day or night.</p>
+                  </div>
+                </div>
+                <a
+                  href={`tel:${emergencyPhone.replace(/[^+\d]/g, '')}`}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-700 px-5 py-2.5 text-base font-semibold text-white hover:bg-red-800"
+                >
+                  <Phone className="h-4 w-4" aria-hidden="true" />
+                  {emergencyPhone}
+                </a>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <section className="py-10 md:py-14">
           <div className="container mx-auto grid max-w-5xl gap-5 px-4 md:grid-cols-2 md:px-6">

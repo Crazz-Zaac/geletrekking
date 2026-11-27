@@ -265,6 +265,8 @@ export interface AdminSiteSettings {
   contactHeroImageUrl?: string
   bookingHeroImageUrl?: string
   phone?: string
+  /** 24-hour emergency number for the Safety page; empty hides it. */
+  emergencyPhone?: string
   email?: string
   address?: string
   officeHoursWeekdays?: string

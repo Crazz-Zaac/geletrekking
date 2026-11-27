@@ -38,8 +38,8 @@ export function faqAnchor(question: string) {
 
 /**
  * Draft answers the admin can add with one click ("Add suggested questions").
- * Booking terms follow Gele Trekking's current rules; payment reflects the current
- * practice of paying on arrival and should be updated if a deposit is introduced.
+ * Booking, deposit and cancellation answers follow the Terms & Conditions
+ * (November 2026); update them together.
  */
 export const SUGGESTED_FAQS: Array<{ question: string; answer: string; category: FaqTopicId }> = [
   {
@@ -70,13 +70,13 @@ export const SUGGESTED_FAQS: Array<{ question: string; answer: string; category:
     category: 'booking',
     question: 'When and how do I pay?',
     answer:
-      'At the moment you pay for your trek **after you arrive in Nepal**, before the trek starts. No advance payment is required to reserve your place.\nWe will confirm the total price, currency and accepted payment methods in writing before you travel. See our [terms and conditions](/terms-and-conditions) for details.',
+      'A **deposit of 15–20%** of the trip price confirms your booking. It is due **6 months before** your trek or, if you book later than that, when you book.\nThe rest can be paid by **bank transfer at least 3 days before** the trek, or **in cash when you arrive** in Nepal. We confirm the exact amounts in writing. See our [terms and conditions](/terms-and-conditions) for details.',
   },
   {
     category: 'booking',
     question: 'What is your cancellation and rescheduling policy?',
     answer:
-      'We always try to **move your dates** rather than cancel your trip.\n- **Cancellation:** accepted up to **3 months before** the trip. A small fee is deducted to cover currency exchange and transaction charges.\n- **Rescheduling:** you can move your trip to new dates **within one year**, at the same price.\n- **Last-minute bookings** cannot be cancelled or refunded.\nFull details are in our [terms and conditions](/terms-and-conditions).',
+      'We always try to **move your dates** rather than cancel your trip.\n- **3 months or more before:** cancel for a refund, minus a small fee for currency exchange and transaction charges.\n- **Less than 3 months before:** cancellations are not refundable, but you can still move your dates.\n- **Once the trek has started:** no refund, including unused days or leaving early.\n- **Rescheduling:** move your trip to new dates **within one year**, at the same price.\nFull details are in our [terms and conditions](/terms-and-conditions).',
   },
   {
     category: 'booking',
