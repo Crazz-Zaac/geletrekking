@@ -7,6 +7,8 @@ const siteSettingsSchema = new mongoose.Schema(
     contactHeroImageUrl: { type: String, default: "" },
     bookingHeroImageUrl: { type: String, default: "" },
     phone: { type: String, default: "" },
+    // 24-hour emergency line shown on the Safety page; hidden while empty.
+    emergencyPhone: { type: String, default: "" },
     email: { type: String, default: "" },
     // Extra addresses shown on the Contact page (main address is `email`).
     // Undefined until first saved, so the website can show its defaults.

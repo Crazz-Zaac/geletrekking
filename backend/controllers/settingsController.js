@@ -109,6 +109,10 @@ exports.updateSettings = async (req, res) => {
       if (typeof req.body[key] !== "undefined") doc[key] = req.body[key];
     }
 
+    if (typeof req.body.emergencyPhone !== "undefined") {
+      doc.emergencyPhone = String(req.body.emergencyPhone || "").trim().slice(0, 40);
+    }
+
     // Extra contact emails: up to 5, each with a valid address.
     if (Array.isArray(req.body.contactEmails)) {
       const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;

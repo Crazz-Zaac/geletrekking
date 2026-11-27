@@ -50,14 +50,14 @@ const getPolicySections = (contactEmail: string) => [
     id: 'what-we-collect',
     title: '3) Personal Data We Collect',
     content:
-      'Contact and inquiry forms: name, email address, phone number if you give one, and your message and trek preferences. Pre-booking Form: your name, contact details, date of birth, gender, nationality, trek and flight details, and optionally your passport number and expiry date. Private Booking Form, used only after confirmation: passport and travel details, health and fitness information including medical conditions and medications, travel insurance details, emergency contact, preferences and your typed signature. We do not ask for card numbers through these forms.',
+      'Contact and inquiry forms: name, email address, phone number if you give one, and your message and trek preferences. Pre-booking Form: your name, contact details, date of birth, gender, nationality, and trek and flight details (we do not ask for passport details at this stage). Private Booking Form, used only after confirmation: passport and travel details, health and fitness information including medical conditions and medications, travel insurance details, emergency contact, preferences and your typed signature. We do not ask for card numbers through these forms.',
     icon: UserRound,
   },
   {
     id: 'how-we-use',
-    title: '4) Purpose and Legal Basis (GDPR)',
+    title: '4) Purpose and Legal Basis',
     content:
-      'We use inquiry data to reply to you, and booking data to arrange your trek, obtain permits, and keep you safe in the mountains. GDPR legal bases: Article 6(1)(b) (steps at your request before a contract, and performing that contract) and Article 6(1)(f) (legitimate interest in customer communication). Health information is processed on the basis of your explicit consent under Article 9(2)(a), given by ticking the health consent box on the Private Booking Form. You can withdraw it at any time by contacting us, although we may then be unable to operate your trek safely.',
+      'We use inquiry data to reply to you, and booking data to arrange your trek, obtain permits, and keep you safe in the mountains. Under the EU and UK GDPR, our legal bases are: Article 6(1)(b) (steps at your request before a contract, and performing that contract) and Article 6(1)(f) (legitimate interest in customer communication). Health information is processed on the basis of your explicit consent under Article 9(2)(a), given by ticking the health consent box on the Private Booking Form. You can withdraw it at any time by contacting us, although we may then be unable to operate your trek safely.',
     icon: Database,
   },
   {
@@ -78,7 +78,7 @@ const getPolicySections = (contactEmail: string) => [
     id: 'processors-transfers',
     title: '7) Backups, Processors and International Transfers',
     content:
-      'Encrypted backups of our website content and inquiry messages are stored in Google Drive and kept for up to 12 months. Backups made before 9 November 2026 may still contain booking form data until they expire, no later than November 2027. We use service providers for email, website hosting and spam protection. Our team is based in Nepal and accesses your data from there in order to arrange your trek. Where data is processed outside the EEA/UK, we rely on appropriate safeguards under GDPR or, where applicable, on the necessity of the transfer to perform your booking.',
+      'Encrypted backups of our website content and inquiry messages are stored in Google Drive and kept for up to 12 months. Backups made before 9 November 2026 may still contain booking form data until they expire, no later than November 2027. We use service providers for email, website hosting and spam protection. Our team is based in Nepal and accesses your data from there in order to arrange your trek. Where data is processed outside the EEA/UK, we rely on appropriate safeguards under the EU or UK GDPR or, where applicable, on the necessity of the transfer to perform your booking. For travellers from Australia, the US or elsewhere, this cross-border handling is needed to provide the trek you book with us.',
     icon: Globe,
   },
   {
@@ -97,9 +97,9 @@ const getPolicySections = (contactEmail: string) => [
   },
   {
     id: 'gdpr-rights',
-    title: '9) Your GDPR Rights',
+    title: '9) Your Privacy Rights (EU, UK, Australia and US)',
     content:
-      'If GDPR applies to you, you have the right to access, rectify, erase, restrict, object, and request portability of your personal data (where applicable). You may also lodge a complaint with your local supervisory authority.',
+      'Wherever you live, you can ask us what personal data we hold about you, ask us to correct or delete it, and withdraw consent you have given. We do not sell your personal information or share it for targeted advertising. European Union and EEA: under the GDPR you have the right to access, rectify, erase, restrict, object to and request portability of your personal data, and to complain to your local data protection authority. United Kingdom: you have the same rights under the UK GDPR and the Data Protection Act 2018, and can complain to the Information Commissioner’s Office (ICO). Australia: where the Privacy Act 1988 applies, we handle your information in line with the Australian Privacy Principles; you can ask to access or correct it, and if you are not satisfied with our response you can complain to the Office of the Australian Information Commissioner (OAIC). United States: depending on your state (for example California under the CCPA/CPRA), you may have the right to know what personal information we collect and how we use it, to access, correct or delete it, and to opt out of its sale or sharing; we will not treat you differently for exercising these rights. To make any request, see “Contact and Updates” below; we may need to verify your identity first and will reply within the time the applicable law requires.',
     icon: Scale,
   },
   {
@@ -127,10 +127,10 @@ export default function PrivacyPolicyPage() {
                 <Badge className="mb-2 bg-primary/15 text-primary border-primary/30 hover:bg-primary/20">Privacy Policy</Badge>
               </m.div>
               <m.h1 variants={itemVariants} className="text-4xl md:text-5xl font-bold text-foreground text-balance">
-                Privacy Policy (GDPR)
+                Privacy Policy
               </m.h1>
               <m.p variants={itemVariants} className="text-muted-foreground max-w-3xl">
-                This policy explains how Gele Trekking handles personal data submitted through our website forms, in line with EU GDPR principles of lawfulness, transparency, and data minimization.
+                This policy explains how Gele Trekking handles personal data submitted through our website forms, in line with the EU and UK GDPR principles of lawfulness, transparency and data minimisation, and with Australian and US privacy rights.
               </m.p>
 
               <m.div variants={itemVariants} className="pt-2 flex flex-wrap items-center gap-2.5 text-sm">
@@ -140,7 +140,7 @@ export default function PrivacyPolicyPage() {
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-muted-foreground">
                   <Scale className="h-4 w-4" />
-                  GDPR-aligned data handling
+                  GDPR, UK, Australian & US privacy rights
                 </span>
               </m.div>
             </m.div>

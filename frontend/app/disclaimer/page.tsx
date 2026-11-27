@@ -16,7 +16,7 @@ import { LegalDocument, type LegalHighlight, type LegalSection } from '@/compone
 const highlights: LegalHighlight[] = [
   { icon: Mountain, title: 'Altitude can be dangerous', text: 'AMS, HACE and HAPE can be fatal. Acclimatisation helps but guarantees nothing.' },
   { icon: Shield, title: 'Insurance is mandatory', text: 'It must include medical evacuation and trekking at high altitude.' },
-  { icon: Helicopter, title: 'Rescue is costly', text: 'A helicopter evacuation often costs US$3,000–10,000.' },
+  { icon: Helicopter, title: 'Rescue is costly', text: 'Helicopter evacuation is extremely expensive, so evacuation cover is required.' },
   { icon: Stethoscope, title: 'See a doctor first', text: 'Disclose all medical conditions before you trek.' },
 ]
 
@@ -54,7 +54,7 @@ const sections: LegalSection[] = [
     title: 'Medical and Emergency Evacuation',
     body: [
       'Emergency medical facilities are limited in remote trekking areas. Medical evacuation by helicopter may be necessary but is not always possible due to weather or terrain.',
-      'Helicopter evacuation is extremely expensive (often **$3,000–$10,000**). Medical evacuation insurance is mandatory.',
+      'Helicopter evacuation is extremely expensive. **Medical evacuation insurance is therefore required** for every participant.',
     ],
   },
   {
@@ -63,7 +63,7 @@ const sections: LegalSection[] = [
     title: 'Accident and Injury Risks',
     body: [
       'Trekking trails can be steep, narrow, and dangerous. Slipping, falling, and other accidents can occur.',
-      'Participants assume all risks associated with physical injuries. Gele Trekking and its staff are not liable for accidents or injuries.',
+      'Participants accept the risk of physical injury that is inherent in trekking. The limits of our liability are set out in our Liability Waiver and Terms & Conditions.',
     ],
   },
   {
@@ -80,7 +80,7 @@ const sections: LegalSection[] = [
     title: 'Assumption of Risk',
     body: [
       'By participating in our treks, you acknowledge that you fully understand these risks and voluntarily assume all risks associated with high-altitude trekking.',
-      'You agree not to hold Gele Trekking, its guides, or its staff responsible for any injuries, accidents, or deaths.',
+      'To the fullest extent permitted by law, and as set out in our Liability Waiver, you agree not to hold Gele Trekking, its guides or its staff responsible for injury, illness or death arising from these inherent risks. This does not apply to gross negligence or wilful misconduct, or to any liability that cannot lawfully be excluded.',
     ],
   },
   {
@@ -119,7 +119,8 @@ export default function DisclaimerPage() {
       eyebrow="Legal · Risk disclosure"
       title="Health & Safety Disclaimer"
       intro="Trekking in the Himalaya carries real risks. This page explains them, what we expect from every participant, and the insurance you need before joining a trip with Gele Trekking."
-      effective="April 2026"
+      effective="November 2026"
+      version="1.1"
       highlightsTitle="Before you book, please know"
       highlights={highlights}
       notice={{
@@ -127,7 +128,7 @@ export default function DisclaimerPage() {
         text: 'Trekking in the Himalayas carries inherent risks, including at high altitude where help can be hours or days away.',
       }}
       sections={sections}
-      closing="By booking a trek with Gele Trekking, you acknowledge that you have read, understood, and fully agree to this disclaimer. You accept all risks associated with high-altitude trekking and absolve Gele Trekking from any liability."
+      closing="By booking a trek with Gele Trekking, you acknowledge that you have read, understood, and fully agree to this disclaimer. You accept all risks associated with high-altitude trekking and absolve Gele Trekking from liability to the extent permitted by law. Read it together with our Terms & Conditions and Liability Waiver (both November 2026), which set out the limits of our liability."
     />
   )
 }
