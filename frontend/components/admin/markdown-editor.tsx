@@ -4,6 +4,8 @@ import { useId, useMemo, useRef, useState } from 'react'
 import { marked } from 'marked'
 import { Bold, Code, Heading2, Heading3, Image as ImageIcon, Italic, Link as LinkIcon, List, ListOrdered, Quote, Strikethrough, Youtube } from 'lucide-react'
 import { sanitizeHtml } from '@/lib/sanitize-html'
+import { renderBlogMarkdown } from '@/lib/blog-markdown'
+import { withDefaultImageAlt } from '@/lib/markdown-alt'
 import { cn } from '@/lib/utils'
 
 type Tool = {
@@ -58,13 +60,18 @@ export function MarkdownEditor({ value, onChange, id, rows = 8, placeholder, pre
   const ref = useRef<HTMLTextAreaElement>(null)
   const [mode, setMode] = useState<'write' | 'preview'>('write')
   const [panel, setPanel] = useState<'image' | 'video' | null>(null)
-  const [media, setMedia] = useState({ url: '', alt: '', width: '', title: '' })
+  const [media, setMedia] = useState({ url: '', alt: '', width: '', title: '', caption: '' })
   const tools = extended ? [...TOOLS, ...EXTENDED_TOOLS] : TOOLS
 
   const words = useMemo(() => (value.trim() ? value.trim().split(/\s+/).length : 0), [value])
   const previewHtml = useMemo(
-    () => (mode === 'preview' ? sanitizeHtml(marked.parse(value || '', { async: false }) as string) : ''),
-    [mode, value]
+    () => {
+      if (mode !== 'preview') return ''
+      // Extended (blog) content uses the same image/caption/video syntax as the live post.
+      const source = extended ? renderBlogMarkdown(withDefaultImageAlt(value || '', defaultAlt || ''), true) : value || ''
+      return sanitizeHtml(marked.parse(source, { async: false }) as string)
+    },
+    [mode, value, extended, defaultAlt]
   )
 
   const apply = (tool: Tool) => {
@@ -105,11 +112,13 @@ export function MarkdownEditor({ value, onChange, id, rows = 8, placeholder, pre
     if (!/^https?:\/\//.test(url)) return
     if (panel === 'image') {
       const size = media.width.trim() ? `{width=${media.width.trim()}}` : ''
-      insertRaw(`![${(media.alt.trim() || defaultAlt?.trim() || 'Image').replace(/[[\]]/g, '')}](${url})${size}`)
+      const caption = media.caption.trim().replace(/"/g, '”').replace(/\s+/g, ' ')
+      const alt = (media.alt.trim() || caption || defaultAlt?.trim() || 'Image').replace(/[[\]"]/g, '')
+      insertRaw(`![${alt}](${url}${caption ? ` "${caption}"` : ''})${size}`)
     } else {
       insertRaw(`::youtube${media.title.trim() ? `[${media.title.trim()}]` : ''}(${url})`)
     }
-    setMedia({ url: '', alt: '', width: '', title: '' })
+    setMedia({ url: '', alt: '', width: '', title: '', caption: '' })
     setPanel(null)
   }
 
@@ -205,6 +214,10 @@ export function MarkdownEditor({ value, onChange, id, rows = 8, placeholder, pre
               <label className="flex min-w-36 flex-1 flex-col gap-1 text-xs font-medium text-muted-foreground">
                 Alt text (describe the image)
                 <input value={media.alt} onChange={(event) => setMedia((prev) => ({ ...prev, alt: event.target.value }))} className="h-9 rounded-md border border-input bg-background px-2.5 text-sm text-foreground" />
+              </label>
+              <label className="flex min-w-36 flex-1 flex-col gap-1 text-xs font-medium text-muted-foreground">
+                Caption (optional, shown under the image)
+                <input value={media.caption} onChange={(event) => setMedia((prev) => ({ ...prev, caption: event.target.value }))} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); insertMedia() } }} placeholder="e.g. Sunrise over Ama Dablam" className="h-9 rounded-md border border-input bg-background px-2.5 text-sm text-foreground" />
               </label>
               <label className="flex w-24 flex-col gap-1 text-xs font-medium text-muted-foreground">
                 Width (px)

@@ -21,6 +21,12 @@ const blogPostSchema = new mongoose.Schema(
     author: { type: String, trim: true },
     hashtags: [{ type: String, trim: true }],
     isPublished: { type: Boolean, default: false },
+    // Set the first time the post goes live. From then on the slug (its web
+    // address) no longer follows the title, so shared links and search
+    // rankings keep working.
+    publishedAt: { type: Date },
+    // Earlier addresses of this post; visiting one redirects to the current slug.
+    previousSlugs: { type: [{ type: String, trim: true }], default: [], index: true },
     views: { type: Number, default: 0, min: 0 },
     likes: { type: Number, default: 0, min: 0 },
   },

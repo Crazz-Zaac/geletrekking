@@ -158,6 +158,7 @@ export interface AdminBlog {
   author?: string
   hashtags?: string[]
   isPublished: boolean
+  publishedAt?: string
   createdAt?: string
   views?: number
   likes?: number
@@ -704,7 +705,7 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
 async function fetchAdminJson<T>(path: string, _session: string, init?: RequestInit): Promise<T> {
   return fetchJson<T>(path, init)
 }
-function slugify(value: string): string {
+export function slugify(value: string): string {
   return value
     .toLowerCase()
     .trim()
