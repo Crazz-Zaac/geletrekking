@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { getBlogBySlug, getBlogs, type UiBlogPost } from '@/lib/api';
 import BlogPostClient from './BlogPostClient';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { JsonLd } from '@/components/json-ld';
 import { articleJsonLd, breadcrumbJsonLd, buildMetadata, truncateDescription } from '@/lib/seo';
 
@@ -57,6 +57,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   if (!post) {
     notFound();
+  }
+
+  // Reached through an earlier address of this post: send readers (and search engines) to the current one.
+  if (post.slug && post.slug !== slug) {
+    permanentRedirect(`/blog/${encodeURIComponent(post.slug)}`);
   }
 
   return (

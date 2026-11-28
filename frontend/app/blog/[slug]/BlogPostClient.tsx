@@ -17,6 +17,7 @@ import { PackingListCta } from '@/components/packing-list-cta'
 import { useBlogEngagement } from '@/hooks/use-blog-engagement'
 import { cn } from '@/lib/utils'
 import { withDefaultImageAlt } from '@/lib/markdown-alt'
+import { renderBlogMarkdown } from '@/lib/blog-markdown'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -111,73 +112,6 @@ function formatDisplayDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function renderSizedMarkdownImages(content: string) {
-  return content.replace(
-    /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)\{\s*(?:width|w)=(\d{1,4})(?:px)?(?:\s+(?:height|h)=(\d{1,4})(?:px)?)?\s*\}/g,
-    (_match, alt: string, src: string, title: string | undefined, width: string, height: string | undefined) => {
-      const imageWidth = Number(width);
-      const imageHeight = height ? Number(height) : undefined;
-      const attrs = [
-        `src="${escapeHtml(src)}"`,
-        `alt="${escapeHtml(alt)}"`,
-        title ? `title="${escapeHtml(title)}"` : '',
-        `width="${imageWidth}"`,
-        imageHeight ? `height="${imageHeight}"` : '',
-        `style="max-width: min(100%, ${imageWidth}px);${imageHeight ? ` aspect-ratio: ${imageWidth} / ${imageHeight};` : ''}"`,
-      ].filter(Boolean).join(' ');
-
-      return `<img ${attrs} />`;
-    }
-  );
-}
-
-function getYouTubeId(value: string) {
-  const trimmed = value.trim();
-  const directId = trimmed.match(/^[a-zA-Z0-9_-]{11}$/)?.[0];
-  if (directId) return directId;
-
-  try {
-    const url = new URL(trimmed);
-    if (url.hostname.includes('youtu.be')) return url.pathname.split('/').filter(Boolean)[0] || null;
-    if (url.searchParams.get('v')) return url.searchParams.get('v');
-    const parts = url.pathname.split('/').filter(Boolean);
-    const embedIndex = parts.findIndex((part) => part === 'embed' || part === 'shorts');
-    if (embedIndex >= 0) return parts[embedIndex + 1] || null;
-  } catch {
-    return null;
-  }
-
-  return null;
-}
-
-function renderYouTubeEmbeds(content: string, allowExternalMedia: boolean) {
-  return content.replace(
-    /::youtube(?:\[([^\]]*)\])?\(([^)\s]+)\)/g,
-    (match, title: string | undefined, url: string) => {
-      const videoId = getYouTubeId(url);
-      if (!videoId) return match;
-      const safeTitle = escapeHtml(title?.trim() || 'YouTube video');
-      if (!allowExternalMedia) return `<p>Video: <a href="https://www.youtube.com/watch?v=${escapeHtml(videoId)}" target="_blank" rel="noopener noreferrer">${safeTitle}</a>. Allow “Maps &amp; videos” in Cookie settings to watch it here.</p>`;
-
-      return `<div class="blog-video-embed"><iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}" title="${safeTitle}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`;
-    }
-  );
-}
-
-function renderBlogMarkdown(content: string, allowExternalMedia: boolean) {
-  const safeContent = allowExternalMedia ? content : content.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, '<p>Embedded media is off. Allow “Maps &amp; videos” in Cookie settings to show it.</p>');
-  return renderYouTubeEmbeds(renderSizedMarkdownImages(safeContent), allowExternalMedia);
 }
 
 export default function BlogPostClient({ post, allPosts }: BlogPostClientProps) {

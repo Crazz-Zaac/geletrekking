@@ -609,6 +609,8 @@ export function SaveBar({
   discardLabel = 'Discard',
   status,
   disabled,
+  secondaryAction,
+  saveWhenClean = false,
 }: {
   dirty?: boolean
   saving?: boolean
@@ -618,6 +620,10 @@ export function SaveBar({
   discardLabel?: string
   status?: ReactNode
   disabled?: boolean
+  /** Extra button(s) rendered between Discard and the primary action. */
+  secondaryAction?: ReactNode
+  /** Keep the primary action enabled with no unsaved changes (e.g. "Publish"). */
+  saveWhenClean?: boolean
 }) {
   return (
     <div className="sticky bottom-0 z-10 -mx-4 mt-6 md:-mx-6 lg:-mx-8" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
@@ -643,13 +649,14 @@ export function SaveBar({
               </>
             ))}
         </p>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {onDiscard && (
             <Button type="button" variant="ghost" onClick={onDiscard} disabled={saving}>
               {discardLabel}
             </Button>
           )}
-          <Button type="button" onClick={onSave} disabled={saving || disabled || !dirty} className="min-w-28">
+          {secondaryAction}
+          <Button type="button" onClick={onSave} disabled={saving || disabled || (!dirty && !saveWhenClean)} className="min-w-28">
             {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
             {saveLabel}
           </Button>

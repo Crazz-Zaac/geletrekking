@@ -1,7 +1,7 @@
 'use client'
 
 import { useConfirm } from '@/components/admin/use-confirm'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type InputHTMLAttributes } from 'react'
 import { ArrowLeft, ExternalLink, FileText, Newspaper, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,7 +14,6 @@ import {
   SaveBar,
   StatusToasts,
   TextArea,
-  ToggleField,
   useDirtyState,
   useUnsavedChangesWarning,
 } from '@/components/admin/form-kit'
@@ -25,6 +24,7 @@ import {
   createAdminBlog,
   deleteAdminBlog,
   getAdminBlogs,
+  slugify,
   updateAdminBlog,
 } from '@/lib/api'
 import { getAdminToken } from '@/lib/admin-auth'
@@ -37,6 +37,8 @@ type BlogForm = {
   author: string
   hashtags: string
   isPublished: boolean
+  /** Web address after /blog/. Empty on a new post means "make it from the title". */
+  slug: string
 }
 
 const initialForm: BlogForm = {
@@ -47,6 +49,17 @@ const initialForm: BlogForm = {
   author: '',
   hashtags: '',
   isPublished: false,
+  slug: '',
+}
+
+/** Text input with a fixed "/blog/" prefix. Props (id, aria-*) go to the input so <Field> can label it. */
+function SlugInput(props: InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className="flex h-10 items-center overflow-hidden rounded-md border border-input bg-background text-sm focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/20">
+      <span className="shrink-0 self-stretch border-r border-border bg-muted/50 px-2.5 leading-10 text-muted-foreground" aria-hidden="true">/blog/</span>
+      <input {...props} maxLength={120} spellCheck={false} autoCapitalize="off" autoComplete="off" className="h-full min-w-0 flex-1 bg-transparent px-2.5 outline-none" />
+    </div>
+  )
 }
 
 export default function AdminBlogsPage() {
@@ -100,6 +113,7 @@ export default function AdminBlogsPage() {
       author: item.author || '',
       hashtags: (item.hashtags || []).join(', '),
       isPublished: !!item.isPublished,
+      slug: item.slug || '',
     }
     setForm(next)
     markSaved(next)
@@ -128,7 +142,7 @@ export default function AdminBlogsPage() {
     markSaved(initialForm)
   }
 
-  const onSave = async () => {
+  const onSave = async (publish: boolean = form.isPublished) => {
     if (!token) {
       setError('Missing admin token. Please login again.')
       return
@@ -152,15 +166,18 @@ export default function AdminBlogsPage() {
 
       const payload = {
         ...form,
+        isPublished: publish,
+        slug: slugify(form.slug),
         hashtags: parsedHashtags,
       }
 
+      const wasPublished = !!items.find((item) => item._id === editingId)?.isPublished
       if (editingId) {
         await updateAdminBlog(token, editingId, payload)
-        setMessage(form.isPublished ? 'Post updated and live.' : 'Draft saved.')
+        setMessage(publish ? (wasPublished ? 'Post updated and live.' : 'Post published.') : wasPublished ? 'Post unpublished and moved to drafts.' : 'Draft saved.')
       } else {
         await createAdminBlog(token, payload)
-        setMessage(form.isPublished ? 'Post published.' : 'Draft created.')
+        setMessage(publish ? 'Post published.' : 'Draft created.')
       }
       onReset()
       await refresh()
@@ -209,7 +226,10 @@ export default function AdminBlogsPage() {
   }, [items, filter, query])
 
   const editingItem = editingId ? items.find((item) => item._id === editingId) : null
+  const isLive = !!editingItem?.isPublished
   const tags = form.hashtags.split(/[\s,]+/).map((tag) => tag.trim()).filter(Boolean)
+  const slugPreview = slugify(form.slug) || (editingItem?.slug ?? slugify(form.title)) || 'new-post'
+  const slugChangedOnLivePost = !!editingItem && (editingItem.isPublished || !!editingItem.publishedAt) && !!slugify(form.slug) && slugify(form.slug) !== editingItem.slug
   const seoDescription = (form.excerpt || form.content).replace(/[#*_>`~\[\]()!-]/g, '').replace(/\s+/g, ' ').trim()
 
   if (showForm) {
@@ -257,12 +277,17 @@ export default function AdminBlogsPage() {
           {/* Sidebar */}
           <aside className="space-y-4 xl:sticky xl:top-20 xl:self-start">
             <div className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-sm">
-              <ToggleField
-                label={form.isPublished ? 'Published' : 'Draft'}
-                description={form.isPublished ? 'Visible on the blog after saving.' : 'Only visible in the admin.'}
-                checked={form.isPublished}
-                onCheckedChange={(isPublished) => setForm((prev) => ({ ...prev, isPublished }))}
-              />
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Status</p>
+                  <p className="text-xs text-muted-foreground">
+                    {isLive ? 'Live on the blog. Use Unpublish to hide it.' : 'Only visible in the admin until you publish.'}
+                  </p>
+                </div>
+                <Badge variant="outline" className={isLive ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'}>
+                  {isLive ? 'Published' : 'Draft'}
+                </Badge>
+              </div>
               <Field label="Author">
                 <Input className="h-10" placeholder="e.g. Gele Bishokarma" value={form.author} onChange={(e) => setForm((prev) => ({ ...prev, author: e.target.value }))} />
               </Field>
@@ -285,9 +310,28 @@ export default function AdminBlogsPage() {
             <div className="space-y-2 rounded-xl border border-border bg-card p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Search preview</p>
               <div className="space-y-0.5">
-                <p className="truncate text-xs text-emerald-700 dark:text-emerald-400">geletrekking.com › blog › {editingItem?.slug || 'new-post'}</p>
+                <p className="truncate text-xs text-emerald-700 dark:text-emerald-400">geletrekking.com › blog › {slugPreview}</p>
                 <p className="line-clamp-1 text-base text-[#1a0dab] dark:text-[#8ab4f8]">{form.title || 'Post title'} | Gele Trekking</p>
                 <p className="line-clamp-2 text-xs text-muted-foreground">{seoDescription || 'The summary appears here.'}</p>
+              </div>
+              <div className="border-t border-border pt-3">
+                <Field
+                  label="Web address"
+                  hint={
+                    slugChangedOnLivePost
+                      ? `Links to /blog/${editingItem?.slug} will redirect to the new address.`
+                      : editingItem && (editingItem.isPublished || editingItem.publishedAt)
+                        ? 'Stays the same when you edit the title.'
+                        : 'Leave blank to make it from the title. It stays fixed once published.'
+                  }
+                >
+                  <SlugInput
+                    placeholder={slugify(form.title) || 'everest-base-camp-in-october'}
+                    value={form.slug}
+                    onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-') }))}
+                    onBlur={() => setForm((prev) => ({ ...prev, slug: slugify(prev.slug) }))}
+                  />
+                </Field>
               </div>
             </div>
           </aside>
@@ -296,10 +340,16 @@ export default function AdminBlogsPage() {
         <SaveBar
           dirty={dirty || !editingId}
           saving={saving}
-          onSave={onSave}
+          onSave={() => void onSave(true)}
           onDiscard={() => void leaveEditor()}
           discardLabel="Cancel"
-          saveLabel={editingId ? (form.isPublished ? 'Update post' : 'Save draft') : form.isPublished ? 'Publish post' : 'Save draft'}
+          saveLabel={isLive ? 'Update post' : 'Publish post'}
+          saveWhenClean={!isLive}
+          secondaryAction={
+            <Button type="button" variant="outline" disabled={saving || (!isLive && !dirty && !!editingId)} onClick={() => void onSave(false)}>
+              {isLive ? 'Unpublish' : 'Save draft'}
+            </Button>
+          }
         />
       </div>
     )

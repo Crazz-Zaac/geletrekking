@@ -290,3 +290,7 @@
 .md-preview table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .md-preview th, .md-preview td { border: 1px solid var(--border); padding: 0.4em 0.6em; text-align: left; }
 .md-preview img { border-radius: 8px; max-width: 100%; }
+.md-preview figure { margin-left: 0; margin-right: 0; }
+.md-preview figcaption { margin-top: 0.4em; text-align: center; font-size: 0.75rem; color: var(--muted-foreground); }
+.md-preview .blog-video-embed { aspect-ratio: 16 / 9; overflow: hidden; border-radius: 8px; background: #000; }
+.md-preview .blog-video-embed iframe { width: 100%; height: 100%; }

@@ -11,6 +11,34 @@ function slugify(str) {
     .replace(/^-+|-+$/g, "");
 }
 
+// A slug is taken if another post uses it now or used it before (its old links still redirect there).
+async function uniqueSlug(title, excludeId) {
+  const base = slugify(title) || "post";
+  const notSelf = excludeId ? { _id: { $ne: excludeId } } : {};
+  let slug = base;
+  let suffix = 1;
+  while (await BlogPost.exists({ ...notSelf, $or: [{ slug }, { previousSlugs: slug }] })) {
+    slug = `${base}-${suffix++}`;
+  }
+  return slug;
+}
+
+// Is `slug` free for this post? Taken if another post uses it now or used it before.
+async function slugAvailable(slug, excludeId) {
+  const notSelf = excludeId ? { _id: { $ne: excludeId } } : {};
+  return !(await BlogPost.exists({ ...notSelf, $or: [{ slug }, { previousSlugs: slug }] }));
+}
+
+// An admin-typed address, cleaned to the same form as generated ones. Returns "" if nothing usable is left.
+function cleanSlug(value) {
+  return typeof value === "string" ? slugify(value).slice(0, 120).replace(/-+$/, "") : "";
+}
+
+const TAKEN_MESSAGE = (slug) => `The web address "/blog/${slug}" is already used by another post. Choose a different one.`;
+
+// Fields an admin may set directly. slug, previousSlugs, publishedAt, views and likes are managed here.
+const EDITABLE_FIELDS = ["title", "excerpt", "content", "coverImage", "author", "hashtags", "isPublished"];
+
 function normalizeHashtags(input) {
   const values = Array.isArray(input)
     ? input
@@ -43,7 +71,11 @@ exports.getAllBlogs = async (req, res) => {
 // Get blog post by slug (public)
 exports.getBlogBySlug = async (req, res) => {
   try {
-    const post = await BlogPost.findOne({ slug: req.params.slug, isPublished: true });
+    const { slug } = req.params;
+    // An old address returns the post too; the site then redirects to post.slug.
+    const post =
+      (await BlogPost.findOne({ slug, isPublished: true })) ||
+      (await BlogPost.findOne({ previousSlugs: slug, isPublished: true }));
     if (!post) return res.status(404).json({ message: "Post not found" });
     res.json(post);
   } catch (err) {
@@ -97,14 +129,11 @@ exports.createBlog = async (req, res) => {
     if (!title || !content) {
       return res.status(400).json({ message: "Title and content are required" });
     }
-    let slug = slugify(title);
-    // Ensure unique slug by appending a suffix if needed
-    let exists = await BlogPost.findOne({ slug });
-    let suffix = 1;
-    while (exists) {
-      slug = `${slugify(title)}-${suffix++}`;
-      exists = await BlogPost.findOne({ slug });
+    const requested = cleanSlug(req.body.slug);
+    if (requested && !(await slugAvailable(requested))) {
+      return res.status(409).json({ message: TAKEN_MESSAGE(requested) });
     }
+    const slug = requested || (await uniqueSlug(title));
     const post = await BlogPost.create({
       title,
       slug,
@@ -114,6 +143,7 @@ exports.createBlog = async (req, res) => {
       author,
       hashtags: normalizeHashtags(hashtags),
       isPublished: !!isPublished,
+      publishedAt: isPublished ? new Date() : undefined,
     });
     res.status(201).json(post);
   } catch (err) {
@@ -128,26 +158,48 @@ exports.updateBlog = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid blog post ID" });
     }
-    const updates = req.body;
-    // These are counted from visitors, so saving an edit must never reset them.
-    delete updates.views;
-    delete updates.likes;
-
-    if (Object.prototype.hasOwnProperty.call(updates, 'hashtags')) {
+    const body = req.body || {};
+    const updates = {};
+    for (const field of EDITABLE_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(body, field)) updates[field] = body[field];
+    }
+    if (Object.prototype.hasOwnProperty.call(updates, "hashtags")) {
       updates.hashtags = normalizeHashtags(updates.hashtags);
     }
-
-    // If title changed, regenerate slug
-    if (updates.title) {
-      let newSlug = slugify(updates.title);
-      let exists = await BlogPost.findOne({ slug: newSlug, _id: { $ne: id } });
-      let suffix = 1;
-      while (exists) {
-        newSlug = `${slugify(updates.title)}-${suffix++}`;
-        exists = await BlogPost.findOne({ slug: newSlug, _id: { $ne: id } });
-      }
-      updates.slug = newSlug;
+    if (Object.prototype.hasOwnProperty.call(updates, "isPublished")) {
+      updates.isPublished = !!updates.isPublished;
     }
+
+    const current = await BlogPost.findById(id).select("title slug isPublished publishedAt previousSlugs").lean();
+    if (!current) return res.status(404).json({ message: "Post not found" });
+
+    // Posts live before publishedAt existed have none; treat them as published already.
+    const hasBeenPublished = !!current.publishedAt || current.isPublished;
+    if (updates.isPublished && !current.publishedAt) updates.publishedAt = new Date();
+
+    let newSlug = null;
+    const requested = Object.prototype.hasOwnProperty.call(body, "slug") ? cleanSlug(body.slug) : "";
+    if (requested && requested !== current.slug) {
+      // Explicitly edited address: allowed at any time; the old one keeps redirecting.
+      if (!(await slugAvailable(requested, id))) {
+        return res.status(409).json({ message: TAKEN_MESSAGE(requested) });
+      }
+      newSlug = requested;
+    } else if (!hasBeenPublished && updates.title && updates.title.trim() !== current.title) {
+      // Never-live draft: the address follows the title, unless the admin set a custom one.
+      const base = slugify(current.title || "");
+      const followsTitle = current.slug === base || new RegExp(`^${base}-\\d+$`).test(current.slug);
+      if (followsTitle) newSlug = await uniqueSlug(updates.title, id);
+    }
+
+    if (newSlug && newSlug !== current.slug) {
+      updates.slug = newSlug;
+      // Moving back to an earlier address takes it out of the history.
+      const history = (current.previousSlugs || []).filter((s) => s && s !== newSlug);
+      if (current.slug && !history.includes(current.slug)) history.push(current.slug);
+      updates.previousSlugs = history;
+    }
+
     const updated = await BlogPost.findByIdAndUpdate(id, updates, { new: true });
     if (!updated) return res.status(404).json({ message: "Post not found" });
     res.json(updated);
